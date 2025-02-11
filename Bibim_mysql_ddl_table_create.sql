@@ -17,7 +17,6 @@ CREATE TABLE `Member` (
     `language` VARCHAR(20) NOT NULL DEFAULT 'english',
     `profile_image` VARCHAR(255) NULL,
     `login_status` CHAR(1) NOT NULL,
-    `auth` BOOLEAN NOT NULL,
     `social_login_check` VARCHAR(255) NOT NULL,
     `reg_date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
