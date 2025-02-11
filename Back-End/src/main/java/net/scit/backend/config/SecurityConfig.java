@@ -16,7 +16,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // CSRF 보호 비활성화 (JWT 사용 시 필요 없음)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/").permitAll() // 로그인, 회원가입은 허용
+                        .requestMatchers("/", "/members/check-email", "/members/signup/", "/members/signup/**").permitAll() // 로그인, 회원가입은 허용
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 전용
                         .requestMatchers("/user/**").hasRole("USER") // 사용자 전용
                         .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
