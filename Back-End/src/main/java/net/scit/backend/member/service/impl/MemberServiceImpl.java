@@ -4,6 +4,9 @@ import lombok.RequiredArgsConstructor;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.component.MailComponents;
+import net.scit.backend.component.S3Uploader;
+import net.scit.backend.exception.CustomException;
+import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.member.dto.MemberDTO;
 import net.scit.backend.member.dto.SignupDTO;
 import net.scit.backend.member.dto.VerificationDTO;
@@ -33,6 +36,7 @@ public class MemberServiceImpl implements MemberService {
     private final MemberRepository memberRepository;
     private final MailComponents mailComponents;
     private final RedisTemplate<String, String> redisTemplate;
+    private final S3Uploader s3Uploader;
 
     /**
      * 회원가입 처리를 수행하는 메소드
@@ -45,9 +49,9 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public ResultDTO<SuccessDTO> signup(SignupDTO signupDTO, MultipartFile file) {
         // 검증은 나중에 추가
+
         if (!signupDTO.isEmailCheck()) {
-            // CustomException으로 변경
-            throw new RuntimeException("이메일 인증이 완료되지 안았습니다.");
+            throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
         }
 
         // 프로필 이미지
@@ -62,13 +66,11 @@ public class MemberServiceImpl implements MemberService {
                 try { // 이미지 업로드하고 url 가져오기
                     imageUrl = s3Uploader.upload(file, "profile-images");
                 } catch (Exception e) {
-                    //CustomException으로 변경 해야함
-                    throw new RuntimeException("이미지 저장에 실패했습니다.");
+                    throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
                 }
             } else {
                 // 이미지 파일이 아닌 경우에 대한 처리
-                //CustomException으로 변경 해야함
-                throw new RuntimeException("지원하는 이미지 형태가 아닙니다.");
+                throw new CustomException(ErrorCode.UN_SUPPORTED_IMAGE_TYPE);
             }
         }
 
@@ -105,8 +107,7 @@ public class MemberServiceImpl implements MemberService {
         // email 중복 검사
         Optional<MemberEntity> byEmail = memberRepository.findByEmail(email);
         if (byEmail.isPresent()) {
-            // 나중에 CustomException으로 변경
-            throw new RuntimeException("중복된 이메일 입니다.");
+            throw new CustomException(ErrorCode.EMAIL_DUPLICATE);
         }
 
         // 성공시 DTO 저장
@@ -163,7 +164,7 @@ public class MemberServiceImpl implements MemberService {
         String code = redisTemplate.opsForValue().get("signup: " + verificationDTO.getEmail());
         if (!code.equals(verificationDTO.getCode())) {
             // 나중에 CustomException으로 변경
-            throw new RuntimeException("인증코드가 잘못되었습니다.");
+            throw new CustomException(ErrorCode.INVALID_EMAIL_CODE);
         }
 
         SuccessDTO successDTO = SuccessDTO.builder()
