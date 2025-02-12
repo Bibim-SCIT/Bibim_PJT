@@ -8,6 +8,7 @@ import net.scit.backend.member.dto.VerificationDTO;
 import net.scit.backend.member.service.MemberService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Member 관련 업무 메소드가 지정된 Controller
@@ -24,8 +25,9 @@ public class MemberController {
      * @return 회원가입 동작 완료 후 결과 확인
      */
     @PostMapping("/signup")
-    public ResponseEntity<ResultDTO<SuccessDTO>> signup(@RequestBody SignupDTO signupDTO) {
-        ResultDTO<SuccessDTO> result = memberService.signup(signupDTO);
+    public ResponseEntity<ResultDTO<SuccessDTO>> signup(@RequestBody SignupDTO signupDTO,
+                                                        @RequestPart(value = "file", required = false) MultipartFile file) {
+        ResultDTO<SuccessDTO> result = memberService.signup(signupDTO, file);
         return ResponseEntity.ok(result);
     }
 
