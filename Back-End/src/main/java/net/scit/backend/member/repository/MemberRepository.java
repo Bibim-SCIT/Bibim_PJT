@@ -6,6 +6,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+/**
+ * Member 테이블을 제어할 JPA repository
+ */
 @Repository
 public interface MemberRepository extends JpaRepository<MemberEntity, String> {
     Optional<MemberEntity> findByEmail(String email);

@@ -6,6 +6,9 @@ import net.scit.backend.member.dto.SignupDTO;
 import net.scit.backend.member.dto.VerificationDTO;
 import org.springframework.stereotype.Service;
 
+/**
+ * member에 관한 작업을 처리 하기 위한 인터페이스
+ */
 @Service
 public interface MemberService {
     ResultDTO<SuccessDTO> signup(SignupDTO signupDTO);

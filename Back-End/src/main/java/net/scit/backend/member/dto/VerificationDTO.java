@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * 이메일 인증을 위한 객체
+ */
 @Getter
 @Setter
 @NoArgsConstructor

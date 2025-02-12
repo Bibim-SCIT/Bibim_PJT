@@ -4,6 +4,10 @@ import lombok.*;
 import net.scit.backend.member.entity.MemberEntity;
 
 import java.time.LocalDate;
+
+/**
+ * Member의 정보가 담기는 DTO
+ */
 @Getter
 @Setter
 @NoArgsConstructor
