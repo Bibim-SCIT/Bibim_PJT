@@ -11,7 +11,7 @@ import org.hibernate.annotations.CurrentTimestamp;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "member")
+@Table(name = "Member")
 @Getter
 @Setter
 @NoArgsConstructor
