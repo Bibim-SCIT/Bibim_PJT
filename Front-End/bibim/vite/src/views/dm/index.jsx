@@ -1,0 +1,17 @@
+// material-ui
+import Typography from '@mui/material/Typography';
+
+// project imports
+import MainCard from 'ui-component/cards/MainCard';
+
+// ==============================|| SAMPLE PAGE ||============================== //
+
+export default function dmPage() {
+    return (
+        <MainCard title="여기는 디엠페이지">
+            <Typography variant="body2">
+                Lorem ipsum dolor sit amen, consenter nipissing eli, 여기는 디엠페이지
+            </Typography>
+        </MainCard>
+    );
+}
