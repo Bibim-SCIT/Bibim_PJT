@@ -16,6 +16,5 @@ public class SignupDTO {
     private String name;
     private String nationality;
     private String language;
-    private String profileImage;
     private boolean emailCheck;
 }
