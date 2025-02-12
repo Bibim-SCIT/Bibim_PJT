@@ -5,6 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.component.MailComponents;
+import net.scit.backend.component.S3Uploader;
+import net.scit.backend.exception.CustomException;
+import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.member.dto.MemberDTO;
 import net.scit.backend.member.dto.MyInfoDTO;
 import net.scit.backend.member.dto.SignupDTO;
@@ -14,7 +17,11 @@ import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.member.service.MemberService;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -32,20 +39,42 @@ public class MemberServiceImpl implements MemberService {
     private final MemberRepository memberRepository;
     private final MailComponents mailComponents;
     private final RedisTemplate<String, String> redisTemplate;
+    private final S3Uploader s3Uploader;
 
     /**
-    * 회원가입 처리를 수행하는 메소드
-    * 
-    * @param signUpRequest 회원가입 요청 정보를 담은 DTO
-    * @return 회원가입 후 결과 확인
-    * @throws RuntimeException 이메일 인증이 완료되지 않은 경우
-    */
+     * 회원가입 처리를 수행하는 메소드
+     *
+     * @param signUpRequest 회원가입 요청 정보를 담은 DTO
+     * @param file
+     * @return 회원가입 후 결과 확인
+     * @throws RuntimeException 이메일 인증이 완료되지 않은 경우
+     */
     @Override
-    public ResultDTO<SuccessDTO> signup(SignupDTO signupDTO) {
+    public ResultDTO<SuccessDTO> signup(SignupDTO signupDTO, MultipartFile file) {
         // 검증은 나중에 추가
+
         if (!signupDTO.isEmailCheck()) {
-            // CustomException으로 변경
-            throw new RuntimeException("이메일 인증이 완료되지 안았습니다.");
+            throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
+        }
+
+        // 프로필 이미지
+        String imageUrl = null;
+        if (file != null || !file.isEmpty()) {
+            // 파일 이름에서 확장자 추출
+            String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+            // 지원하는 이미지 파일 확장자 목록
+            List<String> allowedExtensions = Arrays.asList("jpg", "jpeg", "png", "gif");
+            // 확장자가 이미지 파일인지 확인
+            if (fileExtension != null && allowedExtensions.contains(fileExtension.toLowerCase())) {
+                try { // 이미지 업로드하고 url 가져오기
+                    imageUrl = s3Uploader.upload(file, "profile-images");
+                } catch (Exception e) {
+                    throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
+                }
+            } else {
+                // 이미지 파일이 아닌 경우에 대한 처리
+                throw new CustomException(ErrorCode.UN_SUPPORTED_IMAGE_TYPE);
+            }
         }
 
         // signupDTO의 변수를 memberDTO에 복사
@@ -56,7 +85,7 @@ public class MemberServiceImpl implements MemberService {
                 .nationality(signupDTO.getNationality())
                 .language(signupDTO.getLanguage())
                 .socialLoginCheck("없음")
-                .profileImage(signupDTO.getProfileImage())
+                .profileImage(imageUrl)
                 .build();
         // DTO를 entity로 변경
         MemberEntity temp = MemberEntity.toEntity(memberDTO);
@@ -81,8 +110,7 @@ public class MemberServiceImpl implements MemberService {
         // email 중복 검사
         Optional<MemberEntity> byEmail = memberRepository.findByEmail(email);
         if (byEmail.isPresent()) {
-            // 나중에 CustomException으로 변경
-            throw new RuntimeException("중복된 이메일 입니다.");
+            throw new CustomException(ErrorCode.EMAIL_DUPLICATE);
         }
 
         // 성공시 DTO 저장
@@ -139,7 +167,7 @@ public class MemberServiceImpl implements MemberService {
         String code = redisTemplate.opsForValue().get("signup: " + verificationDTO.getEmail());
         if (!code.equals(verificationDTO.getCode())) {
             // 나중에 CustomException으로 변경
-            throw new RuntimeException("인증코드가 잘못되었습니다.");
+            throw new CustomException(ErrorCode.INVALID_EMAIL_CODE);
         }
 
         SuccessDTO successDTO = SuccessDTO.builder()

@@ -1,6 +1,8 @@
 package net.scit.backend.component;
 
 import lombok.RequiredArgsConstructor;
+import net.scit.backend.exception.CustomException;
+import net.scit.backend.exception.ErrorCode;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
@@ -39,8 +41,7 @@ public class MailComponents {
             mimeMessageHelper.setText(text, true);
 
         } catch (MessagingException e) {
-            // 나중에 CustomException으로 변경
-            throw new RuntimeException(e.getMessage());
+            throw new CustomException(ErrorCode.SEND_MAIL_FAIL);
         }
         // 구성된 이메일 송신
         javaMailSender.send(message);
