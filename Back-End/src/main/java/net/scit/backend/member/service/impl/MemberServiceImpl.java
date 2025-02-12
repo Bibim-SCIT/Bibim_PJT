@@ -1,10 +1,12 @@
 package net.scit.backend.member.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.component.MailComponents;
 import net.scit.backend.member.dto.MemberDTO;
+import net.scit.backend.member.dto.MyInfoDTO;
 import net.scit.backend.member.dto.SignupDTO;
 import net.scit.backend.member.dto.VerificationDTO;
 import net.scit.backend.member.entity.MemberEntity;
@@ -22,6 +24,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MemberServiceImpl implements MemberService {
 
     private static final Long MAIL_EXPIRES_IN = 300000L;
@@ -155,4 +158,32 @@ public class MemberServiceImpl implements MemberService {
         int randomNumber = random.nextInt(900000) + 100000; // 6자리 숫자 생성 (100000부터 999999까지)
         return String.valueOf(randomNumber);
     }
+
+    //회원 정보 확인
+    // 로그인 완성 후 email이 아니라 token을 받아서 회원정보를 받아야함
+    @Override
+    public ResultDTO<MyInfoDTO> myInfo(String email) {
+        Optional<MemberEntity> byEmail = memberRepository.findByEmail(email);
+        if (!byEmail.isPresent()) {
+            throw new RuntimeException("해당 계정이 존재하지 않습니다.");
+        }
+
+        MemberEntity memberEntity = byEmail.get();
+        MemberDTO memberDTO = MemberDTO.toDTO(memberEntity);
+
+        // MyInfoDTO 객체 생성 (빌더 패턴 사용)
+        MyInfoDTO myInfoDTO = MyInfoDTO.builder()
+                .success(true)
+                .email(memberDTO.getEmail())
+                .name(memberDTO.getName())
+                .nationality(memberDTO.getNationality())
+                .language(memberDTO.getLanguage())
+                .profileImage(memberDTO.getProfileImage())
+                .socialLoginCheck(memberDTO.getSocialLoginCheck())
+                .regDate(memberDTO.getRegDate())
+                .build();
+
+        return ResultDTO.of("회원 정보 조회에 성공했습니다.", myInfoDTO);
+    }
+
 }

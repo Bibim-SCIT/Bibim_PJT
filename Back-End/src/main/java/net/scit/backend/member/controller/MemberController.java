@@ -3,6 +3,7 @@ package net.scit.backend.member.controller;
 import lombok.RequiredArgsConstructor;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.member.dto.MyInfoDTO;
 import net.scit.backend.member.dto.SignupDTO;
 import net.scit.backend.member.dto.VerificationDTO;
 import net.scit.backend.member.service.MemberService;
@@ -59,6 +60,13 @@ public class MemberController {
     @GetMapping("/signup/check-mail")
     public ResponseEntity<ResultDTO<SuccessDTO>> checkMail(@RequestBody VerificationDTO verificationDTO) {
         ResultDTO<SuccessDTO> result = memberService.checkMail(verificationDTO);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/myinfo")
+    // 로그인 완성 후 email이 아니라 token을 받아서 회원정보를 받아야함
+    public ResponseEntity<ResultDTO<MyInfoDTO>> myInfo(@RequestParam String email) {
+        ResultDTO<MyInfoDTO> result = memberService.myInfo(email);
         return ResponseEntity.ok(result);
     }
 }
