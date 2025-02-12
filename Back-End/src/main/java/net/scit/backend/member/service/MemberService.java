@@ -5,14 +5,13 @@ import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.member.dto.SignupDTO;
 import net.scit.backend.member.dto.VerificationDTO;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * member에 관한 작업을 처리 하기 위한 인터페이스
  */
 @Service
 public interface MemberService {
-    ResultDTO<SuccessDTO> signup(SignupDTO signupDTO, MultipartFile file);
+    ResultDTO<SuccessDTO> signup(SignupDTO signupDTO);
 
     ResultDTO<SuccessDTO> checkEmail(String email);
 
