@@ -2,6 +2,7 @@ package net.scit.backend.member.service;
 
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.member.dto.MyInfoDTO;
 import net.scit.backend.member.dto.SignupDTO;
 import net.scit.backend.member.dto.VerificationDTO;
 import org.springframework.stereotype.Service;
@@ -18,4 +19,6 @@ public interface MemberService {
     ResultDTO<SuccessDTO> signupSendMail(String email);
 
     ResultDTO<SuccessDTO> checkMail(VerificationDTO verificationDTO);
+
+    ResultDTO<MyInfoDTO> myInfo(String email);
 }
