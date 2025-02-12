@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.component.MailComponents;
+import net.scit.backend.component.S3Uploader;
 import net.scit.backend.member.dto.MemberDTO;
 import net.scit.backend.member.dto.SignupDTO;
 import net.scit.backend.member.dto.VerificationDTO;
@@ -12,7 +13,11 @@ import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.member.service.MemberService;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -29,20 +34,47 @@ public class MemberServiceImpl implements MemberService {
     private final MemberRepository memberRepository;
     private final MailComponents mailComponents;
     private final RedisTemplate<String, String> redisTemplate;
+    private final S3Uploader s3Uploader;
 
     /**
-    * 회원가입 처리를 수행하는 메소드
-    * 
-    * @param signUpRequest 회원가입 요청 정보를 담은 DTO
-    * @return 회원가입 후 결과 확인
-    * @throws RuntimeException 이메일 인증이 완료되지 않은 경우
-    */
+     * 회원가입 처리를 수행하는 메소드
+     *
+     * @param signUpRequest 회원가입 요청 정보를 담은 DTO
+     * @param file
+     * @return 회원가입 후 결과 확인
+     * @throws RuntimeException 이메일 인증이 완료되지 않은 경우
+     */
     @Override
-    public ResultDTO<SuccessDTO> signup(SignupDTO signupDTO) {
+    public ResultDTO<SuccessDTO> signup(SignupDTO signupDTO, MultipartFile file) {
         // 검증은 나중에 추가
         if (!signupDTO.isEmailCheck()) {
             // CustomException으로 변경
             throw new RuntimeException("이메일 인증이 완료되지 안았습니다.");
+        }
+
+        // 이미지 관련
+        String imageUrl = null;
+        if (file != null || !file.isEmpty()) {
+            // 파일 이름에서 확장자 추출
+            String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+
+            // 지원하는 이미지 파일 확장자 목록
+            List<String> allowedExtensions = Arrays.asList("jpg", "jpeg", "png", "gif");
+
+            // 확장자가 이미지 파일인지 확인
+            if (fileExtension != null && allowedExtensions.contains(fileExtension.toLowerCase())) {
+
+                try { // 이미지 업로드하고 url 가져오기
+                    imageUrl = s3Uploader.upload(file, "profile-images");
+                } catch (Exception e) {
+                    //CustomException으로 변경 해야함
+                    throw new RuntimeException("이미지 저장에 실패했습니다.");
+                }
+            } else {
+                // 이미지 파일이 아닌 경우에 대한 처리
+                //CustomException으로 변경 해야함
+                throw new RuntimeException("지원하는 이미지 형태가 아닙니다.");
+            }
         }
 
         // signupDTO의 변수를 memberDTO에 복사
@@ -53,7 +85,7 @@ public class MemberServiceImpl implements MemberService {
                 .nationality(signupDTO.getNationality())
                 .language(signupDTO.getLanguage())
                 .socialLoginCheck("없음")
-                .profileImage(signupDTO.getProfileImage())
+                .profileImage(imageUrl)
                 .build();
         // DTO를 entity로 변경
         MemberEntity temp = MemberEntity.toEntity(memberDTO);
