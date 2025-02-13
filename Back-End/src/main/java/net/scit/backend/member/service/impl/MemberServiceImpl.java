@@ -213,5 +213,11 @@ public class MemberServiceImpl implements MemberService {
 
         return ResultDTO.of("회원 정보 조회에 성공했습니다.", myInfoDTO);
     }
+    
+    //로그인 시 JWT토큰 관련 순환참조를 막기 위해 DB 내 쿼리문 재정의 
+    @Override
+    public Optional<MemberEntity> findByEmail(String email) {
+        return memberRepository.findByEmail(email);
+    }
 
 }
