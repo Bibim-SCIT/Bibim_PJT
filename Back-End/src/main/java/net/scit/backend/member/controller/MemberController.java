@@ -4,9 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
-import net.scit.backend.member.dto.MyInfoDTO;
-import net.scit.backend.member.dto.SignupDTO;
-import net.scit.backend.member.dto.VerificationDTO;
+import net.scit.backend.member.dto.*;
 import net.scit.backend.member.service.MemberService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -92,4 +90,25 @@ public class MemberController {
         ResultDTO<MyInfoDTO> result = memberService.myInfo(email);
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * 회원 정보 수정
+     * @param token (예정)
+     * @param updateInfoDTO
+     * @return
+     */
+    @PutMapping("/changeInfo")
+    public ResponseEntity<ResultDTO<MemberDTO>> updateInfo(
+            @RequestBody UpdateInfoDTO updateInfoDTO) {    // 클라이언트가 보낸 JSON 데이터
+
+        // 서비스 호출 (토큰과 수정할 데이터 전달)
+        // 지금은 임시로 이메일
+        String email = "woriv73367@sectorid.com";
+        ResultDTO<MemberDTO> result = memberService.updateInfo(email, updateInfoDTO);
+
+        // 클라이언트에게 응답 반환
+        return ResponseEntity.ok(result);
+    }
 }
+
+

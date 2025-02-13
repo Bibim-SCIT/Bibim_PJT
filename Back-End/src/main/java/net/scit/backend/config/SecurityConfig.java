@@ -27,6 +27,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // CSRF 보호 비활성화 (JWT 사용 시 필요 없음)
                 .authorizeHttpRequests(auth -> auth
+
                         .requestMatchers("/", "/members/check-email", "/members/signup/", "/members/signup/**",
                                 "/members/myinfo",
                                 "/members/login",
