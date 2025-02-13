@@ -8,10 +8,7 @@ import net.scit.backend.component.MailComponents;
 import net.scit.backend.component.S3Uploader;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
-import net.scit.backend.member.dto.MemberDTO;
-import net.scit.backend.member.dto.MyInfoDTO;
-import net.scit.backend.member.dto.SignupDTO;
-import net.scit.backend.member.dto.VerificationDTO;
+import net.scit.backend.member.dto.*;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.member.service.MemberService;
@@ -40,6 +37,7 @@ public class MemberServiceImpl implements MemberService {
     private final MailComponents mailComponents;
     private final RedisTemplate<String, String> redisTemplate;
     private final S3Uploader s3Uploader;
+
 
     /**
      * 회원가입 처리를 수행하는 메소드
@@ -212,6 +210,40 @@ public class MemberServiceImpl implements MemberService {
                 .build();
 
         return ResultDTO.of("회원 정보 조회에 성공했습니다.", myInfoDTO);
+    }
+
+
+
+    /**
+     * 회원 정보를 수정하는 메소드
+     *
+     *
+     * @return
+     */
+    @Override
+    public ResultDTO<UpdateInfoDTO> updateInfo(String email, UpdateInfoDTO updateInfoDTO) {
+        //이메일 존재 확인
+        Optional <MemberEntity> optionalMember = memberRepository.findByEmail(email);
+        if (optionalMember.isEmpty()) {
+            throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
+        }
+
+        //Optional에서 꺼냄
+        MemberEntity member = optionalMember.get();
+
+        // 업데이트할 값이 null이면 기존 값을 유지
+        member.setName(updateInfoDTO.getName() != null ? updateInfoDTO.getName() : member.getName());
+        member.setNationality(updateInfoDTO.getNationality() != null ? updateInfoDTO.getNationality() : member.getNationality());
+        member.setLanguage(updateInfoDTO.getLanguage() != null ? updateInfoDTO.getLanguage() : member.getLanguage());
+
+        // 변경된 정보 저장
+        memberRepository.save(member);
+
+        // 클라이언트에게 응답 반환
+        return ResultDTO.of("회원 정보가 성공적으로 수정되었습니다.",
+                new UpdateInfoDTO(null, member.getName(), member.getNationality(), member.getLanguage()));
+
+
     }
 
 }
