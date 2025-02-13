@@ -9,7 +9,7 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-    private final String SECRET_KEY = "your-secret-key"; // 비밀 키는 환경변수나 config로 관리해야 함
+    private final String SECRET_KEY = "d994ab06d63c1c2d325c73c6cc24afc33300f612d6a300311e79595fc58fad20"; // 비밀 키는 환경변수나 config로 관리해야 함
     private final long EXPIRATION_TIME = 86400000L; // 1일
 
     // JWT 토큰 생성
