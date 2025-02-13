@@ -2,10 +2,7 @@ package net.scit.backend.member.service;
 
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
-import net.scit.backend.member.dto.MyInfoDTO;
-import net.scit.backend.member.dto.SignupDTO;
-import net.scit.backend.member.dto.UpdateInfoDTO;
-import net.scit.backend.member.dto.VerificationDTO;
+import net.scit.backend.member.dto.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +21,6 @@ public interface MemberService {
 
     ResultDTO<MyInfoDTO> myInfo(String email);
 
-    ResultDTO<UpdateInfoDTO> updateInfo(String email, UpdateInfoDTO updateInfoDTO);
+    ResultDTO<MemberDTO> updateInfo(String email, UpdateInfoDTO updateInfoDTO);
 
 }

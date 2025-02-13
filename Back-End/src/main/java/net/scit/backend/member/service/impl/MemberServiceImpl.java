@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.component.MailComponents;
-import net.scit.backend.component.S3Uploader;
+//import net.scit.backend.component.S3Uploader;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.member.dto.*;
@@ -36,7 +36,7 @@ public class MemberServiceImpl implements MemberService {
     private final MemberRepository memberRepository;
     private final MailComponents mailComponents;
     private final RedisTemplate<String, String> redisTemplate;
-    private final S3Uploader s3Uploader;
+//    private final S3Uploader s3Uploader;
 
 
     /**
@@ -56,24 +56,24 @@ public class MemberServiceImpl implements MemberService {
         }
 
         // 프로필 이미지
-        String imageUrl = null;
-        if (file != null || !file.isEmpty()) {
-            // 파일 이름에서 확장자 추출
-            String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
-            // 지원하는 이미지 파일 확장자 목록
-            List<String> allowedExtensions = Arrays.asList("jpg", "jpeg", "png", "gif");
-            // 확장자가 이미지 파일인지 확인
-            if (fileExtension != null && allowedExtensions.contains(fileExtension.toLowerCase())) {
-                try { // 이미지 업로드하고 url 가져오기
-                    imageUrl = s3Uploader.upload(file, "profile-images");
-                } catch (Exception e) {
-                    throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
-                }
-            } else {
-                // 이미지 파일이 아닌 경우에 대한 처리
-                throw new CustomException(ErrorCode.UN_SUPPORTED_IMAGE_TYPE);
-            }
-        }
+//        String imageUrl = null;
+//        if (file != null || !file.isEmpty()) {
+//            // 파일 이름에서 확장자 추출
+//            String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+//            // 지원하는 이미지 파일 확장자 목록
+//            List<String> allowedExtensions = Arrays.asList("jpg", "jpeg", "png", "gif");
+//            // 확장자가 이미지 파일인지 확인
+//            if (fileExtension != null && allowedExtensions.contains(fileExtension.toLowerCase())) {
+//                try { // 이미지 업로드하고 url 가져오기
+//                    imageUrl = s3Uploader.upload(file, "profile-images");
+//                } catch (Exception e) {
+//                    throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
+//                }
+//            } else {
+//                // 이미지 파일이 아닌 경우에 대한 처리
+//                throw new CustomException(ErrorCode.UN_SUPPORTED_IMAGE_TYPE);
+//            }
+//        }
 
         // signupDTO의 변수를 memberDTO에 복사
         MemberDTO memberDTO = MemberDTO.builder()
@@ -83,7 +83,8 @@ public class MemberServiceImpl implements MemberService {
                 .nationality(signupDTO.getNationality())
                 .language(signupDTO.getLanguage())
                 .socialLoginCheck("없음")
-                .profileImage(imageUrl)
+//                .profileImage(imageUrl)
+                .profileImage(null)
                 .build();
         // DTO를 entity로 변경
         MemberEntity temp = MemberEntity.toEntity(memberDTO);
@@ -217,11 +218,10 @@ public class MemberServiceImpl implements MemberService {
     /**
      * 회원 정보를 수정하는 메소드
      *
-     *
-     * @return
+     * @return 수정된 memberDTO를 전달.
      */
     @Override
-    public ResultDTO<UpdateInfoDTO> updateInfo(String email, UpdateInfoDTO updateInfoDTO) {
+    public ResultDTO<MemberDTO> updateInfo(String email, UpdateInfoDTO updateInfoDTO) {
         //이메일 존재 확인
         Optional <MemberEntity> optionalMember = memberRepository.findByEmail(email);
         if (optionalMember.isEmpty()) {
@@ -239,9 +239,11 @@ public class MemberServiceImpl implements MemberService {
         // 변경된 정보 저장
         memberRepository.save(member);
 
+        MemberDTO memberDTO = MemberDTO.toDTO(member);
+
         // 클라이언트에게 응답 반환
         return ResultDTO.of("회원 정보가 성공적으로 수정되었습니다.",
-                new UpdateInfoDTO(null, member.getName(), member.getNationality(), member.getLanguage()));
+                memberDTO);
 
 
     }
