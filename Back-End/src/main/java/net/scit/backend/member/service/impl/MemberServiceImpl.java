@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.component.MailComponents;
-//import net.scit.backend.component.S3Uploader;
+
+// import net.scit.backend.component.S3Uploader;
+
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.member.dto.*;
@@ -36,8 +38,8 @@ public class MemberServiceImpl implements MemberService {
     private final MemberRepository memberRepository;
     private final MailComponents mailComponents;
     private final RedisTemplate<String, String> redisTemplate;
-//    private final S3Uploader s3Uploader;
 
+    // private final S3Uploader s3Uploader;
 
     /**
      * 회원가입 처리를 수행하는 메소드
@@ -55,25 +57,26 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
         }
 
-        // 프로필 이미지
-//        String imageUrl = null;
-//        if (file != null || !file.isEmpty()) {
-//            // 파일 이름에서 확장자 추출
-//            String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
-//            // 지원하는 이미지 파일 확장자 목록
-//            List<String> allowedExtensions = Arrays.asList("jpg", "jpeg", "png", "gif");
-//            // 확장자가 이미지 파일인지 확인
-//            if (fileExtension != null && allowedExtensions.contains(fileExtension.toLowerCase())) {
-//                try { // 이미지 업로드하고 url 가져오기
-//                    imageUrl = s3Uploader.upload(file, "profile-images");
-//                } catch (Exception e) {
-//                    throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
-//                }
-//            } else {
-//                // 이미지 파일이 아닌 경우에 대한 처리
-//                throw new CustomException(ErrorCode.UN_SUPPORTED_IMAGE_TYPE);
-//            }
-//        }
+
+        // // 프로필 이미지
+        // String imageUrl = null;
+        // if (file != null || !file.isEmpty()) {
+        //     // 파일 이름에서 확장자 추출
+        //     String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+        //     // 지원하는 이미지 파일 확장자 목록
+        //     List<String> allowedExtensions = Arrays.asList("jpg", "jpeg", "png", "gif");
+        //     // 확장자가 이미지 파일인지 확인
+        //     if (fileExtension != null && allowedExtensions.contains(fileExtension.toLowerCase())) {
+        //         try { // 이미지 업로드하고 url 가져오기
+        //             imageUrl = s3Uploader.upload(file, "profile-images");
+        //         } catch (Exception e) {
+        //             throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
+        //         }
+        //     } else {
+        //         // 이미지 파일이 아닌 경우에 대한 처리
+        //         throw new CustomException(ErrorCode.UN_SUPPORTED_IMAGE_TYPE);
+        //     }
+        // }
 
         // signupDTO의 변수를 memberDTO에 복사
         MemberDTO memberDTO = MemberDTO.builder()
@@ -83,7 +86,7 @@ public class MemberServiceImpl implements MemberService {
                 .nationality(signupDTO.getNationality())
                 .language(signupDTO.getLanguage())
                 .socialLoginCheck("없음")
-//                .profileImage(imageUrl)
+                //.profileImage(imageUrl)
                 .profileImage(null)
                 .build();
         // DTO를 entity로 변경
@@ -211,6 +214,12 @@ public class MemberServiceImpl implements MemberService {
                 .build();
 
         return ResultDTO.of("회원 정보 조회에 성공했습니다.", myInfoDTO);
+    }
+    
+    //로그인 시 JWT토큰 관련 순환참조를 막기 위해 DB 내 쿼리문 재정의 
+    @Override
+    public Optional<MemberEntity> findByEmail(String email) {
+        return memberRepository.findByEmail(email);
     }
 
 

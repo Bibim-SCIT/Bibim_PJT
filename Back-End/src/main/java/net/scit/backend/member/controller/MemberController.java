@@ -1,13 +1,17 @@
 package net.scit.backend.member.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.member.dto.*;
 import net.scit.backend.member.service.MemberService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 
 /**
  * Member 관련 업무 메소드가 지정된 Controller
@@ -15,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/members")
+@Slf4j
 public class MemberController {
     private final MemberService memberService;
 
@@ -62,6 +67,22 @@ public class MemberController {
         ResultDTO<SuccessDTO> result = memberService.checkMail(verificationDTO);
         return ResponseEntity.ok(result);
     }
+    /**
+     * 로그인 성공시 
+     * @param userDetails
+     */
+    @GetMapping("/loginsucess")
+    public ResponseEntity<ResultDTO<SuccessDTO>> loginsucess(@AuthenticationPrincipal UserDetails userDetails) 
+    {
+        log.info("로그인성공!!!");
+
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+        ResultDTO<SuccessDTO> result = ResultDTO.of("로그인에에 성공했습니다.", successDTO);
+        return ResponseEntity.ok(result);
+    }
+    
 
     @GetMapping("/myinfo")
     // 로그인 완성 후 email이 아니라 token을 받아서 회원정보를 받아야함
