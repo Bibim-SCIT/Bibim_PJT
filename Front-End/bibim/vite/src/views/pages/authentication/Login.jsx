@@ -20,6 +20,7 @@ export default function Login() {
   const downMD = useMediaQuery((theme) => theme.breakpoints.down('md'));
 
   return (
+    // 전체 배경색 
     <AuthWrapper1>
       <Grid container direction="column" sx={{ justifyContent: 'flex-end', minHeight: '100vh' }}>
         <Grid size={12}>
@@ -27,28 +28,35 @@ export default function Login() {
             <Grid sx={{ m: { xs: 1, sm: 3 }, mb: 0 }}>
               <AuthCardWrapper>
                 <Grid container spacing={2} sx={{ alignItems: 'center', justifyContent: 'center' }}>
+                  {/* 로고 들어가는 부분 */}
                   <Grid sx={{ mb: 3 }}>
-                    <Link to="#" aria-label="logo">
+                    <Link to="/" aria-label="logo">
                       <Logo />
                     </Link>
                   </Grid>
+                  {/* 로고 밑 인사말 들어가는 부분 */}
                   <Grid size={12}>
                     <Grid container direction={{ xs: 'column-reverse', md: 'row' }} sx={{ alignItems: 'center', justifyContent: 'center' }}>
                       <Grid>
                         <Stack spacing={1} sx={{ alignItems: 'center', justifyContent: 'center' }}>
                           <Typography gutterBottom variant={downMD ? 'h3' : 'h2'} sx={{ color: 'secondary.main' }}>
-                            Hi, Welcome Back
+                            당신의 협업을 위한 최고의 선택
+                          </Typography>
+                          <Typography gutterBottom variant={downMD ? 'h3' : 'h2'} sx={{ color: 'secondary.main' }}>
+                            Bibim
                           </Typography>
                           <Typography variant="caption" sx={{ fontSize: '16px', textAlign: { xs: 'center', md: 'inherit' } }}>
-                            Enter your credentials to continue
+                            계속 하려면 로그인 하세요
                           </Typography>
                         </Stack>
                       </Grid>
                     </Grid>
                   </Grid>
+                  {/* id 및 비밀번호 입력창 */}
                   <Grid size={12}>
                     <AuthLogin />
                   </Grid>
+                  {/* 구분 선 */}
                   <Grid size={12}>
                     <Divider />
                   </Grid>
