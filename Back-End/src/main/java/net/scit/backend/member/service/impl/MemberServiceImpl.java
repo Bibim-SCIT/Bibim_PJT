@@ -16,6 +16,7 @@ import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.member.service.MemberService;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,11 +41,12 @@ public class MemberServiceImpl implements MemberService {
     private final MailComponents mailComponents;
     private final RedisTemplate<String, String> redisTemplate;
     private final S3Uploader s3Uploader;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     /**
      * 회원가입 처리를 수행하는 메소드
      *
-     * @param signUpRequest 회원가입 요청 정보를 담은 DTO
+     * @param signupDTO 회원가입 요청 정보를 담은 DTO
      * @param file
      * @return 회원가입 후 결과 확인
      * @throws RuntimeException 이메일 인증이 완료되지 않은 경우
@@ -69,6 +71,7 @@ public class MemberServiceImpl implements MemberService {
                 try { // 이미지 업로드하고 url 가져오기
                     imageUrl = s3Uploader.upload(file, "profile-images");
                 } catch (Exception e) {
+                    log.error(e.getMessage(), e);
                     throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
                 }
             } else {
@@ -77,10 +80,13 @@ public class MemberServiceImpl implements MemberService {
             }
         }
 
+        // password 암호화
+        String password = bCryptPasswordEncoder.encode(signupDTO.getPassword());
+
         // signupDTO의 변수를 memberDTO에 복사
         MemberDTO memberDTO = MemberDTO.builder()
                 .email(signupDTO.getEmail())
-                .password(signupDTO.getPassword())
+                .password(password)
                 .name(signupDTO.getName())
                 .nationality(signupDTO.getNationality())
                 .language(signupDTO.getLanguage())
