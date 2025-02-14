@@ -37,6 +37,7 @@ dependencies {
     // S3
    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
 
+
     //jjwt-api: JWT의 주요 API 제공
     implementation group: 'io.jsonwebtoken', name: 'jjwt-api', version: '0.11.2'
     //jjwt-impl: JWT를 구현하는 실제 로직 포함
