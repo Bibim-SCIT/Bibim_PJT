@@ -26,3 +26,4 @@ public class S3Configuration {
         .build();
   }
 }
+

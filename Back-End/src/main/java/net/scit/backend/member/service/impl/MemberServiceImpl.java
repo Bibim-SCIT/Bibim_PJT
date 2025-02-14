@@ -8,10 +8,7 @@ import net.scit.backend.component.MailComponents;
 import net.scit.backend.component.S3Uploader;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
-import net.scit.backend.member.dto.MemberDTO;
-import net.scit.backend.member.dto.MyInfoDTO;
-import net.scit.backend.member.dto.SignupDTO;
-import net.scit.backend.member.dto.VerificationDTO;
+import net.scit.backend.member.dto.*;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.member.service.MemberService;
@@ -91,7 +88,8 @@ public class MemberServiceImpl implements MemberService {
                 .nationality(signupDTO.getNationality())
                 .language(signupDTO.getLanguage())
                 .socialLoginCheck("없음")
-                .profileImage(imageUrl)
+                //.profileImage(imageUrl)
+                .profileImage(null)
                 .build();
         // DTO를 entity로 변경
         MemberEntity temp = MemberEntity.toEntity(memberDTO);
@@ -218,6 +216,47 @@ public class MemberServiceImpl implements MemberService {
                 .build();
 
         return ResultDTO.of("회원 정보 조회에 성공했습니다.", myInfoDTO);
+    }
+    
+    //로그인 시 JWT토큰 관련 순환참조를 막기 위해 DB 내 쿼리문 재정의 
+    @Override
+    public Optional<MemberEntity> findByEmail(String email) {
+        return memberRepository.findByEmail(email);
+    }
+
+
+
+    /**
+     * 회원 정보를 수정하는 메소드
+     *
+     * @return 수정된 memberDTO를 전달.
+     */
+    @Override
+    public ResultDTO<MemberDTO> updateInfo(String email, UpdateInfoDTO updateInfoDTO) {
+        //이메일 존재 확인
+        Optional <MemberEntity> optionalMember = memberRepository.findByEmail(email);
+        if (optionalMember.isEmpty()) {
+            throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
+        }
+
+        //Optional에서 꺼냄
+        MemberEntity member = optionalMember.get();
+
+        // 업데이트할 값이 null이면 기존 값을 유지
+        member.setName(updateInfoDTO.getName() != null ? updateInfoDTO.getName() : member.getName());
+        member.setNationality(updateInfoDTO.getNationality() != null ? updateInfoDTO.getNationality() : member.getNationality());
+        member.setLanguage(updateInfoDTO.getLanguage() != null ? updateInfoDTO.getLanguage() : member.getLanguage());
+
+        // 변경된 정보 저장
+        memberRepository.save(member);
+
+        MemberDTO memberDTO = MemberDTO.toDTO(member);
+
+        // 클라이언트에게 응답 반환
+        return ResultDTO.of("회원 정보가 성공적으로 수정되었습니다.",
+                memberDTO);
+
+
     }
 
 }

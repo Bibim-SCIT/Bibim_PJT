@@ -1,15 +1,17 @@
 package net.scit.backend.member.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
-import net.scit.backend.member.dto.MyInfoDTO;
-import net.scit.backend.member.dto.SignupDTO;
-import net.scit.backend.member.dto.VerificationDTO;
+import net.scit.backend.member.dto.*;
 import net.scit.backend.member.service.MemberService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 
 /**
  * Member 관련 업무 메소드가 지정된 Controller
@@ -17,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/members")
+@Slf4j
 public class MemberController {
     private final MemberService memberService;
 
@@ -64,6 +67,22 @@ public class MemberController {
         ResultDTO<SuccessDTO> result = memberService.checkMail(verificationDTO);
         return ResponseEntity.ok(result);
     }
+    /**
+     * 로그인 성공시 
+     * @param userDetails
+     */
+    @GetMapping("/loginsucess")
+    public ResponseEntity<ResultDTO<SuccessDTO>> loginsucess(@AuthenticationPrincipal UserDetails userDetails) 
+    {
+        log.info("로그인성공!!!");
+
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+        ResultDTO<SuccessDTO> result = ResultDTO.of("로그인에에 성공했습니다.", successDTO);
+        return ResponseEntity.ok(result);
+    }
+    
 
     @GetMapping("/myinfo")
     // 로그인 완성 후 email이 아니라 token을 받아서 회원정보를 받아야함
@@ -71,4 +90,25 @@ public class MemberController {
         ResultDTO<MyInfoDTO> result = memberService.myInfo(email);
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * 회원 정보 수정
+     * @param token (예정)
+     * @param updateInfoDTO
+     * @return
+     */
+    @PutMapping("/changeInfo")
+    public ResponseEntity<ResultDTO<MemberDTO>> updateInfo(
+            @RequestBody UpdateInfoDTO updateInfoDTO) {    // 클라이언트가 보낸 JSON 데이터
+
+        // 서비스 호출 (토큰과 수정할 데이터 전달)
+        // 지금은 임시로 이메일
+        String email = "woriv73367@sectorid.com";
+        ResultDTO<MemberDTO> result = memberService.updateInfo(email, updateInfoDTO);
+
+        // 클라이언트에게 응답 반환
+        return ResponseEntity.ok(result);
+    }
 }
+
+

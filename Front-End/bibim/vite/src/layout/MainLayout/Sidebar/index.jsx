@@ -15,6 +15,9 @@ import MenuList from '../MenuList';
 import LogoSection from '../LogoSection';
 import MiniDrawerStyled from './MiniDrawerStyled';
 
+// 워크스페이스 셀렉터 import
+import WorkspaceSelector from './WorkspaceSelector';
+
 import useConfig from 'hooks/useConfig';
 import { drawerWidth } from 'store/constant';
 
@@ -42,10 +45,9 @@ function Sidebar() {
   const drawer = useMemo(() => {
     const drawerContent = (
       <>
-        <MenuCard />
-        {/* <Stack direction="row" sx={{ justifyContent: 'center', mb: 2 }}>
-          <Chip label={import.meta.env.VITE_APP_VERSION} size="small" color="default" />
-        </Stack> */}
+        <WorkspaceSelector /> {/* ✅ 1️⃣ 최상단에 워크스페이스 선택자 추가 */}
+        <MenuList /> {/* ✅ 2️⃣ 그 아래에 메뉴 리스트 추가 */}
+        {drawerOpen && <MenuCard />} {/* ✅ 3️⃣ 마지막에 MenuCard 추가 */}
       </>
     );
 
@@ -56,13 +58,11 @@ function Sidebar() {
       <>
         {downMD ? (
           <Box sx={drawerSX}>
-            <MenuList />
-            {drawerOpen && drawerContent}
+            {drawerContent}
           </Box>
         ) : (
           <PerfectScrollbar style={{ height: 'calc(100vh - 88px)', ...drawerSX }}>
-            <MenuList />
-            {drawerOpen && drawerContent}
+            {drawerContent}
           </PerfectScrollbar>
         )}
       </>
