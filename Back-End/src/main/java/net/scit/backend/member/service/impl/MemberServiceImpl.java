@@ -5,9 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.component.MailComponents;
-
-// import net.scit.backend.component.S3Uploader;
-
+import net.scit.backend.component.S3Uploader;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.member.dto.*;
@@ -15,6 +13,7 @@ import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.member.service.MemberService;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,13 +37,13 @@ public class MemberServiceImpl implements MemberService {
     private final MemberRepository memberRepository;
     private final MailComponents mailComponents;
     private final RedisTemplate<String, String> redisTemplate;
-
-    // private final S3Uploader s3Uploader;
+    private final S3Uploader s3Uploader;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     /**
      * 회원가입 처리를 수행하는 메소드
      *
-     * @param signUpRequest 회원가입 요청 정보를 담은 DTO
+     * @param signupDTO 회원가입 요청 정보를 담은 DTO
      * @param file
      * @return 회원가입 후 결과 확인
      * @throws RuntimeException 이메일 인증이 완료되지 않은 경우
@@ -57,31 +56,34 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
         }
 
+        // 프로필 이미지
+        String imageUrl = null;
+        if (file != null || !file.isEmpty()) {
+            // 파일 이름에서 확장자 추출
+            String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+            // 지원하는 이미지 파일 확장자 목록
+            List<String> allowedExtensions = Arrays.asList("jpg", "jpeg", "png", "gif");
+            // 확장자가 이미지 파일인지 확인
+            if (fileExtension != null && allowedExtensions.contains(fileExtension.toLowerCase())) {
+                try { // 이미지 업로드하고 url 가져오기
+                    imageUrl = s3Uploader.upload(file, "profile-images");
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                    throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
+                }
+            } else {
+                // 이미지 파일이 아닌 경우에 대한 처리
+                throw new CustomException(ErrorCode.UN_SUPPORTED_IMAGE_TYPE);
+            }
+        }
 
-        // // 프로필 이미지
-        // String imageUrl = null;
-        // if (file != null || !file.isEmpty()) {
-        //     // 파일 이름에서 확장자 추출
-        //     String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
-        //     // 지원하는 이미지 파일 확장자 목록
-        //     List<String> allowedExtensions = Arrays.asList("jpg", "jpeg", "png", "gif");
-        //     // 확장자가 이미지 파일인지 확인
-        //     if (fileExtension != null && allowedExtensions.contains(fileExtension.toLowerCase())) {
-        //         try { // 이미지 업로드하고 url 가져오기
-        //             imageUrl = s3Uploader.upload(file, "profile-images");
-        //         } catch (Exception e) {
-        //             throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
-        //         }
-        //     } else {
-        //         // 이미지 파일이 아닌 경우에 대한 처리
-        //         throw new CustomException(ErrorCode.UN_SUPPORTED_IMAGE_TYPE);
-        //     }
-        // }
+        // password 암호화
+        String password = bCryptPasswordEncoder.encode(signupDTO.getPassword());
 
         // signupDTO의 변수를 memberDTO에 복사
         MemberDTO memberDTO = MemberDTO.builder()
                 .email(signupDTO.getEmail())
-                .password(signupDTO.getPassword())
+                .password(password)
                 .name(signupDTO.getName())
                 .nationality(signupDTO.getNationality())
                 .language(signupDTO.getLanguage())

@@ -29,7 +29,7 @@ public class MemberController {
      * @return 회원가입 동작 완료 후 결과 확인
      */
     @PostMapping("/signup")
-    public ResponseEntity<ResultDTO<SuccessDTO>> signup(@RequestBody SignupDTO signupDTO,
+    public ResponseEntity<ResultDTO<SuccessDTO>> signup(@RequestPart SignupDTO signupDTO,
                                                         @RequestPart(value = "file", required = false) MultipartFile file) {
         ResultDTO<SuccessDTO> result = memberService.signup(signupDTO, file);
         return ResponseEntity.ok(result);
