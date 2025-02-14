@@ -43,7 +43,7 @@ public class S3Uploader {
     metadata.setContentType(file.getContentType());
 
     amazonS3.putObject(new PutObjectRequest(bucket, fileName, file.getInputStream(), metadata)
-        .withCannedAcl(CannedAccessControlList.PublicRead));
+            .withCannedAcl(CannedAccessControlList.PublicRead));
     return amazonS3.getUrl(bucket, fileName).toString();
   }
 

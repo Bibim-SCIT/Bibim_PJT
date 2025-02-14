@@ -6,6 +6,9 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
     // Member
     EMAIL_DUPLICATE("이미 가입한 이메일 입니다.", HttpStatus.BAD_REQUEST),
+    MEMBER_NOT_FOUND("해당하는 회원이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    INVALID_PASSWORD("비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
+
 
     // Common
     PARSING_ERROR("파싱 오류가 발생했습니다.", HttpStatus.BAD_REQUEST),
