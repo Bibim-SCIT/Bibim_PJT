@@ -19,23 +19,7 @@ import java.util.Optional;
 @Slf4j
 public class MemberDetailsService implements UserDetailsService {
 
-    private final MemberService memberService; // MemberService 인터페이스 사용
-
-    // @Override
-    // public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-    //     MemberEntity memberEntity = memberService.findByEmail(email)
-    //             .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
-
-    //     log.info("byEmail:{}", memberEntity.getEmail());
-
-    //     return new org.springframework.security.core.userdetails.User(
-    //             memberEntity.getEmail(),
-    //             memberEntity.getPassword(),
-    //             new ArrayList<>() // 권한 설정 (필요시)
-    //     );
-    // }
-
-        private final MemberRepository memberRepository;
+    private final MemberRepository memberRepository;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
