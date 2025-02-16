@@ -88,8 +88,7 @@ public class MemberServiceImpl implements MemberService {
                 .nationality(signupDTO.getNationality())
                 .language(signupDTO.getLanguage())
                 .socialLoginCheck("없음")
-                //.profileImage(imageUrl)
-                .profileImage(null)
+                .profileImage(imageUrl)
                 .build();
         // DTO를 entity로 변경
         MemberEntity temp = MemberEntity.toEntity(memberDTO);
@@ -223,8 +222,6 @@ public class MemberServiceImpl implements MemberService {
     public Optional<MemberEntity> findByEmail(String email) {
         return memberRepository.findByEmail(email);
     }
-
-
 
     /**
      * 회원 정보를 수정하는 메소드
