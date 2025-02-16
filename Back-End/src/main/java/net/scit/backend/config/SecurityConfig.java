@@ -38,8 +38,7 @@ public class SecurityConfig {
                         .requestMatchers("/", "/members/check-email", "/members/signup/", "/members/signup/**",
                                 "/members/myinfo",
                                 "/members/login",
-                                "/error",
-                                "/workspace/**")
+                                "/error")
                         .permitAll() // 로그인 엔드포인트 허용
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 전용
                         .requestMatchers("/user/**").hasRole("USER") // 사용자 전용
