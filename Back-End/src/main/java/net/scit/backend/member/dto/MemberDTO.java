@@ -25,6 +25,7 @@ public class MemberDTO {
     private String socialLoginCheck;
     private LocalDate regDate;
     private String roles;
+    private String socialLoginId;
 
     public static MemberDTO toDTO(MemberEntity memberEntity){
         return MemberDTO.builder()
@@ -38,6 +39,7 @@ public class MemberDTO {
                 .socialLoginCheck(memberEntity.getSocialLoginCheck())
                 .regDate(memberEntity.getRegDate())
                 .roles(memberEntity.getRoles())
+                .socialLoginId(memberEntity.getSocialLoginId())
                 .build();
     }
 }
