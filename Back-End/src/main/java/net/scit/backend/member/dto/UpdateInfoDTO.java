@@ -12,6 +12,4 @@ public class UpdateInfoDTO {
     private String name;
     private String nationality;
     private String language;
-
-
 }
