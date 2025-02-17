@@ -8,9 +8,7 @@ import net.scit.backend.member.dto.*;
 import net.scit.backend.member.service.MemberService;
 import net.scit.backend.member.service.MemberDetailsService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,11 +33,28 @@ public class MemberController {
      * @return 회원가입 동작 완료 후 결과 확인
      */
     @PostMapping("/signup")
+    public ResponseEntity<ResultDTO<SuccessDTO>> signup(@RequestPart("signupDTO") SignupDTO signupDTO,
 
-    public ResponseEntity<ResultDTO<SuccessDTO>> signup(
-            @RequestPart SignupDTO signupDTO,
             @RequestPart(value = "file", required = false) MultipartFile file) {
-        return ResponseEntity.ok(memberService.signup(signupDTO, file));
+
+        // 📌 `file`이 `null`인지 먼저 체크 후 로깅 (2025.02.17 추가코드)
+        if (file == null) {
+            log.warn("파일이 제공되지 않았습니다. 기본 프로필 이미지를 사용합니다.");
+        } else if (file.isEmpty()) {
+            log.warn("파일이 비어 있습니다.");
+        }
+
+        log.info("📩 회원가입 요청 수신: {}", signupDTO);
+
+        if (file != null) {
+            log.info("📷 받은 파일 이름: {}", file.getOriginalFilename());
+            log.info("📷 파일 크기: {} bytes", file.getSize());
+        } else {
+            log.warn("⚠️ 프로필 이미지 파일이 전달되지 않음.");
+        }
+
+        ResultDTO<SuccessDTO> result = memberService.signup(signupDTO, file);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -74,7 +89,7 @@ public class MemberController {
     public ResponseEntity<ResultDTO<SuccessDTO>> checkMail(@RequestBody VerificationDTO verificationDTO) {
         return ResponseEntity.ok(memberService.checkMail(verificationDTO));
     }
-    
+
     /**
      * 로그인 성공 시 JWT 토큰을 생성하고 반환하는 메소드
      * 
@@ -89,23 +104,17 @@ public class MemberController {
      *         - LoginResponse: 사용자 이메일과 JWT 액세스 토큰 포함
      */
     @GetMapping("/loginsucess")
-    public ResponseEntity<ResultDTO<LoginResponse>> loginSuccess(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ResultDTO<TokenDTO>> loginSuccess(@AuthenticationPrincipal UserDetails userDetails) {
         log.info("로그인 성공: {}", userDetails.getUsername());
         
         // UserDetails에서 추출한 username으로 JWT 토큰 생성
-        String token = jwtTokenProvider.generateToken(userDetails.getUsername());
-        
-        // 클라이언트에게 반환할 응답 객체 생성
-        LoginResponse loginResponse = LoginResponse.builder()
-                .email(userDetails.getUsername())
-                .accessToken(token)  // 생성된 JWT 토큰 설정
-                .build();
+        TokenDTO tokenDTO = jwtTokenProvider.generateToken(userDetails.getUsername());
                 
         // 최종 응답 생성 및 반환
-        ResultDTO<LoginResponse> result = ResultDTO.of("로그인에 성공했습니다.", loginResponse);
+        ResultDTO<TokenDTO> result = ResultDTO.of("로그인에 성공했습니다.", tokenDTO);
         return ResponseEntity.ok(result);
     }
-
+  
     @GetMapping("/myinfo")
     public ResponseEntity<ResultDTO<MyInfoDTO>> myInfo(@RequestParam String email) {
         return ResponseEntity.ok(memberService.myInfo(email));
@@ -137,15 +146,13 @@ public class MemberController {
      * @return 로그인 응답 정보
      */
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
-        LoginResponse response = memberDetailsService.login(
+    public ResponseEntity<ResultDTO<TokenDTO>> login(@RequestBody LoginRequest loginRequest) {
+        ResultDTO<TokenDTO> response = memberDetailsService.login(
             loginRequest.getEmail(), 
             loginRequest.getPassword()
         );
         return ResponseEntity.ok(response);
     }
-}
-
 
     /**
      * 비밀번호 변경 메일 전송
@@ -158,7 +165,6 @@ public class MemberController {
         ResultDTO<SuccessDTO> result = memberService.sendChangePasswordMail(email);
         return ResponseEntity.ok(result);
     }
-
     /**
      * 비밀번호 변경
      * 
@@ -169,6 +175,12 @@ public class MemberController {
     public ResponseEntity<ResultDTO<SuccessDTO>> changePassword(@RequestBody ChangePasswordDTO changePasswordDTO) {
 
         ResultDTO<SuccessDTO> result = memberService.changePassword(changePasswordDTO);
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ResultDTO<SuccessDTO>> logout() {
+        ResultDTO<SuccessDTO> result = memberService.logout();
         return ResponseEntity.ok(result);
     }
 }

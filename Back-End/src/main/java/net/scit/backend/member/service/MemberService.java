@@ -2,13 +2,10 @@ package net.scit.backend.member.service;
 
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
-
 import net.scit.backend.member.dto.*;
 import net.scit.backend.member.entity.MemberEntity;
-
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.Optional;
 
 /**
@@ -33,5 +30,7 @@ public interface MemberService {
     ResultDTO<SuccessDTO> sendChangePasswordMail(String email);
 
     ResultDTO<SuccessDTO> changePassword(ChangePasswordDTO changePasswordDTO);
+
+    ResultDTO<SuccessDTO> logout();
 
 }

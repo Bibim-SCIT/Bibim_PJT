@@ -1,7 +1,11 @@
 package net.scit.backend.member.service.impl;
 
+import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.scit.backend.auth.AuthUtil;
+import net.scit.backend.auth.JwtTokenProvider;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.component.MailComponents;
@@ -18,10 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -39,6 +40,8 @@ public class MemberServiceImpl implements MemberService {
     private final RedisTemplate<String, String> redisTemplate;
     private final S3Uploader s3Uploader;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final HttpServletRequest httpServletRequest;
 
     /**
      * 회원가입 처리를 수행하는 메소드
@@ -56,9 +59,13 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
         }
 
+        // 검증 로그 찍어보기 (250217 추가)
+        log.info("🚀 회원가입 요청: {}", signupDTO);
+        log.info("📷 받은 파일: {}", (file != null ? file.getOriginalFilename() : "파일 없음"));
+
         // 프로필 이미지
         String imageUrl = null;
-        if (file != null || !file.isEmpty()) {
+        if (file != null && !file.isEmpty()) { // ✅ file이 null인지 먼저 체크한 후 isEmpty() 확인
             // 파일 이름에서 확장자 추출
             String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
             // 지원하는 이미지 파일 확장자 목록
@@ -67,15 +74,19 @@ public class MemberServiceImpl implements MemberService {
             if (fileExtension != null && allowedExtensions.contains(fileExtension.toLowerCase())) {
                 try { // 이미지 업로드하고 url 가져오기
                     imageUrl = s3Uploader.upload(file, "profile-images");
+                    log.info("✅ 업로드 완료: {}", imageUrl);
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
+                    log.error("❌ S3 업로드 실패: {}", e.getMessage());
                     throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
                 }
             } else {
                 // 이미지 파일이 아닌 경우에 대한 처리
+                log.warn("⚠️ 파일이 없으므로 기본 프로필 이미지를 사용합니다.");
                 throw new CustomException(ErrorCode.UN_SUPPORTED_IMAGE_TYPE);
             }
         }
+        log.info("📝 최종 저장할 이미지 URL: {}", imageUrl);
 
         // password 암호화
         String password = bCryptPasswordEncoder.encode(signupDTO.getPassword());
@@ -88,8 +99,7 @@ public class MemberServiceImpl implements MemberService {
                 .nationality(signupDTO.getNationality())
                 .language(signupDTO.getLanguage())
                 .socialLoginCheck("없음")
-                // .profileImage(imageUrl)
-                .profileImage(null)
+                .profileImage(imageUrl) // ✅ imageUrl이 DTO에 저장됨
                 .build();
         // DTO를 entity로 변경
         MemberEntity temp = MemberEntity.toEntity(memberDTO);
@@ -223,6 +233,32 @@ public class MemberServiceImpl implements MemberService {
         return memberRepository.findByEmail(email);
     }
 
+    @Override
+    public ResultDTO<SuccessDTO> logout() {
+        String email = AuthUtil.getLoginUserId();
+        memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        String accessToken = jwtTokenProvider.getJwtFromRequest(httpServletRequest);
+        Claims claimsFromToken = jwtTokenProvider.getClaimsFromToken(accessToken);
+        String tokenType = (String) claimsFromToken.get("token_type");
+        if (tokenType == null || !tokenType.equals("access")) {
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
+        }
+
+        // 해당 accessToken 유효시간을 가지고 와서 Redis에 BlackList로 추가
+        long expiration = jwtTokenProvider.getExpiration(accessToken);
+        long now = (new Date()).getTime();
+        long accessTokenExpiresIn = expiration - now;
+        redisTemplate.opsForValue()
+                .set(accessToken, "logout", accessTokenExpiresIn, TimeUnit.MILLISECONDS);
+
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+
+        return ResultDTO.of("로그아웃에 성공했습니다.", successDTO);
+    }
+
     /**
      * 회원 정보를 수정하는 메소드
      *
@@ -253,7 +289,6 @@ public class MemberServiceImpl implements MemberService {
         // 클라이언트에게 응답 반환
         return ResultDTO.of("회원 정보가 성공적으로 수정되었습니다.",
                 memberDTO);
-
     }
 
     @Override
@@ -312,7 +347,6 @@ public class MemberServiceImpl implements MemberService {
                 .build();
 
         return ResultDTO.of("비밀번호 변경에 성공했습니다.", successDTO);
-
     }
 
 }
