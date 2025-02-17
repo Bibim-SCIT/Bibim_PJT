@@ -1,7 +1,11 @@
 package net.scit.backend.member.service.impl;
 
+import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.scit.backend.auth.AuthUtil;
+import net.scit.backend.auth.JwtTokenProvider;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.component.MailComponents;
@@ -18,10 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -39,6 +40,8 @@ public class MemberServiceImpl implements MemberService {
     private final RedisTemplate<String, String> redisTemplate;
     private final S3Uploader s3Uploader;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final HttpServletRequest httpServletRequest;
 
     /**
      * 회원가입 처리를 수행하는 메소드
@@ -223,6 +226,32 @@ public class MemberServiceImpl implements MemberService {
         return memberRepository.findByEmail(email);
     }
 
+    @Override
+    public ResultDTO<SuccessDTO> logout() {
+        String email = AuthUtil.getLoginUserId();
+        memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        String accessToken = jwtTokenProvider.getJwtFromRequest(httpServletRequest);
+        Claims claimsFromToken = jwtTokenProvider.getClaimsFromToken(accessToken);
+        String tokenType = (String) claimsFromToken.get("token_type");
+        if (tokenType == null || !tokenType.equals("access")) {
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
+        }
+
+        // 해당 accessToken 유효시간을 가지고 와서 Redis에 BlackList로 추가
+        long expiration = jwtTokenProvider.getExpiration(accessToken);
+        long now = (new Date()).getTime();
+        long accessTokenExpiresIn = expiration - now;
+        redisTemplate.opsForValue()
+                .set(accessToken, "logout", accessTokenExpiresIn, TimeUnit.MILLISECONDS);
+
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+
+        return ResultDTO.of("로그아웃에 성공했습니다.", successDTO);
+    }
+
     /**
      * 회원 정보를 수정하는 메소드
      *
@@ -252,8 +281,6 @@ public class MemberServiceImpl implements MemberService {
         // 클라이언트에게 응답 반환
         return ResultDTO.of("회원 정보가 성공적으로 수정되었습니다.",
                 memberDTO);
-
-
     }
 
 }

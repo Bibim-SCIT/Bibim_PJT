@@ -8,9 +8,7 @@ import net.scit.backend.member.dto.*;
 import net.scit.backend.member.service.MemberService;
 import net.scit.backend.member.service.MemberDetailsService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -85,20 +83,14 @@ public class MemberController {
      *         - LoginResponse: 사용자 이메일과 JWT 액세스 토큰 포함
      */
     @GetMapping("/loginsucess")
-    public ResponseEntity<ResultDTO<LoginResponse>> loginSuccess(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ResultDTO<TokenDTO>> loginSuccess(@AuthenticationPrincipal UserDetails userDetails) {
         log.info("로그인 성공: {}", userDetails.getUsername());
         
         // UserDetails에서 추출한 username으로 JWT 토큰 생성
-        String token = jwtTokenProvider.generateToken(userDetails.getUsername());
-        
-        // 클라이언트에게 반환할 응답 객체 생성
-        LoginResponse loginResponse = LoginResponse.builder()
-                .email(userDetails.getUsername())
-                .accessToken(token)  // 생성된 JWT 토큰 설정
-                .build();
+        TokenDTO tokenDTO = jwtTokenProvider.generateToken(userDetails.getUsername());
                 
         // 최종 응답 생성 및 반환
-        ResultDTO<LoginResponse> result = ResultDTO.of("로그인에 성공했습니다.", loginResponse);
+        ResultDTO<TokenDTO> result = ResultDTO.of("로그인에 성공했습니다.", tokenDTO);
         return ResponseEntity.ok(result);
     }
     
@@ -132,12 +124,18 @@ public class MemberController {
      * @return 로그인 응답 정보
      */
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
-        LoginResponse response = memberDetailsService.login(
+    public ResponseEntity<ResultDTO<TokenDTO>> login(@RequestBody LoginRequest loginRequest) {
+        ResultDTO<TokenDTO> response = memberDetailsService.login(
             loginRequest.getEmail(), 
             loginRequest.getPassword()
         );
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ResultDTO<SuccessDTO>> logout() {
+        ResultDTO<SuccessDTO> result = memberService.logout();
+        return ResponseEntity.ok(result);
     }
 }
 
