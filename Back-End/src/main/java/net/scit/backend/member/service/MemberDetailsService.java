@@ -1,23 +1,20 @@
 package net.scit.backend.member.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.scit.backend.common.ResultDTO;
 import net.scit.backend.member.dto.LoginMemberDetail;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.authentication.BadCredentialsException;
-import net.scit.backend.member.dto.JwtToken;
 import net.scit.backend.auth.JwtTokenProvider;
-import net.scit.backend.member.dto.LoginResponse;
+import net.scit.backend.member.dto.TokenDTO;
 
-import java.util.ArrayList;
-import java.util.Optional;
+import javax.xml.transform.Result;
 
 @Service
 @Slf4j
@@ -51,7 +48,7 @@ public class MemberDetailsService implements UserDetailsService {
      * @param password 사용자 비밀번호
      * @return 로그인 응답 정보
      */
-    public LoginResponse login(String email, String password) {
+    public ResultDTO<TokenDTO> login(String email, String password) {
         // 사용자 정보 조회
         MemberEntity memberEntity = memberRepository.findById(email)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
@@ -62,15 +59,12 @@ public class MemberDetailsService implements UserDetailsService {
         }
 
         // JWT 토큰 생성
-        String accessToken = jwtTokenProvider.generateToken(email);
+        TokenDTO tokenDTO = jwtTokenProvider.generateToken(email);
+        String accessToken = tokenDTO.getAccessToken();
         
         // 토큰 발급 로깅 추가
         log.info("사용자 {} 에게 토큰이 발급되었습니다. 토큰: {}", email, accessToken);
-        
-        // LoginResponse 객체 생성 및 반환
-        return LoginResponse.builder()
-                .email(email)
-                .accessToken(accessToken)
-                .build();
+
+        return ResultDTO.of("로그인에 성공했습니다.", tokenDTO);
     }
 }

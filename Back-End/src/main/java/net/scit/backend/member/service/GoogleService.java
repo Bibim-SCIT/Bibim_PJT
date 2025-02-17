@@ -2,6 +2,7 @@ package net.scit.backend.member.service;
 
 import lombok.RequiredArgsConstructor;
 import net.scit.backend.auth.JwtTokenProvider;
+import net.scit.backend.member.dto.TokenDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,7 +51,7 @@ public class GoogleService {
     }
 
     // 구글 사용자 정보(email)를 기반으로 JWT 토큰 생성
-    public String generateJwtToken(String accessToken) {
+    public TokenDTO generateJwtToken(String accessToken) {
         // accessToken을 통해 구글 사용자 정보(email) 추출
         String googleUserInfo = getGoogleUserInfo(accessToken);
         String email = extractEmailFromGoogleUserInfo(googleUserInfo); // Google API 응답에서 이메일 추출
