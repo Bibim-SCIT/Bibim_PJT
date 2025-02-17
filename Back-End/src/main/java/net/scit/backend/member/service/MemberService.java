@@ -26,7 +26,7 @@ public interface MemberService {
 
     ResultDTO<MyInfoDTO> myInfo(String email);
 
-    ResultDTO<MemberDTO> updateInfo(String email, UpdateInfoDTO updateInfoDTO);
+    ResultDTO<MemberDTO> updateInfo(String token, UpdateInfoDTO updateInfoDTO, MultipartFile file);
   
     Optional<MemberEntity> findByEmail(String email);
 

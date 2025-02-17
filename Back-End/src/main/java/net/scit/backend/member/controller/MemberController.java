@@ -107,20 +107,30 @@ public class MemberController {
         return ResponseEntity.ok(memberService.myInfo(email));
     }
 
+
     /**
      * 회원 정보 수정
-     * @param token (예정)
+     * @param token
      * @param updateInfoDTO
      * @return
      */
     @PutMapping("/changeInfo")
     public ResponseEntity<ResultDTO<MemberDTO>> updateInfo(
-            @RequestBody UpdateInfoDTO updateInfoDTO) {    // 클라이언트가 보낸 JSON 데이터
+            //토큰
+            @RequestHeader("Authorization") String token,
+            //인포 전송
+            @RequestPart(value = "info") UpdateInfoDTO updateInfoDTO,
+            //프로필 이미지 전송
+            @RequestPart(value = "file", required = false) MultipartFile file
+    ) {
 
-        // 서비스 호출 (토큰과 수정할 데이터 전달)
-        // 지금은 임시로 이메일
-        String email = "woriv73367@sectorid.com";
-        ResultDTO<MemberDTO> result = memberService.updateInfo(email, updateInfoDTO);
+        // 토큰에서 이메일 꺼내기
+    //    String email = jwtProvider.getEmailFromToken(
+     //           token.replace("Bearer ", ""));
+
+        //서비스 호출
+        ResultDTO<MemberDTO> result = memberService.updateInfo(token, updateInfoDTO, file
+        );
 
         // 클라이언트에게 응답 반환
         return ResponseEntity.ok(result);

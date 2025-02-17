@@ -1,5 +1,6 @@
 package net.scit.backend.member.service.impl;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -232,31 +234,38 @@ public class MemberServiceImpl implements MemberService {
      * @return 수정된 memberDTO를 전달.
      */
     @Override
-    public ResultDTO<MemberDTO> updateInfo(String email, UpdateInfoDTO updateInfoDTO) {
-        //이메일 존재 확인
-        Optional <MemberEntity> optionalMember = memberRepository.findByEmail(email);
-        if (optionalMember.isEmpty()) {
-            throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
-        }
+    @Transactional
+    public ResultDTO<MemberDTO> updateInfo(String token, UpdateInfoDTO updateInfoDTO, MultipartFile file
+    ) {
+        // 1. JWT에서 이메일 추출
+        Object jwtTokenProvider = null;
+        String email = jwtTokenProvider.getEmailFromToken(token);
 
-        //Optional에서 꺼냄
-        MemberEntity member = optionalMember.get();
+        // 2. 이메일로 회원 특정
+        MemberEntity member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 업데이트할 값이 null이면 기존 값을 유지
         member.setName(updateInfoDTO.getName() != null ? updateInfoDTO.getName() : member.getName());
         member.setNationality(updateInfoDTO.getNationality() != null ? updateInfoDTO.getNationality() : member.getNationality());
         member.setLanguage(updateInfoDTO.getLanguage() != null ? updateInfoDTO.getLanguage() : member.getLanguage());
-
-        // 변경된 정보 저장
+        
+        // S3 이미지 업로드
+        if (file != null && !file.isEmpty()) {
+            try {
+                String fileName = s3Uploader.upload(file, "profile-images");
+                member.setProfileImage(fileName);
+            } catch (IOException e) {
+                throw new CustomException(ErrorCode.IMAGE_EXCEPTION);
+            }
+        }
+        
+        // 3. 변경된 정보 저장
         memberRepository.save(member);
 
+        // 4. DTO 변환 후 반환
         MemberDTO memberDTO = MemberDTO.toDTO(member);
-
-        // 클라이언트에게 응답 반환
         return ResultDTO.of("회원 정보가 성공적으로 수정되었습니다.",
                 memberDTO);
-
-
     }
-
 }
