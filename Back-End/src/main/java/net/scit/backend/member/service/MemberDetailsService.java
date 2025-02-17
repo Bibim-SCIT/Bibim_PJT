@@ -24,6 +24,7 @@ import java.util.Optional;
 public class MemberDetailsService implements UserDetailsService {
 
     private final MemberRepository memberRepository;
+
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
 
@@ -32,6 +33,7 @@ public class MemberDetailsService implements UserDetailsService {
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordEncoder = passwordEncoder;
     }
+
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
