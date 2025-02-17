@@ -6,11 +6,15 @@ import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.member.dto.*;
 import net.scit.backend.member.service.MemberService;
+import net.scit.backend.member.service.MemberDetailsService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import net.scit.backend.auth.JwtTokenProvider;
 
 /**
  * Member 관련 업무 메소드가 지정된 Controller
@@ -21,6 +25,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 public class MemberController {
     private final MemberService memberService;
+    private final MemberDetailsService memberDetailsService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     /**
      * 회원가입 요청 시 동작하는 메소드
@@ -29,6 +35,7 @@ public class MemberController {
      * @return 회원가입 동작 완료 후 결과 확인
      */
     @PostMapping("/signup")
+
     public ResponseEntity<ResultDTO<SuccessDTO>> signup(@RequestPart("signupDTO") SignupDTO signupDTO,
             @RequestPart(value = "file", required = false) MultipartFile file) {
 
@@ -60,8 +67,7 @@ public class MemberController {
      */
     @GetMapping("/check-email")
     public ResponseEntity<ResultDTO<SuccessDTO>> checkEmail(@RequestParam String email) {
-        ResultDTO<SuccessDTO> result = memberService.checkEmail(email);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(memberService.checkEmail(email));
     }
 
     /**
@@ -72,8 +78,7 @@ public class MemberController {
      */
     @PostMapping("/signup/send-mail")
     public ResponseEntity<ResultDTO<SuccessDTO>> sendMail(@RequestParam String email) {
-        ResultDTO<SuccessDTO> result = memberService.signupSendMail(email);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(memberService.signupSendMail(email));
     }
 
     /**
@@ -84,31 +89,43 @@ public class MemberController {
      */
     @GetMapping("/signup/check-mail")
     public ResponseEntity<ResultDTO<SuccessDTO>> checkMail(@RequestBody VerificationDTO verificationDTO) {
-        ResultDTO<SuccessDTO> result = memberService.checkMail(verificationDTO);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(memberService.checkMail(verificationDTO));
     }
 
     /**
-     * 로그인 성공시
+     * 로그인 성공 시 JWT 토큰을 생성하고 반환하는 메소드
      * 
-     * @param userDetails
+     * @param userDetails Spring Security가 제공하는 인증된 사용자 정보
+     *                    - username (이메일)
+     *                    - authorities (권한 정보)
+     *                    - 기타 사용자 관련 정보
+     * 
+     * @return ResponseEntity<ResultDTO<LoginResponse>> 
+     *         - HTTP 200 OK
+     *         - ResultDTO: 성공 메시지와 로그인 응답 정보를 포함
+     *         - LoginResponse: 사용자 이메일과 JWT 액세스 토큰 포함
      */
     @GetMapping("/loginsucess")
-    public ResponseEntity<ResultDTO<SuccessDTO>> loginsucess(@AuthenticationPrincipal UserDetails userDetails) {
-        log.info("로그인성공!!!");
-
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
+    public ResponseEntity<ResultDTO<LoginResponse>> loginSuccess(@AuthenticationPrincipal UserDetails userDetails) {
+        log.info("로그인 성공: {}", userDetails.getUsername());
+        
+        // UserDetails에서 추출한 username으로 JWT 토큰 생성
+        String token = jwtTokenProvider.generateToken(userDetails.getUsername());
+        
+        // 클라이언트에게 반환할 응답 객체 생성
+        LoginResponse loginResponse = LoginResponse.builder()
+                .email(userDetails.getUsername())
+                .accessToken(token)  // 생성된 JWT 토큰 설정
                 .build();
-        ResultDTO<SuccessDTO> result = ResultDTO.of("로그인에에 성공했습니다.", successDTO);
+                
+        // 최종 응답 생성 및 반환
+        ResultDTO<LoginResponse> result = ResultDTO.of("로그인에 성공했습니다.", loginResponse);
         return ResponseEntity.ok(result);
     }
-
+  
     @GetMapping("/myinfo")
-    // 로그인 완성 후 email이 아니라 token을 받아서 회원정보를 받아야함
     public ResponseEntity<ResultDTO<MyInfoDTO>> myInfo(@RequestParam String email) {
-        ResultDTO<MyInfoDTO> result = memberService.myInfo(email);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(memberService.myInfo(email));
     }
 
     /**
@@ -129,5 +146,19 @@ public class MemberController {
 
         // 클라이언트에게 응답 반환
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 로그인 처리 엔드포인트
+     * @param loginRequest 로그인 요청 정보
+     * @return 로그인 응답 정보
+     */
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
+        LoginResponse response = memberDetailsService.login(
+            loginRequest.getEmail(), 
+            loginRequest.getPassword()
+        );
+        return ResponseEntity.ok(response);
     }
 }

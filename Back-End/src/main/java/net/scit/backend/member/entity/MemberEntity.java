@@ -28,6 +28,7 @@ public class MemberEntity {
     private String profileImage;
     private boolean loginStatus;
     private String socialLoginCheck;
+    private String socialLoginId;
 
     @CreationTimestamp
     private LocalDate regDate;
@@ -45,6 +46,7 @@ public class MemberEntity {
                 .profileImage(memberDTO.getProfileImage())
                 .loginStatus(memberDTO.isLoginStatus())
                 .socialLoginCheck(memberDTO.getSocialLoginCheck())
+                .socialLoginId(memberDTO.getSocialLoginId())
                 .build();
     }
 }
