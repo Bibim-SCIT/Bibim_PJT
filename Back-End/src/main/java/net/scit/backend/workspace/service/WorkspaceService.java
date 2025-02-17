@@ -9,5 +9,7 @@ import net.scit.backend.workspace.dto.WorkspaceDTO;
 @Service
 public interface WorkspaceService
 {
-    ResultDTO<SuccessDTO> workspaceCreate(WorkspaceDTO workspaceDTO);   
+    ResultDTO<SuccessDTO> workspaceCreate(WorkspaceDTO workspaceDTO);
+
+    ResultDTO<SuccessDTO> workspaceRead(WorkspaceDTO workspaceDTO);
 }

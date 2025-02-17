@@ -33,7 +33,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     private final WorkspaceRoleRepository workspaceRoleRepository;
 
     /**
-     * 워크스페이스 생성 메소드드
+     * 워크스페이스 생성 메소드
      * 
      * @param workspaceDTO 워크스페이스 대한 정보
      * @return 결과 확인 메세지
@@ -79,6 +79,8 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     }
 
+
+
     /**
      * 현재 로그인한 유저의 이메일을 가져오는 메소드
      */
@@ -90,6 +92,12 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         } else {
             return principal.toString();
         }
+    }
+
+    @Override
+    public ResultDTO<SuccessDTO> workspaceRead(WorkspaceDTO workspaceDTO) {
+
+        return null;
     }
 
 }

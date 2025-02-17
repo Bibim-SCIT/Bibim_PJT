@@ -268,8 +268,7 @@ public class MemberServiceImpl implements MemberService {
     public ResultDTO<MemberDTO> updateInfo(String token, UpdateInfoDTO updateInfoDTO, MultipartFile file
     ) {
         // 1. JWT에서 이메일 추출
-        Object jwtTokenProvider = null;
-        String email = jwtTokenProvider.getEmailFromToken(token);
+        String email = jwtTokenProvider.getUsernameFromToken(token.substring(7));
 
         // 2. 이메일로 회원 특정
         MemberEntity member = memberRepository.findByEmail(email)

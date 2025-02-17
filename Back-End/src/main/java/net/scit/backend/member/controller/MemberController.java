@@ -117,8 +117,8 @@ public class MemberController {
     ) {
 
         // 토큰에서 이메일 꺼내기
-    //    String email = jwtProvider.getEmailFromToken(
-     //           token.replace("Bearer ", ""));
+        String email = jwtTokenProvider.getUsernameFromToken(token.substring(7));
+
 
         //서비스 호출
         ResultDTO<MemberDTO> result = memberService.updateInfo(token, updateInfoDTO, file
