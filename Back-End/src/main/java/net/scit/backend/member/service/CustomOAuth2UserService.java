@@ -1,6 +1,7 @@
 package net.scit.backend.member.service;
 
 import net.scit.backend.auth.JwtTokenProvider;
+import net.scit.backend.member.dto.TokenDTO;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -47,7 +48,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             memberRepository.save(memberEntity);
         }
 
-        String token = jwtTokenProvider.generateToken(email);
+        TokenDTO tokenDTO = jwtTokenProvider.generateToken(email);
 
         return oAuth2User;
     }

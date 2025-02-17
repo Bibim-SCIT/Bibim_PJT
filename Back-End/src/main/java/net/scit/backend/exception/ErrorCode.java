@@ -23,7 +23,8 @@ public enum ErrorCode {
     IMAGE_NOT_FOUND("이미지가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
     SEND_MAIL_FAIL("메일전송에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     EMAIL_NOT_VERIFIED("이메일 인증이 완료되지 않았습니다.", HttpStatus.UNAUTHORIZED),
-    INVALID_EMAIL_CODE("인증 코드가 잘못되었습니다.", HttpStatus.BAD_REQUEST);
+    INVALID_EMAIL_CODE("인증 코드가 잘못되었습니다.", HttpStatus.BAD_REQUEST),
+    INVALID_TOKEN("잘못된 토큰 입니다.", HttpStatus.UNAUTHORIZED), ;
 
 
     String message;

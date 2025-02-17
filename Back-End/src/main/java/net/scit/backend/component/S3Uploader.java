@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,25 +26,25 @@ import org.springframework.web.multipart.MultipartFile;
 @Component
 public class S3Uploader {
 
-  private final AmazonS3 amazonS3;
-  private final String bucket;
+    private final AmazonS3 amazonS3;
+    private final String bucket;
 
-  public S3Uploader(AmazonS3 amazonS3, @Value("${spring.cloud.s3.bucket}") String bucket) {
-    this.amazonS3 = amazonS3;
-    this.bucket = bucket;
-  }
+    public S3Uploader(AmazonS3 amazonS3, @Value("${spring.cloud.s3.bucket}") String bucket) {
+        this.amazonS3 = amazonS3;
+        this.bucket = bucket;
+    }
 
-  public String upload(MultipartFile file, String dirName) throws IOException {
-    String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
-    String fileName = dirName + "/" + UUID.randomUUID() + "." + fileExtension;
-    ObjectMetadata metadata = new ObjectMetadata();
-    metadata.setContentLength(file.getSize());
-    metadata.setContentType(file.getContentType());
+    public String upload(MultipartFile file, String dirName) throws IOException {
+        String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+        String fileName = dirName + "/" + UUID.randomUUID() + "." + fileExtension;
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(file.getSize());
+        metadata.setContentType(file.getContentType());
 
-    amazonS3.putObject(new PutObjectRequest(bucket, fileName, file.getInputStream(), metadata)
-        .withCannedAcl(CannedAccessControlList.PublicRead));
-    return amazonS3.getUrl(bucket, fileName).toString();
-  }
+        amazonS3.putObject(new PutObjectRequest(bucket, fileName, file.getInputStream(), metadata)
+                .withCannedAcl(CannedAccessControlList.PublicRead));
+        return amazonS3.getUrl(bucket, fileName).toString();
+    }
 
 //  public void deleteFile(String fileName) {
 //    try{

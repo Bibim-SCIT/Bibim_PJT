@@ -51,7 +51,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         // 요청에서 JWT 토큰을 가져옴
-        String token = getJwtFromRequest(request);
+        String token = jwtTokenProvider.getJwtFromRequest(request);
 
         // 토큰이 존재하고, 유효하면 사용자 정보를 SecurityContext에 저장
         if (token != null && jwtTokenProvider.validateToken(token)) {
@@ -72,24 +72,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 다음 필터로 요청 전달
         chain.doFilter(request, response);
-    }
-
-    /**
-     * 요청에서 JWT 토큰을 추출하는 메서드
-     * 
-     * @param request HTTP 요청 객체
-     *               - getHeader("Authorization")로 인증 헤더 값 추출
-     *               - 헤더 형식은 "Bearer {JWT토큰}" 형태여야 함
-     * 
-     * @return String JWT 토큰 문자열 또는 null
-     *         - 유효한 Bearer 토큰인 경우: JWT 토큰 문자열
-     *         - 토큰이 없거나 잘못된 형식: null
-     */
-    private String getJwtFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization"); // 요청 헤더에서 Authorization 값 가져오기
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) { // "Bearer "로 시작하면
-            return bearerToken.substring(7); // "Bearer " 이후의 토큰 값만 추출하여 반환
-        }
-        return null; // 토큰이 없거나 잘못된 형식이면 null 반환
     }
 }

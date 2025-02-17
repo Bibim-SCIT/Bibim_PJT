@@ -4,8 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import net.scit.backend.auth.JwtTokenProvider;
+import net.scit.backend.member.dto.TokenDTO;
 import net.scit.backend.member.service.GoogleService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2LoginAuthenticationToken;
@@ -63,14 +65,14 @@ public class AuthController {
                 userInfo, "email");
 
         // OAuth2 인증을 위한 토큰 생성
-         OAuth2LoginAuthenticationToken authenticationToken =
-                 new OAuth2LoginAuthenticationToken(oAuth2User, oAuth2User.getAuthorities(), userInfo);
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(oAuth2User, null, oAuth2User.getAuthorities());
 
          //Spring Security 컨텍스트에 인증 설정
          SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
         // JWT 토큰 발급
-        String token = jwtTokenProvider.generateToken(email);
+        TokenDTO tokenDTO = jwtTokenProvider.generateToken(email);
 
         return "Google 로그인 성공, 사용자 정보: " + userInfo;
     }
