@@ -24,8 +24,13 @@ public interface MemberService {
     ResultDTO<MyInfoDTO> myInfo(String email);
 
     ResultDTO<MemberDTO> updateInfo(String email, UpdateInfoDTO updateInfoDTO);
-  
+
     Optional<MemberEntity> findByEmail(String email);
 
+    ResultDTO<SuccessDTO> sendChangePasswordMail(String email);
+
+    ResultDTO<SuccessDTO> changePassword(ChangePasswordDTO changePasswordDTO);
+
     ResultDTO<SuccessDTO> logout();
+
 }

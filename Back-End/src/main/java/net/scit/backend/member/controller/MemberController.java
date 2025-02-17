@@ -33,8 +33,8 @@ public class MemberController {
      * @return 회원가입 동작 완료 후 결과 확인
      */
     @PostMapping("/signup")
-
     public ResponseEntity<ResultDTO<SuccessDTO>> signup(@RequestPart("signupDTO") SignupDTO signupDTO,
+
             @RequestPart(value = "file", required = false) MultipartFile file) {
 
         // 📌 `file`이 `null`인지 먼저 체크 후 로깅 (2025.02.17 추가코드)
@@ -152,6 +152,30 @@ public class MemberController {
             loginRequest.getPassword()
         );
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 비밀번호 변경 메일 전송
+     * 
+     * @param email
+     * @return
+     */
+    @PostMapping("/change-password")
+    public ResponseEntity<ResultDTO<SuccessDTO>> sendChangePasswordMail(@RequestParam String email) {
+        ResultDTO<SuccessDTO> result = memberService.sendChangePasswordMail(email);
+        return ResponseEntity.ok(result);
+    }
+    /**
+     * 비밀번호 변경
+     * 
+     * @param changePasswordDTO
+     * @return
+     */
+    @PutMapping("/change-password")
+    public ResponseEntity<ResultDTO<SuccessDTO>> changePassword(@RequestBody ChangePasswordDTO changePasswordDTO) {
+
+        ResultDTO<SuccessDTO> result = memberService.changePassword(changePasswordDTO);
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/logout")

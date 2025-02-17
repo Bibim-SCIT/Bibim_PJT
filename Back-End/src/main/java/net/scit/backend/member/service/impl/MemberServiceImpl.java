@@ -180,7 +180,6 @@ public class MemberServiceImpl implements MemberService {
         // 서버에서 보낸 코드와 사용자가 입력한 코드를 서로 비교
         String code = redisTemplate.opsForValue().get("signup: " + verificationDTO.getEmail());
         if (!code.equals(verificationDTO.getCode())) {
-            // 나중에 CustomException으로 변경
             throw new CustomException(ErrorCode.INVALID_EMAIL_CODE);
         }
 
@@ -259,6 +258,7 @@ public class MemberServiceImpl implements MemberService {
 
         return ResultDTO.of("로그아웃에 성공했습니다.", successDTO);
     }
+
     /**
      * 회원 정보를 수정하는 메소드
      *
@@ -289,6 +289,64 @@ public class MemberServiceImpl implements MemberService {
         // 클라이언트에게 응답 반환
         return ResultDTO.of("회원 정보가 성공적으로 수정되었습니다.",
                 memberDTO);
+    }
+
+    @Override
+    public ResultDTO<SuccessDTO> sendChangePasswordMail(String email) {
+
+        // email 양식
+        String title = "BIBIM 비밀번호 수정 인증메일";
+        String code = generateRandomUUID();
+        String message = "<h3>5분안에 인증번호를 입력해주세요</h3> <br>" +
+                "<h1>" + code + "</h1>";
+
+        // 보내기전에 기존에 보낸 코드가 있는지 확인하고 Redis에서 삭제 후 메일 전송
+        if (redisTemplate.opsForValue().get("password: " + email) != null) {
+            redisTemplate.delete("password: " + email);
+        }
+        // mailcomponent의 sendmail 메소드를 통해 해당 email 주소에 메일을 전송
+        mailComponents.sendMail(email, title, message);
+
+        // redis에 uuid를 임시 저장
+        redisTemplate.opsForValue()
+                .set("password: " + email, code, MAIL_EXPIRES_IN, TimeUnit.MILLISECONDS);
+
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+        return ResultDTO.of("메일을 보내는 것을 성공했습니다.", successDTO);
+    }
+
+    @Override
+    public ResultDTO<SuccessDTO> changePassword(ChangePasswordDTO changePasswordDTO) {
+
+        // 이메일로 회원인지 확인하기
+        Optional<MemberEntity> optionalMember = memberRepository.findByEmail(changePasswordDTO.getEmail());
+        if (optionalMember.isEmpty()) {
+            throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
+        }
+
+        // Optional에서 꺼냄
+        MemberEntity member = optionalMember.get();
+
+        // 서버에서 보낸 코드와 사용자가 입력한 코드를 서로 비교
+        String code = redisTemplate.opsForValue().get("password: " + changePasswordDTO.getEmail());
+        if (!code.equals(changePasswordDTO.getCode())) {
+            throw new CustomException(ErrorCode.INVALID_EMAIL_CODE);
+        }
+
+        // 비밀번호 암호화
+        String password = bCryptPasswordEncoder.encode(changePasswordDTO.getPassword());
+
+        // 변경된 비밀번호로 사용자 비밀번호 번경 저장
+        member.setPassword(password);
+        memberRepository.save(member);
+
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+
+        return ResultDTO.of("비밀번호 변경에 성공했습니다.", successDTO);
     }
 
 }
