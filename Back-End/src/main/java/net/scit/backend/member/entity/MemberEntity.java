@@ -35,7 +35,7 @@ public class MemberEntity {
     @Builder.Default
     private String roles = "ROLE_USER";
 
-    public static MemberEntity toEntity(MemberDTO memberDTO){
+    public static MemberEntity toEntity(MemberDTO memberDTO) {
         return MemberEntity.builder()
                 .email(memberDTO.getEmail())
                 .password(memberDTO.getPassword())

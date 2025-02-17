@@ -26,6 +26,10 @@ import AnimateButton from 'ui-component/extended/AnimateButton';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
+// API 호출 (25.02.14 수정)
+import { checkEmail, sendVerificationEmail, verifyEmailCode, registerUser } from 'api/auth';
+
+
 // ===========================|| JWT - REGISTER ||=========================== //
 
 export default function AuthRegister() {
@@ -37,6 +41,8 @@ export default function AuthRegister() {
 
   // 추가 코드 (우리 회원가입 정보에 맞게)
   const [email, setEmail] = useState('');
+  const [emailCheck, setEmailCheck] = useState(false); // 이메일 인증 여부
+  const [name, setName] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [generatedCode, setGeneratedCode] = useState('');
   const [isVerified, setIsVerified] = useState(false);
@@ -46,6 +52,7 @@ export default function AuthRegister() {
   const [nationality, setNationality] = useState('');
   const [language, setLanguage] = useState('');
   const [profileImage, setProfileImage] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);  // 미리보기용 URL
   const [fileInputKey, setfileInputKey] = useState(Date.now()); // 파일 input 초기화용 key
 
   // 기존 코드
@@ -60,6 +67,16 @@ export default function AuthRegister() {
   // 추가 코드
   const handleClickShowConfirmPassword = () => setShowConfirmPassword(!showConfirmPassword);
 
+  // 이메일 중복 체크 (25.02.17 추가)
+  const handleCheckEmail = async () => {
+    try {
+      await checkEmail(email);
+      alert("사용 가능한 이메일입니다.");
+    } catch (error) {
+      alert(error.message || "이메일 중복 확인 오류");
+    }
+  };
+
   // 이메일 인증 코드 발송 (추가 코드)
   const sendVerificationCode = () => {
     const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6자리 난수 생성
@@ -71,6 +88,7 @@ export default function AuthRegister() {
   const verifyCode = () => {
     if (verificationCode === generatedCode) {
       setIsVerified(true);
+      setEmailCheck(true); // 이메일 인증 완료 후 true 설정
       alert('이메일 인증 성공!');
     } else {
       alert('인증 코드가 올바르지 않습니다.');
@@ -85,7 +103,9 @@ export default function AuthRegister() {
   const handleProfileImageUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setProfileImage(URL.createObjectURL(file));
+      setProfileImage(file);  // ✅ 실제 파일 저장
+      // setProfileImage(URL.createObjectURL(file));
+      setPreviewImage(URL.createObjectURL(file));  // ✅ 미리보기 URL 생성
     }
   };
 
@@ -94,6 +114,69 @@ export default function AuthRegister() {
     setProfileImage(null);
     setFileInputKey(Date.now()); // 파일 input 초기화
   };
+
+  // 회원가입 요청 (25.02.17 추가)
+  const handleRegister = async () => {
+    if (!isVerified) {
+      alert("이메일 인증을 완료해야 합니다.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      alert("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    const formData = new FormData();
+
+    // signupDTO 데이터를 JSON으로 변환하여 추가
+    const signupDTO = JSON.stringify({
+      email: email,
+      password: password,
+      name: name,
+      nationality: nationality,
+      language: language,
+      emailCheck: true, // 이메일 인증 완료 여부 추가
+    });
+
+    formData.append("signupDTO", new Blob([signupDTO], { type: "application/json" }));
+
+    // if (profileImage) {
+    //   formData.append("file", profileImage);
+    // }
+    if (profileImage) {
+      console.log("✅ 파일 추가됨:", profileImage);
+      formData.append("file", profileImage);  // 📌 파일 추가
+    } else {
+      console.log("⚠️ 프로필 이미지 없음");
+    }
+
+    console.log("전송할 FormData:", formData); // 🚀 디버깅을 위해 FormData 확인
+
+    console.log("📦 FormData 전송 데이터:");
+    for (let pair of formData.entries()) {
+      console.log(pair[0], pair[1]); // 🚀 확인 로그
+    }
+
+    // 아까 정상 작동하던 코드
+    // try {
+    //   await registerUser(formData);
+    //   alert("회원가입이 완료되었습니다!");
+    // } catch (error) {
+    //   alert(error.message || "회원가입 중 오류가 발생했습니다.");
+    // }
+
+    try {
+      await registerUser(formData, {
+        headers: {
+          "Content-Type": "multipart/form-data", // 📌 Content-Type 명시적으로 지정
+        },
+      });
+      alert("회원가입이 완료되었습니다!");
+    } catch (error) {
+      alert(error.message || "회원가입 중 오류가 발생했습니다.");
+    }
+  };
+
 
   return (
     <>
@@ -183,6 +266,18 @@ export default function AuthRegister() {
         />
       </FormControl>
 
+      {/* 이름 입력 */}
+      <FormControl fullWidth sx={{ mt: 2 }}>
+        <InputLabel>이름</InputLabel>
+        <OutlinedInput
+          id="name"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="이름을 입력하세요"
+        />
+      </FormControl>
+
       {/* 국적 선택 (SelectBox) */}
       <FormControl fullWidth sx={{ mt: 2 }}>
         <InputLabel shrink>국적 선택</InputLabel>
@@ -209,10 +304,12 @@ export default function AuthRegister() {
       <Typography variant="h4" sx={{ mt: 3, mb: 1 }}>프로필 이미지</Typography>
       <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
         <Avatar
-          src={profileImage}
+          // src={profileImage}
+          src={previewImage}  // ✅ 미리보기 URL 적용
           sx={{ width: 80, height: 80, backgroundColor: '#ccc' }}
         >
-          {!profileImage && <CameraAltIcon />}
+          {/* {!profileImage && <CameraAltIcon />} */}
+          {!previewImage && <CameraAltIcon />}
         </Avatar>
         <Box sx={{ mt: 1 }}>
           <Button variant="contained" component="label">
@@ -231,7 +328,15 @@ export default function AuthRegister() {
 
       <Box sx={{ mt: 2 }}>
         <AnimateButton>
-          <Button disableElevation fullWidth size="large" type="submit" variant="contained" color="secondary">
+          <Button
+            disableElevation
+            fullWidth
+            size="large"
+            type="submit"
+            variant="contained"
+            color="secondary"
+            onClick={handleRegister}
+          >
             회원가입
           </Button>
         </AnimateButton>
