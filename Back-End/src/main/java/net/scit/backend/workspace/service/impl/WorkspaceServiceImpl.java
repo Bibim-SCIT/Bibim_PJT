@@ -1,6 +1,5 @@
 package net.scit.backend.workspace.service.impl;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -11,9 +10,11 @@ import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
+import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import net.scit.backend.workspace.entity.WorkspaceRoleEntity;
+import net.scit.backend.workspace.repository.WorkspaceChennelRepository;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import net.scit.backend.workspace.repository.WorkspaceRepository;
 import net.scit.backend.workspace.repository.WorkspaceRoleRepository;
@@ -31,9 +32,10 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final MemberRepository memberRepository;
     private final WorkspaceRoleRepository workspaceRoleRepository;
+    private final WorkspaceChennelRepository workspaceChennelRepository;
 
     /**
-     * 워크스페이스 생성 메소드드
+     * 워크스페이스 생성 메소드
      * 
      * @param workspaceDTO 워크스페이스 대한 정보
      * @return 결과 확인 메세지
@@ -45,13 +47,11 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         WorkspaceEntity workspaceEntity;
         workspaceEntity = WorkspaceEntity.toEntity(workspaceDTO);
         workspaceEntity = workspaceRepository.saveAndFlush(workspaceEntity);
-        log.info("워크스페이스 생성");
 
         // 채널의 기본 역할을 추가함
         WorkspaceRoleEntity workspaceRoleEntity = WorkspaceRoleEntity.builder()
-                .workspaceEntity(workspaceEntity).build();
+                .workspace(workspaceEntity).build();
         workspaceRoleRepository.saveAndFlush(workspaceRoleEntity);
-        log.info("기본 역할 추가");
 
         // 현재 로그인한 유저 이메일을 가져옴
         String email = getCurrentUserEmail();
@@ -67,8 +67,17 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 .nickname(memberEntity.getName())
                 .profileImage(memberEntity.getProfileImage())
                 .build();
-
         workspaceMemberRepository.save(workspaceMemberEntity);
+
+        //워크스페이스 채널 생성
+        WorkspaceChannelEntity workspaceChannelEntity = WorkspaceChannelEntity.builder()
+                .workspace(workspaceEntity)
+                .workspaceRole(workspaceRoleEntity)
+                .channelName("새 채널")
+                .build();
+        workspaceChennelRepository.save(workspaceChannelEntity);
+
+        // 자료실이 들어갈 자리
 
         // 성공시 DTO 저장
         SuccessDTO successDTO = SuccessDTO.builder()
@@ -90,6 +99,23 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         } else {
             return principal.toString();
         }
+    }
+
+    /**
+     * 워크스페이스 삭제 메소드
+     * 
+     */
+    @Override
+    public ResultDTO<SuccessDTO> workspaceDelete(String wsName, String email) 
+    {
+        Long wsId = workspaceRepository.findWorkspaceIdByWsNameAndEmail(wsName, email);
+        workspaceRepository.deleteById(wsId);   
+        // 성공시 DTO 저장
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+        // 결과 반환
+        return ResultDTO.of("워크스페이스 삭제에 성공했습니다.", successDTO);
     }
 
 }

@@ -28,5 +28,18 @@ public class WorkspaceController
         ResultDTO<SuccessDTO> result = workspaceService.workspaceCreate(workspaceDTO);
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * 워크스페이스 삭제 메소드
+     * @param wsName 삭제할 워크스페이스 이름
+     * @param authentication 현재 로그인한 유저 정보보
+     * @return
+     */
+    @DeleteMapping("")
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceDelete(@RequestParam String wsName,@RequestParam String email)
+    {
+        ResultDTO<SuccessDTO> result = workspaceService.workspaceDelete(wsName,email);
+        return ResponseEntity.ok(result);
+    }
     
 }
