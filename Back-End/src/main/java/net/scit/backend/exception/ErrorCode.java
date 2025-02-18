@@ -9,6 +9,12 @@ public enum ErrorCode {
     MEMBER_NOT_FOUND("해당하는 회원이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
     INVALID_PASSWORD("비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
 
+    // WorkSpace
+    WORKSPACE_NOT_FOUND("해당 워크스페이스를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    WORKSPACE_MEMBER_NOT_FOUND("해당 워크스페이스의 멤버가 아닙니다.", HttpStatus.FORBIDDEN),
+
+    // Schedule
+    INVALID_SCHEDULE_STATUS("알 수 없는 일정 상태 입니다.", HttpStatus.BAD_REQUEST),
 
     // Common
     PARSING_ERROR("파싱 오류가 발생했습니다.", HttpStatus.BAD_REQUEST),

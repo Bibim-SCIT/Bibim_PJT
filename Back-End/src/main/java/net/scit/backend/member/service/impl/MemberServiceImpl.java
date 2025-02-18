@@ -239,11 +239,6 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         String accessToken = jwtTokenProvider.getJwtFromRequest(httpServletRequest);
-        Claims claimsFromToken = jwtTokenProvider.getClaimsFromToken(accessToken);
-        String tokenType = (String) claimsFromToken.get("token_type");
-        if (tokenType == null || !tokenType.equals("access")) {
-            throw new CustomException(ErrorCode.INVALID_TOKEN);
-        }
 
         // 해당 accessToken 유효시간을 가지고 와서 Redis에 BlackList로 추가
         long expiration = jwtTokenProvider.getExpiration(accessToken);
@@ -251,6 +246,10 @@ public class MemberServiceImpl implements MemberService {
         long accessTokenExpiresIn = expiration - now;
         redisTemplate.opsForValue()
                 .set(accessToken, "logout", accessTokenExpiresIn, TimeUnit.MILLISECONDS);
+
+
+        // 해당 유저의 refreshToken 삭제
+        redisTemplate.delete(email + ": refreshToken");
 
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)

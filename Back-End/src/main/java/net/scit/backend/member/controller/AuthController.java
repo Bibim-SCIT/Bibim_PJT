@@ -38,14 +38,14 @@ public class AuthController {
         String state = UUID.randomUUID().toString();
         String clientId = "874993133895-bol28o6ebhsgerrtiripu6njccbf3pun.apps.googleusercontent.com";
         String googleLoginUrl = "https://accounts.google.com/o/oauth2/auth?client_id=" + clientId +
-                "&redirect_uri=http://localhost:8080/login/oauth2/code/google" +
+                "&redirect_uri=http://localhost:8080/auth/login/oauth2/code/google" +
                 "&response_type=code&scope=email%20profile%20openid" +  // 'openid' 추가
                 "&state=" + state;
         response.sendRedirect(googleLoginUrl);
     }
 
     @GetMapping("/login/oauth2/code/google")
-    public String googleCallback(@RequestParam String code, @RequestParam String state) {
+    public String googleCallback(@RequestParam String state, @RequestParam String code) {
         // 받은 인증 코드로 accessToken을 얻음
         String accessToken = googleService.getAccessToken(code);
 

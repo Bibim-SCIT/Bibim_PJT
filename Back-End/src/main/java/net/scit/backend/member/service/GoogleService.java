@@ -31,7 +31,7 @@ public class GoogleService {
                 .bodyValue("code=" + code +
                         "&client_id=" + clientId +
                         "&client_secret=" + clientSecret +
-                        "&redirect_uri=http://localhost:8080/login/oauth2/code/google" +
+                        "&redirect_uri=http://localhost:8080/auth/login/oauth2/code/google" +
                         "&grant_type=authorization_code")
                 .retrieve()
                 .bodyToMono(String.class)  // 응답을 String으로 받음
