@@ -4,7 +4,7 @@ import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.scit.backend.auth.AuthUtil;
+// import net.scit.backend.auth.AuthUtil;
 import net.scit.backend.auth.JwtTokenProvider;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
