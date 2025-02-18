@@ -3,6 +3,8 @@ package net.scit.backend.member.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.auth.JwtTokenProvider;
 import net.scit.backend.member.dto.TokenDTO;
 import net.scit.backend.member.service.GoogleService;
@@ -21,7 +23,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/auth")
+@Slf4j
 public class AuthController {
 
     private final GoogleService googleService;
@@ -33,29 +35,31 @@ public class AuthController {
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
-    @GetMapping("/google")
-    public void redirectToGoogle(HttpServletResponse response) throws IOException {
-        String state = UUID.randomUUID().toString();
+    @GetMapping("/auth/google")
+    public void redirectToGoogle(HttpServletResponse response, HttpSession session) throws IOException {
+
         String clientId = "874993133895-bol28o6ebhsgerrtiripu6njccbf3pun.apps.googleusercontent.com";
         String googleLoginUrl = "https://accounts.google.com/o/oauth2/auth?client_id=" + clientId +
                 "&redirect_uri=http://localhost:8080/login/oauth2/code/google" +
-                "&response_type=code&scope=email%20profile%20openid" +  // 'openid' 추가
-                "&state=" + state;
-        response.sendRedirect(googleLoginUrl);
+                "&response_type=code&scope=email%20profile%20" +  // 'openid' 추가
+                "&state=https://www.googleapis.com/auth/userinfo.email+profile";
+        log.info("Google login URL: {}", googleLoginUrl);
+        response.sendRedirect(googleLoginUrl);  // 구글 로그인 페이지로 리디렉션
     }
 
+
     @GetMapping("/login/oauth2/code/google")
-    public String googleCallback(@RequestParam String code, @RequestParam String state) {
-        // 받은 인증 코드로 accessToken을 얻음
+    public String googleCallback(@RequestParam String code, @RequestParam String state, HttpSession session) {
+
         String accessToken = googleService.getAccessToken(code);
 
-        // accessToken을 사용하여 사용자 정보를 가져옴 (JSON 응답을 Map으로 변환)
+        // accessToken을 사용하여 사용자 정보를 가져옴
         String userInfoJson = googleService.getGoogleUserInfo(accessToken);
 
-        // userInfoJson을 Map으로 변환 (예시: 이메일, 이름을 파싱)
+        // userInfoJson을 Map으로 변환
         Map<String, Object> userInfo = parseJsonToMap(userInfoJson);
 
-        // 사용자 정보에서 필요한 데이터를 추출
+        // 사용자 정보 추출
         String email = (String) userInfo.get("email");
         String name = (String) userInfo.get("name");
 
@@ -64,12 +68,12 @@ public class AuthController {
                 Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
                 userInfo, "email");
 
-        // OAuth2 인증을 위한 토큰 생성
+        // 인증 토큰 생성
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(oAuth2User, null, oAuth2User.getAuthorities());
 
-         //Spring Security 컨텍스트에 인증 설정
-         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+        // Spring Security 컨텍스트에 인증 설정
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
         // JWT 토큰 발급
         TokenDTO tokenDTO = jwtTokenProvider.generateToken(email);

@@ -17,6 +17,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import net.scit.backend.member.service.MemberDetailsService;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 
 @Configuration
@@ -40,7 +45,9 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // CSRF 비활성화 (JWT 사용 시 필요 없음)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/members/check-email", "/members/signup/", "/members/signup/**",
+                        .requestMatchers("/",
+                                "/auth/**","/login/**",
+                                "/members/check-email", "/members/signup/", "/members/signup/**",
                                 "/members/myinfo",
                                 "/members/login",
                                 "/error")
@@ -54,7 +61,10 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService) // CustomOAuth2UserService 등록
                         )
-                        .defaultSuccessUrl("/members/myinfo", true) // 로그인 성공 시 이동할 경로
+                        .successHandler((request, response, authentication) -> {
+                            // 로그인 성공 후 처리 로직 (예: redirect to custom URL)
+                            response.sendRedirect("/login/oauth2/code/google");  // 이곳에서 커스텀 후속처리로 리디렉션
+                        })
                 )
                 // JWT 필터 추가
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService),
@@ -62,16 +72,22 @@ public class SecurityConfig {
 
         return http.build();
     }
-        @Bean
-        public CorsConfigurationSource corsConfigurationSource() {
-                CorsConfiguration config = new CorsConfiguration();
-                config.setAllowedOrigins(List.of("http://localhost:3000")); // React 허용
-                config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // 허용할 HTTP 메소드
-                config.setAllowedHeaders(List.of("*")); // 모든 헤더 허용
-                config.setAllowCredentials(true); // 쿠키 허용
 
-                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-                source.registerCorsConfiguration("/**", config);
-                return source;
-        }
+    @Bean
+    public BCryptPasswordEncoder bCryptPasswordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:3000")); // React 허용
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // 허용할 HTTP 메소드
+        config.setAllowedHeaders(List.of("*")); // 모든 헤더 허용
+        config.setAllowCredentials(true); // 쿠키 허용
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
 }
