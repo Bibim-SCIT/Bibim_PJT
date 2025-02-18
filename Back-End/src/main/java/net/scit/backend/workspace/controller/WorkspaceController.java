@@ -4,7 +4,10 @@ import lombok.RequiredArgsConstructor;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
+import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.service.WorkspaceService;
+
+import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,11 +26,11 @@ public class WorkspaceController
 
     /**
      * 현재 유저의 모든 워크스페이스 반환 메소드
-     * @return 워크스페이스 리스트 반환환
+     * @return 워크스페이스 리스트 반환
      */
     @GetMapping("")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceList() {
-        ResultDTO<SuccessDTO> result = workspaceService.workspaceList();
+    public ResponseEntity<ResultDTO<List<WorkspaceDTO>>> workspaceList() {
+        ResultDTO<List<WorkspaceDTO>> result = workspaceService.workspaceList();
         return ResponseEntity.ok(result);
     }
     

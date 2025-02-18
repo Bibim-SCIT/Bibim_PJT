@@ -163,34 +163,27 @@ public class WorkspaceServiceImpl implements WorkspaceService {
      * 워크스페이스 반환 메소드
      */
     @Override
-    public ResultDTO<SuccessDTO> workspaceList() 
+    public ResultDTO<List<WorkspaceDTO>> workspaceList() 
     {
         // 현재 로그인한 아이디 확인
         String email = getCurrentUserEmail();
         // 해당 유저가 참여중인 모든 워크스페이스 검색
-        List<WorkspaceMemberEntity> workspaceMemberEntities = workspaceMemberRepository.findAllbyEmail(email);
+        List<WorkspaceMemberEntity> workspaceMemberEntities = workspaceMemberRepository.findAllByMemberEmail(email);
         // 모든 워크스페이스 리스트
-        List<WorkspaceEntity> workspaceEntities = new ArrayList<>();
+        List<WorkspaceDTO> workspaceDTOs = new ArrayList<>();
         if (workspaceMemberEntities.size() == 0) 
         {
-            SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
             // 결과 반환
-            return ResultDTO.of("현재 등록된 워크스페이스가 존재하지 않습니다.", successDTO);
+            return ResultDTO.of("현재 등록된 워크스페이스가 존재하지 않습니다.", null);
         }
 
         workspaceMemberEntities.forEach((e)->
         {
-            workspaceEntities.add(workspaceRepository.findById(e.getWorkspace().getWsId()).get());
+            workspaceDTOs.add(WorkspaceDTO.toDTO(workspaceRepository.findById(e.getWorkspace().getWsId()).get()));
         });
 
-
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
         // 결과 반환
-        return ResultDTO.of("워크스페이스 삭제에 성공했습니다.", successDTO);
+        return ResultDTO.of("워크스페이스 검색색에 성공했습니다.", workspaceDTOs);
     }
 
 }

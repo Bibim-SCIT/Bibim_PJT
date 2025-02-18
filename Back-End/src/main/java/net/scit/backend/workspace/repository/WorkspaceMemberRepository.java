@@ -9,6 +9,7 @@ import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMemberEntity,Long>
 {
 
-    List<WorkspaceMemberEntity> findAllbyEmail(String email);
+    List<WorkspaceMemberEntity> findAllByMemberEmail(String email);
+
 
 }
