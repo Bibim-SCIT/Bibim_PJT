@@ -46,26 +46,26 @@ public class S3Uploader {
         return amazonS3.getUrl(bucket, fileName).toString();
     }
 
-//  public void deleteFile(String fileName) {
-//    try{
-//      amazonS3.deleteObject(new DeleteObjectRequest(bucket, fileName));
-//    } catch (AmazonServiceException e) {
-//      switch (e.getStatusCode()) {
-//        case 403:
-//          throw new CustomException(ErrorCode.IMAGE_ACCESS_DENIED);
-//        case 404:
-//          throw new CustomException(ErrorCode.IMAGE_NOT_FOUND);
-//        case 400:
-//          throw new CustomException(ErrorCode.IMAGE_NOT_HAVE_PATH);
-//        default:
-//          throw new CustomException(ErrorCode.IMAGE_INTERNAL_SERVER_ERROR);
-//      }
-//    } catch (SdkClientException e) {
-//      throw new CustomException(ErrorCode.IMAGE_EXCEPTION);
-//    } catch (Exception e) {
-//      throw new CustomException(ErrorCode.IMAGE_EXCEPTION);
-//    }
-//  }
+  public void deleteFile(String fileName) {
+    try{
+      amazonS3.deleteObject(new DeleteObjectRequest(bucket, fileName));
+    } catch (AmazonServiceException e) {
+      switch (e.getStatusCode()) {
+        case 403:
+          throw new CustomException(ErrorCode.IMAGE_ACCESS_DENIED);
+        case 404:
+          throw new CustomException(ErrorCode.IMAGE_NOT_FOUND);
+        case 400:
+          throw new CustomException(ErrorCode.IMAGE_NOT_HAVE_PATH);
+        default:
+          throw new CustomException(ErrorCode.IMAGE_INTERNAL_SERVER_ERROR);
+      }
+    } catch (SdkClientException e) {
+      throw new CustomException(ErrorCode.IMAGE_EXCEPTION);
+    } catch (Exception e) {
+      throw new CustomException(ErrorCode.IMAGE_EXCEPTION);
+    }
+  }
 //
 //  public void deleteFolder(Long auctionId) {
 //    String prefix = "auction-images/" + auctionId + "/";

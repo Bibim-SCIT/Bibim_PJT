@@ -1,9 +1,10 @@
 package net.scit.backend.member.service.impl;
 
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+//import net.scit.backend.auth.AuthUtil;
 import net.scit.backend.auth.AuthUtil;
 import net.scit.backend.auth.JwtTokenProvider;
 import net.scit.backend.common.ResultDTO;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -233,62 +235,81 @@ public class MemberServiceImpl implements MemberService {
         return memberRepository.findByEmail(email);
     }
 
-    @Override
-    public ResultDTO<SuccessDTO> logout() {
-        String email = AuthUtil.getLoginUserId();
-        memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-        String accessToken = jwtTokenProvider.getJwtFromRequest(httpServletRequest);
-        Claims claimsFromToken = jwtTokenProvider.getClaimsFromToken(accessToken);
-        String tokenType = (String) claimsFromToken.get("token_type");
-        if (tokenType == null || !tokenType.equals("access")) {
-            throw new CustomException(ErrorCode.INVALID_TOKEN);
-        }
-
-        // 해당 accessToken 유효시간을 가지고 와서 Redis에 BlackList로 추가
-        long expiration = jwtTokenProvider.getExpiration(accessToken);
-        long now = (new Date()).getTime();
-        long accessTokenExpiresIn = expiration - now;
-        redisTemplate.opsForValue()
-                .set(accessToken, "logout", accessTokenExpiresIn, TimeUnit.MILLISECONDS);
-
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
-
-        return ResultDTO.of("로그아웃에 성공했습니다.", successDTO);
-    }
+//    @Override
+//    public ResultDTO<SuccessDTO> logout() {
+//        String email = AuthUtil.getLoginUserId();
+//        memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+//
+//        String accessToken = jwtTokenProvider.getJwtFromRequest(httpServletRequest);
+//        Claims claimsFromToken = jwtTokenProvider.getClaimsFromToken(accessToken);
+//        String tokenType = (String) claimsFromToken.get("token_type");
+//        if (tokenType == null || !tokenType.equals("access")) {
+//            throw new CustomException(ErrorCode.INVALID_TOKEN);
+//        }
+//
+//        // 해당 accessToken 유효시간을 가지고 와서 Redis에 BlackList로 추가
+//        long expiration = jwtTokenProvider.getExpiration(accessToken);
+//        long now = (new Date()).getTime();
+//        long accessTokenExpiresIn = expiration - now;
+//        redisTemplate.opsForValue()
+//                .set(accessToken, "logout", accessTokenExpiresIn, TimeUnit.MILLISECONDS);
+//
+//        SuccessDTO successDTO = SuccessDTO.builder()
+//                .success(true)
+//                .build();
+//
+//        return ResultDTO.of("로그아웃에 성공했습니다.", successDTO);
+//    }
 
     /**
      * 회원 정보를 수정하는 메소드
      *
-     * @return 수정된 memberDTO를 전달.
+     * @param updateInfoDTO 수정할 회원 정보를 담은 DTO
+     * @param file          업로드할 프로필 이미지 파일
+     * @return 수정 성공 여부를 담은 ResultDTO
      */
     @Override
-    public ResultDTO<MemberDTO> updateInfo(String email, UpdateInfoDTO updateInfoDTO) {
-        // 이메일 존재 확인
-        Optional<MemberEntity> optionalMember = memberRepository.findByEmail(email);
-        if (optionalMember.isEmpty()) {
-            throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
-        }
+    @Transactional
+    public ResultDTO<SuccessDTO> updateInfo(UpdateInfoDTO updateInfoDTO, MultipartFile file
+    ) {
 
-        // Optional에서 꺼냄
-        MemberEntity member = optionalMember.get();
+        // 1. JWT에서 이메일 추출
+        String email = AuthUtil.getLoginUserId();
+
+        // 2. 이메일로 회원 특정
+        MemberEntity member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 업데이트할 값이 null이면 기존 값을 유지
         member.setName(updateInfoDTO.getName() != null ? updateInfoDTO.getName() : member.getName());
-        member.setNationality(
-                updateInfoDTO.getNationality() != null ? updateInfoDTO.getNationality() : member.getNationality());
+        member.setNationality(updateInfoDTO.getNationality() != null ? updateInfoDTO.getNationality() : member.getNationality());
         member.setLanguage(updateInfoDTO.getLanguage() != null ? updateInfoDTO.getLanguage() : member.getLanguage());
 
-        // 변경된 정보 저장
+        // S3 이미지 업로드
+        if (file != null && !file.isEmpty()) {
+            try {
+                // 기존 이미지가 있을 시 삭제
+                if (member.getProfileImage() != null && !member.getProfileImage().isEmpty()) {
+                    s3Uploader.deleteFile(member.getProfileImage());
+                }
+                //업로드
+                String fileName = s3Uploader.upload(file, "profile-images");
+                member.setProfileImage(fileName);
+            } catch (IOException e) {
+                throw new CustomException(ErrorCode.IMAGE_EXCEPTION);
+            }
+        }
+
+        // 3. 변경된 정보 저장
         memberRepository.save(member);
 
-        MemberDTO memberDTO = MemberDTO.toDTO(member);
+        // 4. SuccessDTO 생성 후 반환
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
 
-        // 클라이언트에게 응답 반환
-        return ResultDTO.of("회원 정보가 성공적으로 수정되었습니다.",
-                memberDTO);
+        return ResultDTO.of("회원 정보가 성공적으로 수정되었습니다.", successDTO);
+
     }
 
     @Override
