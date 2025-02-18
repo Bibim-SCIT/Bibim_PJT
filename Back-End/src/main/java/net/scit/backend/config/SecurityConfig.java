@@ -54,12 +54,12 @@ public class SecurityConfig {
                         .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
                 )
                 // OAuth2 로그인 설정
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService) // CustomOAuth2UserService 등록
-                        )
-                        .defaultSuccessUrl("/members/myinfo", true) // 로그인 성공 시 이동할 경로
-                )
+                // .oauth2Login(oauth2 -> oauth2
+                //         .userInfoEndpoint(userInfo -> userInfo
+                //                 .userService(customOAuth2UserService) // CustomOAuth2UserService 등록
+                //         )
+                //         .defaultSuccessUrl("/members/myinfo", true) // 로그인 성공 시 이동할 경로
+                // )
                 // JWT 필터 추가
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService),
                         UsernamePasswordAuthenticationFilter.class);
