@@ -158,8 +158,15 @@ public class MemberServiceImpl implements MemberService {
         mailComponents.sendMail(email, title, message);
 
         // redis에 uuid를 임시 저장
-        redisTemplate.opsForValue()
-                .set("signup: " + email, code, MAIL_EXPIRES_IN, TimeUnit.MILLISECONDS);
+        // redisTemplate.opsForValue()
+        // .set("signup: " + email, code, MAIL_EXPIRES_IN, TimeUnit.MILLISECONDS);
+        try {
+            redisTemplate.opsForValue()
+                    .set("signup: " + email, code, MAIL_EXPIRES_IN, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            log.error("❌ Redis 저장 실패: {}", e.getMessage());
+            throw new CustomException(ErrorCode.REDIS_CONNECTION_FAILED);
+        }
 
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
