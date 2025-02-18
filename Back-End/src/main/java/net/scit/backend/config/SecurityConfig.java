@@ -1,6 +1,5 @@
 package net.scit.backend.config;
 
-import lombok.RequiredArgsConstructor;
 import net.scit.backend.auth.JwtAuthenticationFilter;
 import net.scit.backend.auth.JwtTokenProvider;
 // import net.scit.backend.member.service.CustomOAuth2UserService;
@@ -14,12 +13,20 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+
 import net.scit.backend.member.service.MemberDetailsService;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 
 import java.util.List;
 
@@ -68,7 +75,6 @@ public class SecurityConfig {
                                 // JWT 필터 추가
                                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService),
                                                 UsernamePasswordAuthenticationFilter.class);
-
                 return http.build();
         }
 
@@ -78,11 +84,17 @@ public class SecurityConfig {
                 config.setAllowedOrigins(List.of("http://localhost:3000")); // React 허용
                 config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // 허용할 HTTP 메소드
                 config.setAllowedHeaders(List.of("*")); // 모든 헤더 허용
-                config.setAllowCredentials(true); // 쿠키 허용
-
+                config.setAllowCredentials(true);
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
                 source.registerCorsConfiguration("/**", config);
                 return source;
+        } // 쿠키 허용
+
+        @Bean
+        public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+                        throws Exception {
+                return authenticationConfiguration.getAuthenticationManager();
+        
         }
 
         @Bean
