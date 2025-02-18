@@ -28,14 +28,14 @@ public class MemberController {
 
     /**
      * 회원가입 요청 시 동작하는 메소드
-     * 
+     *
      * @param signupDTO 회원가입 할 사용자가 입력한 정보 DTO
      * @return 회원가입 동작 완료 후 결과 확인
      */
     @PostMapping("/signup")
     public ResponseEntity<ResultDTO<SuccessDTO>> signup(@RequestPart("signupDTO") SignupDTO signupDTO,
 
-            @RequestPart(value = "file", required = false) MultipartFile file) {
+                                                        @RequestPart(value = "file", required = false) MultipartFile file) {
 
         // 📌 `file`이 `null`인지 먼저 체크 후 로깅 (2025.02.17 추가코드)
         if (file == null) {
@@ -59,7 +59,7 @@ public class MemberController {
 
     /**
      * 아이디 중복체크 요청 시 동작하는 메소드
-     * 
+     *
      * @param email 회원가입 할 사용자의 아이디
      * @return 중복 이메일 체크 동작 완료 후 결과 확인
      */
@@ -70,7 +70,7 @@ public class MemberController {
 
     /**
      * 이메일 인증 요청을 위한 메일을 보낼 시 동작하는 메소드
-     * 
+     *
      * @param email 이메일 인증을 위해 인증 번호를 보낼 메일
      * @return 이메일 송신 완료 후 결과 확인
      */
@@ -81,7 +81,7 @@ public class MemberController {
 
     /**
      * 인증확인 요청 시 동작하는 메소드
-     * 
+     *
      * @param verificationDTO 인증 받으려는 이메일 주소와 인증 번호를 가지고 있는 객체
      * @return 인증 동작 후 결과 확인
      */
@@ -92,12 +92,12 @@ public class MemberController {
 
     /**
      * 로그인 성공 시 JWT 토큰을 생성하고 반환하는 메소드
-     * 
+     *
      * @param userDetails Spring Security가 제공하는 인증된 사용자 정보
      *                    - username (이메일)
      *                    - authorities (권한 정보)
      *                    - 기타 사용자 관련 정보
-     * 
+     *
      * @return ResponseEntity<ResultDTO<LoginResponse>> 
      *         - HTTP 200 OK
      *         - ResultDTO: 성공 메시지와 로그인 응답 정보를 포함
@@ -106,15 +106,15 @@ public class MemberController {
     @GetMapping("/loginsucess")
     public ResponseEntity<ResultDTO<TokenDTO>> loginSuccess(@AuthenticationPrincipal UserDetails userDetails) {
         log.info("로그인 성공: {}", userDetails.getUsername());
-        
+
         // UserDetails에서 추출한 username으로 JWT 토큰 생성
         TokenDTO tokenDTO = jwtTokenProvider.generateToken(userDetails.getUsername());
-                
+
         // 최종 응답 생성 및 반환
         ResultDTO<TokenDTO> result = ResultDTO.of("로그인에 성공했습니다.", tokenDTO);
         return ResponseEntity.ok(result);
     }
-  
+
     @GetMapping("/myinfo")
     public ResponseEntity<ResultDTO<MyInfoDTO>> myInfo(@RequestParam String email) {
         return ResponseEntity.ok(memberService.myInfo(email));
@@ -148,15 +148,15 @@ public class MemberController {
     @PostMapping("/login")
     public ResponseEntity<ResultDTO<TokenDTO>> login(@RequestBody LoginRequest loginRequest) {
         ResultDTO<TokenDTO> response = memberDetailsService.login(
-            loginRequest.getEmail(), 
-            loginRequest.getPassword()
+                loginRequest.getEmail(),
+                loginRequest.getPassword()
         );
         return ResponseEntity.ok(response);
     }
 
     /**
      * 비밀번호 변경 메일 전송
-     * 
+     *
      * @param email
      * @return
      */
@@ -167,7 +167,7 @@ public class MemberController {
     }
     /**
      * 비밀번호 변경
-     * 
+     *
      * @param changePasswordDTO
      * @return
      */

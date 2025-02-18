@@ -29,17 +29,17 @@ public class WorkspaceController
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * 워크스페이스 조회 메소드
-     * @param workspaceDTO
-     * @return
-     */
-    @GetMapping("/read")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceRead(@ModelAttribute WorkspaceDTO workspaceDTO)
-    {
-        ResultDTO<SuccessDTO> result = workspaceService.workspaceRead(workspaceDTO);
-        return null;
-    }
+//    /**
+//     * 워크스페이스 조회 메소드
+//     * @param workspaceDTO
+//     * @return
+//     */
+//    @GetMapping("/read")
+//    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceRead(@ModelAttribute WorkspaceDTO workspaceDTO)
+//    {
+//        ResultDTO<SuccessDTO> result = workspaceService.workspaceRead(workspaceDTO);
+//        return null;
+//    }
 
 
 }
