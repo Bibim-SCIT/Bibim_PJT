@@ -98,7 +98,7 @@ public class MemberController {
      *                    - authorities (권한 정보)
      *                    - 기타 사용자 관련 정보
      * 
-     * @return ResponseEntity<ResultDTO<LoginResponse>> 
+     * @return ResponseEntity<ResultDTO<LoginResponse>>
      *         - HTTP 200 OK
      *         - ResultDTO: 성공 메시지와 로그인 응답 정보를 포함
      *         - LoginResponse: 사용자 이메일과 JWT 액세스 토큰 포함
@@ -106,15 +106,15 @@ public class MemberController {
     @GetMapping("/loginsucess")
     public ResponseEntity<ResultDTO<TokenDTO>> loginSuccess(@AuthenticationPrincipal UserDetails userDetails) {
         log.info("로그인 성공: {}", userDetails.getUsername());
-        
+
         // UserDetails에서 추출한 username으로 JWT 토큰 생성
         TokenDTO tokenDTO = jwtTokenProvider.generateToken(userDetails.getUsername());
-                
+
         // 최종 응답 생성 및 반환
         ResultDTO<TokenDTO> result = ResultDTO.of("로그인에 성공했습니다.", tokenDTO);
         return ResponseEntity.ok(result);
     }
-  
+
     @GetMapping("/myinfo")
     public ResponseEntity<ResultDTO<MyInfoDTO>> myInfo(@RequestParam String email) {
         return ResponseEntity.ok(memberService.myInfo(email));
@@ -142,15 +142,15 @@ public class MemberController {
 
     /**
      * 로그인 처리 엔드포인트
+     * 
      * @param loginRequest 로그인 요청 정보
      * @return 로그인 응답 정보
      */
     @PostMapping("/login")
     public ResponseEntity<ResultDTO<TokenDTO>> login(@RequestBody LoginRequest loginRequest) {
         ResultDTO<TokenDTO> response = memberDetailsService.login(
-            loginRequest.getEmail(), 
-            loginRequest.getPassword()
-        );
+                loginRequest.getEmail(),
+                loginRequest.getPassword());
         return ResponseEntity.ok(response);
     }
 
@@ -165,6 +165,7 @@ public class MemberController {
         ResultDTO<SuccessDTO> result = memberService.sendChangePasswordMail(email);
         return ResponseEntity.ok(result);
     }
+
     /**
      * 비밀번호 변경
      * 
@@ -178,9 +179,9 @@ public class MemberController {
         return ResponseEntity.ok(result);
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<ResultDTO<SuccessDTO>> logout() {
-        ResultDTO<SuccessDTO> result = memberService.logout();
-        return ResponseEntity.ok(result);
-    }
+    // @PostMapping("/logout")
+    // public ResponseEntity<ResultDTO<SuccessDTO>> logout() {
+    // ResultDTO<SuccessDTO> result = memberService.logout();
+    // return ResponseEntity.ok(result);
+    // }
 }
