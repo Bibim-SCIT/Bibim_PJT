@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Box, Typography, Avatar, Tooltip, Button, Menu, MenuItem } from '@mui/material';
 import useConfig from 'hooks/useConfig';
 
@@ -14,22 +15,44 @@ const WorkspaceSelector = () => {
     const { miniDrawer } = useConfig(); // 사이드바 확장 여부 가져오기
 
     // 현재 선택된 워크스페이스 상태
-    const [workspace, setWorkspace] = useState({
-        id: 'workspace1',
-        name: '개발팀 워크스페이스',
-        image: 'https://via.placeholder.com/40' // 워크스페이스 대표 이미지
-    });
-
-    // 워크스페이스 목록
-    const workspaces = [
-        { id: 'workspace1', name: '개발팀 워크스페이스', image: 'https://via.placeholder.com/40' },
-        { id: 'workspace2', name: '디자인팀 워크스페이스', image: 'https://via.placeholder.com/40' },
-        { id: 'workspace3', name: '마케팅팀 워크스페이스', image: 'https://via.placeholder.com/40' }
-    ];
+    const [workspace, setWorkspace] = useState(null);
+    const [workspaces, setWorkspaces] = useState([]);
+    const [loading, setLoading] = useState(false);
 
     // 메뉴 열기 상태 관리
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
+
+    // ✅ 서버에서 워크스페이스 목록 가져오기
+    useEffect(() => {
+        const fetchWorkspaces = async () => {
+            setLoading(true);
+            try {
+                const token = 'eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ0ZXN0QGVtYWlsLmNvbSIsInJvbGVzIjpbIlJPTEVfVVNFUiJdLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiaWF0IjoxNzM5ODQ4MTk3LCJleHAiOjE3Mzk4NTUzOTd9.2YrRuTZDNiacwTkZcZ0aE1eWbWhV3e-VVbT4ngv229s'
+                // localStorage.getItem('token'); // JWT 토큰 가져오기
+
+                if (!token) {
+                    console.error('토큰 없음! 로그인 필요');
+                    return;
+                }
+
+                const response = await axios.get('http://localhost:8080/workspace', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                console.log(response.data);
+                setWorkspaces(response.data);
+                setWorkspace(response.data[0]); // 첫 번째 워크스페이스를 기본 선택
+            } catch (error) {
+                console.error('워크스페이스 불러오기 실패:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchWorkspaces();
+    }, []);
 
     // 버튼 클릭 시 메뉴 열기
     const handleClick = (event) => {
@@ -42,6 +65,9 @@ const WorkspaceSelector = () => {
         setAnchorEl(null); // 메뉴 닫기
     };
 
+    if (loading) return <p>로딩 중...</p>;
+    if (!workspace) return <p>워크스페이스를 찾을 수 없습니다.</p>;
+
     return (
         <Box
             sx={{
@@ -53,10 +79,10 @@ const WorkspaceSelector = () => {
             }}
         >
             {/* ✅ 현재 워크스페이스 이미지 표시 */}
-            <Tooltip title={workspace.name} placement="right">
+            <Tooltip title={workspace.wsName} placement="right">
                 <Avatar
-                    src={workspace.image}
-                    alt={workspace.name}
+                    src={workspace.wsImg}
+                    alt={workspace.wsName}
                     sx={{ width: 40, height: 40, cursor: 'pointer', mb: miniDrawer ? 1 : 0 }}
                 />
             </Tooltip>
@@ -64,14 +90,14 @@ const WorkspaceSelector = () => {
             {/* ✅ 사이드바가 열렸을 때만 버튼 보이기 */}
             {!miniDrawer && (
                 <Box sx={{ flexGrow: 1, ml: 2 }}>
-                    <Typography variant="subtitle1">{workspace.name}</Typography>
+                    <Typography variant="subtitle1">{workspace.wsName}</Typography>
 
                     {/* ✅ 버튼 클릭 시 메뉴를 띄워 워크스페이스 선택 가능 */}
                     <Button
                         variant="outlined"
                         fullWidth
                         onClick={handleClick}
-                        sx={{ height: 36, textTransform: 'none' }} // 버튼 크기 줄이고 텍스트 변경 없음
+                        sx={{ height: 36, textTransform: 'none' }}
                     >
                         워크스페이스 변경
                     </Button>
@@ -84,8 +110,8 @@ const WorkspaceSelector = () => {
                         sx={{ width: '100%' }}
                     >
                         {workspaces.map((ws) => (
-                            <MenuItem key={ws.id} onClick={() => handleSelect(ws)}>
-                                {ws.name}
+                            <MenuItem key={ws.wsId} onClick={() => handleSelect(ws)}>
+                                {ws.wsName}
                             </MenuItem>
                         ))}
                     </Menu>

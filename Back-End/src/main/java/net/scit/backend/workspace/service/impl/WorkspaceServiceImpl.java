@@ -163,7 +163,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
      * 워크스페이스 반환 메소드
      */
     @Override
-    public ResultDTO<List<WorkspaceDTO>> workspaceList() 
+    public List<WorkspaceDTO>  workspaceList() 
     {
         // 현재 로그인한 아이디 확인
         String email = getCurrentUserEmail();
@@ -174,7 +174,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         if (workspaceMemberEntities.size() == 0) 
         {
             // 결과 반환
-            return ResultDTO.of("현재 등록된 워크스페이스가 존재하지 않습니다.", null);
+            // 여긴 예외처리
         }
 
         workspaceMemberEntities.forEach((e)->
@@ -183,7 +183,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         });
 
         // 결과 반환
-        return ResultDTO.of("워크스페이스 검색색에 성공했습니다.", workspaceDTOs);
+        return workspaceDTOs;
     }
 
 }

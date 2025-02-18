@@ -18,5 +18,5 @@ public interface WorkspaceService
 
     ResultDTO<SuccessDTO> workspaceDelete(String wsName);
 
-    ResultDTO<List<WorkspaceDTO>> workspaceList();   
+    List<WorkspaceDTO> workspaceList();   
 }

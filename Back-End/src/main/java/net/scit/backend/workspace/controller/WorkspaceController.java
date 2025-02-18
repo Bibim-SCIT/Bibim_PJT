@@ -29,9 +29,8 @@ public class WorkspaceController
      * @return 워크스페이스 리스트 반환
      */
     @GetMapping("")
-    public ResponseEntity<ResultDTO<List<WorkspaceDTO>>> workspaceList() {
-        ResultDTO<List<WorkspaceDTO>> result = workspaceService.workspaceList();
-        return ResponseEntity.ok(result);
+    public List<WorkspaceDTO> workspaceList() {
+        return workspaceService.workspaceList();
     }
     
 
