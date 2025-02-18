@@ -3,7 +3,7 @@ package net.scit.backend.config;
 import lombok.RequiredArgsConstructor;
 import net.scit.backend.auth.JwtAuthenticationFilter;
 import net.scit.backend.auth.JwtTokenProvider;
-import net.scit.backend.member.service.CustomOAuth2UserService;
+//import net.scit.backend.member.service.CustomOAuth2UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,14 +29,16 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final CustomOAuth2UserService customOAuth2UserService;
+//    private final CustomOAuth2UserService customOAuth2UserService;
     private final UserDetailsService userDetailsService;
 
     @Lazy
     @Autowired
-    public SecurityConfig(JwtTokenProvider jwtTokenProvider, CustomOAuth2UserService customOAuth2UserService, UserDetailsService userDetailsService) {
+    public SecurityConfig(JwtTokenProvider jwtTokenProvider,
+//                          CustomOAuth2UserService customOAuth2UserService,
+                          UserDetailsService userDetailsService) {
         this.jwtTokenProvider = jwtTokenProvider;
-        this.customOAuth2UserService = customOAuth2UserService;
+//        this.customOAuth2UserService = customOAuth2UserService;
         this.userDetailsService = userDetailsService;
     }
 
@@ -55,20 +57,20 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 전용
                         .requestMatchers("/user/**").hasRole("USER") // 사용자 전용
                         .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
-                )
-                // OAuth2 로그인 설정
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService) // CustomOAuth2UserService 등록
-                        )
-                        .successHandler((request, response, authentication) -> {
-                            // 로그인 성공 후 처리 로직 (예: redirect to custom URL)
-                            response.sendRedirect("/login/oauth2/code/google");  // 이곳에서 커스텀 후속처리로 리디렉션
-                        })
-                )
-                // JWT 필터 추가
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService),
-                        UsernamePasswordAuthenticationFilter.class);
+                );
+//                // OAuth2 로그인 설정
+//                .oauth2Login(oauth2 -> oauth2
+//                        .userInfoEndpoint(userInfo -> userInfo
+//                                .userService(customOAuth2UserService) // CustomOAuth2UserService 등록
+//                        )
+//                        .successHandler((request, response, authentication) -> {
+//                            // 로그인 성공 후 처리 로직 (예: redirect to custom URL)
+//                            response.sendRedirect("/login/oauth2/code/google");  // 이곳에서 커스텀 후속처리로 리디렉션
+//                        })
+//                )
+//                // JWT 필터 추가
+//                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService),
+//                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
