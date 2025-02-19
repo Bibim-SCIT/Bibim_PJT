@@ -60,7 +60,7 @@ public class SecurityConfig {
                                                                 "/error")
                                                 .permitAll() // 로그인 엔드포인트 허용
                                                 .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 전용
-                                                .requestMatchers("/user/**", "/schedule/**").hasRole("USER") // 사용자 전용
+                                                .requestMatchers("/user/**", "/schedule/**", "/members/changeinfo").hasRole("USER") // 사용자 전용
                                                 .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
                                 )
                                 // OAuth2 로그인 설정

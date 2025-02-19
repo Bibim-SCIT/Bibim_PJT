@@ -138,6 +138,8 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     }
 
+
+
     /**
      * 워크스페이스 삭제 메소드
      * @param wsName 삭제할 워크스페이스 이름
@@ -184,6 +186,12 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
         // 결과 반환
         return ResultDTO.of("워크스페이스 검색색에 성공했습니다.", workspaceDTOs);
+    }
+
+    @Override
+    public ResultDTO<SuccessDTO> workspaceRead(WorkspaceDTO workspaceDTO) {
+
+        return null;
     }
 
 }
