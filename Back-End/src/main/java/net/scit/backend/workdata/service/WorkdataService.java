@@ -7,5 +7,5 @@ import org.springframework.stereotype.Service;
 
 @Service
 public interface WorkdataService {
-    ResultDTO<SuccessDTO> workdataCreate(WorkdataDTO workdataDTO, Long wsId);
+    ResultDTO<SuccessDTO> workdataCreate(Long wsId, WorkdataDTO workdataDTO);
 }

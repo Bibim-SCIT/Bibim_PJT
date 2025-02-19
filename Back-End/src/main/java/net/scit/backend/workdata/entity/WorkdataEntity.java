@@ -26,7 +26,7 @@ public class WorkdataEntity {
     // WorkspaceEntity와의 관계 설정 (ManyToOne)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ws_id")
-    private WorkspaceEntity wsId;
+    private WorkspaceEntity workspaceEntity;
 
     private String writer;
     private String title;
@@ -46,7 +46,7 @@ public class WorkdataEntity {
     public static WorkdataEntity toEntity(WorkdataDTO workdataDTO, WorkspaceEntity workspaceEntity) {
         return WorkdataEntity.builder()
                 .dataNumber(workdataDTO.getDataNumber())
-                .wsId(workspaceEntity)
+                .workspaceEntity(workspaceEntity)
                 .writer(workdataDTO.getWriter())
                 .title(workdataDTO.getTitle())
                 .content(workdataDTO.getContent())

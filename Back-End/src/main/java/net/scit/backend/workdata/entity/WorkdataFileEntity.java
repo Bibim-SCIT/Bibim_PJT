@@ -28,5 +28,5 @@ public class WorkdataFileEntity {
 
     // WorkDataFileTagEntity와의 관계 설정 (OneToMany, mappedBy 수정)
     @OneToMany(mappedBy = "workdataFileEntity", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<WorkDataFileTagEntity> workdataFileTag;
+    private List<WorkDataFileTagEntity> workdataFile;
 }

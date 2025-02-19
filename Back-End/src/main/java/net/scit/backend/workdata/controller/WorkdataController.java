@@ -22,9 +22,11 @@ public class WorkdataController {
 
     //1. 자료글 등록
     @PostMapping("/create")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workdataCreate(@RequestBody WorkdataDTO workdataDTO, Long wsId){
-        log.info("workdataDTO: {}", workdataDTO.toString());
-        ResultDTO<SuccessDTO> result = workdataService.workdataCreate(workdataDTO, wsId);
+    public ResponseEntity<ResultDTO<SuccessDTO>> workdataCreate(@RequestParam Long wsId, @RequestBody WorkdataDTO workdataDTO){
+        log.info("workdataDTO: {}", workdataDTO);
+        log.info("wsId: {}", wsId);
+
+        ResultDTO<SuccessDTO> result = workdataService.workdataCreate(wsId, workdataDTO);
         return ResponseEntity.ok(result);
     }
 
