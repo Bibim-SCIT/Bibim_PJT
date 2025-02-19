@@ -18,7 +18,7 @@ export const checkEmail = async (email) => {
 // 이메일 인증 요청
 export const sendVerificationEmail = async (email) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/members/signup/send-mail`, null, {
+        const response = await axios.post(`${API_BASE_URL}/members/signup/mail`, null, {
             params: { email },
         });
 
@@ -35,7 +35,7 @@ export const sendVerificationEmail = async (email) => {
 // 이메일 인증 코드 확인
 export const verifyEmailCode = async (email, code) => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/members/signup/check-mail`, {
+        const response = await axios.get(`${API_BASE_URL}/members/signup/mail`, {
             params: { email, code } // ✅ 백엔드 요구 사항에 맞게 GET 요청으로 전달
         });
 
