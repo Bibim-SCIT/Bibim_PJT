@@ -22,7 +22,7 @@ import net.scit.backend.member.entity.MemberEntity;
 public interface MemberService {
     ResultDTO<SuccessDTO> signup(SignupDTO signupDTO, MultipartFile file);
 
-    ResultDTO<SuccessDTO> checkEmail(String email);
+//    ResultDTO<SuccessDTO> checkEmail(String email);
 
     ResultDTO<SuccessDTO> signupSendMail(String email);
 
