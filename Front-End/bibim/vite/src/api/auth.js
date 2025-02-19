@@ -51,3 +51,4 @@ export const registerUser = async (formData) => {
         throw error.response?.data || "회원가입 요청 오류";
     }
 };
+
