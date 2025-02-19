@@ -138,6 +138,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     }
 
+
     /**
      * 워크스페이스 삭제 메소드
      * @param wsName 삭제할 워크스페이스 이름
@@ -161,9 +162,10 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     /**
      * 워크스페이스 반환 메소드
+     * @return 해당 멤버의 워크스페이스리스트
      */
     @Override
-    public List<WorkspaceDTO>  workspaceList() 
+    public List<WorkspaceDTO>  workspaceList()  
     {
         // 현재 로그인한 아이디 확인
         String email = getCurrentUserEmail();
@@ -174,7 +176,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         if (workspaceMemberEntities.size() == 0) 
         {
             // 결과 반환
-            // 여긴 예외처리
+            // 예외 처리
         }
 
         workspaceMemberEntities.forEach((e)->
@@ -186,4 +188,52 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         return workspaceDTOs;
     }
 
+
+    // @Override
+    /**
+     * 파일이 있는 경우
+     * @param wsName
+     * @param file
+     * @return
+     */
+    @Override
+    public ResultDTO<SuccessDTO> workspaceUpdate(String wsName, String newName,MultipartFile file) 
+    {
+        // 현재 로그인 한 이메일을 받음음
+        String email = getCurrentUserEmail();
+        // 워크스페이스 id 검색
+        Long wsId = workspaceRepository.findWorkspaceIdByWsNameAndEmail(wsName, email);
+   
+        // 성공시 DTO 저장 
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+        // 결과 반환
+        return ResultDTO.of("워크스페이스 이름,프로필 사진 변경에 성공했습니다.", successDTO);
+    }
+
+    /**
+     * 파일이 없는 경우
+     * @param wsName
+     * @return
+     */
+    @Override
+    public ResultDTO<SuccessDTO> workspaceUpdate(String wsName,String newName) 
+    {
+        // 현재 로그인 한 이메일을 받음음
+        String email = getCurrentUserEmail();
+        // 워크스페이스 id 검색
+        Long wsId = workspaceRepository.findWorkspaceIdByWsNameAndEmail(wsName, email);
+
+        WorkspaceEntity workspaceEntity = workspaceRepository.findById(wsId).get();
+
+        workspaceEntity.setWsName(newName);
+        workspaceRepository.save(workspaceEntity);
+        // 성공시 DTO 저장
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+        // 결과 반환
+        return ResultDTO.of("워크스페이스 이름 변경에 성공했습니다.", successDTO);
+    }
 }

@@ -14,6 +14,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PathVariable;
+
 
 
 
@@ -51,7 +55,7 @@ public class WorkspaceController
     /**
      * 워크스페이스 삭제 메소드
      * @param wsName 삭제할 워크스페이스 이름
-     * @param authentication 현재 로그인한 유저 정보보
+     * @param authentication 현재 로그인한 유저 정보
      * @return
      */
     @DeleteMapping("")
@@ -60,5 +64,28 @@ public class WorkspaceController
         ResultDTO<SuccessDTO> result = workspaceService.workspaceDelete(wsName);
         return ResponseEntity.ok(result);
     }
+
     
+    /**
+     * 워크스페이스 업데이트 메소드
+     * @param wsName 업데이트할 워크스페이스 이름
+     * @param file 업데이트할 프로필 사진
+     * @param newName 바꿀 이름
+     * @return
+     */
+    @PutMapping("")
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceUpdate(@RequestParam String wsName,@RequestParam String newName, @RequestPart(value = "file", required = false) MultipartFile file) 
+    {
+        if(file.isEmpty())
+        {
+            ResultDTO<SuccessDTO> result = workspaceService.workspaceUpdate(wsName,newName);
+            return ResponseEntity.ok(result);
+        }
+        else
+        {
+            ResultDTO<SuccessDTO> result = workspaceService.workspaceUpdate(wsName,newName,file);
+            return ResponseEntity.ok(result);
+        }
+    }
+
 }
