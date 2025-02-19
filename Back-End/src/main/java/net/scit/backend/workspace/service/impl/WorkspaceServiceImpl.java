@@ -187,11 +187,4 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         // 결과 반환
         return ResultDTO.of("워크스페이스 검색색에 성공했습니다.", workspaceDTOs);
     }
-
-    @Override
-    public ResultDTO<SuccessDTO> workspaceRead(WorkspaceDTO workspaceDTO) {
-
-        return null;
-    }
-
 }
