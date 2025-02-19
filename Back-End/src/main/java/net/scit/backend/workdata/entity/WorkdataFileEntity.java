@@ -20,13 +20,13 @@ public class WorkdataFileEntity {
 
     // WorkdataEntity와의 관계 설정 (ManyToOne)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dataNumber")
+    @JoinColumn(name = "data_number")
     private WorkdataEntity workdataEntity;
 
     private String file;
     private String fileName;
 
     // WorkDataFileTagEntity와의 관계 설정 (OneToMany, mappedBy 수정)
-    @OneToMany(mappedBy = "workdataFile", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "workdataFileEntity", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<WorkDataFileTagEntity> workdataFileTag;
 }

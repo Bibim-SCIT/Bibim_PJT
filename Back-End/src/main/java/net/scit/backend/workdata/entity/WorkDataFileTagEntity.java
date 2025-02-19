@@ -20,7 +20,7 @@ public class WorkDataFileTagEntity {
 
     // WorkdataFileEntity와의 관계 설정 (ManyToOne)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "fileNumber", nullable = false)
+    @JoinColumn(name = "file_number", nullable = false)
     private WorkdataFileEntity workdataFile;
 
     private String tag;
