@@ -28,14 +28,14 @@ public class MemberController {
 
     /**
      * 회원가입 요청 시 동작하는 메소드
-     * 
+     *
      * @param signupDTO 회원가입 할 사용자가 입력한 정보 DTO
      * @return 회원가입 동작 완료 후 결과 확인
      */
     @PostMapping("/signup")
     public ResponseEntity<ResultDTO<SuccessDTO>> signup(@RequestPart("signupDTO") SignupDTO signupDTO,
 
-            @RequestPart(value = "file", required = false) MultipartFile file) {
+                                                        @RequestPart(value = "file", required = false) MultipartFile file) {
 
         // 📌 `file`이 `null`인지 먼저 체크 후 로깅 (2025.02.17 추가코드)
         if (file == null) {
@@ -59,7 +59,7 @@ public class MemberController {
 
     /**
      * 아이디 중복체크 요청 시 동작하는 메소드
-     * 
+     *
      * @param email 회원가입 할 사용자의 아이디
      * @return 중복 이메일 체크 동작 완료 후 결과 확인
      */
@@ -70,35 +70,50 @@ public class MemberController {
 
     /**
      * 이메일 인증 요청을 위한 메일을 보낼 시 동작하는 메소드
-     * 
+     *
      * @param email 이메일 인증을 위해 인증 번호를 보낼 메일
      * @return 이메일 송신 완료 후 결과 확인
      */
-    @PostMapping("/signup/send-mail")
+    @PostMapping("/signup/mail")
     public ResponseEntity<ResultDTO<SuccessDTO>> sendMail(@RequestParam String email) {
+        log.info("✅ 이메일 인증 요청 수신: {}", email); // 로그 추가
         return ResponseEntity.ok(memberService.signupSendMail(email));
     }
+
+    // /**
+    // * 인증확인 요청 시 동작하는 메소드
+    // *
+    // * @param verificationDTO 인증 받으려는 이메일 주소와 인증 번호를 가지고 있는 객체
+    // * @return 인증 동작 후 결과 확인
+    // */
+    // @GetMapping("/signup/check-mail")
+    // public ResponseEntity<ResultDTO<SuccessDTO>> checkMail(@RequestBody
+    // VerificationDTO verificationDTO) {
+    // return ResponseEntity.ok(memberService.checkMail(verificationDTO));
+    // }
 
     /**
      * 인증확인 요청 시 동작하는 메소드
      * 
-     * @param verificationDTO 인증 받으려는 이메일 주소와 인증 번호를 가지고 있는 객체
+     * @param email 인증 받으려는 이메일 주소
+     * @param code  사용자가 입력한 인증 코드
      * @return 인증 동작 후 결과 확인
      */
-    @GetMapping("/signup/check-mail")
-    public ResponseEntity<ResultDTO<SuccessDTO>> checkMail(@RequestBody VerificationDTO verificationDTO) {
+    @GetMapping("/signup/mail")
+    public ResponseEntity<ResultDTO<SuccessDTO>> checkMail(@RequestParam String email, @RequestParam String code) {
+        VerificationDTO verificationDTO = new VerificationDTO(email, code);
         return ResponseEntity.ok(memberService.checkMail(verificationDTO));
     }
 
     /**
      * 로그인 성공 시 JWT 토큰을 생성하고 반환하는 메소드
-     * 
+     *
      * @param userDetails Spring Security가 제공하는 인증된 사용자 정보
      *                    - username (이메일)
      *                    - authorities (권한 정보)
      *                    - 기타 사용자 관련 정보
      * 
-     * @return ResponseEntity<ResultDTO<LoginResponse>> 
+     * @return ResponseEntity<ResultDTO<LoginResponse>>
      *         - HTTP 200 OK
      *         - ResultDTO: 성공 메시지와 로그인 응답 정보를 포함
      *         - LoginResponse: 사용자 이메일과 JWT 액세스 토큰 포함
@@ -106,15 +121,15 @@ public class MemberController {
     @GetMapping("/loginsucess")
     public ResponseEntity<ResultDTO<TokenDTO>> loginSuccess(@AuthenticationPrincipal UserDetails userDetails) {
         log.info("로그인 성공: {}", userDetails.getUsername());
-        
+
         // UserDetails에서 추출한 username으로 JWT 토큰 생성
         TokenDTO tokenDTO = jwtTokenProvider.generateToken(userDetails.getUsername());
-                
+
         // 최종 응답 생성 및 반환
         ResultDTO<TokenDTO> result = ResultDTO.of("로그인에 성공했습니다.", tokenDTO);
         return ResponseEntity.ok(result);
     }
-  
+
     @GetMapping("/myinfo")
     public ResponseEntity<ResultDTO<MyInfoDTO>> myInfo(@RequestParam String email) {
         return ResponseEntity.ok(memberService.myInfo(email));
@@ -122,19 +137,19 @@ public class MemberController {
 
     /**
      * 회원 정보 수정
-     * 
-     * @param token         (예정)
+     *
      * @param updateInfoDTO
      * @return
      */
-    @PutMapping("/changeInfo")
-    public ResponseEntity<ResultDTO<MemberDTO>> updateInfo(
-            @RequestBody UpdateInfoDTO updateInfoDTO) { // 클라이언트가 보낸 JSON 데이터
-
-        // 서비스 호출 (토큰과 수정할 데이터 전달)
-        // 지금은 임시로 이메일
-        String email = "woriv73367@sectorid.com";
-        ResultDTO<MemberDTO> result = memberService.updateInfo(email, updateInfoDTO);
+    @PutMapping("/changeinfo")
+    public ResponseEntity<ResultDTO<SuccessDTO>> updateInfo(
+            //인포 전송
+            @RequestPart("info") UpdateInfoDTO updateInfoDTO,
+            //프로필 이미지 전송
+            @RequestPart(value = "file", required = false) MultipartFile file
+    ) {
+        //서비스 호출
+        ResultDTO<SuccessDTO> result = memberService.updateInfo(updateInfoDTO, file);
 
         // 클라이언트에게 응답 반환
         return ResponseEntity.ok(result);
@@ -142,21 +157,21 @@ public class MemberController {
 
     /**
      * 로그인 처리 엔드포인트
+     * 
      * @param loginRequest 로그인 요청 정보
      * @return 로그인 응답 정보
      */
     @PostMapping("/login")
     public ResponseEntity<ResultDTO<TokenDTO>> login(@RequestBody LoginRequest loginRequest) {
         ResultDTO<TokenDTO> response = memberDetailsService.login(
-            loginRequest.getEmail(), 
-            loginRequest.getPassword()
-        );
+                loginRequest.getEmail(),
+                loginRequest.getPassword());
         return ResponseEntity.ok(response);
     }
 
     /**
      * 비밀번호 변경 메일 전송
-     * 
+     *
      * @param email
      * @return
      */
@@ -165,9 +180,10 @@ public class MemberController {
         ResultDTO<SuccessDTO> result = memberService.sendChangePasswordMail(email);
         return ResponseEntity.ok(result);
     }
+
     /**
      * 비밀번호 변경
-     * 
+     *
      * @param changePasswordDTO
      * @return
      */
@@ -180,7 +196,7 @@ public class MemberController {
 
     @PostMapping("/logout")
     public ResponseEntity<ResultDTO<SuccessDTO>> logout() {
-        ResultDTO<SuccessDTO> result = memberService.logout();
-        return ResponseEntity.ok(result);
+    ResultDTO<SuccessDTO> result = memberService.logout();
+    return ResponseEntity.ok(result);
     }
 }

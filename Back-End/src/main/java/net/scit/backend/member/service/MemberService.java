@@ -23,7 +23,7 @@ public interface MemberService {
 
     ResultDTO<MyInfoDTO> myInfo(String email);
 
-    ResultDTO<MemberDTO> updateInfo(String email, UpdateInfoDTO updateInfoDTO);
+    ResultDTO<SuccessDTO> updateInfo(UpdateInfoDTO updateInfoDTO, MultipartFile file);
 
     Optional<MemberEntity> findByEmail(String email);
 
@@ -32,5 +32,4 @@ public interface MemberService {
     ResultDTO<SuccessDTO> changePassword(ChangePasswordDTO changePasswordDTO);
 
     ResultDTO<SuccessDTO> logout();
-
 }
