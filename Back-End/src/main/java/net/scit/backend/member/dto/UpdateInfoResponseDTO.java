@@ -1,18 +1,14 @@
 package net.scit.backend.member.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
-public class UpdateInfoDTO {
+public class UpdateInfoResponseDTO {
+    private boolean success;
     private String name;
     private String language;
     private String nationality;
-}
+    private String profileImage;
+} 

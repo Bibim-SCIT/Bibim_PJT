@@ -142,16 +142,14 @@ public class MemberController {
      * @return
      */
     @PutMapping("/changeinfo")
-    public ResponseEntity<ResultDTO<SuccessDTO>> updateInfo(
+    public ResponseEntity<ResultDTO<UpdateInfoResponseDTO>> updateInfo(
             //인포 전송
             @RequestPart("info") UpdateInfoDTO updateInfoDTO,
             //프로필 이미지 전송
             @RequestPart(value = "file", required = false) MultipartFile file
     ) {
         //서비스 호출
-        ResultDTO<SuccessDTO> result = memberService.updateInfo(updateInfoDTO, file);
-
-        // 클라이언트에게 응답 반환
+        ResultDTO<UpdateInfoResponseDTO> result = memberService.updateInfo(updateInfoDTO, file);
         return ResponseEntity.ok(result);
     }
 
