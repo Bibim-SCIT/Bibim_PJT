@@ -31,7 +31,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final CustomOAuth2UserService customOAuth2UserService;
+    // private final CustomOAuth2UserService customOAuth2UserService;
     private final UserDetailsService userDetailsService;
     private final RedisTemplate<String, String> redisTemplate;
 
