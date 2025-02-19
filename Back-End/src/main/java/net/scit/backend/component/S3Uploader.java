@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Component
 public class S3Uploader {
 
@@ -47,9 +50,13 @@ public class S3Uploader {
     }
 
   public void deleteFile(String fileName) {
-    try{
-      amazonS3.deleteObject(new DeleteObjectRequest(bucket, fileName));
-    } catch (AmazonServiceException e) {
+      try {
+          // URL 전체가 넘어왔을 가능성 체크 후 파일명만 추출
+          if (fileName.startsWith("https://")) {
+              fileName = fileName.substring(fileName.indexOf("/", 8) + 1);
+          }
+          amazonS3.deleteObject(new DeleteObjectRequest(bucket, fileName));
+      } catch (AmazonServiceException e) {
       switch (e.getStatusCode()) {
         case 403:
           throw new CustomException(ErrorCode.IMAGE_ACCESS_DENIED);
