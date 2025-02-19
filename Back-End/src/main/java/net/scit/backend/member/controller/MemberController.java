@@ -74,7 +74,7 @@ public class MemberController {
      * @param email 이메일 인증을 위해 인증 번호를 보낼 메일
      * @return 이메일 송신 완료 후 결과 확인
      */
-    @PostMapping("/signup/send-mail")
+    @PostMapping("/signup/mail")
     public ResponseEntity<ResultDTO<SuccessDTO>> sendMail(@RequestParam String email) {
         log.info("✅ 이메일 인증 요청 수신: {}", email); // 로그 추가
         return ResponseEntity.ok(memberService.signupSendMail(email));
@@ -99,7 +99,7 @@ public class MemberController {
      * @param code  사용자가 입력한 인증 코드
      * @return 인증 동작 후 결과 확인
      */
-    @GetMapping("/signup/check-mail")
+    @GetMapping("/signup/mail")
     public ResponseEntity<ResultDTO<SuccessDTO>> checkMail(@RequestParam String email, @RequestParam String code) {
         VerificationDTO verificationDTO = new VerificationDTO(email, code);
         return ResponseEntity.ok(memberService.checkMail(verificationDTO));

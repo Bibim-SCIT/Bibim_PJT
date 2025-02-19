@@ -1,10 +1,12 @@
 package net.scit.backend.member.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.member.dto.LoginMemberDetail;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -15,22 +17,19 @@ import net.scit.backend.auth.JwtTokenProvider;
 import net.scit.backend.member.dto.TokenDTO;
 
 import javax.xml.transform.Result;
+import java.util.Date;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class MemberDetailsService implements UserDetailsService {
 
     private final MemberRepository memberRepository;
-
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
-
-    public MemberDetailsService(MemberRepository memberRepository, JwtTokenProvider jwtTokenProvider, PasswordEncoder passwordEncoder) {
-        this.memberRepository = memberRepository;
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.passwordEncoder = passwordEncoder;
-    }
-
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -61,7 +60,19 @@ public class MemberDetailsService implements UserDetailsService {
         // JWT 토큰 생성
         TokenDTO tokenDTO = jwtTokenProvider.generateToken(email);
         String accessToken = tokenDTO.getAccessToken();
-        
+        String refreshToken = tokenDTO.getRefreshToken();
+
+        // Redis에 refreshToken이 있는지 확인 후 있으면 삭제 후 추가
+        String existingToken = redisTemplate.opsForValue().get(email + ": refreshToken");
+        if (existingToken != null && !existingToken.isEmpty()) {
+            redisTemplate.delete(email + ": refreshToken");
+        }
+
+        long expiration = jwtTokenProvider.getExpiration(refreshToken);
+        long now = (new Date()).getTime();
+        long refreshTokenExpiresIn = expiration - now;
+        redisTemplate.opsForValue().set(email + ": refreshToken", refreshToken, refreshTokenExpiresIn, TimeUnit.MILLISECONDS);
+
         // 토큰 발급 로깅 추가
         log.info("사용자 {} 에게 토큰이 발급되었습니다. 토큰: {}", email, accessToken);
 

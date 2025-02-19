@@ -5,6 +5,7 @@ import net.scit.backend.auth.JwtTokenProvider;
 // import net.scit.backend.member.service.CustomOAuth2UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,27 +17,23 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
 import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-
 import net.scit.backend.member.service.MemberDetailsService;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-        private final JwtTokenProvider jwtTokenProvider;
-        // private final CustomOAuth2UserService customOAuth2UserService;
-        private final UserDetailsService userDetailsService;
+    private final JwtTokenProvider jwtTokenProvider;
+    // private final CustomOAuth2UserService customOAuth2UserService;
+    private final UserDetailsService userDetailsService;
+    private final RedisTemplate<String, String> redisTemplate;
 
         @Lazy
         @Autowired
@@ -63,7 +60,7 @@ public class SecurityConfig {
                                                                 "/error")
                                                 .permitAll() // 로그인 엔드포인트 허용
                                                 .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 전용
-                                                .requestMatchers("/user/**").hasRole("USER") // 사용자 전용
+                                                .requestMatchers("/user/**", "/schedule/**").hasRole("USER") // 사용자 전용
                                                 .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
                                 )
                                 // OAuth2 로그인 설정
@@ -75,8 +72,8 @@ public class SecurityConfig {
                                 // .defaultSuccessUrl("/members/myinfo", true) // 로그인 성공 시 이동할 경로
                                 // )
                                 // JWT 필터 추가
-                                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService),
-                                                UsernamePasswordAuthenticationFilter.class);
+                                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService, redisTemplate),
+                        UsernamePasswordAuthenticationFilter.class);
                 return http.build();
         }
 
