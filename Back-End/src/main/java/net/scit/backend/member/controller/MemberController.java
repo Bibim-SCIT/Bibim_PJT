@@ -76,17 +76,32 @@ public class MemberController {
      */
     @PostMapping("/signup/mail")
     public ResponseEntity<ResultDTO<SuccessDTO>> sendMail(@RequestParam String email) {
+        log.info("✅ 이메일 인증 요청 수신: {}", email); // 로그 추가
         return ResponseEntity.ok(memberService.signupSendMail(email));
     }
+
+    // /**
+    // * 인증확인 요청 시 동작하는 메소드
+    // *
+    // * @param verificationDTO 인증 받으려는 이메일 주소와 인증 번호를 가지고 있는 객체
+    // * @return 인증 동작 후 결과 확인
+    // */
+    // @GetMapping("/signup/check-mail")
+    // public ResponseEntity<ResultDTO<SuccessDTO>> checkMail(@RequestBody
+    // VerificationDTO verificationDTO) {
+    // return ResponseEntity.ok(memberService.checkMail(verificationDTO));
+    // }
 
     /**
      * 인증확인 요청 시 동작하는 메소드
      * 
-     * @param verificationDTO 인증 받으려는 이메일 주소와 인증 번호를 가지고 있는 객체
+     * @param email 인증 받으려는 이메일 주소
+     * @param code  사용자가 입력한 인증 코드
      * @return 인증 동작 후 결과 확인
      */
     @GetMapping("/signup/mail")
-    public ResponseEntity<ResultDTO<SuccessDTO>> checkMail(@RequestBody VerificationDTO verificationDTO) {
+    public ResponseEntity<ResultDTO<SuccessDTO>> checkMail(@RequestParam String email, @RequestParam String code) {
+        VerificationDTO verificationDTO = new VerificationDTO(email, code);
         return ResponseEntity.ok(memberService.checkMail(verificationDTO));
     }
 
