@@ -31,6 +31,6 @@ public interface MemberService {
 
     ResultDTO<SuccessDTO> changePassword(ChangePasswordDTO changePasswordDTO);
 
-    // ResultDTO<SuccessDTO> logout();
+    ResultDTO<SuccessDTO> logout();
 
 }

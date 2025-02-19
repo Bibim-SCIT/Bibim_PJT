@@ -179,9 +179,9 @@ public class MemberController {
         return ResponseEntity.ok(result);
     }
 
-    // @PostMapping("/logout")
-    // public ResponseEntity<ResultDTO<SuccessDTO>> logout() {
-    // ResultDTO<SuccessDTO> result = memberService.logout();
-    // return ResponseEntity.ok(result);
-    // }
+    @PostMapping("/logout")
+    public ResponseEntity<ResultDTO<SuccessDTO>> logout() {
+    ResultDTO<SuccessDTO> result = memberService.logout();
+    return ResponseEntity.ok(result);
+    }
 }

@@ -28,7 +28,7 @@ const WorkspaceSelector = () => {
         const fetchWorkspaces = async () => {
             setLoading(true);
             try {
-                const token = 'eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ0ZXN0QGVtYWlsLmNvbSIsInJvbGVzIjpbIlJPTEVfVVNFUiJdLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiaWF0IjoxNzM5ODQ4MTk3LCJleHAiOjE3Mzk4NTUzOTd9.2YrRuTZDNiacwTkZcZ0aE1eWbWhV3e-VVbT4ngv229s'
+                const token = 'eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ0ZXN0QGVtYWlsLmNvbSIsInJvbGVzIjpbIlJPTEVfVVNFUiJdLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiaWF0IjoxNzM5ODY1NzY5LCJleHAiOjE3Mzk4NzI5Njl9.ugMoTU0NmuwwfEZFG9MH3lo6ZUV1vx5m9r8TliqE_M0';
                 // localStorage.getItem('token'); // JWT 토큰 가져오기
 
                 if (!token) {
@@ -111,7 +111,8 @@ const WorkspaceSelector = () => {
                     >
                         {workspaces.map((ws) => (
                             <MenuItem key={ws.wsId} onClick={() => handleSelect(ws)}>
-                                {ws.wsName}
+                                {ws.wsName} 
+                                {/* 여기서 사이트가 이동을 해야하는데... */}
                             </MenuItem>
                         ))}
                     </Menu>
