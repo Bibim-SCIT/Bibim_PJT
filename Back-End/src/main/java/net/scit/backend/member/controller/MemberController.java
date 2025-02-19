@@ -74,19 +74,34 @@ public class MemberController {
      * @param email 이메일 인증을 위해 인증 번호를 보낼 메일
      * @return 이메일 송신 완료 후 결과 확인
      */
-    @PostMapping("/signup/send-mail")
+    @PostMapping("/signup/mail")
     public ResponseEntity<ResultDTO<SuccessDTO>> sendMail(@RequestParam String email) {
+        log.info("✅ 이메일 인증 요청 수신: {}", email); // 로그 추가
         return ResponseEntity.ok(memberService.signupSendMail(email));
     }
 
+    // /**
+    // * 인증확인 요청 시 동작하는 메소드
+    // *
+    // * @param verificationDTO 인증 받으려는 이메일 주소와 인증 번호를 가지고 있는 객체
+    // * @return 인증 동작 후 결과 확인
+    // */
+    // @GetMapping("/signup/check-mail")
+    // public ResponseEntity<ResultDTO<SuccessDTO>> checkMail(@RequestBody
+    // VerificationDTO verificationDTO) {
+    // return ResponseEntity.ok(memberService.checkMail(verificationDTO));
+    // }
+
     /**
      * 인증확인 요청 시 동작하는 메소드
-     *
-     * @param verificationDTO 인증 받으려는 이메일 주소와 인증 번호를 가지고 있는 객체
+     * 
+     * @param email 인증 받으려는 이메일 주소
+     * @param code  사용자가 입력한 인증 코드
      * @return 인증 동작 후 결과 확인
      */
-    @GetMapping("/signup/check-mail")
-    public ResponseEntity<ResultDTO<SuccessDTO>> checkMail(@RequestBody VerificationDTO verificationDTO) {
+    @GetMapping("/signup/mail")
+    public ResponseEntity<ResultDTO<SuccessDTO>> checkMail(@RequestParam String email, @RequestParam String code) {
+        VerificationDTO verificationDTO = new VerificationDTO(email, code);
         return ResponseEntity.ok(memberService.checkMail(verificationDTO));
     }
 
@@ -97,8 +112,8 @@ public class MemberController {
      *                    - username (이메일)
      *                    - authorities (권한 정보)
      *                    - 기타 사용자 관련 정보
-     *
-     * @return ResponseEntity<ResultDTO<LoginResponse>> 
+     * 
+     * @return ResponseEntity<ResultDTO<LoginResponse>>
      *         - HTTP 200 OK
      *         - ResultDTO: 성공 메시지와 로그인 응답 정보를 포함
      *         - LoginResponse: 사용자 이메일과 JWT 액세스 토큰 포함
@@ -142,6 +157,7 @@ public class MemberController {
 
     /**
      * 로그인 처리 엔드포인트
+     * 
      * @param loginRequest 로그인 요청 정보
      * @return 로그인 응답 정보
      */
@@ -149,8 +165,7 @@ public class MemberController {
     public ResponseEntity<ResultDTO<TokenDTO>> login(@RequestBody LoginRequest loginRequest) {
         ResultDTO<TokenDTO> response = memberDetailsService.login(
                 loginRequest.getEmail(),
-                loginRequest.getPassword()
-        );
+                loginRequest.getPassword());
         return ResponseEntity.ok(response);
     }
 
@@ -165,6 +180,7 @@ public class MemberController {
         ResultDTO<SuccessDTO> result = memberService.sendChangePasswordMail(email);
         return ResponseEntity.ok(result);
     }
+
     /**
      * 비밀번호 변경
      *
@@ -178,9 +194,9 @@ public class MemberController {
         return ResponseEntity.ok(result);
     }
 
-//    @PostMapping("/logout")
-//    public ResponseEntity<ResultDTO<SuccessDTO>> logout() {
-//        ResultDTO<SuccessDTO> result = memberService.logout();
-//        return ResponseEntity.ok(result);
-//    }
+    @PostMapping("/logout")
+    public ResponseEntity<ResultDTO<SuccessDTO>> logout() {
+    ResultDTO<SuccessDTO> result = memberService.logout();
+    return ResponseEntity.ok(result);
+    }
 }

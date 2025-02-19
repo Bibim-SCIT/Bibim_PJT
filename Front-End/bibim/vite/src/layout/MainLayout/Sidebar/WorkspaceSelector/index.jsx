@@ -2,6 +2,14 @@ import { useState } from 'react';
 import { Box, Typography, Avatar, Tooltip, Button, Menu, MenuItem } from '@mui/material';
 import useConfig from 'hooks/useConfig';
 
+/**
+ * 여기서 서버에서 워크스페이스 데이터를 가져와야함
+ * 1. 현재 로그인 한 사용자의 이메일 기반으로 wsmember 테이블 검색
+ * 2. 해당 되는 ws의 id 전부 전부 가져오기(리스트)
+ * 3. ws 테이블에서 가져온 id로 전부 검색 후 결과 값 (리스트)
+ * 4. 여기에 보내기
+ */
+
 const WorkspaceSelector = () => {
     const { miniDrawer } = useConfig(); // 사이드바 확장 여부 가져오기
 

@@ -77,34 +77,68 @@ export default function AuthRegister() {
     }
   };
 
-  // 이메일 인증 코드 발송 (추가 코드)
-  const sendVerificationCode = () => {
-    const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6자리 난수 생성
-    setGeneratedCode(code);
-    alert(`이메일 (${email})로 인증 코드가 발송되었습니다: ${code}`); // 실제 환경에서는 이메일 API 사용
-  };
+  // 이메일 인증 코드 발송 (25.02.17 - 수동 버전)
+  // const sendVerificationCode = () => {
+  //   const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6자리 난수 생성
+  //   setGeneratedCode(code);
+  //   alert(`이메일 (${email})로 인증 코드가 발송되었습니다: ${code}`); // 실제 환경에서는 이메일 API 사용
+  // };
 
-  // 인증 코드 확인 (추가 코드)
-  const verifyCode = () => {
-    if (verificationCode === generatedCode) {
-      setIsVerified(true);
-      setEmailCheck(true); // 이메일 인증 완료 후 true 설정
-      alert('이메일 인증 성공!');
-    } else {
-      alert('인증 코드가 올바르지 않습니다.');
+  // 이메일 인증 코드 발송 (25.02.17 - 실제 이메일 버전)
+  const handleSendVerificationCode = async () => {
+    try {
+      const response = await sendVerificationEmail(email);
+
+      console.log("📩 인증 코드 응답:", response);  // ✅ 백엔드 응답 확인
+
+      // 응답 구조에 따라 success 필드를 올바르게 확인
+      if (response.data && response.data.success) {
+        alert(`이메일(${email})로 인증 코드가 발송되었습니다.`);
+      } else {
+        alert('인증 코드 전송 실패');
+      }
+    } catch (error) {
+      alert(error.message || '인증 코드 요청 중 오류 발생');
     }
   };
 
-  // 프로필 이미지 업로드 (추가 코드)
-  // const handleProfileImageUpload = (event) => {
-  //   const file = event.target.files[0];
-  //   setProfileImage(URL.createObjectURL(file)); // 미리보기 기능
+
+
+  // 인증 코드 확인 (25.02.17 - 수동 버전)
+  // const verifyCode = () => {
+  //   if (verificationCode === generatedCode) {
+  //     setIsVerified(true);
+  //     setEmailCheck(true); // 이메일 인증 완료 후 true 설정
+  //     alert('이메일 인증 성공!');
+  //   } else {
+  //     alert('인증 코드가 올바르지 않습니다.');
+  //   }
   // };
+
+  // 인증 코드 확인 (25.02.17 - 실제 이메일 버전)
+  const handleVerifyCode = async () => {
+    try {
+      const response = await verifyEmailCode(email, verificationCode); // ✅ GET 요청 사용
+
+      console.log("📩 인증 코드 검증 결과:", response); // ✅ 응답 확인 로그
+
+      if (response.data && response.data.success) {
+        setEmailCheck(true);
+        alert("✅ 이메일 인증 성공!");
+      } else {
+        alert("❌ 인증 코드가 일치하지 않습니다.");
+      }
+    } catch (error) {
+      alert(error.message || "❌ 인증 코드 검증 중 오류 발생");
+    }
+  };
+
+
+  // 프로필 이미지 업로드 (추가 코드)
   const handleProfileImageUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
       setProfileImage(file);  // ✅ 실제 파일 저장
-      // setProfileImage(URL.createObjectURL(file));
       setPreviewImage(URL.createObjectURL(file));  // ✅ 미리보기 URL 생성
     }
   };
@@ -112,13 +146,14 @@ export default function AuthRegister() {
   // 프로필 이미지 삭제 (추가 코드)
   const removeProfileImage = () => {
     setProfileImage(null);
+    setPreviewImage(null);
     setFileInputKey(Date.now()); // 파일 input 초기화
   };
 
   // 회원가입 요청 (25.02.17 추가)
   const handleRegister = async () => {
-    if (!isVerified) {
-      alert("이메일 인증을 완료해야 합니다.");
+    if (!emailCheck) {
+      alert('이메일 인증을 완료해야 합니다.');
       return;
     }
     if (password !== confirmPassword) {
@@ -140,9 +175,6 @@ export default function AuthRegister() {
 
     formData.append("signupDTO", new Blob([signupDTO], { type: "application/json" }));
 
-    // if (profileImage) {
-    //   formData.append("file", profileImage);
-    // }
     if (profileImage) {
       console.log("✅ 파일 추가됨:", profileImage);
       formData.append("file", profileImage);  // 📌 파일 추가
@@ -156,14 +188,6 @@ export default function AuthRegister() {
     for (let pair of formData.entries()) {
       console.log(pair[0], pair[1]); // 🚀 확인 로그
     }
-
-    // 아까 정상 작동하던 코드
-    // try {
-    //   await registerUser(formData);
-    //   alert("회원가입이 완료되었습니다!");
-    // } catch (error) {
-    //   alert(error.message || "회원가입 중 오류가 발생했습니다.");
-    // }
 
     try {
       await registerUser(formData, {
@@ -195,15 +219,10 @@ export default function AuthRegister() {
           </FormControl>
         </Grid>
         <Grid item xs={2} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Button variant="contained" color="secondary" fullWidth sx={{ fontSize: '12px', height: '35px' }} onClick={sendVerificationCode} disabled={!email}>
+          <Button variant="contained" color="secondary" fullWidth sx={{ fontSize: '12px', height: '35px' }} onClick={handleSendVerificationCode} disabled={!email}>
             인증코드 발송
           </Button>
         </Grid>
-        {/* <Grid item xs={4}>
-          <Button variant="contained" color="secondary" fullWidth sx={{ height: '35px' }} onClick={sendVerificationCode} disabled={!email}>
-            인증코드 발송
-          </Button>
-        </Grid> */}
       </Grid>
 
       {/* 인증코드 입력 */}
@@ -221,7 +240,14 @@ export default function AuthRegister() {
           </FormControl>
         </Grid>
         <Grid item xs={4}>
-          <Button variant="contained" color="secondary" fullWidth sx={{ fontSize: '12px', height: '35px' }} onClick={verifyCode} disabled={isVerified}>
+          <Button
+            variant="contained"
+            color="secondary"
+            fullWidth
+            sx={{ fontSize: '12px', height: '35px' }}
+            onClick={handleVerifyCode}
+            disabled={emailCheck} // ✅ 인증 성공하면 버튼 비활성화
+          >
             인증코드 확인
           </Button>
         </Grid>

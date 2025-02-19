@@ -1,5 +1,7 @@
 package net.scit.backend.workspace.entity;
 
+import java.util.*;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,8 +20,11 @@ public class WorkspaceRoleEntity
 
     @ManyToOne
     @JoinColumn(name = "ws_id", nullable = false)
-    private WorkspaceEntity workspaceEntity;
+    private WorkspaceEntity workspace;
 
     @Builder.Default
     private String chRole = "None";
+
+    @OneToMany(mappedBy = "workspaceRole", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<WorkspaceChannelEntity> channels = new ArrayList<>();
 }

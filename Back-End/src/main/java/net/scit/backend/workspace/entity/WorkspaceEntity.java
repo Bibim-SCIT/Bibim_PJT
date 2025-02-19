@@ -1,14 +1,17 @@
 package net.scit.backend.workspace.entity;
 
 import java.time.LocalDateTime;
+import java.util.*;
 
 import org.hibernate.annotations.CurrentTimestamp;
 
 import jakarta.annotation.Generated;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,6 +38,22 @@ public class WorkspaceEntity
 
     @CurrentTimestamp
     private LocalDateTime regDate;
+
+    @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<WorkspaceChannelEntity> channels = new ArrayList<>();
+
+    @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<WorkspaceRoleEntity> roles = new ArrayList<>();
+
+    // @OneToMany(mappedBy = "workSpace", cascade = CascadeType.ALL, orphanRemoval = true)
+    // private List<Record> records = new ArrayList<>();
+
+    // @OneToMany(mappedBy = "workSpace", cascade = CascadeType.ALL, orphanRemoval = true)
+    // private List<Schedule> schedules = new ArrayList<>();
+
+    // @OneToMany(mappedBy = "workSpace", cascade = CascadeType.ALL, orphanRemoval = true)
+    // private List<WorkData> workDataList = new ArrayList<>();
+
 
     public static WorkspaceEntity toEntity (WorkspaceDTO workspaceDTO)
     {
