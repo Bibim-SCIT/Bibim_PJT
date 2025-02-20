@@ -28,7 +28,7 @@ public interface MemberService {
 
     ResultDTO<SuccessDTO> checkMail(VerificationDTO verificationDTO);
 
-    ResultDTO<MyInfoDTO> myInfo(String email);
+    ResultDTO<MyInfoDTO> myInfo();
 
     ResultDTO<UpdateInfoResponseDTO> updateInfo(UpdateInfoDTO updateInfoDTO, MultipartFile file);
 
