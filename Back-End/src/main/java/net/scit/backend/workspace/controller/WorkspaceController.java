@@ -1,6 +1,7 @@
 package net.scit.backend.workspace.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
@@ -9,17 +10,23 @@ import net.scit.backend.workspace.service.WorkspaceService;
 
 import java.util.List;
 
+import org.hibernate.annotations.Fetch;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PathVariable;
+
 
 
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/workspace")
+@Slf4j
 public class WorkspaceController 
 {
     private final WorkspaceService workspaceService;
@@ -29,9 +36,8 @@ public class WorkspaceController
      * @return 워크스페이스 리스트 반환
      */
     @GetMapping("")
-    public ResponseEntity<ResultDTO<List<WorkspaceDTO>>> workspaceList() {
-        ResultDTO<List<WorkspaceDTO>> result = workspaceService.workspaceList();
-        return ResponseEntity.ok(result);
+    public List<WorkspaceDTO> workspaceList() {
+        return workspaceService.workspaceList();
     }
     
 
@@ -52,6 +58,7 @@ public class WorkspaceController
     /**
      * 워크스페이스 삭제 메소드
      * @param wsName 삭제할 워크스페이스 이름
+     * @param authentication 현재 로그인한 유저 정보
      * @return
      */
     @DeleteMapping("")
@@ -60,18 +67,22 @@ public class WorkspaceController
         ResultDTO<SuccessDTO> result = workspaceService.workspaceDelete(wsName);
         return ResponseEntity.ok(result);
     }
-
-//    /**
-//     * 워크스페이스 조회 메소드
-//     * @param workspaceDTO
-//     * @return
-//     */
-//    @GetMapping("/read")
-//    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceRead(@ModelAttribute WorkspaceDTO workspaceDTO)
-//    {
-//        ResultDTO<SuccessDTO> result = workspaceService.workspaceRead(workspaceDTO);
-//        return null;
-//    }
+    
+    /**
+     * 워크스페이스 업데이트 메소드
+     * @param wsName 업데이트할 워크스페이스 이름
+     * @param file 업데이트할 프로필 사진
+     * @param newName 바꿀 이름
+     * @return
+     */
+    @PutMapping("")
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceUpdate(@RequestParam String wsName,
+                                                                 @RequestParam String newName, 
+                                                                 @RequestPart(value = "file", required = false) MultipartFile file) 
+    {
+            ResultDTO<SuccessDTO> result = workspaceService.workspaceUpdate(wsName,newName,file);
+            return ResponseEntity.ok(result);
+    }
 
 
 }

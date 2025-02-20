@@ -243,6 +243,7 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public ResultDTO<SuccessDTO> logout() {
+
         String email = AuthUtil.getLoginUserId();
         memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 

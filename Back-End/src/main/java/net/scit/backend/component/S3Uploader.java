@@ -13,6 +13,8 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -45,6 +47,26 @@ public class S3Uploader {
                 .withCannedAcl(CannedAccessControlList.PublicRead));
         return amazonS3.getUrl(bucket, fileName).toString();
     }
+    
+  //   public String extractFileNameFromUrl(String fileUrl) {
+  //     try {
+  //         // URL 객체 생성
+  //         URL url = new URL(fileUrl);
+  
+  //         // 경로 추출 (버킷명 이후의 경로)
+  //         String fullPath = url.getPath(); // 예: "/workspace-images/6e62c522-d61f-4d41-96b8-a100646cf0ca.png"
+  
+  //         // 첫 '/' 제거 (필수)
+  //         if (fullPath.startsWith("/")) {
+  //             fullPath = fullPath.substring(1);
+  //         }
+  
+  //         return fullPath; // "workspace-images/6e62c522-d61f-4d41-96b8-a100646cf0ca.png"
+  //     } catch (MalformedURLException e) {
+  //         throw new CustomException(ErrorCode.IMAGE_EXCEPTION);
+  //     }
+  // }
+  
 
   public void deleteFile(String fileName) {
     try{
@@ -66,6 +88,7 @@ public class S3Uploader {
       throw new CustomException(ErrorCode.IMAGE_EXCEPTION);
     }
   }
+
 //
 //  public void deleteFolder(Long auctionId) {
 //    String prefix = "auction-images/" + auctionId + "/";
