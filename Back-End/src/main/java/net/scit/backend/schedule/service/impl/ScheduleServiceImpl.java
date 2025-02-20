@@ -147,4 +147,45 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         return ResultDTO.of("팀 스케줄 리스트를 불러 왔습니다.", scheduleDTOList);
     }
+
+    @Override
+    public ResultDTO<ScheduleDTO> getSchedule(Long scheduleNumber) {
+
+        String email = AuthUtil.getLoginUserId();
+        MemberEntity member = memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        Optional<ScheduleEntity> byScheduleNumber = scheduleRepository.findByScheduleNumber(scheduleNumber);
+        if (byScheduleNumber.isEmpty()) {
+            throw new CustomException(ErrorCode.SCHEDULE_NOT_FOUND);
+        }
+
+        ScheduleEntity scheduleEntity = byScheduleNumber.get();
+        WorkspaceEntity workspace = scheduleEntity.getWorkspace();
+
+        Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository.findByWorkspaceAndMember(workspace, member);
+        if (byWorkspaceAndMember.isEmpty()) {
+            throw new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
+        }
+
+        ScheduleDTO scheduleDTO = null;
+
+        // 담당자 찾아오기
+        String nickname = null;
+        MemberEntity memberEntity = scheduleEntity.getMember();
+        Optional<WorkspaceMemberEntity> byWorkspaceAndMember1 = workspaceMemberRepository.findByWorkspaceAndMember(workspace, memberEntity);
+        if (byWorkspaceAndMember1.isPresent()) {
+            nickname = byWorkspaceAndMember.get().getNickname();
+        }
+
+        // 해당 스케줄의 태그 가져오기
+        Optional<ScheduleTagEntity> bySchedule = scheduleTagRepository.findBySchedule(scheduleEntity);
+        if (bySchedule.isEmpty()) {
+            scheduleDTO = ScheduleDTO.toDTO(scheduleEntity, nickname, null);
+        } else {
+            ScheduleTagEntity scheduleTagEntity = bySchedule.get();
+            scheduleDTO = ScheduleDTO.toDTO(scheduleEntity, nickname, scheduleTagEntity);
+        }
+
+        return ResultDTO.of("스케줄 상세 조회에 성공했습니다.", scheduleDTO);
+    }
 }

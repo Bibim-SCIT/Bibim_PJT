@@ -12,4 +12,6 @@ public interface ScheduleService {
     ResultDTO<SuccessDTO> createSchedule(ScheduleDTO scheduleDTO);
 
     ResultDTO<List<ScheduleDTO>> getSchedules(Long wsId);
+
+    ResultDTO<ScheduleDTO> getSchedule(Long scheduleNumber);
 }

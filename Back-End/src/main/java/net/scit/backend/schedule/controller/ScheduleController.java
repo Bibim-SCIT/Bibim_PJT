@@ -28,4 +28,10 @@ public class ScheduleController {
         ResultDTO<List<ScheduleDTO>> result = scheduleService.getSchedules(wsId);
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("{scheduleNumber}")
+    public ResponseEntity<ResultDTO<ScheduleDTO>> getSchedule(@PathVariable Long scheduleNumber) {
+        ResultDTO<ScheduleDTO> result = scheduleService.getSchedule(scheduleNumber);
+        return ResponseEntity.ok(result);
+    }
 }
