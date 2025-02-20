@@ -23,7 +23,7 @@ public class WorkdataController {
     private final WorkdataService workdataService;
 
     /**
-     * 1. 자료실 전체 조회
+     * 1. 자료글 전체 조회
      */
     @GetMapping("")
     public ResponseEntity<ResultDTO<List<WorkdataDTO>>> workdata() {
@@ -31,7 +31,9 @@ public class WorkdataController {
         return ResponseEntity.ok(result);
     }
 
-    //2. 자료글 등록
+    /**
+     * 2. 자료글 등록
+     */
     @PostMapping("/create")
     public ResponseEntity<ResultDTO<SuccessDTO>> workdataCreate(@RequestParam Long wsId, @RequestBody WorkdataDTO workdataDTO){
         log.info("workdataDTO: {}", workdataDTO);
@@ -41,4 +43,15 @@ public class WorkdataController {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * 3. 자료실 삭제
+     */
+    @DeleteMapping("/delete")
+    public ResponseEntity<ResultDTO<SuccessDTO>> workdataDelete(@RequestParam Long wsId, @RequestBody WorkdataDTO workdataDTO) {
+        log.info("workdataDTO: {}", workdataDTO);
+        log.info("wsId: {}", wsId);
+
+        ResultDTO<SuccessDTO> result = workdataService.workdataDelete(wsId, workdataDTO);
+        return ResponseEntity.ok(result);
+    }
 }

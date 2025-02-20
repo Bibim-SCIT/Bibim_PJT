@@ -16,6 +16,7 @@ import net.scit.backend.workspace.repository.WorkspaceRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -87,6 +88,49 @@ public class WorkdataServiceImpl implements WorkdataService {
 
         // 결과 반환
         return ResultDTO.of("자료글 생성에 성공했습니다.", successDTO);
+    }
+
+    //3. 자료글 삭제
+    @Override
+    @Transactional
+    public ResultDTO<SuccessDTO> workdataDelete(Long wsId, WorkdataDTO workdataDTO) {
+        log.info("workdataDTO: {}", workdataDTO);
+        log.info("wsId: {}", wsId);
+
+        // 자료글 존재 여부 확인
+        Optional<WorkdataEntity> workdataEntityOpt = workdataRepository.findById(workdataDTO.getDataNumber());
+
+        if (workdataEntityOpt.isEmpty()) {
+            log.warn("자료글이 존재하지 않습니다. dataNumber: {}", workdataDTO.getDataNumber());
+            // 실패 시 success: false
+            SuccessDTO failDTO = SuccessDTO.builder()
+                    .success(false)
+                    .build();
+            return ResultDTO.of("자료글이 존재하지 않습니다.", failDTO);
+        }
+
+        WorkdataEntity workdataEntity = workdataEntityOpt.get();
+
+        // 워크스페이스 ID 검증
+        if (!workdataEntity.getWorkspaceEntity().getWsId().equals(wsId)) {
+            log.warn("워크스페이스 ID가 일치하지 않습니다. 요청 wsId: {}, 자료글 wsId: {}", wsId, workdataEntity.getWorkspaceEntity().getWsId());
+
+            // 실패 시 success: false
+            SuccessDTO failDTO = SuccessDTO.builder()
+                    .success(false)
+                    .build();
+            return ResultDTO.of("워크스페이스 ID가 일치하지 않습니다.", failDTO);
+        }
+
+        // 자료글 삭제
+        workdataRepository.delete(workdataEntity);
+        log.info("자료글 삭제 완료. dataNumber: {}", workdataDTO.getDataNumber());
+        // 성공 여부 반환
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+
+        return ResultDTO.of("자료글 삭제에 성공했습니다.", successDTO);
     }
 
 }
