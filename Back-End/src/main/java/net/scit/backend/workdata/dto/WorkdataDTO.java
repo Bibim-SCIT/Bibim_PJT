@@ -19,7 +19,6 @@ public class WorkdataDTO {
     private String title;
     private String content;
     @Builder.Default
-    @CreationTimestamp
     private LocalDateTime regDate = LocalDateTime.now();
 
     public static WorkdataDTO toDTO(WorkdataEntity workdataEntity) {

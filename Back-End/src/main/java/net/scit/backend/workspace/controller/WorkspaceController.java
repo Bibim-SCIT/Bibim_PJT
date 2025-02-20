@@ -52,7 +52,6 @@ public class WorkspaceController
     /**
      * 워크스페이스 삭제 메소드
      * @param wsName 삭제할 워크스페이스 이름
-     * @param authentication 현재 로그인한 유저 정보보
      * @return
      */
     @DeleteMapping("")
