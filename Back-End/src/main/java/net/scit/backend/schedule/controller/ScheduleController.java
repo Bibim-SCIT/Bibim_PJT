@@ -8,6 +8,8 @@ import net.scit.backend.schedule.service.ScheduleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/schedule")
@@ -15,9 +17,15 @@ public class ScheduleController {
 
     private final ScheduleService scheduleService;
 
-    @PostMapping("/regist")
-    public ResponseEntity<ResultDTO<SuccessDTO>> scheduleRegist(@RequestBody ScheduleDTO scheduleDTO) {
-        ResultDTO<SuccessDTO> result = scheduleService.scheduleRegist(scheduleDTO);
+    @PostMapping
+    public ResponseEntity<ResultDTO<SuccessDTO>> createSchedule(@RequestBody ScheduleDTO scheduleDTO) {
+        ResultDTO<SuccessDTO> result = scheduleService.createSchedule(scheduleDTO);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping
+    public ResponseEntity<ResultDTO<List<ScheduleDTO>>> getSchedules(@RequestParam Long wsId) {
+        ResultDTO<List<ScheduleDTO>> result = scheduleService.getSchedules(wsId);
         return ResponseEntity.ok(result);
     }
 }

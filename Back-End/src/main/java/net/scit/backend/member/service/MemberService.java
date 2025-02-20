@@ -16,7 +16,7 @@ import java.util.Optional;
 public interface MemberService {
     ResultDTO<SuccessDTO> signup(SignupDTO signupDTO, MultipartFile file);
 
-    ResultDTO<SuccessDTO> checkEmail(String email);
+//    ResultDTO<SuccessDTO> checkEmail(String email);
 
     ResultDTO<SuccessDTO> signupSendMail(String email);
 
