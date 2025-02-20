@@ -14,4 +14,6 @@ public interface WorkdataService {
     ResultDTO<SuccessDTO> workdataCreate(Long wsId, WorkdataDTO workdataDTO);
 
     ResultDTO<SuccessDTO> workdataDelete(Long wsId, WorkdataDTO workdataDTO);
+
+    ResultDTO<WorkdataDTO> workdataUpdate(Long wsId, WorkdataDTO workdataDTO);
 }
