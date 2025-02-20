@@ -1,20 +1,13 @@
 package net.scit.backend.member.service;
 
-import java.util.Optional;
+import net.scit.backend.common.ResultDTO;
+import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.member.dto.*;
+import net.scit.backend.member.entity.MemberEntity;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
-import net.scit.backend.common.ResultDTO;
-import net.scit.backend.common.SuccessDTO;
-import net.scit.backend.member.dto.ChangePasswordDTO;
-import net.scit.backend.member.dto.MyInfoDTO;
-import net.scit.backend.member.dto.SignupDTO;
-import net.scit.backend.member.dto.UpdateInfoDTO;
-import net.scit.backend.member.dto.UpdateInfoResponseDTO;
-import net.scit.backend.member.dto.VerificationDTO;
-import net.scit.backend.member.entity.MemberEntity;
-import net.scit.backend.member.dto.MemberDTO;
+import java.util.Optional;
 
 /**
  * member에 관한 작업을 처리 하기 위한 인터페이스
@@ -31,7 +24,7 @@ public interface MemberService {
 
     ResultDTO<MyInfoDTO> myInfo(String email);
 
-    ResultDTO<UpdateInfoResponseDTO> updateInfo(UpdateInfoDTO updateInfoDTO, MultipartFile file);
+    ResultDTO<SuccessDTO> updateInfo(UpdateInfoDTO updateInfoDTO, MultipartFile file);
 
     Optional<MemberEntity> findByEmail(String email);
 
