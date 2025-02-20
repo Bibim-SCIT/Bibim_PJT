@@ -1,5 +1,6 @@
 package net.scit.backend.member.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
@@ -130,16 +131,22 @@ public class MemberController {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * 회원 정보 조회
+     *
+     * @param request
+     * @return 회원 정보
+     */
     @GetMapping("/myinfo")
-    public ResponseEntity<ResultDTO<MyInfoDTO>> myInfo(@RequestParam String email) {
-        return ResponseEntity.ok(memberService.myInfo(email));
+    public ResponseEntity<ResultDTO<MyInfoDTO>> myInfo(HttpServletRequest request) {
+        return ResponseEntity.ok(memberService.myInfo());
     }
 
     /**
      * 회원 정보 수정
      *
      * @param updateInfoDTO
-     * @return
+     * @return 수정된 회원 정보
      */
     @PutMapping("/changeinfo")
 

@@ -208,28 +208,28 @@ public class MemberServiceImpl implements MemberService {
         return String.valueOf(randomNumber);
     }
 
-    // 회원 정보 확인
-    // 로그인 완성 후 email이 아니라 token을 받아서 회원정보를 받아야함
+    /**
+     * 회원 정보 조회
+     * @return 수정된 회원 정보를 ResultDTO로 반환.
+     */
     @Override
-    public ResultDTO<MyInfoDTO> myInfo(String email) {
-        Optional<MemberEntity> byEmail = memberRepository.findByEmail(email);
-        if (!byEmail.isPresent()) {
-            throw new RuntimeException("해당 계정이 존재하지 않습니다.");
-        }
+    public ResultDTO<MyInfoDTO> myInfo() {
+        // 1. JWT에서 이메일 추출
+        String email = AuthUtil.getLoginUserId();
 
-        MemberEntity memberEntity = byEmail.get();
-        MemberDTO memberDTO = MemberDTO.toDTO(memberEntity);
+        // 2. 이메일로 회원 특정
+        MemberEntity memberEntity = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        // MyInfoDTO 객체 생성 (빌더 패턴 사용)
+        // 3. MyInfoDTO 객체 생성
         MyInfoDTO myInfoDTO = MyInfoDTO.builder()
                 .success(true)
-                .email(memberDTO.getEmail())
-                .name(memberDTO.getName())
-                .nationality(memberDTO.getNationality())
-                .language(memberDTO.getLanguage())
-                .profileImage(memberDTO.getProfileImage())
-                .socialLoginCheck(memberDTO.getSocialLoginCheck())
-                .regDate(memberDTO.getRegDate())
+                .email(memberEntity.getEmail())
+                .name(memberEntity.getName())
+                .nationality(memberEntity.getNationality())
+                .language(memberEntity.getLanguage())
+                .profileImage(memberEntity.getProfileImage())
+                .regDate(memberEntity.getRegDate())
                 .build();
 
         return ResultDTO.of("회원 정보 조회에 성공했습니다.", myInfoDTO);
