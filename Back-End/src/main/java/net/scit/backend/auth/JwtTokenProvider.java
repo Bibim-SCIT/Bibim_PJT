@@ -139,5 +139,6 @@ public class JwtTokenProvider {
         }
         return null; // 토큰이 없거나 잘못된 형식이면 null 반환
     }
+
 }
 

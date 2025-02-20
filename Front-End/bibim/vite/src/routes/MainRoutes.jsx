@@ -22,6 +22,8 @@ const CalendarView = Loadable(lazy(() => import('views/schedule/calendar')));
 const GanttView = Loadable(lazy(() => import('views/schedule/gantt')));
 const OverallView = Loadable(lazy(() => import('views/schedule/overall')));
 const WsSettingPage = Loadable(lazy(() => import('views/ws-setting')));
+const ProfileUpdatePage = Loadable(lazy(() => import('views/profile_update')));
+const MyPage = Loadable(lazy(() => import('views/mypage')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -42,18 +44,6 @@ const MainRoutes = {
         }
       ]
     },
-    // {
-    //   path: 'typography',
-    //   element: <UtilsTypography />
-    // },
-    // {
-    //   path: 'color',
-    //   element: <UtilsColor />
-    // },
-    // {
-    //   path: 'shadow',
-    //   element: <UtilsShadow />
-    // },
     {
       path: '/dm',
       element: <DMPage />
@@ -85,6 +75,14 @@ const MainRoutes = {
     {
       path: '/ws-setting',
       element: <WsSettingPage />
+    },
+    {
+      path: '/mypage',
+      element: <MyPage />
+    },
+    {
+      path: '/profile_update',
+      element: <ProfileUpdatePage />
     }
   ]
 };

@@ -2,6 +2,7 @@ package net.scit.backend.exception;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
+
 @Getter
 public enum ErrorCode {
     // Member
@@ -9,6 +10,12 @@ public enum ErrorCode {
     MEMBER_NOT_FOUND("해당하는 회원이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
     INVALID_PASSWORD("비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
 
+    // WorkSpace
+    WORKSPACE_NOT_FOUND("해당 워크스페이스를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    WORKSPACE_MEMBER_NOT_FOUND("해당 워크스페이스의 멤버가 아닙니다.", HttpStatus.FORBIDDEN),
+
+    // Schedule
+    INVALID_SCHEDULE_STATUS("알 수 없는 일정 상태 입니다.", HttpStatus.BAD_REQUEST),
 
     // Common
     PARSING_ERROR("파싱 오류가 발생했습니다.", HttpStatus.BAD_REQUEST),
@@ -18,14 +25,16 @@ public enum ErrorCode {
     IMAGE_ACCESS_DENIED("권한이 없어 접근이 불가능한 이미지입니다.", HttpStatus.FORBIDDEN),
     IMAGE_NOT_HAVE_PATH("잘못된 이미지 파일 경로입니다.", HttpStatus.BAD_REQUEST),
     IMAGE_EXCEPTION("이미지 관련 에러입니다.", HttpStatus.INTERNAL_SERVER_ERROR),
-    IMAGE_INTERNAL_SERVER_ERROR("이미지 내부 서버 오류입니다.",HttpStatus.INTERNAL_SERVER_ERROR),
+    IMAGE_INTERNAL_SERVER_ERROR("이미지 내부 서버 오류입니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     IMAGE_MALFORMED("잘못된 형식의 URL입니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     IMAGE_NOT_FOUND("이미지가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
     SEND_MAIL_FAIL("메일전송에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     EMAIL_NOT_VERIFIED("이메일 인증이 완료되지 않았습니다.", HttpStatus.UNAUTHORIZED),
     INVALID_EMAIL_CODE("인증 코드가 잘못되었습니다.", HttpStatus.BAD_REQUEST),
-    INVALID_TOKEN("잘못된 토큰 입니다.", HttpStatus.UNAUTHORIZED), ;
+    INVALID_TOKEN("잘못된 토큰 입니다.", HttpStatus.UNAUTHORIZED),
 
+    // Redis 관련 예외 추가
+    REDIS_CONNECTION_FAILED("Redis 서버에 연결할 수 없습니다.", HttpStatus.INTERNAL_SERVER_ERROR),;
 
     String message;
     HttpStatus status;

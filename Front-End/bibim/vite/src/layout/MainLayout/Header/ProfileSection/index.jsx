@@ -27,6 +27,7 @@ import UpgradePlanCard from './UpgradePlanCard';
 import MainCard from 'ui-component/cards/MainCard';
 import Transitions from 'ui-component/extended/Transitions';
 import useConfig from 'hooks/useConfig';
+import { useNavigate } from 'react-router-dom'; // 추가
 
 // assets
 import User1 from 'assets/images/users/user-round.svg';
@@ -43,6 +44,7 @@ export default function ProfileSection() {
   const [notification, setNotification] = useState(false);
   const [selectedIndex] = useState(-1);
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate(); // 추가
 
   /**
    * anchorRef is used on different components and specifying one type leads to other components throwing an error
@@ -69,6 +71,18 @@ export default function ProfileSection() {
 
     prevOpen.current = open;
   }, [open]);
+
+  // 내 프로필 페이지
+  const handleMypage = () => {
+    navigate('/mypage');
+    setOpen(false); // 메뉴 닫기
+  };
+
+  // 회원 정보 수정 페이지로 이동하는 함수
+  const handleProfileUpdate = () => {
+    navigate('/profile_update');
+    setOpen(false); // 메뉴 닫기
+  };
 
   return (
     <>
@@ -166,45 +180,6 @@ export default function ProfileSection() {
                         '&::-webkit-scrollbar': { width: 5 }
                       }}
                     >
-                      {/* <UpgradePlanCard /> */}
-                      {/* <Divider />
-                      <Card sx={{ bgcolor: 'primary.light', my: 2 }}>
-                        <CardContent>
-                          <Grid container spacing={3} direction="column"> */}
-                      {/* <Grid>
-                              <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                                <Grid>
-                                  <Typography variant="subtitle1">Start DND Mode</Typography>
-                                </Grid>
-                                <Grid>
-                                  <Switch
-                                    color="primary"
-                                    checked={sdm}
-                                    onChange={(e) => setSdm(e.target.checked)}
-                                    name="sdm"
-                                    size="small"
-                                  />
-                                </Grid>
-                              </Grid>
-                            </Grid> */}
-                      {/* <Grid>
-                              <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                                <Grid>
-                                  <Typography variant="subtitle1">Allow Notifications</Typography>
-                                </Grid>
-                                <Grid>
-                                  <Switch
-                                    checked={notification}
-                                    onChange={(e) => setNotification(e.target.checked)}
-                                    name="sdm"
-                                    size="small"
-                                  />
-                                </Grid>
-                              </Grid>
-                            </Grid> */}
-                      {/* </Grid>
-                        </CardContent>
-                      </Card> */}
                       <Divider />
                       <List
                         component="nav"
@@ -216,30 +191,31 @@ export default function ProfileSection() {
                           '& .MuiListItemButton-root': { mt: 0.5 }
                         }}
                       >
-                        <ListItemButton sx={{ borderRadius: `${borderRadius}px` }} selected={selectedIndex === 0}>
-                          <ListItemIcon>
-                            <IconSettings stroke={1.5} size="20px" />
-                          </ListItemIcon>
-                          <ListItemText primary={<Typography variant="body2">Account Settings</Typography>} />
-                        </ListItemButton>
-                        <ListItemButton sx={{ borderRadius: `${borderRadius}px` }} selected={selectedIndex === 1}>
+                        {/* 내 프로필 버튼 */}
+                        <ListItemButton
+                          sx={{ borderRadius: `${borderRadius}px` }}
+                          selected={selectedIndex === 0}
+                          onClick={handleMypage}
+                        >
                           <ListItemIcon>
                             <IconUser stroke={1.5} size="20px" />
+                          </ListItemIcon>
+                          <ListItemText primary={<Typography variant="body2">내 프로필</Typography>} />
+                        </ListItemButton>
+                        {/* 회원정보 수정 버튼 */}
+                        <ListItemButton
+                          sx={{ borderRadius: `${borderRadius}px` }}
+                          selected={selectedIndex === 1}
+                          onClick={handleProfileUpdate}
+                        >
+                          <ListItemIcon>
+                            <IconSettings stroke={1.5} size="20px" />
                           </ListItemIcon>
                           <ListItemText
                             primary={
                               <Grid container spacing={1} sx={{ justifyContent: 'space-between' }}>
                                 <Grid>
-                                  <Typography variant="body2">Social Profile</Typography>
-                                </Grid>
-                                <Grid>
-                                  <Chip
-                                    label="02"
-                                    variant="filled"
-                                    size="small"
-                                    color="warning"
-                                    sx={{ '& .MuiChip-label': { mt: 0.25 } }}
-                                  />
+                                  <Typography variant="body2">회원 정보 수정</Typography>
                                 </Grid>
                               </Grid>
                             }

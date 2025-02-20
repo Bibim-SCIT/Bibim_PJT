@@ -43,7 +43,7 @@ public class WorkspaceController
 
     /**
      * 워크스페이스 생성 메소드
-     * @param WorkspaceDTO 워크스페이스 대한 정보 (이름과 사진)
+     * @param workspaceDTO 워크스페이스 대한 정보 (이름과 사진)
      * @return 워크스페이스 생성 동작후 결과 확인인
      */
     @PostMapping("")
@@ -67,7 +67,6 @@ public class WorkspaceController
         ResultDTO<SuccessDTO> result = workspaceService.workspaceDelete(wsName);
         return ResponseEntity.ok(result);
     }
-
     
     /**
      * 워크스페이스 업데이트 메소드
@@ -84,5 +83,6 @@ public class WorkspaceController
             ResultDTO<SuccessDTO> result = workspaceService.workspaceUpdate(wsName,newName,file);
             return ResponseEntity.ok(result);
     }
+
 
 }
