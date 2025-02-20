@@ -15,6 +15,7 @@ import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.repository.WorkspaceRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,7 +30,8 @@ public class WorkdataServiceImpl implements WorkdataService {
     private final WorkspaceRepository workspaceRepository;
 
     /**
-     * 1. 자료 전체 조회
+     * 1. 자료글 전체 조회
+     * @return
      */
     @Override
     @Transactional
@@ -49,7 +51,13 @@ public class WorkdataServiceImpl implements WorkdataService {
         return ResultDTO.of("자료 전체 조회에 성공했습니다.", workdataDTOs);
     }
 
-    //2. 자료글 등록
+
+    /**
+     *  2. 자료글 등록
+     * @param wsId
+     * @param workdataDTO
+     * @return
+     */
     @Override
     @Transactional
     public ResultDTO<SuccessDTO> workdataCreate(Long wsId, WorkdataDTO workdataDTO) {
@@ -90,7 +98,13 @@ public class WorkdataServiceImpl implements WorkdataService {
         return ResultDTO.of("자료글 생성에 성공했습니다.", successDTO);
     }
 
-    //3. 자료글 삭제
+
+    /**
+     * 3. 자료글 삭제
+     * @param wsId
+     * @param workdataDTO
+     * @return
+     */
     @Override
     @Transactional
     public ResultDTO<SuccessDTO> workdataDelete(Long wsId, WorkdataDTO workdataDTO) {
@@ -122,7 +136,7 @@ public class WorkdataServiceImpl implements WorkdataService {
             return ResultDTO.of("워크스페이스 ID가 일치하지 않습니다.", failDTO);
         }
 
-        // 자료글 삭제
+        //자료글 삭제
         workdataRepository.delete(workdataEntity);
         log.info("자료글 삭제 완료. dataNumber: {}", workdataDTO.getDataNumber());
         // 성공 여부 반환
@@ -132,5 +146,40 @@ public class WorkdataServiceImpl implements WorkdataService {
 
         return ResultDTO.of("자료글 삭제에 성공했습니다.", successDTO);
     }
+
+    /**
+     * 4. 자료글 수정
+     * @param wsId
+     * @param workdataDTO
+     * @return
+     */
+    @Override
+    @Transactional
+    public ResultDTO<WorkdataDTO> workdataUpdate(Long wsId, WorkdataDTO workdataDTO) {
+        // 수정할 자료글 조회
+        WorkdataEntity workdataEntity = workdataRepository.findById(workdataDTO.getDataNumber())
+                .orElseThrow(() -> new IllegalArgumentException("자료글을 찾을 수 없습니다."));
+
+        // 수정할 데이터 변경
+        workdataEntity.setTitle(workdataDTO.getTitle());
+        workdataEntity.setContent(workdataDTO.getContent());
+
+        // 수정된 시간으로 regDate 업데이트
+        workdataEntity.setRegDate(LocalDateTime.now());
+
+        // 워크스페이스 정보 변경
+        WorkspaceEntity workspaceEntity = workspaceRepository.findById(wsId)
+                .orElseThrow(() -> new IllegalArgumentException("워크스페이스를 찾을 수 없습니다."));
+        workdataEntity.setWorkspaceEntity(workspaceEntity);
+
+        // 엔티티 저장 (JPA는 자동으로 변경 사항을 감지하여 업데이트)
+        workdataRepository.save(workdataEntity);
+
+        // DTO로 변환하여 결과 반환
+        WorkdataDTO updatedWorkdataDTO = WorkdataDTO.toDTO(workdataEntity);
+        return ResultDTO.of("자료글 수정에 성공했습니다.", updatedWorkdataDTO);
+    }
+
+
 
 }

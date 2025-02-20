@@ -54,4 +54,19 @@ public class WorkdataController {
         ResultDTO<SuccessDTO> result = workdataService.workdataDelete(wsId, workdataDTO);
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * 4. 자료글 수정
+     */
+    @PostMapping("/update")
+    public ResponseEntity<ResultDTO<WorkdataDTO>> workdataUpdate(@RequestParam Long wsId, @RequestBody WorkdataDTO workdataDTO) {
+
+        log.info("workdataDTO: {}", workdataDTO);
+        log.info("wsId: {}", wsId);
+
+        // 수정된 WorkdataDTO 반환
+        ResultDTO<WorkdataDTO> result = workdataService.workdataUpdate(wsId, workdataDTO);
+        return ResponseEntity.ok(result);
+    }
+
 }
