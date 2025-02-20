@@ -1,19 +1,5 @@
 package net.scit.backend.member.service.impl;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,16 +12,19 @@ import net.scit.backend.component.MailComponents;
 import net.scit.backend.component.S3Uploader;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
-import net.scit.backend.member.dto.ChangePasswordDTO;
-import net.scit.backend.member.dto.MemberDTO;
-import net.scit.backend.member.dto.MyInfoDTO;
-import net.scit.backend.member.dto.SignupDTO;
-import net.scit.backend.member.dto.UpdateInfoDTO;
-import net.scit.backend.member.dto.UpdateInfoResponseDTO;
-import net.scit.backend.member.dto.VerificationDTO;
+import net.scit.backend.member.dto.*;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.member.service.MemberService;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Member관련 업무를 수행하는 Service
@@ -125,27 +114,27 @@ public class MemberServiceImpl implements MemberService {
         return ResultDTO.of("회원 가입에 성공했습니다.", successDTO);
     }
 
-//    /**
-//     * 이메일 중복 체크 하는 메소드
-//     *
-//     * @param email 회원가입 신청한 email
-//     * @return 중복체크 후 결과 확인
-//     */
-//    @Override
-//    public ResultDTO<SuccessDTO> checkEmail(String email) {
-//        // email 중복 검사
-//        Optional<MemberEntity> byEmail = memberRepository.findByEmail(email);
-//        if (byEmail.isPresent()) {
-//            throw new CustomException(ErrorCode.EMAIL_DUPLICATE);
-//        }
-//
-//        // 성공시 DTO 저장
-//        SuccessDTO successDTO = SuccessDTO.builder()
-//                .success(true)
-//                .build();
-//        // 결과 반환
-//        return ResultDTO.of("이메일 중복 체크에 성공했습니다.", successDTO);
-//    }
+    /**
+     * 이메일 중복 체크 하는 메소드
+     * 
+     * @param email 회원가입 신청한 email
+     * @return 중복체크 후 결과 확인
+     */
+    @Override
+    public ResultDTO<SuccessDTO> checkEmail(String email) {
+        // email 중복 검사
+        Optional<MemberEntity> byEmail = memberRepository.findByEmail(email);
+        if (byEmail.isPresent()) {
+            throw new CustomException(ErrorCode.EMAIL_DUPLICATE);
+        }
+
+        // 성공시 DTO 저장
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+        // 결과 반환
+        return ResultDTO.of("이메일 중복 체크에 성공했습니다.", successDTO);
+    }
 
     /**
      * 회원가입 인증 메일 보내는 메소드
@@ -155,12 +144,6 @@ public class MemberServiceImpl implements MemberService {
      */
     @Override
     public ResultDTO<SuccessDTO> signupSendMail(String email) {
-
-        // 이미 가입한 회원인지 확인
-        Optional<MemberEntity> byEmail = memberRepository.findByEmail(email);
-        if (byEmail.isPresent()) {
-            throw new CustomException(ErrorCode.EMAIL_DUPLICATE);
-        }
 
         // email 양식
         String title = "BIBIM 회원가입 인증메일";
@@ -292,47 +275,46 @@ public class MemberServiceImpl implements MemberService {
      */
     @Override
     @Transactional
-    public ResultDTO<UpdateInfoResponseDTO> updateInfo(UpdateInfoDTO updateInfoDTO, MultipartFile file) {
+    public ResultDTO<SuccessDTO> updateInfo(UpdateInfoDTO updateInfoDTO, MultipartFile file
+    ) {
+
         // 1. JWT에서 이메일 추출
         String email = AuthUtil.getLoginUserId();
 
         // 2. 이메일로 회원 특정
-        MemberEntity memberEntity = memberRepository.findByEmail(email)
+        MemberEntity member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 업데이트할 값이 null이면 기존 값을 유지
-        memberEntity.setName(updateInfoDTO.getName() != null ? updateInfoDTO.getName() : memberEntity.getName());
-        memberEntity.setNationality(updateInfoDTO.getNationality() != null ? updateInfoDTO.getNationality() : memberEntity.getNationality());
-        memberEntity.setLanguage(updateInfoDTO.getLanguage() != null ? updateInfoDTO.getLanguage() : memberEntity.getLanguage());
+        member.setName(updateInfoDTO.getName() != null ? updateInfoDTO.getName() : member.getName());
+        member.setNationality(updateInfoDTO.getNationality() != null ? updateInfoDTO.getNationality() : member.getNationality());
+        member.setLanguage(updateInfoDTO.getLanguage() != null ? updateInfoDTO.getLanguage() : member.getLanguage());
 
         // S3 이미지 업로드
         if (file != null && !file.isEmpty()) {
             try {
-                // 기존 프로필 이미지 삭제 시도
-                if (memberEntity.getProfileImage() != null && !memberEntity.getProfileImage().isEmpty()) {
-                    s3Uploader.deleteFile(memberEntity.getProfileImage());
+                // 기존 이미지가 있을 시 삭제
+                if (member.getProfileImage() != null && !member.getProfileImage().isEmpty()) {
+                    s3Uploader.deleteFile(member.getProfileImage());
                 }
                 //업로드
                 String fileName = s3Uploader.upload(file, "profile-images");
-                memberEntity.setProfileImage(fileName);
+                member.setProfileImage(fileName);
             } catch (IOException e) {
                 throw new CustomException(ErrorCode.IMAGE_EXCEPTION);
             }
         }
 
         // 3. 변경된 정보 저장
-        memberRepository.save(memberEntity);
+        memberRepository.save(member);
 
-        // 응답 생성
-        UpdateInfoResponseDTO responseDTO = UpdateInfoResponseDTO.builder()
+        // 4. SuccessDTO 생성 후 반환
+        SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
-                .name(memberEntity.getName())
-                .language(memberEntity.getLanguage())
-                .nationality(memberEntity.getNationality())
-                .profileImage(memberEntity.getProfileImage())
                 .build();
 
-        return ResultDTO.of("회원 정보 수정이 완료되었습니다.", responseDTO);
+        return ResultDTO.of("회원 정보가 성공적으로 수정되었습니다.", successDTO);
+
     }
 
     @Override
