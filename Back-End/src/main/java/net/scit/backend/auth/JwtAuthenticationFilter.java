@@ -59,7 +59,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 요청에서 JWT 토큰을 가져옴
         String token = jwtTokenProvider.getJwtFromRequest(request);
-
+    
         // 토큰이 존재하고, 유효하면 사용자 정보를 SecurityContext에 저장
         if (token != null && jwtTokenProvider.validateToken(token)) {
 

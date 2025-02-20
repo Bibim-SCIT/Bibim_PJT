@@ -18,5 +18,8 @@ public interface WorkspaceService
 
     ResultDTO<SuccessDTO> workspaceDelete(String wsName);
 
-    ResultDTO<List<WorkspaceDTO>> workspaceList();   
+    List<WorkspaceDTO> workspaceList();   
+    
+    ResultDTO<SuccessDTO> workspaceUpdate(String wsName,String newName,MultipartFile file) ;
+
 }

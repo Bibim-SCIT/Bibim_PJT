@@ -7,6 +7,7 @@ import org.springframework.util.StringUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.scit.backend.auth.AuthUtil;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.component.S3Uploader;
@@ -42,19 +43,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     private final WorkspaceChennelRepository workspaceChennelRepository;
 
     private final S3Uploader s3Uploader;
-
-    /**
-     * 현재 로그인한 유저의 이메일을 가져오는 메소드
-     */
-    private String getCurrentUserEmail() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        if (principal instanceof UserDetails) {
-            return ((UserDetails) principal).getUsername(); // email 반환
-        } else {
-            return principal.toString();
-        }
-    }
 
     /**
      * 워크스페이스 생성 메소드
@@ -104,7 +92,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         workspaceRoleRepository.saveAndFlush(workspaceRoleEntity);
 
         // 현재 로그인한 유저 이메일을 가져옴
-        String email = getCurrentUserEmail();
+        String email = AuthUtil.getLoginUserId();
 
         // 현재 로그인한 유저의 정보를 가져옴
         MemberEntity memberEntity = memberRepository.findById(email).get();
@@ -126,9 +114,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 .channelName("새 채널")
                 .build();
         workspaceChennelRepository.save(workspaceChannelEntity);
-
-        // 자료실이 들어갈 자리
-
         // 성공시 DTO 저장
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
@@ -138,8 +123,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     }
 
-
-
     /**
      * 워크스페이스 삭제 메소드
      * @param wsName 삭제할 워크스페이스 이름
@@ -148,10 +131,13 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     public ResultDTO<SuccessDTO> workspaceDelete(String wsName) 
     {
         // 현재 로그인 한 이메일을 받음음
-        String email = getCurrentUserEmail();
-        // 워크스페이스 id 검색색
+        String email = AuthUtil.getLoginUserId();
+        // 워크스페이스 id 검색
         Long wsId = workspaceRepository.findWorkspaceIdByWsNameAndEmail(wsName, email);
-        // 워크스페이스 삭제제
+        WorkspaceEntity w = workspaceRepository.findById(wsId).get();
+        // 사진 삭제
+        s3Uploader.deleteFile(w.getWsImg());
+        // 워크스페이스 삭제
         workspaceRepository.deleteById(wsId);   
         // 성공시 DTO 저장
         SuccessDTO successDTO = SuccessDTO.builder()
@@ -163,12 +149,13 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     /**
      * 워크스페이스 반환 메소드
+     * @return 해당 멤버의 워크스페이스리스트
      */
     @Override
-    public ResultDTO<List<WorkspaceDTO>> workspaceList() 
+    public List<WorkspaceDTO>  workspaceList()  
     {
         // 현재 로그인한 아이디 확인
-        String email = getCurrentUserEmail();
+        String email = AuthUtil.getLoginUserId();
         // 해당 유저가 참여중인 모든 워크스페이스 검색
         List<WorkspaceMemberEntity> workspaceMemberEntities = workspaceMemberRepository.findAllByMemberEmail(email);
         // 모든 워크스페이스 리스트
@@ -176,7 +163,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         if (workspaceMemberEntities.size() == 0) 
         {
             // 결과 반환
-            return ResultDTO.of("현재 등록된 워크스페이스가 존재하지 않습니다.", null);
+            // 예외 처리
         }
 
         workspaceMemberEntities.forEach((e)->
@@ -185,6 +172,62 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         });
 
         // 결과 반환
-        return ResultDTO.of("워크스페이스 검색색에 성공했습니다.", workspaceDTOs);
+        return workspaceDTOs;
+    }
+    /**
+     * 파일이 있는 경우
+     * @param wsName
+     * @param file
+     * @return
+     */
+    @Override
+    public ResultDTO<SuccessDTO> workspaceUpdate(String wsName, String newName,MultipartFile file) 
+    {
+        String email = AuthUtil.getLoginUserId();
+        Long wsId = workspaceRepository.findWorkspaceIdByWsNameAndEmail(wsName, email);
+        WorkspaceEntity workspaceEntity = workspaceRepository.findById(wsId).get();
+        // // 프로필 이미지
+        // String imageUrl = null;
+        // if (file != null && !file.isEmpty()) { // ✅ file이 null인지 먼저 체크한 후 isEmpty() 확인
+        //     // 파일 이름에서 확장자 추출
+        //     String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+        //     // 지원하는 이미지 파일 확장자 목록
+        //     List<String> allowedExtensions = Arrays.asList("jpg", "jpeg", "png", "gif");
+        //     // 확장자가 이미지 파일인지 확인
+        //     if (fileExtension != null && allowedExtensions.contains(fileExtension.toLowerCase())) {
+        //         try { // 이미지 업로드하고 url 가져오기
+        //             String oldfile_name = workspaceEntity.getWsImg();
+        //             s3Uploader.deleteFile(oldfile_name);
+        //             imageUrl = s3Uploader.upload(file, "workspace-images");
+        //             log.info("✅ 업로드 완료: {}", imageUrl);
+        //         } catch (Exception e) {
+        //             log.error(e.getMessage(), e);
+        //             log.error("❌ S3 업로드 실패: {}", e.getMessage());
+        //             throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
+        //         }
+        //     } else 
+        //     {
+        //         workspaceEntity.setWsName(newName);
+        //         workspaceRepository.save(workspaceEntity);
+
+        //         // 성공시 DTO 저장 
+        //         SuccessDTO successDTO = SuccessDTO.builder()
+        //         .success(true)
+        //         .build();
+        //         // 결과 반환
+        //         return ResultDTO.of("워크스페이스 이름 변경에 성공했습니다.", successDTO);
+        //     }
+        // }
+        // log.info("📝 최종 저장할 이미지 URL: {}", imageUrl);
+        workspaceEntity.setWsName(newName);
+        // workspaceEntity.setWsImg(imageUrl);
+        // log.info("===={}",workspaceEntity.toString());
+        workspaceRepository.save(workspaceEntity);
+                // 성공시 DTO 저장 
+                SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+                // 결과 반환
+        return ResultDTO.of("워크스페이스 이름및 사진 변경에 성공했습니다.", successDTO);
     }
 }

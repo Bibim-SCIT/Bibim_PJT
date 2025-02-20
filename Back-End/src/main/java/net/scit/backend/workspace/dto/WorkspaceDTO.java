@@ -14,12 +14,14 @@ import net.scit.backend.workspace.entity.WorkspaceEntity;
 @Builder
 public class WorkspaceDTO 
 {
+    private Long wsId;
     private String wsName;
     private String wsImg;
 
     public static WorkspaceDTO toDTO (WorkspaceEntity workspaceEntity)
     {
         return WorkspaceDTO.builder()
+                .wsId(workspaceEntity.getWsId())
                 .wsName(workspaceEntity.getWsName())
                 .wsImg(workspaceEntity.getWsImg())
                 .build();
