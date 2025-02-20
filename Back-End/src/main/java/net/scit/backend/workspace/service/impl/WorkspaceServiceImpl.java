@@ -149,8 +149,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         Long wsId = workspaceRepository.findWorkspaceIdByWsNameAndEmail(wsName, email);
         WorkspaceEntity w = workspaceRepository.findById(wsId).get();
         // 사진 삭제
-        String url = s3Uploader.extractFileNameFromUrl(w.getWsImg());
-        s3Uploader.deleteFile(url);
+        s3Uploader.deleteFile(w.getWsImg());
         // 워크스페이스 삭제
         workspaceRepository.deleteById(wsId);   
         // 성공시 DTO 저장
@@ -236,6 +235,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         log.info("📝 최종 저장할 이미지 URL: {}", imageUrl);
         workspaceEntity.setWsName(newName);
         workspaceEntity.setWsImg(imageUrl);
+        log.info("===={}",workspaceEntity.toString());
         workspaceRepository.save(workspaceEntity);
                 // 성공시 DTO 저장 
                 SuccessDTO successDTO = SuccessDTO.builder()
