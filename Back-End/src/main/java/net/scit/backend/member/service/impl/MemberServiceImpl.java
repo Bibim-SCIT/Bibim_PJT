@@ -266,7 +266,6 @@ public class MemberServiceImpl implements MemberService {
         redisTemplate.opsForValue()
                 .set(accessToken, "logout", accessTokenExpiresIn, TimeUnit.MILLISECONDS);
 
-
         // 해당 유저의 refreshToken 삭제
         redisTemplate.delete(email + ": refreshToken");
 
@@ -296,8 +295,10 @@ public class MemberServiceImpl implements MemberService {
 
         // 업데이트할 값이 null이면 기존 값을 유지
         memberEntity.setName(updateInfoDTO.getName() != null ? updateInfoDTO.getName() : memberEntity.getName());
-        memberEntity.setNationality(updateInfoDTO.getNationality() != null ? updateInfoDTO.getNationality() : memberEntity.getNationality());
-        memberEntity.setLanguage(updateInfoDTO.getLanguage() != null ? updateInfoDTO.getLanguage() : memberEntity.getLanguage());
+        memberEntity.setNationality(updateInfoDTO.getNationality() != null ? updateInfoDTO.getNationality()
+                : memberEntity.getNationality());
+        memberEntity.setLanguage(
+                updateInfoDTO.getLanguage() != null ? updateInfoDTO.getLanguage() : memberEntity.getLanguage());
 
         // S3 이미지 업로드
         if (file != null && !file.isEmpty()) {
@@ -306,7 +307,7 @@ public class MemberServiceImpl implements MemberService {
                 if (memberEntity.getProfileImage() != null && !memberEntity.getProfileImage().isEmpty()) {
                     s3Uploader.deleteFile(memberEntity.getProfileImage());
                 }
-                //업로드
+                // 업로드
                 String fileName = s3Uploader.upload(file, "profile-images");
                 memberEntity.setProfileImage(fileName);
             } catch (IOException e) {
@@ -385,6 +386,30 @@ public class MemberServiceImpl implements MemberService {
                 .build();
 
         return ResultDTO.of("비밀번호 변경에 성공했습니다.", successDTO);
+    }
+
+    @Override
+    @Transactional
+    public ResultDTO<SuccessDTO> withdraw(MemberDTO memberDTO) {
+
+        // 토큰으로 사용자 정보 가져오기
+        String email = AuthUtil.getLoginUserId();
+        MemberEntity member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // 비밀번호 검증
+        if (!bCryptPasswordEncoder.matches(memberDTO.getPassword(), member.getPassword())) {
+            throw new CustomException(ErrorCode.INVALID_PASSWORD);
+        }
+
+        // 실제 데이터 삭제 (하드 삭제)
+        memberRepository.delete(member);
+
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+
+        return ResultDTO.of("회원탈퇴가 완료되었었습니다.", successDTO);
     }
 
 }

@@ -35,7 +35,7 @@ public class MemberController {
     @PostMapping("/signup")
     public ResponseEntity<ResultDTO<SuccessDTO>> signup(@RequestPart("signupDTO") SignupDTO signupDTO,
 
-                                                        @RequestPart(value = "file", required = false) MultipartFile file) {
+            @RequestPart(value = "file", required = false) MultipartFile file) {
 
         // 📌 `file`이 `null`인지 먼저 체크 후 로깅 (2025.02.17 추가코드)
         if (file == null) {
@@ -143,12 +143,11 @@ public class MemberController {
      */
     @PutMapping("/changeinfo")
     public ResponseEntity<ResultDTO<UpdateInfoResponseDTO>> updateInfo(
-            //인포 전송
+            // 인포 전송
             @RequestPart("info") UpdateInfoDTO updateInfoDTO,
-            //프로필 이미지 전송
-            @RequestPart(value = "file", required = false) MultipartFile file
-    ) {
-        //서비스 호출
+            // 프로필 이미지 전송
+            @RequestPart(value = "file", required = false) MultipartFile file) {
+        // 서비스 호출
         ResultDTO<UpdateInfoResponseDTO> result = memberService.updateInfo(updateInfoDTO, file);
         return ResponseEntity.ok(result);
     }
@@ -194,7 +193,24 @@ public class MemberController {
 
     @PostMapping("/logout")
     public ResponseEntity<ResultDTO<SuccessDTO>> logout() {
-    ResultDTO<SuccessDTO> result = memberService.logout();
-    return ResponseEntity.ok(result);
+        ResultDTO<SuccessDTO> result = memberService.logout();
+        return ResponseEntity.ok(result);
     }
+
+    /***
+     * 
+     * 회원 탈퇴**
+     * 
+     * @param token
+     * @param password
+     * @return
+     */
+
+    @DeleteMapping("/withdraw")
+    public ResponseEntity<ResultDTO<SuccessDTO>> withdraw(@RequestBody MemberDTO memberDTO) {
+
+        ResultDTO<SuccessDTO> result = memberService.withdraw(memberDTO);
+        return ResponseEntity.ok(result);
+    }
+
 }
