@@ -39,7 +39,7 @@ public class SecurityConfig {
     @Lazy
     @Autowired
     public SecurityConfig(JwtTokenProvider jwtTokenProvider, // CustomOAuth2UserService customOAuth2UserService,
-                          UserDetailsService userDetailsService, RedisTemplate<String, String> redisTemplate) {
+            UserDetailsService userDetailsService, RedisTemplate<String, String> redisTemplate) {
         this.jwtTokenProvider = jwtTokenProvider;
         // this.customOAuth2UserService = customOAuth2UserService;
         this.userDetailsService = userDetailsService;
@@ -57,10 +57,12 @@ public class SecurityConfig {
                                 "/members/login",
                                 "/members/signup/send-mail", // ✅ 이메일 인증 요청 허용
                                 "/members/signup/check-mail", // ✅ 인증 코드 확인 요청 허용
+                                "/workdata/**",
                                 "/error")
                         .permitAll() // 로그인 엔드포인트 허용
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 전용
-                        .requestMatchers("/user/**", "/schedule/**","/members/myinfo","/members/changeinfo").hasRole("USER") // 사용자 전용
+                        .requestMatchers("/user/**", "/schedule/**","/members/myinfo","/members/changeinfo", "/members/withdraw").hasRole("USER") // 사용자 전용
+
                         .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
                 )
                 // OAuth2 로그인 설정

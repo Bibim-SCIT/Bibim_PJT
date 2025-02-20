@@ -36,7 +36,7 @@ public class MemberController {
     @PostMapping("/signup")
     public ResponseEntity<ResultDTO<SuccessDTO>> signup(@RequestPart("signupDTO") SignupDTO signupDTO,
 
-                                                        @RequestPart(value = "file", required = false) MultipartFile file) {
+            @RequestPart(value = "file", required = false) MultipartFile file) {
 
         // 📌 `file`이 `null`인지 먼저 체크 후 로깅 (2025.02.17 추가코드)
         if (file == null) {
@@ -58,16 +58,16 @@ public class MemberController {
         return ResponseEntity.ok(result);
     }
 
-//    /**
-//     * 아이디 중복체크 요청 시 동작하는 메소드
-//     *
-//     * @param email 회원가입 할 사용자의 아이디
-//     * @return 중복 이메일 체크 동작 완료 후 결과 확인
-//     */
-//    @GetMapping("/check-email")
-//    public ResponseEntity<ResultDTO<SuccessDTO>> checkEmail(@RequestParam String email) {
-//        return ResponseEntity.ok(memberService.checkEmail(email));
-//    }
+    /**
+     * 아이디 중복체크 요청 시 동작하는 메소드
+     *
+     * @param email 회원가입 할 사용자의 아이디
+     * @return 중복 이메일 체크 동작 완료 후 결과 확인
+     */
+    @GetMapping("/check-email")
+    public ResponseEntity<ResultDTO<SuccessDTO>> checkEmail(@RequestParam String email) {
+        return ResponseEntity.ok(memberService.checkEmail(email));
+    }
 
     /**
      * 이메일 인증 요청을 위한 메일을 보낼 시 동작하는 메소드
@@ -80,6 +80,18 @@ public class MemberController {
         log.info("✅ 이메일 인증 요청 수신: {}", email); // 로그 추가
         return ResponseEntity.ok(memberService.signupSendMail(email));
     }
+
+    // /**
+    // * 인증확인 요청 시 동작하는 메소드
+    // *
+    // * @param verificationDTO 인증 받으려는 이메일 주소와 인증 번호를 가지고 있는 객체
+    // * @return 인증 동작 후 결과 확인
+    // */
+    // @GetMapping("/signup/check-mail")
+    // public ResponseEntity<ResultDTO<SuccessDTO>> checkMail(@RequestBody
+    // VerificationDTO verificationDTO) {
+    // return ResponseEntity.ok(memberService.checkMail(verificationDTO));
+    // }
 
     /**
      * 인증확인 요청 시 동작하는 메소드
@@ -137,14 +149,17 @@ public class MemberController {
      * @return 수정된 회원 정보
      */
     @PutMapping("/changeinfo")
-    public ResponseEntity<ResultDTO<UpdateInfoResponseDTO>> updateInfo(
+
+    public ResponseEntity<ResultDTO<SuccessDTO>> updateInfo(
             //인포 전송
             @RequestPart("info") UpdateInfoDTO updateInfoDTO,
             //프로필 이미지 전송
             @RequestPart(value = "file", required = false) MultipartFile file
     ) {
         //서비스 호출
-        ResultDTO<UpdateInfoResponseDTO> result = memberService.updateInfo(updateInfoDTO, file);
+        ResultDTO<SuccessDTO> result = memberService.updateInfo(updateInfoDTO, file);
+
+        // 클라이언트에게 응답 반환
         return ResponseEntity.ok(result);
     }
 
@@ -189,7 +204,24 @@ public class MemberController {
 
     @PostMapping("/logout")
     public ResponseEntity<ResultDTO<SuccessDTO>> logout() {
-    ResultDTO<SuccessDTO> result = memberService.logout();
-    return ResponseEntity.ok(result);
+        ResultDTO<SuccessDTO> result = memberService.logout();
+        return ResponseEntity.ok(result);
     }
+
+    /***
+     * 
+     * 회원 탈퇴**
+     * 
+     * @param token
+     * @param password
+     * @return
+     */
+
+    @DeleteMapping("/withdraw")
+    public ResponseEntity<ResultDTO<SuccessDTO>> withdraw(@RequestBody MemberDTO memberDTO) {
+
+        ResultDTO<SuccessDTO> result = memberService.withdraw(memberDTO);
+        return ResponseEntity.ok(result);
+    }
+
 }
