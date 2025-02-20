@@ -227,7 +227,6 @@ public class MemberServiceImpl implements MemberService {
 
     /**
      * 회원 정보 조회
-     *
      * @return 수정된 회원 정보를 ResultDTO로 반환.
      */
     @Override
