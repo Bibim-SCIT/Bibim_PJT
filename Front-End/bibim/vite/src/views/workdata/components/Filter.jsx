@@ -9,6 +9,7 @@ const Filter = ({ selectedTag, setSelectedTag }) => {
                 <MenuItem value="전체">전체</MenuItem>
                 <MenuItem value="문서">문서</MenuItem>
                 <MenuItem value="디자인">디자인</MenuItem>
+                <MenuItem value="사진">사진</MenuItem>
             </Select>
         </FormControl>
     );
