@@ -227,7 +227,8 @@ public class MemberServiceImpl implements MemberService {
 
     /**
      * 회원 정보 조회
-     * @return 수정된 회원 정보를 MyInfoDTO가 담긴 ResultDTO로 반환.
+     *
+     * @return 수정된 회원 정보를 ResultDTO로 반환.
      */
     @Override
     public ResultDTO<MyInfoDTO> myInfo() {
@@ -241,12 +242,11 @@ public class MemberServiceImpl implements MemberService {
         // 3. MyInfoDTO 객체 생성
         MyInfoDTO myInfoDTO = MyInfoDTO.builder()
                 .success(true)
-                .email(memberEntity.getEmail())  //
+                .email(memberEntity.getEmail())
                 .name(memberEntity.getName())
                 .nationality(memberEntity.getNationality())
                 .language(memberEntity.getLanguage())
                 .profileImage(memberEntity.getProfileImage())
-                .socialLoginCheck(memberEntity.getSocialLoginCheck())
                 .regDate(memberEntity.getRegDate())
                 .build();
 
