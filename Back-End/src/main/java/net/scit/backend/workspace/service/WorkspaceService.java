@@ -21,5 +21,5 @@ public interface WorkspaceService
     List<WorkspaceDTO> workspaceList();   
     
     ResultDTO<SuccessDTO> workspaceUpdate(String wsName,String newName,MultipartFile file) ;
-    ResultDTO<SuccessDTO> workspaceUpdate(String wsName,String newName); 
+
 }

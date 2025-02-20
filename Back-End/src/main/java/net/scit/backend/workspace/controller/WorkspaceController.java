@@ -1,6 +1,7 @@
 package net.scit.backend.workspace.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
@@ -9,6 +10,7 @@ import net.scit.backend.workspace.service.WorkspaceService;
 
 import java.util.List;
 
+import org.hibernate.annotations.Fetch;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/workspace")
+@Slf4j
 public class WorkspaceController 
 {
     private final WorkspaceService workspaceService;
@@ -74,18 +77,12 @@ public class WorkspaceController
      * @return
      */
     @PutMapping("")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceUpdate(@RequestParam String wsName,@RequestParam String newName, @RequestPart(value = "file", required = false) MultipartFile file) 
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceUpdate(@RequestParam String wsName,
+                                                                 @RequestParam String newName, 
+                                                                 @RequestPart(value = "file", required = false) MultipartFile file) 
     {
-        if(file.isEmpty())
-        {
-            ResultDTO<SuccessDTO> result = workspaceService.workspaceUpdate(wsName,newName);
-            return ResponseEntity.ok(result);
-        }
-        else
-        {
             ResultDTO<SuccessDTO> result = workspaceService.workspaceUpdate(wsName,newName,file);
             return ResponseEntity.ok(result);
-        }
     }
 
 }

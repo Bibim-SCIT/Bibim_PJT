@@ -126,9 +126,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 .channelName("새 채널")
                 .build();
         workspaceChennelRepository.save(workspaceChannelEntity);
-
-        // 자료실이 들어갈 자리
-
         // 성공시 DTO 저장
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
@@ -148,9 +145,13 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     {
         // 현재 로그인 한 이메일을 받음음
         String email = getCurrentUserEmail();
-        // 워크스페이스 id 검색색
+        // 워크스페이스 id 검색
         Long wsId = workspaceRepository.findWorkspaceIdByWsNameAndEmail(wsName, email);
-        // 워크스페이스 삭제제
+        WorkspaceEntity w = workspaceRepository.findById(wsId).get();
+        // 사진 삭제
+        String url = s3Uploader.extractFileNameFromUrl(w.getWsImg());
+        s3Uploader.deleteFile(url);
+        // 워크스페이스 삭제
         workspaceRepository.deleteById(wsId);   
         // 성공시 DTO 저장
         SuccessDTO successDTO = SuccessDTO.builder()
@@ -188,8 +189,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         return workspaceDTOs;
     }
 
-
-    // @Override
     /**
      * 파일이 있는 경우
      * @param wsName
@@ -199,17 +198,51 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     @Override
     public ResultDTO<SuccessDTO> workspaceUpdate(String wsName, String newName,MultipartFile file) 
     {
-        // 현재 로그인 한 이메일을 받음음
         String email = getCurrentUserEmail();
-        // 워크스페이스 id 검색
         Long wsId = workspaceRepository.findWorkspaceIdByWsNameAndEmail(wsName, email);
-   
-        // 성공시 DTO 저장 
-        SuccessDTO successDTO = SuccessDTO.builder()
+        WorkspaceEntity workspaceEntity = workspaceRepository.findById(wsId).get();
+        // 프로필 이미지
+        String imageUrl = null;
+        if (file != null && !file.isEmpty()) { // ✅ file이 null인지 먼저 체크한 후 isEmpty() 확인
+            // 파일 이름에서 확장자 추출
+            String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+            // 지원하는 이미지 파일 확장자 목록
+            List<String> allowedExtensions = Arrays.asList("jpg", "jpeg", "png", "gif");
+            // 확장자가 이미지 파일인지 확인
+            if (fileExtension != null && allowedExtensions.contains(fileExtension.toLowerCase())) {
+                try { // 이미지 업로드하고 url 가져오기
+                    String oldfile_name = workspaceEntity.getWsImg();
+                    s3Uploader.deleteFile(oldfile_name);
+                    imageUrl = s3Uploader.upload(file, "workspace-images");
+                    log.info("✅ 업로드 완료: {}", imageUrl);
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                    log.error("❌ S3 업로드 실패: {}", e.getMessage());
+                    throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
+                }
+            } else 
+            {
+                workspaceEntity.setWsName(newName);
+                workspaceRepository.save(workspaceEntity);
+
+                // 성공시 DTO 저장 
+                SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
                 .build();
-        // 결과 반환
-        return ResultDTO.of("워크스페이스 이름,프로필 사진 변경에 성공했습니다.", successDTO);
+                // 결과 반환
+                return ResultDTO.of("워크스페이스 이름 변경에 성공했습니다.", successDTO);
+            }
+        }
+        log.info("📝 최종 저장할 이미지 URL: {}", imageUrl);
+        workspaceEntity.setWsName(newName);
+        workspaceEntity.setWsImg(imageUrl);
+        workspaceRepository.save(workspaceEntity);
+                // 성공시 DTO 저장 
+                SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+                // 결과 반환
+        return ResultDTO.of("워크스페이스 이름및 사진 변경에 성공했습니다.", successDTO);
     }
 
     /**
@@ -217,23 +250,23 @@ public class WorkspaceServiceImpl implements WorkspaceService {
      * @param wsName
      * @return
      */
-    @Override
-    public ResultDTO<SuccessDTO> workspaceUpdate(String wsName,String newName) 
-    {
-        // 현재 로그인 한 이메일을 받음음
-        String email = getCurrentUserEmail();
-        // 워크스페이스 id 검색
-        Long wsId = workspaceRepository.findWorkspaceIdByWsNameAndEmail(wsName, email);
+//     @Override
+//     public ResultDTO<SuccessDTO> workspaceUpdate(String wsName,String newName) 
+//     {
+//         // 현재 로그인 한 이메일을 받음음
+//         String email = getCurrentUserEmail();
+//         // 워크스페이스 id 검색
+//         Long wsId = workspaceRepository.findWorkspaceIdByWsNameAndEmail(wsName, email);
 
-        WorkspaceEntity workspaceEntity = workspaceRepository.findById(wsId).get();
+//         WorkspaceEntity workspaceEntity = workspaceRepository.findById(wsId).get();
 
-        workspaceEntity.setWsName(newName);
-        workspaceRepository.save(workspaceEntity);
-        // 성공시 DTO 저장
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
-        // 결과 반환
-        return ResultDTO.of("워크스페이스 이름 변경에 성공했습니다.", successDTO);
-    }
+//         workspaceEntity.setWsName(newName);
+//         workspaceRepository.save(workspaceEntity);
+//         // 성공시 DTO 저장
+//         SuccessDTO successDTO = SuccessDTO.builder()
+//                 .success(true)
+//                 .build();
+//         // 결과 반환
+//         return ResultDTO.of("워크스페이스 이름 변경에 성공했습니다.", successDTO);
+//     }
 }
