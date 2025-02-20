@@ -15,6 +15,8 @@ import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.repository.WorkspaceRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -25,7 +27,29 @@ public class WorkdataServiceImpl implements WorkdataService {
     private final WorkdataFileTagRepository workdataFileTagRepository;
     private final WorkspaceRepository workspaceRepository;
 
-    //자료글 등록
+    /**
+     * 1. 자료 전체 조회
+     */
+    @Override
+    @Transactional
+    public ResultDTO<List<WorkdataDTO>> workdata() {
+
+        // 1️⃣ 전체 자료 조회
+        List<WorkdataEntity> workdataEntities = workdataRepository.findAll();
+
+        // 2️⃣ Entity -> DTO 변환
+        List<WorkdataDTO> workdataDTOs = workdataEntities.stream()
+                .map(WorkdataDTO::toDTO)
+                .toList();
+
+        log.info("조회된 자료 수: {}", workdataDTOs.size());
+
+        // 3️⃣ 결과 반환
+        return ResultDTO.of("자료 전체 조회에 성공했습니다.", workdataDTOs);
+    }
+    /**
+     * 2. 자료글 등록
+     */
     @Override
     @Transactional
     public ResultDTO<SuccessDTO> workdataCreate(Long wsId, WorkdataDTO workdataDTO) {

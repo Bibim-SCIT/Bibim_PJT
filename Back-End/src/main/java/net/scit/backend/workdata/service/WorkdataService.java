@@ -5,7 +5,13 @@ import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.workdata.dto.WorkdataDTO;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public interface WorkdataService {
+
+    ResultDTO<List<WorkdataDTO>> workdata();
+
+
     ResultDTO<SuccessDTO> workdataCreate(Long wsId, WorkdataDTO workdataDTO);
 }

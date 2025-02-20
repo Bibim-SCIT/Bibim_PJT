@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Controller
 @RestController
 @RequestMapping("/workdata")
@@ -20,7 +22,19 @@ public class WorkdataController {
 
     private final WorkdataService workdataService;
 
-    //1. 자료글 등록
+    /**
+     * 1. 자료실 전체 조회
+     */
+    @GetMapping("")
+    public ResponseEntity<ResultDTO<List<WorkdataDTO>>> workdata() {
+        ResultDTO<List<WorkdataDTO>> result = workdataService.workdata();
+        return ResponseEntity.ok(result);
+    }
+
+
+    /**
+     *  2. 자료글 등록
+     */
     @PostMapping("/create")
     public ResponseEntity<ResultDTO<SuccessDTO>> workdataCreate(@RequestParam Long wsId, @RequestBody WorkdataDTO workdataDTO){
         log.info("workdataDTO: {}", workdataDTO);
@@ -29,5 +43,8 @@ public class WorkdataController {
         ResultDTO<SuccessDTO> result = workdataService.workdataCreate(wsId, workdataDTO);
         return ResponseEntity.ok(result);
     }
+
+
+
 
 }
