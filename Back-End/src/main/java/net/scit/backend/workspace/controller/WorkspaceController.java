@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+
 
 
 
@@ -39,7 +41,6 @@ public class WorkspaceController
     public List<WorkspaceDTO> workspaceList() {
         return workspaceService.workspaceList();
     }
-    
 
     /**
      * 워크스페이스 생성 메소드
@@ -80,9 +81,97 @@ public class WorkspaceController
                                                                  @RequestParam String newName, 
                                                                  @RequestPart(value = "file", required = false) MultipartFile file) 
     {
-            ResultDTO<SuccessDTO> result = workspaceService.workspaceUpdate(wsName,newName,file);
-            return ResponseEntity.ok(result);
+        ResultDTO<SuccessDTO> result = workspaceService.workspaceUpdate(wsName,newName,file);
+        return ResponseEntity.ok(result);
     }
+
+    /**
+     * 워크스페이스 역할 세팅
+     * 역할 : 유저, 관리자 2개
+     * @return
+     */
+    @PatchMapping("/rolesetting")
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceRoleSetting()
+    {
+        // ResultDTO<SuccessDTO> result = workspaceService.workspaceUpdate(wsName,newName,file);
+        return null;
+    }
+
+    /**
+     * 워크스페이스 초대
+     * @return
+     */
+    @PostMapping("/invite")
+    public String workspaseInvate(@RequestParam String wsName,
+                                  @RequestParam String email) 
+    {
+        // ResultDTO<SuccessDTO> result = workspaceService.workspaceUpdate(wsName,newName,file);
+        // return ResponseEntity.ok(result);
+        return null;
+    }
+
+    /**
+     * 워크스페이스 초대 수락(참가)
+     * @return
+     */
+    @PostMapping("/add")
+    public String workspaseAdd() 
+    {
+        
+        return null;
+    }
+
+    /**
+     * 워크스페이스 탈퇴
+     * @return
+     */
+    @DeleteMapping("/withdrawal")
+    public String workspaceWithDrwal()
+    {
+        return null;
+    }
+
+    /**
+     * 워크스페이스 강퇴
+     * @return
+     */
+    @DeleteMapping("/forcedrawal")
+    public String worksapceForceDrawal()
+    {
+        return null;
+    }
+
+    /**
+     * 채널 권한 생성
+     * @return
+     */
+    @PostMapping("/right")
+    public String wsRightCreate()
+    {
+        return null;
+    }
+    
+    /**
+     * 채널 권한 부여
+     * @return
+     */
+    @PatchMapping("/right")
+    public String wsRightGrant()
+    {
+        return null;
+    }
+
+    /**
+     * 채널 권한 삭제
+     * @return
+     */
+    @DeleteMapping("/right")
+    public String wsRightDelete()
+    {
+        return null;
+    }
+
+    
 
 
 }

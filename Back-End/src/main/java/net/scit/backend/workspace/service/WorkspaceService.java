@@ -22,4 +22,10 @@ public interface WorkspaceService
     
     ResultDTO<SuccessDTO> workspaceUpdate(String wsName,String newName,MultipartFile file) ;
 
+    ResultDTO<SuccessDTO> workspaseInvate(String wsName, String email);
+
+    public ResultDTO<SuccessDTO> workspaseAdd(Long wsId, Boolean YorN);
+
+    public ResultDTO<SuccessDTO> workspaceWithDrwal(String wsName);
+
 }

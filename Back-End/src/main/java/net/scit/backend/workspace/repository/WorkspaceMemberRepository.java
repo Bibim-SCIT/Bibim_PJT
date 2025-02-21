@@ -11,4 +11,10 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
     Optional<WorkspaceMemberEntity> findByWorkspaceAndMember(WorkspaceEntity workspace, MemberEntity member);
 
     List<WorkspaceMemberEntity> findAllByMemberEmail(String email);
+
+    void deleteByWsNameAndEmail(String wsName, String email);
+
+    Optional<WorkspaceMemberEntity> findWorkspaceIdByWsNameAndEmail(String wsName, String email);
+
+    List<WorkspaceMemberEntity> findByWsId(Long wsId);
 }

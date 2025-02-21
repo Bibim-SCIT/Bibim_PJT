@@ -28,6 +28,7 @@ import net.scit.backend.workspace.service.WorkspaceService;
 
 import java.util.*;
 
+import org.springframework.security.access.method.P;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -229,5 +230,105 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 .build();
                 // 결과 반환
         return ResultDTO.of("워크스페이스 이름및 사진 변경에 성공했습니다.", successDTO);
+    }
+
+  /**
+     * 워크스페이스 초대
+     * @param wsName
+     * @param email
+     */
+    @Override
+    public ResultDTO<SuccessDTO> workspaseInvate(String wsName, String email) 
+    {
+        // try {
+        //     // 0. 해당 유저가 이미 워크스페이스에 존재하는지 확인 
+        //     if (workspaceMemberRepository.existsByWorkspaceNameAndEmail(wsName, email)) {
+        //         return new ResultDTO<>(false, new SuccessDTO("User already exists in the workspace."));
+        //     }
+
+        //     // 1. 해당 이메일에 초대를 보냄
+        //     emailService.sendInvitationEmail(wsName, email);
+
+        //     // 2. 초대를 보낸 것을 DB에 저장
+        //     Invitation invitation = new Invitation();
+        //     invitation.setWorkspaceName(wsName);
+        //     invitation.setEmail(email);
+        //     invitationRepository.save(invitation);
+
+        //     return new ResultDTO<>(true, new SuccessDTO("Invitation sent successfully."));
+        // } catch (Exception e) {
+        //     return new ResultDTO<>(false, new SuccessDTO("Failed to send invitation."));
+        // }
+    }
+
+    /**
+     * 워크스페이스 초대 수락 메소드
+     * @param wsId 워크스페이스 id
+     * @param YorN 워크스페이스 추가 yes or no
+     * @return
+     */
+    @Override
+    public ResultDTO<SuccessDTO> workspaseAdd(Long wsId, Boolean YorN)
+    {
+        // try {
+        //     // 0. 초대 테이블에 있는지 확인
+        //     Optional<Invitation> invitationOpt = invitationRepository.findById(wsId);
+        //     if (!invitationOpt.isPresent()) {
+        //         return new ResultDTO<>(false, new SuccessDTO("Invitation not found."));
+        //     }
+
+        //     Invitation invitation = invitationOpt.get();
+
+        //     // 1. yes 값인지 no 값인지 확인
+        //     if (YorN) {
+        //         // 2. yes면 ws mem 테이블에 추가 => 이후 테이블에서 삭제
+        //         WorkspaceMember member = new WorkspaceMember();
+        //         member.setWorkspaceId(wsId);
+        //         member.setEmail(invitation.getEmail());
+        //         workspaceMemberRepository.save(member);
+
+        //         invitationRepository.delete(invitation);
+        //         return new ResultDTO<>(true, new SuccessDTO("User added to workspace successfully."));
+        //     } else {
+        //         // 3. No면 걍 테이블에서 삭제
+        //         invitationRepository.delete(invitation);
+        //         return new ResultDTO<>(true, new SuccessDTO("Invitation declined and deleted."));
+        //     }
+        // } catch (Exception e) {
+        //     return new ResultDTO<>(false, new SuccessDTO("Failed to process invitation."));
+        // }
+    }
+
+
+    /**
+     * 워크스페이스 탈퇴
+     * @param wsName 워크스페이스 이름
+     * @return
+     */
+    @Override
+    public ResultDTO<SuccessDTO> workspaceWithDrwal(String wsName)
+    {
+        // 현재 로그인 한 이메일을 받음
+        String email = AuthUtil.getLoginUserId();
+        // 워크스페이스 id 검색
+        Long wsId = workspaceRepository.findWorkspaceIdByWsNameAndEmail(wsName, email);
+        // 해당 되는 멤버 삭제
+        workspaceMemberRepository.deleteByWsNameAndEmail(wsName, email);
+
+        // 현재 워크스페이스에 멤버가 있나 확인
+        List<WorkspaceMemberEntity > wM = workspaceMemberRepository.findByWsId(wsId);
+
+        // 멤버가 없으면 현재 워크스페이스 삭제
+        if(wM.isEmpty())
+        {
+            workspaceRepository.deleteById(wsId);
+        }
+        
+        // 성공시 DTO 저장
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+        // 결과 반환
+        return ResultDTO.of("워크스페이스 탈퇴에 성공했습니다.", successDTO);
     }
 }
