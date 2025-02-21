@@ -58,16 +58,16 @@ public class MemberController {
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * 아이디 중복체크 요청 시 동작하는 메소드
-     *
-     * @param email 회원가입 할 사용자의 아이디
-     * @return 중복 이메일 체크 동작 완료 후 결과 확인
-     */
-    @GetMapping("/check-email")
-    public ResponseEntity<ResultDTO<SuccessDTO>> checkEmail(@RequestParam String email) {
-        return ResponseEntity.ok(memberService.checkEmail(email));
-    }
+//    /**
+//     * 아이디 중복체크 요청 시 동작하는 메소드
+//     *
+//     * @param email 회원가입 할 사용자의 아이디
+//     * @return 중복 이메일 체크 동작 완료 후 결과 확인
+//     */
+//    @GetMapping("/check-email")
+//    public ResponseEntity<ResultDTO<SuccessDTO>> checkEmail(@RequestParam String email) {
+//        return ResponseEntity.ok(memberService.checkEmail(email));
+//    }
 
     /**
      * 이메일 인증 요청을 위한 메일을 보낼 시 동작하는 메소드
@@ -80,18 +80,6 @@ public class MemberController {
         log.info("✅ 이메일 인증 요청 수신: {}", email); // 로그 추가
         return ResponseEntity.ok(memberService.signupSendMail(email));
     }
-
-    // /**
-    // * 인증확인 요청 시 동작하는 메소드
-    // *
-    // * @param verificationDTO 인증 받으려는 이메일 주소와 인증 번호를 가지고 있는 객체
-    // * @return 인증 동작 후 결과 확인
-    // */
-    // @GetMapping("/signup/check-mail")
-    // public ResponseEntity<ResultDTO<SuccessDTO>> checkMail(@RequestBody
-    // VerificationDTO verificationDTO) {
-    // return ResponseEntity.ok(memberService.checkMail(verificationDTO));
-    // }
 
     /**
      * 인증확인 요청 시 동작하는 메소드
