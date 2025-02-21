@@ -208,28 +208,28 @@ public class MemberServiceImpl implements MemberService {
         return String.valueOf(randomNumber);
     }
 
-    // 회원 정보 확인
-    // 로그인 완성 후 email이 아니라 token을 받아서 회원정보를 받아야함
+    /**
+     * 회원 정보 조회
+     * @return 수정된 회원 정보를 ResultDTO로 반환.
+     */
     @Override
-    public ResultDTO<MyInfoDTO> myInfo(String email) {
-        Optional<MemberEntity> byEmail = memberRepository.findByEmail(email);
-        if (!byEmail.isPresent()) {
-            throw new RuntimeException("해당 계정이 존재하지 않습니다.");
-        }
+    public ResultDTO<MyInfoDTO> myInfo() {
+        // 1. JWT에서 이메일 추출
+        String email = AuthUtil.getLoginUserId();
 
-        MemberEntity memberEntity = byEmail.get();
-        MemberDTO memberDTO = MemberDTO.toDTO(memberEntity);
+        // 2. 이메일로 회원 특정
+        MemberEntity memberEntity = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        // MyInfoDTO 객체 생성 (빌더 패턴 사용)
+        // 3. MyInfoDTO 객체 생성
         MyInfoDTO myInfoDTO = MyInfoDTO.builder()
                 .success(true)
-                .email(memberDTO.getEmail())
-                .name(memberDTO.getName())
-                .nationality(memberDTO.getNationality())
-                .language(memberDTO.getLanguage())
-                .profileImage(memberDTO.getProfileImage())
-                .socialLoginCheck(memberDTO.getSocialLoginCheck())
-                .regDate(memberDTO.getRegDate())
+                .email(memberEntity.getEmail())
+                .name(memberEntity.getName())
+                .nationality(memberEntity.getNationality())
+                .language(memberEntity.getLanguage())
+                .profileImage(memberEntity.getProfileImage())
+                .regDate(memberEntity.getRegDate())
                 .build();
 
         return ResultDTO.of("회원 정보 조회에 성공했습니다.", myInfoDTO);
@@ -243,6 +243,7 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public ResultDTO<SuccessDTO> logout() {
+
         String email = AuthUtil.getLoginUserId();
         memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
@@ -254,7 +255,6 @@ public class MemberServiceImpl implements MemberService {
         long accessTokenExpiresIn = expiration - now;
         redisTemplate.opsForValue()
                 .set(accessToken, "logout", accessTokenExpiresIn, TimeUnit.MILLISECONDS);
-
 
         // 해당 유저의 refreshToken 삭제
         redisTemplate.delete(email + ": refreshToken");
@@ -286,6 +286,7 @@ public class MemberServiceImpl implements MemberService {
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 업데이트할 값이 null이면 기존 값을 유지
+
         member.setName(updateInfoDTO.getName() != null ? updateInfoDTO.getName() : member.getName());
         member.setNationality(updateInfoDTO.getNationality() != null ? updateInfoDTO.getNationality() : member.getNationality());
         member.setLanguage(updateInfoDTO.getLanguage() != null ? updateInfoDTO.getLanguage() : member.getLanguage());
@@ -297,7 +298,7 @@ public class MemberServiceImpl implements MemberService {
                 if (member.getProfileImage() != null && !member.getProfileImage().isEmpty()) {
                     s3Uploader.deleteFile(member.getProfileImage());
                 }
-                //업로드
+                // 업로드
                 String fileName = s3Uploader.upload(file, "profile-images");
                 member.setProfileImage(fileName);
             } catch (IOException e) {
@@ -373,6 +374,30 @@ public class MemberServiceImpl implements MemberService {
                 .build();
 
         return ResultDTO.of("비밀번호 변경에 성공했습니다.", successDTO);
+    }
+
+    @Override
+    @Transactional
+    public ResultDTO<SuccessDTO> withdraw(MemberDTO memberDTO) {
+
+        // 토큰으로 사용자 정보 가져오기
+        String email = AuthUtil.getLoginUserId();
+        MemberEntity member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // 비밀번호 검증
+        if (!bCryptPasswordEncoder.matches(memberDTO.getPassword(), member.getPassword())) {
+            throw new CustomException(ErrorCode.INVALID_PASSWORD);
+        }
+
+        // 실제 데이터 삭제 (하드 삭제)
+        memberRepository.delete(member);
+
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+
+        return ResultDTO.of("회원탈퇴가 완료되었었습니다.", successDTO);
     }
 
 }

@@ -1,5 +1,6 @@
 package net.scit.backend.member.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
@@ -35,7 +36,7 @@ public class MemberController {
     @PostMapping("/signup")
     public ResponseEntity<ResultDTO<SuccessDTO>> signup(@RequestPart("signupDTO") SignupDTO signupDTO,
 
-                                                        @RequestPart(value = "file", required = false) MultipartFile file) {
+            @RequestPart(value = "file", required = false) MultipartFile file) {
 
         // 📌 `file`이 `null`인지 먼저 체크 후 로깅 (2025.02.17 추가코드)
         if (file == null) {
@@ -130,18 +131,25 @@ public class MemberController {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * 회원 정보 조회
+     *
+     * @param request
+     * @return 회원 정보
+     */
     @GetMapping("/myinfo")
-    public ResponseEntity<ResultDTO<MyInfoDTO>> myInfo(@RequestParam String email) {
-        return ResponseEntity.ok(memberService.myInfo(email));
+    public ResponseEntity<ResultDTO<MyInfoDTO>> myInfo(HttpServletRequest request) {
+        return ResponseEntity.ok(memberService.myInfo());
     }
 
     /**
      * 회원 정보 수정
      *
      * @param updateInfoDTO
-     * @return
+     * @return 수정된 회원 정보
      */
     @PutMapping("/changeinfo")
+
     public ResponseEntity<ResultDTO<SuccessDTO>> updateInfo(
             //인포 전송
             @RequestPart("info") UpdateInfoDTO updateInfoDTO,
@@ -196,7 +204,24 @@ public class MemberController {
 
     @PostMapping("/logout")
     public ResponseEntity<ResultDTO<SuccessDTO>> logout() {
-    ResultDTO<SuccessDTO> result = memberService.logout();
-    return ResponseEntity.ok(result);
+        ResultDTO<SuccessDTO> result = memberService.logout();
+        return ResponseEntity.ok(result);
     }
+
+    /***
+     * 
+     * 회원 탈퇴**
+     * 
+     * @param token
+     * @param password
+     * @return
+     */
+
+    @DeleteMapping("/withdraw")
+    public ResponseEntity<ResultDTO<SuccessDTO>> withdraw(@RequestBody MemberDTO memberDTO) {
+
+        ResultDTO<SuccessDTO> result = memberService.withdraw(memberDTO);
+        return ResponseEntity.ok(result);
+    }
+
 }

@@ -5,8 +5,8 @@ const API_BASE_URL = "http://localhost:8080"; // 백엔드 API 기본 URL
 
 // 이메일 중복 확인
 export const checkEmail = async (email) => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/check-email`, {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/check-email`, {
             params: { email },
         });
         return response.data;
@@ -18,7 +18,7 @@ export const checkEmail = async (email) => {
 // 이메일 인증 요청
 export const sendVerificationEmail = async (email) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/members/signup/send-mail`, null, {
+        const response = await axios.post(`${API_BASE_URL}/members/signup/mail`, null, {
             params: { email },
         });
 
@@ -35,7 +35,7 @@ export const sendVerificationEmail = async (email) => {
 // 이메일 인증 코드 확인
 export const verifyEmailCode = async (email, code) => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/members/signup/check-mail`, {
+        const response = await axios.get(`${API_BASE_URL}/members/signup/mail`, {
             params: { email, code } // ✅ 백엔드 요구 사항에 맞게 GET 요청으로 전달
         });
 
@@ -60,3 +60,4 @@ export const registerUser = async (formData) => {
         throw error.response?.data || "회원가입 요청 오류";
     }
 };
+
