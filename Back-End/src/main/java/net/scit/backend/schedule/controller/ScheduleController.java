@@ -29,9 +29,15 @@ public class ScheduleController {
         return ResponseEntity.ok(result);
     }
 
-    @GetMapping("{scheduleNumber}")
+    @GetMapping("/{scheduleNumber}")
     public ResponseEntity<ResultDTO<ScheduleDTO>> getSchedule(@PathVariable Long scheduleNumber) {
         ResultDTO<ScheduleDTO> result = scheduleService.getSchedule(scheduleNumber);
+        return ResponseEntity.ok(result);
+    }
+
+    @PutMapping("/{scheduleNumber}/assignees")
+    public ResponseEntity<ResultDTO<SuccessDTO>> assignSchedule(@PathVariable Long scheduleNumber) {
+        ResultDTO<SuccessDTO> result = scheduleService.assignSchedule(scheduleNumber);
         return ResponseEntity.ok(result);
     }
 }
