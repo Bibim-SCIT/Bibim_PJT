@@ -46,11 +46,8 @@ public class ScheduleServiceImpl implements ScheduleService {
         MemberEntity member = memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
-        Optional<WorkspaceEntity> byId = workspaceRepository.findById(scheduleDTO.getWsId());
-        if (byId.isEmpty()) {
-            throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
-        }
-        WorkspaceEntity workspace = byId.get();
+        WorkspaceEntity workspace = workspaceRepository.findById(scheduleDTO.getWsId())
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
 
         Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository.findByWorkspaceAndMember(workspace, member);
         if (byWorkspaceAndMember.isEmpty()) {
@@ -113,11 +110,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         MemberEntity member = memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
-        Optional<WorkspaceEntity> byId = workspaceRepository.findById(wsId);
-        if (byId.isEmpty()) {
-            throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
-        }
-        WorkspaceEntity workspace = byId.get();
+        WorkspaceEntity workspace = workspaceRepository.findById(wsId).orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
 
         Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository.findByWorkspaceAndMember(workspace, member);
         if (byWorkspaceAndMember.isEmpty()) {
@@ -154,12 +147,9 @@ public class ScheduleServiceImpl implements ScheduleService {
         String email = AuthUtil.getLoginUserId();
         MemberEntity member = memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        Optional<ScheduleEntity> byScheduleNumber = scheduleRepository.findByScheduleNumber(scheduleNumber);
-        if (byScheduleNumber.isEmpty()) {
-            throw new CustomException(ErrorCode.SCHEDULE_NOT_FOUND);
-        }
+        ScheduleEntity scheduleEntity = scheduleRepository.findByScheduleNumber(scheduleNumber)
+                .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
 
-        ScheduleEntity scheduleEntity = byScheduleNumber.get();
         WorkspaceEntity workspace = scheduleEntity.getWorkspace();
 
         Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository.findByWorkspaceAndMember(workspace, member);
@@ -187,5 +177,24 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
 
         return ResultDTO.of("스케줄 상세 조회에 성공했습니다.", scheduleDTO);
+    }
+
+    @Override
+    public ResultDTO<SuccessDTO> assignSchedule(Long scheduleNumber) {
+
+        String email = AuthUtil.getLoginUserId();
+        MemberEntity member = memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        ScheduleEntity scheduleEntity = scheduleRepository.findByScheduleNumber(scheduleNumber)
+                .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        scheduleEntity.setMember(member);
+        scheduleRepository.save(scheduleEntity);
+
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+
+        return ResultDTO.of("해당 스케줄 담당에 성공했습니다.", successDTO);
     }
 }
