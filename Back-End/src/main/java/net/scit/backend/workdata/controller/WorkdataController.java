@@ -35,7 +35,7 @@ public class WorkdataController {
      * 1. 자료글 전체 조회
      */
     @GetMapping("")
-    public ResponseEntity<ResultDTO<List<WorkdataDTO>>> workdata(@RequestParam Long wsId) {    //변수: wsId 포함
+    public ResponseEntity<ResultDTO<List<WorkdataDTO>>> workdata(@RequestParam Long wsId) {
         ResultDTO<List<WorkdataDTO>> result = workdataService.workdata(wsId);
         return ResponseEntity.ok(result);
     }
@@ -57,7 +57,7 @@ public class WorkdataController {
     /**
      * 3. 자료글 등록
      */
-    @PostMapping("/create")
+    @PostMapping("")
     public ResponseEntity<ResultDTO<SuccessDTO>> workdataCreate(@RequestParam Long wsId,
                                                                 @RequestBody WorkdataDTO workdataDTO,
                                                                 @RequestHeader("userEmail") String userEmail) {
@@ -74,7 +74,7 @@ public class WorkdataController {
     /**
      * 4. 자료실 삭제
      */
-    @DeleteMapping("/delete")
+    @DeleteMapping("")
     public ResultDTO<SuccessDTO> deleteWorkdata(@RequestParam Long wsId,
                                                 @RequestParam Long dataNumber,
                                                 @RequestBody DeleteRequestBody requestBody) {
@@ -100,7 +100,7 @@ public class WorkdataController {
     /**
      * 5. 자료글 수정
      */
-    @PostMapping("/update")
+    @PutMapping("")
     public ResponseEntity<ResultDTO<WorkdataDTO>> workdataUpdate(@RequestParam Long wsId,
                                                                  @RequestParam Long dataNumber,
                                                                  @RequestBody WorkdataDTO workdataDTO,
@@ -118,19 +118,18 @@ public class WorkdataController {
     /**
      * 6. 파일 등록
      */
-    // 6. 파일 등록
     @PostMapping("/upload")
     public ResponseEntity<ResultDTO<SuccessDTO>> uploadFile(@RequestParam("dataNumber") Long dataNumber,
                                                             @RequestParam("file") MultipartFile file) {
         try {
-            // ✅ S3에 파일 업로드 (디렉토리명: workdata-files)
+            // S3에 파일 업로드 (디렉토리명: workdata-files)
             String fileUrl = s3Uploader.upload(file, "workdata-files");
             log.info("fileUrl:{}", fileUrl);
-            // ✅ WorkdataEntity 찾기
+            // WorkdataEntity 찾기
             WorkdataEntity workdataEntity = workdataRepository.findById(dataNumber)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid dataNumber"));
 
-            // ✅ DB에 파일 정보 저장
+            // DB에 파일 정보 저장
             WorkdataFileEntity workdataFileEntity = WorkdataFileEntity.builder()
                     .workdataEntity(workdataEntity)
                     .file(fileUrl)
@@ -139,34 +138,31 @@ public class WorkdataController {
 
             workdataFileRepository.save(workdataFileEntity);
 
-            // ✅ 성공 응답 생성
+            // 성공 응답 생성
             SuccessDTO successDTO = SuccessDTO.builder()
-                    .success(true) // ✅ 성공 여부 설정
+                    .success(true)
                     .build();
 
             ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
-                    .message("File uploaded successfully") // ✅ 메시지 설정
-                    .data(successDTO)                      // ✅ 성공 DTO 전달
+                    .message("File uploaded successfully")
+                    .data(successDTO)
                     .build();
 
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {
-            // ❌ 실패 응답 생성
+            // 실패 응답 생성
             SuccessDTO failureDTO = SuccessDTO.builder()
-                    .success(false) // ✅ 실패 여부 설정
+                    .success(false)
                     .build();
 
             ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
-                    .message("File upload failed: " + e.getMessage()) // ✅ 에러 메시지
+                    .message("File upload failed: " + e.getMessage())
                     .data(failureDTO)
                     .build();
 
             return ResponseEntity.status(500).body(result);
         }
     }
-
-
-
 
 }
