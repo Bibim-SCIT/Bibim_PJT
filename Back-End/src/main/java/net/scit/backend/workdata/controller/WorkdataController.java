@@ -4,11 +4,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.component.S3Uploader;
 import net.scit.backend.workdata.dto.WorkdataDTO;
+import net.scit.backend.workdata.entity.WorkdataEntity;
+import net.scit.backend.workdata.entity.WorkdataFileEntity;
+import net.scit.backend.workdata.repository.WorkdataFileRepository;
+import net.scit.backend.workdata.repository.WorkdataRepository;
 import net.scit.backend.workdata.service.WorkdataService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -20,14 +26,17 @@ import java.util.List;
 public class WorkdataController {
 
     private final WorkdataService workdataService;
+    private final WorkdataRepository workdataRepository;
+    private final WorkdataFileRepository workdataFileRepository;
+    private final S3Uploader s3Uploader;
 
 
     /**
      * 1. 자료글 전체 조회
      */
     @GetMapping("")
-    public ResponseEntity<ResultDTO<List<WorkdataDTO>>> workdata() {
-        ResultDTO<List<WorkdataDTO>> result = workdataService.workdata();
+    public ResponseEntity<ResultDTO<List<WorkdataDTO>>> workdata(@RequestParam Long wsId) {
+        ResultDTO<List<WorkdataDTO>> result = workdataService.workdata(wsId);
         return ResponseEntity.ok(result);
     }
 
@@ -48,7 +57,7 @@ public class WorkdataController {
     /**
      * 3. 자료글 등록
      */
-    @PostMapping("/create")
+    @PostMapping("")
     public ResponseEntity<ResultDTO<SuccessDTO>> workdataCreate(@RequestParam Long wsId,
                                                                 @RequestBody WorkdataDTO workdataDTO,
                                                                 @RequestHeader("userEmail") String userEmail) {
@@ -65,7 +74,7 @@ public class WorkdataController {
     /**
      * 4. 자료실 삭제
      */
-    @DeleteMapping("/delete")
+    @DeleteMapping("")
     public ResultDTO<SuccessDTO> deleteWorkdata(@RequestParam Long wsId,
                                                 @RequestParam Long dataNumber,
                                                 @RequestBody DeleteRequestBody requestBody) {
@@ -91,7 +100,7 @@ public class WorkdataController {
     /**
      * 5. 자료글 수정
      */
-    @PostMapping("/update")
+    @PutMapping("")
     public ResponseEntity<ResultDTO<WorkdataDTO>> workdataUpdate(@RequestParam Long wsId,
                                                                  @RequestParam Long dataNumber,
                                                                  @RequestBody WorkdataDTO workdataDTO,
@@ -106,7 +115,54 @@ public class WorkdataController {
     }
 
 
+    /**
+     * 6. 파일 등록
+     */
+    @PostMapping("/upload")
+    public ResponseEntity<ResultDTO<SuccessDTO>> uploadFile(@RequestParam("dataNumber") Long dataNumber,
+                                                            @RequestParam("file") MultipartFile file) {
+        try {
+            // S3에 파일 업로드 (디렉토리명: workdata-files)
+            String fileUrl = s3Uploader.upload(file, "workdata-files");
+            log.info("fileUrl:{}", fileUrl);
+            // WorkdataEntity 찾기
+            WorkdataEntity workdataEntity = workdataRepository.findById(dataNumber)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid dataNumber"));
 
+            // DB에 파일 정보 저장
+            WorkdataFileEntity workdataFileEntity = WorkdataFileEntity.builder()
+                    .workdataEntity(workdataEntity)
+                    .file(fileUrl)
+                    .fileName(file.getOriginalFilename())
+                    .build();
 
+            workdataFileRepository.save(workdataFileEntity);
+
+            // 성공 응답 생성
+            SuccessDTO successDTO = SuccessDTO.builder()
+                    .success(true)
+                    .build();
+
+            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
+                    .message("File uploaded successfully")
+                    .data(successDTO)
+                    .build();
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            // 실패 응답 생성
+            SuccessDTO failureDTO = SuccessDTO.builder()
+                    .success(false)
+                    .build();
+
+            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
+                    .message("File upload failed: " + e.getMessage())
+                    .data(failureDTO)
+                    .build();
+
+            return ResponseEntity.status(500).body(result);
+        }
+    }
 
 }
