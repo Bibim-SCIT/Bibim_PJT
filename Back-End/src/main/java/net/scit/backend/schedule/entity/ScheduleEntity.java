@@ -45,9 +45,8 @@ public class ScheduleEntity {
     private LocalDateTime scheduleStartdate;
     private LocalDateTime scheduleFinishdate;
 
-    public static ScheduleEntity toEntity(ScheduleDTO scheduleDTO, MemberEntity member, WorkspaceEntity workspace, ScheduleStatus scheduleStatus) {
+    public static ScheduleEntity toEntity(ScheduleDTO scheduleDTO, WorkspaceEntity workspace, ScheduleStatus scheduleStatus) {
         return ScheduleEntity.builder()
-                .member(member)
                 .workspace(workspace)
                 .scheduleTitle(scheduleDTO.getScheduleTitle())
                 .scheduleContent(scheduleDTO.getScheduleContent())

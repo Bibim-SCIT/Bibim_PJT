@@ -11,7 +11,7 @@ import java.util.List;
 public interface WorkdataService {
 
     //자료글 전체 조회
-    ResultDTO<List<WorkdataDTO>> workdata();
+    ResultDTO<List<WorkdataDTO>> workdata(Long wsId);
 
     //자료글 개별 조회
     ResultDTO<WorkdataDTO> workdataDetail(Long wsId, Long dataNumber);

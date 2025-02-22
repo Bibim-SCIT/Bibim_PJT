@@ -54,10 +54,9 @@ public class WorkdataServiceImpl implements WorkdataService {
      */
     @Override
     @Transactional
-    public ResultDTO<List<WorkdataDTO>> workdata() {
-
-        // 전체 자료 조회
-        List<WorkdataEntity> workdataEntities = workdataRepository.findAll();
+    public ResultDTO<List<WorkdataDTO>> workdata(Long wsId) {
+        // 특정 워크스페이스에 속한 자료만 조회
+        List<WorkdataEntity> workdataEntities = workdataRepository.findByWorkspaceEntity_WsId(wsId);
 
         // Entity -> DTO 변환
         List<WorkdataDTO> workdataDTOs = workdataEntities.stream()
