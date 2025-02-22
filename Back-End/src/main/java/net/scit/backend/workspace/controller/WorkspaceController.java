@@ -97,8 +97,8 @@ public class WorkspaceController
      * @return
      */
     @PostMapping("/invite")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workspaseInvate(@RequestParam Long wsId,
-                                  @RequestParam String email) 
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaseInvate(@RequestParam("wsId") Long wsId,
+                                                                @RequestParam("email") String email) 
     {
         ResultDTO<SuccessDTO> result = workspaceService.workspaseInvate(wsId,email);
         return ResponseEntity.ok(result);
@@ -109,7 +109,7 @@ public class WorkspaceController
      * @return
      */
     @PostMapping("/add")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workspaseAdd(InvateWorkspaceDTO invateWorkspaceDTO) 
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaseAdd(@ModelAttribute InvateWorkspaceDTO invateWorkspaceDTO) 
     {
         
         ResultDTO<SuccessDTO> result = workspaceService.workspaseAdd(invateWorkspaceDTO);

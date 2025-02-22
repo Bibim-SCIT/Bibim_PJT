@@ -9,6 +9,6 @@ import net.scit.backend.workspace.entity.WorkspaceRoleEntity;
 public interface WorkspaceRoleRepository extends JpaRepository<WorkspaceRoleEntity,Long>
 {
 
-    Optional<WorkspaceRoleEntity> findByWsIdAndChRole(Long wsID, String string);
+    Optional<WorkspaceRoleEntity> findByWorkspace_wsIdAndChRole(Long wsId, String chRole);
 
 }

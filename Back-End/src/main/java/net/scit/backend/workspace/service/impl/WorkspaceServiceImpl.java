@@ -154,7 +154,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         // 현재 로그인 한 이메일을 받음음
         String email = AuthUtil.getLoginUserId();
         // 워크스페이스 id 검색
-        Long wsId = workspaceRepository.findWorkspaceIdByWsNameAndEmail(wsName, email);
+        Long wsId = workspaceRepository.findWsIdByWsNameAndEmail(wsName, email);
         WorkspaceEntity w = workspaceRepository.findById(wsId).get();
         // 사진 삭제
         s3Uploader.deleteFile(w.getWsImg());
@@ -204,7 +204,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     @Override
     public ResultDTO<SuccessDTO> workspaceUpdate(String wsName, String newName, MultipartFile file) {
         String email = AuthUtil.getLoginUserId();
-        Long wsId = workspaceRepository.findWorkspaceIdByWsNameAndEmail(wsName, email);
+        Long wsId = workspaceRepository.findWsIdByWsNameAndEmail(wsName, email);
         WorkspaceEntity workspaceEntity = workspaceRepository.findById(wsId).get();
         // // 프로필 이미지
         // String imageUrl = null;
@@ -279,7 +279,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         }
 
         // 0. 해당 유저가 이미 워크스페이스에 존재하는지 확인
-        if (workspaceMemberRepository.findByWsIdAndEmail(wsId, email).isEmpty()) {
+        if (!workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email).isEmpty()) {
             SuccessDTO successDTO = SuccessDTO.builder()
                     .success(false)
                     .build();
@@ -336,7 +336,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         // DB에서 현재 워크스페이스에 대한 정보를 가져옴
         WorkspaceEntity workspaceEntity = workspaceRepository.findById(invateWorkspaceDTO.getWsID()).get();
         // DB에서 현재 워크스페이스 채널 권한 중 기본 권한 정보를 가져옴
-        WorkspaceRoleEntity workspaceRoleEntity = workspaceRoleRepository.findByWsIdAndChRole(invateWorkspaceDTO.getWsID(),"None").get();
+        WorkspaceRoleEntity workspaceRoleEntity = workspaceRoleRepository.findByWorkspace_wsIdAndChRole(invateWorkspaceDTO.getWsID(),"None").get();
 
         // 워크스페이스 멤버 엔티티에 저장
         WorkspaceMemberEntity workspaceMemberEntity = WorkspaceMemberEntity.builder()
@@ -367,12 +367,12 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         // 현재 로그인 한 이메일을 받음
         String email = AuthUtil.getLoginUserId();
         // 워크스페이스 id 검색
-        Long wsId = workspaceRepository.findWorkspaceIdByWsNameAndEmail(wsName, email);
+        Long wsId = workspaceRepository.findWsIdByWsNameAndEmail(wsName, email);
         // 해당 되는 멤버 삭제
-        workspaceMemberRepository.deleteByWsNameAndEmail(wsName, email);
+        workspaceMemberRepository.deleteByWorkspace_wsIdAndMember_Email(wsId, email);
 
         // 현재 워크스페이스에 멤버가 있나 확인
-        List<WorkspaceMemberEntity> wM = workspaceMemberRepository.findByWsId(wsId);
+        List<WorkspaceMemberEntity> wM = workspaceMemberRepository.findByWorkspace_wsId(wsId);
 
         // 멤버가 없으면 현재 워크스페이스 삭제
         if (wM.isEmpty()) {
