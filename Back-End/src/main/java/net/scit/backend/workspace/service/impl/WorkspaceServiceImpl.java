@@ -279,7 +279,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         }
 
         // 0. 해당 유저가 이미 워크스페이스에 존재하는지 확인
-        if (!workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email).isEmpty()) {
+        if (workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email).isEmpty()) {
             SuccessDTO successDTO = SuccessDTO.builder()
                     .success(false)
                     .build();
@@ -363,11 +363,12 @@ public class WorkspaceServiceImpl implements WorkspaceService {
      * @return
      */
     @Override
-    public ResultDTO<SuccessDTO> workspaceWithDrwal(String wsName) {
+    @Transactional
+    public ResultDTO<SuccessDTO> workspaceWithDrwal(Long wsId) {
         // 현재 로그인 한 이메일을 받음
         String email = AuthUtil.getLoginUserId();
         // 워크스페이스 id 검색
-        Long wsId = workspaceRepository.findWsIdByWsNameAndEmail(wsName, email);
+        // Long wsId = workspaceRepository.findWsIdByWsNameAndEmail(wsName, email);
         // 해당 되는 멤버 삭제
         workspaceMemberRepository.deleteByWorkspace_wsIdAndMember_Email(wsId, email);
 
