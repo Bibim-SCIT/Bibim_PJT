@@ -8,6 +8,7 @@ import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
+import net.scit.backend.schedule.dto.LargeTagDTO;
 import net.scit.backend.schedule.dto.ScheduleDTO;
 import net.scit.backend.schedule.entity.*;
 import net.scit.backend.schedule.repository.*;
@@ -43,13 +44,15 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         // 토큰으로 사용자 정보 가져오기
         String email = AuthUtil.getLoginUserId();
-        MemberEntity member = memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+        MemberEntity member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
         WorkspaceEntity workspace = workspaceRepository.findById(scheduleDTO.getWsId())
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
 
-        Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository.findByWorkspaceAndMember(workspace, member);
+        Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository
+                .findByWorkspaceAndMember(workspace, member);
         if (byWorkspaceAndMember.isEmpty()) {
             throw new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
         }
@@ -107,12 +110,15 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         // 토큰으로 사용자 정보 가져오기
         String email = AuthUtil.getLoginUserId();
-        MemberEntity member = memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+        MemberEntity member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
-        WorkspaceEntity workspace = workspaceRepository.findById(wsId).orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
+        WorkspaceEntity workspace = workspaceRepository.findById(wsId)
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
 
-        Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository.findByWorkspaceAndMember(workspace, member);
+        Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository
+                .findByWorkspaceAndMember(workspace, member);
         if (byWorkspaceAndMember.isEmpty()) {
             throw new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
         }
@@ -123,7 +129,8 @@ public class ScheduleServiceImpl implements ScheduleService {
             // 해당 스케줄의 담당자 찾기
             String nickname = null;
             MemberEntity memberEntity = scheduleEntity.getMember();
-            Optional<WorkspaceMemberEntity> byWorkspaceAndMember1 = workspaceMemberRepository.findByWorkspaceAndMember(workspace, memberEntity);
+            Optional<WorkspaceMemberEntity> byWorkspaceAndMember1 = workspaceMemberRepository
+                    .findByWorkspaceAndMember(workspace, memberEntity);
             if (byWorkspaceAndMember1.isPresent()) {
                 nickname = byWorkspaceAndMember1.get().getNickname();
             }
@@ -145,14 +152,16 @@ public class ScheduleServiceImpl implements ScheduleService {
     public ResultDTO<ScheduleDTO> getSchedule(Long scheduleNumber) {
 
         String email = AuthUtil.getLoginUserId();
-        MemberEntity member = memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+        MemberEntity member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         ScheduleEntity scheduleEntity = scheduleRepository.findByScheduleNumber(scheduleNumber)
                 .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
 
         WorkspaceEntity workspace = scheduleEntity.getWorkspace();
 
-        Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository.findByWorkspaceAndMember(workspace, member);
+        Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository
+                .findByWorkspaceAndMember(workspace, member);
         if (byWorkspaceAndMember.isEmpty()) {
             throw new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
         }
@@ -162,7 +171,8 @@ public class ScheduleServiceImpl implements ScheduleService {
         // 담당자 찾아오기
         String nickname = null;
         MemberEntity memberEntity = scheduleEntity.getMember();
-        Optional<WorkspaceMemberEntity> byWorkspaceAndMember1 = workspaceMemberRepository.findByWorkspaceAndMember(workspace, memberEntity);
+        Optional<WorkspaceMemberEntity> byWorkspaceAndMember1 = workspaceMemberRepository
+                .findByWorkspaceAndMember(workspace, memberEntity);
         if (byWorkspaceAndMember1.isPresent()) {
             nickname = byWorkspaceAndMember.get().getNickname();
         }
@@ -183,7 +193,8 @@ public class ScheduleServiceImpl implements ScheduleService {
     public ResultDTO<SuccessDTO> assignSchedule(Long scheduleNumber) {
 
         String email = AuthUtil.getLoginUserId();
-        MemberEntity member = memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+        MemberEntity member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         ScheduleEntity scheduleEntity = scheduleRepository.findByScheduleNumber(scheduleNumber)
                 .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
@@ -196,5 +207,34 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .build();
 
         return ResultDTO.of("해당 스케줄 담당에 성공했습니다.", successDTO);
+    }
+
+    /**
+     * 대분류 태그 생성
+     * 
+     * @param largeTagDTO
+     * @return
+     */
+    @Override
+    public ResultDTO<SuccessDTO> createLargeTag(LargeTagDTO largeTagDTO) {
+
+        // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
+        WorkspaceEntity workspace = workspaceRepository.findById(largeTagDTO.getWsId())
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
+
+        // 대분류 태그 생성
+        LargeTagEntity largeTagEntity = LargeTagEntity.builder()
+                .workspace(workspace)
+                .tagName(largeTagDTO.getTagName())
+                .tagColor(largeTagDTO.getTagColor())
+                .build();
+
+        largeTagRepository.save(largeTagEntity);
+
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+
+        return ResultDTO.of("대분류 태그가 생성되었습니다.", successDTO);
     }
 }
