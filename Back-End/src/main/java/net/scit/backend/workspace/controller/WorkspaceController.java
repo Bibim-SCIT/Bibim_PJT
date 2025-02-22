@@ -121,9 +121,10 @@ public class WorkspaceController
      * @return
      */
     @DeleteMapping("/withdrawal")
-    public String workspaceWithDrwal()
+    public ResponseEntity<ResultDTO<SuccessDTO>>  workspaceWithDrwal(@RequestParam("wsId") Long wsId)
     {
-        return null;
+        ResultDTO<SuccessDTO> result = workspaceService.workspaceWithDrwal(wsId);
+        return ResponseEntity.ok(result);
     }
 
     /**

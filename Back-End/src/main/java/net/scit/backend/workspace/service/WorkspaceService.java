@@ -27,6 +27,6 @@ public interface WorkspaceService
 
     public ResultDTO<SuccessDTO> workspaseAdd(InvateWorkspaceDTO invateWorkspaceDTO);
 
-    public ResultDTO<SuccessDTO> workspaceWithDrwal(String wsName);
+    public ResultDTO<SuccessDTO> workspaceWithDrwal(Long wsId);
 
 }
