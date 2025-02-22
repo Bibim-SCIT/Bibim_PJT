@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.workspace.dto.InvateWorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.service.WorkspaceService;
@@ -14,12 +15,6 @@ import org.hibernate.annotations.Fetch;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 
 
 
@@ -102,12 +97,11 @@ public class WorkspaceController
      * @return
      */
     @PostMapping("/invite")
-    public String workspaseInvate(@RequestParam String wsName,
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaseInvate(@RequestParam Long wsId,
                                   @RequestParam String email) 
     {
-        // ResultDTO<SuccessDTO> result = workspaceService.workspaceUpdate(wsName,newName,file);
-        // return ResponseEntity.ok(result);
-        return null;
+        ResultDTO<SuccessDTO> result = workspaceService.workspaseInvate(wsId,email);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -115,10 +109,11 @@ public class WorkspaceController
      * @return
      */
     @PostMapping("/add")
-    public String workspaseAdd() 
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaseAdd(InvateWorkspaceDTO invateWorkspaceDTO) 
     {
         
-        return null;
+        ResultDTO<SuccessDTO> result = workspaceService.workspaseAdd(invateWorkspaceDTO);
+        return ResponseEntity.ok(result);
     }
 
     /**
