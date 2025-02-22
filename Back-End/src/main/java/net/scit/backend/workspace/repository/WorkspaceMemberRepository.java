@@ -11,4 +11,14 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
     Optional<WorkspaceMemberEntity> findByWorkspaceAndMember(WorkspaceEntity workspace, MemberEntity member);
 
     List<WorkspaceMemberEntity> findAllByMemberEmail(String email);
+
+    // 수정 전: void deleteByWorkspaceWsIdAndMemberEmail(Long wsId, String email);
+    void deleteByWorkspace_wsIdAndMember_Email(Long wsId, String email);
+
+    // 수정 전: Optional<WorkspaceMemberEntity> findByWorkspaceWsIdAndMemberEmail(Long workspaceId, String email);
+    Optional<WorkspaceMemberEntity> findByWorkspace_wsIdAndMember_Email(Long workspaceId, String email);
+
+    // 수정 전: List<WorkspaceMemberEntity> findByWorkspaceWsId(Long wsId);
+    List<WorkspaceMemberEntity> findByWorkspace_wsId(Long wsId);
+
 }

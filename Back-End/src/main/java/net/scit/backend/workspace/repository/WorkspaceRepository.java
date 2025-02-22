@@ -15,7 +15,5 @@ public interface WorkspaceRepository extends JpaRepository<WorkspaceEntity, Long
            "JOIN WorkspaceMemberEntity wm ON w.wsId = wm.workspace.wsId " +
            "JOIN MemberEntity m ON wm.member.email = m.email " +
            "WHERE w.wsName = :wsName AND m.email = :email")
-    Long findWorkspaceIdByWsNameAndEmail(@Param("wsName") String wsName, @Param("email") String email);
-
-
+    Long findWsIdByWsNameAndEmail(@Param("wsName") String wsName, @Param("email") String email);
 }
