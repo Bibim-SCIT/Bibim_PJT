@@ -11,6 +11,7 @@ import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.schedule.dto.LargeTagDTO;
 import net.scit.backend.schedule.dto.MediumTagDTO;
 import net.scit.backend.schedule.dto.ScheduleDTO;
+import net.scit.backend.schedule.dto.SmallTagDTO;
 import net.scit.backend.schedule.entity.*;
 import net.scit.backend.schedule.repository.*;
 import net.scit.backend.schedule.service.ScheduleService;
@@ -267,5 +268,33 @@ public class ScheduleServiceImpl implements ScheduleService {
 
                 return ResultDTO.of("중분류 태그가 생성되었습니다.", successDTO);
 
+        }
+
+        /**
+         * 소분류 태그 생성
+         * 
+         * @param smallTagDTO
+         * @return
+         */
+        @Override
+        public ResultDTO<SuccessDTO> createSmallTag(SmallTagDTO smallTagDTO) {
+
+                // 중분류 식별자로 중분류 태그 찾기
+                MediumTagEntity mediumTagEntity = mediumTagRepository.findById(smallTagDTO.getMediumTagNumber())
+                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+                // 소분류 태그 생성
+                SmallTagEntity smallTagEntity = SmallTagEntity.builder()
+                                .mediumTag(mediumTagEntity)
+                                .tagName(smallTagDTO.getTagName())
+                                .build();
+
+                smallTagRepository.save(smallTagEntity);
+
+                SuccessDTO successDTO = SuccessDTO.builder()
+                                .success(true)
+                                .build();
+
+                return ResultDTO.of("소분류 태그가 생성되었습니다.", successDTO);
         }
 }
