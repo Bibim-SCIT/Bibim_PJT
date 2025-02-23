@@ -79,4 +79,15 @@ public class ScheduleController {
         ResultDTO<SuccessDTO> result = scheduleService.createSmallTag(smallTagDTO);
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * 대분류 태그 조회
+     *
+     * @return
+     */
+    @GetMapping("/tag/large")
+    public ResponseEntity<ResultDTO<List<LargeTagDTO>>> getLargeTags(@RequestParam Long wsId) {
+        ResultDTO<List<LargeTagDTO>> result = scheduleService.getLargeTags(wsId);
+        return ResponseEntity.ok(result);
+    }
 }
