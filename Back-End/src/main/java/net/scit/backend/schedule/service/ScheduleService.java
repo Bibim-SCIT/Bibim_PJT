@@ -28,4 +28,6 @@ public interface ScheduleService {
     ResultDTO<SuccessDTO> createSmallTag(SmallTagDTO smallTagDTO);
 
     ResultDTO<List<LargeTagDTO>> getLargeTags(Long wsId);
+
+    ResultDTO<List<MediumTagDTO>> getMediumTags(Long largeTagNumber);
 }
