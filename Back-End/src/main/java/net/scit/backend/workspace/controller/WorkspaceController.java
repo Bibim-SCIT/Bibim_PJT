@@ -132,9 +132,10 @@ public class WorkspaceController
      * @return
      */
     @DeleteMapping("/forcedrawal")
-    public String worksapceForceDrawal()
+    public ResponseEntity<ResultDTO<SuccessDTO>> worksapceForceDrawal(@RequestParam("wsId") Long wsId, @RequestParam String email)
     {
-        return null;
+        ResultDTO<SuccessDTO> result = workspaceService.worksapceForceDrawal(wsId, email);
+        return ResponseEntity.ok(result);
     }
 
     /**

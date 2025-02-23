@@ -32,9 +32,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.access.method.P;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 
 @Service
 @RequiredArgsConstructor
@@ -336,17 +333,18 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         // DB에서 현재 워크스페이스에 대한 정보를 가져옴
         WorkspaceEntity workspaceEntity = workspaceRepository.findById(invateWorkspaceDTO.getWsID()).get();
         // DB에서 현재 워크스페이스 채널 권한 중 기본 권한 정보를 가져옴
-        WorkspaceRoleEntity workspaceRoleEntity = workspaceRoleRepository.findByWorkspace_wsIdAndChRole(invateWorkspaceDTO.getWsID(),"None").get();
+        WorkspaceRoleEntity workspaceRoleEntity = workspaceRoleRepository
+                .findByWorkspace_wsIdAndChRole(invateWorkspaceDTO.getWsID(), "None").get();
 
         // 워크스페이스 멤버 엔티티에 저장
         WorkspaceMemberEntity workspaceMemberEntity = WorkspaceMemberEntity.builder()
-                                                        .workspace(workspaceEntity)
-                                                        .member(memberEntity)
-                                                        .wsRole("user")
-                                                        .chRoleNumber(workspaceRoleEntity)
-                                                        .nickname(memberEntity.getName())
-                                                        .profileImage(memberEntity.getProfileImage())
-                                                        .build();
+                .workspace(workspaceEntity)
+                .member(memberEntity)
+                .wsRole("user")
+                .chRoleNumber(workspaceRoleEntity)
+                .nickname(memberEntity.getName())
+                .profileImage(memberEntity.getProfileImage())
+                .build();
 
         workspaceMemberRepository.save(workspaceMemberEntity);
 
@@ -386,5 +384,35 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 .build();
         // 결과 반환
         return ResultDTO.of("워크스페이스 탈퇴에 성공했습니다.", successDTO);
+    }
+
+    @Override
+    @Transactional
+    public ResultDTO<SuccessDTO> worksapceForceDrawal(Long wsId, String email) {
+        // 현재 로그인 한 이메일을 받음
+        String e = AuthUtil.getLoginUserId();
+
+        WorkspaceMemberEntity workspaceMemberEntity = workspaceMemberRepository
+                .findByWorkspace_wsIdAndMember_Email(wsId, e).get();
+
+        // 권한 확인
+        if (workspaceMemberEntity.getWsRole() != "onwer") {
+            // 성공시 DTO 저장
+            SuccessDTO successDTO = SuccessDTO.builder()
+                    .success(false)
+                    .build();
+            // 결과 반환
+            return ResultDTO.of("해당 권한이 존재하지 않습니다.", successDTO);
+        }
+
+        // 해당 되는 멤버 삭제
+        workspaceMemberRepository.deleteByWorkspace_wsIdAndMember_Email(wsId, email);
+
+        // 성공시 DTO 저장
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+        // 결과 반환
+        return ResultDTO.of("워크스페이스 강퇴에 성공했습니다.", successDTO);
     }
 }
