@@ -3,6 +3,8 @@ package net.scit.backend.schedule.controller;
 import lombok.RequiredArgsConstructor;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.schedule.dto.LargeTagDTO;
+import net.scit.backend.schedule.dto.MediumTagDTO;
 import net.scit.backend.schedule.dto.ScheduleDTO;
 import net.scit.backend.schedule.dto.LargeTagDTO;
 import net.scit.backend.schedule.service.ScheduleService;
@@ -53,4 +55,16 @@ public class ScheduleController {
         ResultDTO<SuccessDTO> result = scheduleService.createLargeTag(largeTagDTO);
         return ResponseEntity.ok(result);
     }
+    /**
+     * 중분류 태그 생성
+     * 
+     * @param mediumTagDTO
+     * @return
+     */
+    @PostMapping("/tag/medium")
+    public ResponseEntity<ResultDTO<SuccessDTO>> createMediumTag(@RequestBody MediumTagDTO mediumTagDTO) {
+        ResultDTO<SuccessDTO> result = scheduleService.createMediumTag(mediumTagDTO);
+        return ResponseEntity.ok(result);
+    }
+
 }
