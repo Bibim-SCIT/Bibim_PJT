@@ -6,6 +6,7 @@ import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.schedule.dto.LargeTagDTO;
 import net.scit.backend.schedule.dto.MediumTagDTO;
 import net.scit.backend.schedule.dto.ScheduleDTO;
+import net.scit.backend.schedule.dto.LargeTagDTO;
 import net.scit.backend.schedule.service.ScheduleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -54,7 +55,6 @@ public class ScheduleController {
         ResultDTO<SuccessDTO> result = scheduleService.createLargeTag(largeTagDTO);
         return ResponseEntity.ok(result);
     }
-
     /**
      * 중분류 태그 생성
      * 
@@ -66,4 +66,5 @@ public class ScheduleController {
         ResultDTO<SuccessDTO> result = scheduleService.createMediumTag(mediumTagDTO);
         return ResponseEntity.ok(result);
     }
+
 }

@@ -30,6 +30,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ScheduleServiceImpl implements ScheduleService {
 
+
         private final ScheduleRepository scheduleRepository;
         private final MemberRepository memberRepository;
         private final WorkspaceRepository workspaceRepository;
@@ -105,6 +106,7 @@ public class ScheduleServiceImpl implements ScheduleService {
                                 .build();
 
                 return ResultDTO.of("스케쥴 등록에 성공 했습니다.", successDTO);
+
         }
 
         @Override
@@ -194,6 +196,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         @Override
         public ResultDTO<SuccessDTO> assignSchedule(Long scheduleNumber) {
 
+
                 String email = AuthUtil.getLoginUserId();
                 MemberEntity member = memberRepository.findByEmail(email)
                                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -201,12 +204,15 @@ public class ScheduleServiceImpl implements ScheduleService {
                 ScheduleEntity scheduleEntity = scheduleRepository.findByScheduleNumber(scheduleNumber)
                                 .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
 
+
                 scheduleEntity.setMember(member);
                 scheduleRepository.save(scheduleEntity);
+
 
                 SuccessDTO successDTO = SuccessDTO.builder()
                                 .success(true)
                                 .build();
+
 
                 return ResultDTO.of("해당 스케줄 담당에 성공했습니다.", successDTO);
         }
@@ -238,6 +244,7 @@ public class ScheduleServiceImpl implements ScheduleService {
                                 .build();
 
                 return ResultDTO.of("대분류 태그가 생성되었습니다.", successDTO);
+
         }
 
         /**
@@ -259,7 +266,9 @@ public class ScheduleServiceImpl implements ScheduleService {
                                 .tagName(mediumTagDTO.getTagName())
                                 .build();
 
+
                 mediumTagRepository.save(mediumTagEntity);
+
 
                 SuccessDTO successDTO = SuccessDTO.builder()
                                 .success(true)
@@ -267,5 +276,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
                 return ResultDTO.of("중분류 태그가 생성되었습니다.", successDTO);
 
+
         }
+
 }
