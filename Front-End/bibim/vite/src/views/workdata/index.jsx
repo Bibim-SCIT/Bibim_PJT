@@ -5,6 +5,9 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 // project imports
 import MainCard from "ui-component/cards/MainCard";
 
+// React Router 추가
+import { useNavigate } from "react-router-dom";
+
 // components
 import { useState } from "react";
 import FileTable from "./components/FileTable";
@@ -34,6 +37,7 @@ const filesData = [
 // ==============================|| 자료실 ||============================== //
 
 export default function WorkDataPage() {
+    const navigate = useNavigate(); // ✅ useNavigate 훅 사용
     const [files, setFiles] = useState(filesData);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedTag, setSelectedTag] = useState("전체");
@@ -46,9 +50,9 @@ export default function WorkDataPage() {
             (selectedTag === "전체" || file.tag === selectedTag)
     );
 
-    // 📤 파일 업로드 버튼 클릭 이벤트 (현재 알림창)
+    // 📤 파일 업로드 버튼 클릭 시 /workdata/create로 이동
     const handleUpload = () => {
-        alert("파일 업로드 기능은 아직 구현되지 않았습니다.");
+        navigate("/workdata/create"); // ✅ 파일 업로드 페이지로 이동
     };
 
     return (
