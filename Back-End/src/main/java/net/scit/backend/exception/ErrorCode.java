@@ -40,7 +40,7 @@ public enum ErrorCode {
     INVALID_TOKEN("잘못된 토큰 입니다.", HttpStatus.UNAUTHORIZED),
 
     // Redis 관련 예외 추가
-    REDIS_CONNECTION_FAILED("Redis 서버에 연결할 수 없습니다.", HttpStatus.INTERNAL_SERVER_ERROR),;
+    REDIS_CONNECTION_FAILED("Redis 서버에 연결할 수 없습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
 
     String message;
     HttpStatus status;

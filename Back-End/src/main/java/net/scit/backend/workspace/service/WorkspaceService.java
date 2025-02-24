@@ -31,4 +31,10 @@ public interface WorkspaceService
 
     public ResultDTO<SuccessDTO> worksapceForceDrawal(Long wsId, String email);
 
+    ResultDTO<SuccessDTO> worksapceRightCreate(Long wsId, String newRole);
+
+    ResultDTO<SuccessDTO> worksapceRightGrant(Long wsId, String email,Long chRole);
+
+    ResultDTO<SuccessDTO> worksapceRightDelete(Long wsId, Long chRole);
+
 }
