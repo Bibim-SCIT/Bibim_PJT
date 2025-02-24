@@ -25,4 +25,9 @@ public interface WorkdataService {
     //자료글 수정
     ResultDTO<WorkdataDTO> workdataUpdate(Long wsId, Long dataNumber, WorkdataDTO workdataDTO);
 
+    //자료 검색(workdata의 title, writer 기반)
+    ResultDTO<List<WorkdataDTO>> searchWorkdata(Long wsId, String keyword);
+
+    //자료 동적 정렬(writer, title, reg_date, file_name)
+    ResultDTO<List<WorkdataDTO>> getSortedWorkdata(Long wsId, String sortField, String sortOrder);
 }

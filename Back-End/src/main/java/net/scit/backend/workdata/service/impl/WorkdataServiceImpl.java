@@ -15,6 +15,7 @@ import net.scit.backend.workdata.repository.WorkdataRepository;
 import net.scit.backend.workdata.service.WorkdataService;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.repository.WorkspaceRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -204,6 +205,82 @@ public class WorkdataServiceImpl implements WorkdataService {
         return ResultDTO.of("자료글 수정에 성공했습니다.", updatedWorkdataDTO);
     }
 
+
+    /**
+     * 10. 검색 기능(workdata의 writer, title)
+     * @param wsId
+     * @param keyword
+     * @return
+     */
+    @Override
+    @Transactional
+    public ResultDTO<List<WorkdataDTO>> searchWorkdata(Long wsId, String keyword) {
+        // 1. WorkspaceEntity 조회
+        WorkspaceEntity workspaceEntity = workspaceRepository.findById(wsId)
+                .orElseThrow(() -> new IllegalArgumentException("워크스페이스를 찾을 수 없습니다."));
+
+        // 2. 검색: 워크스페이스 내에서 writer, title, fileName에 keyword가 포함된 자료글 조회
+        List<WorkdataEntity> entities = workdataRepository.searchByWorkspaceAndKeyword(wsId, keyword);
+
+        // 검색 결과가 없을 경우 메시지 반환
+        if (entities.isEmpty()) {
+            return ResultDTO.of("게시물이 존재하지 않습니다.", List.of());
+        }
+
+        // 3. 검색 결과를 DTO로 변환하여 반환
+        List<WorkdataDTO> dtos = entities.stream()
+                .map(WorkdataDTO::toDTO)
+                .toList();
+
+        return ResultDTO.of("검색 결과 조회에 성공했습니다.", dtos);
+    }
+
+
+    /**
+     * 11. 자료 동적 정렬(writer, title, reg_date, file_name)
+     * @param wsId
+     * @param sortField
+     * @param sortOrder
+     * @return
+     */
+    @Override
+    @Transactional
+    public ResultDTO<List<WorkdataDTO>> getSortedWorkdata(Long wsId, String sortField, String sortOrder) {
+        // 정렬 방향 결정 (asc 또는 desc)
+        Sort.Direction direction = sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        String property;
+
+        // 정렬 요소에 따른 엔티티 필드 매핑 (WorkdataEntity 기준)
+        switch (sortField.toLowerCase()) {
+            case "writer":
+                property = "writer";
+                break;
+            case "title":
+                property = "title";
+                break;
+            case "reg_date":
+                property = "regDate";
+                break;
+            case "file_name":
+                // WorkdataEntity와 연결된 WorkdataFileEntity의 fileName 필드
+                property = "workdataFile.fileName";
+                break;
+            default:
+                // 기본 정렬: reg_date 내림차순
+                property = "regDate";
+                direction = Sort.Direction.DESC;
+                break;
+        }
+        Sort sort = Sort.by(direction, property);
+
+        // 워크스페이스에 속한 자료글 조회 (정렬 적용)
+        List<WorkdataEntity> entities = workdataRepository.findByWorkspaceEntity_WsId(wsId, sort);
+        List<WorkdataDTO> dtos = entities.stream()
+                .map(WorkdataDTO::toDTO)
+                .toList();
+
+        return ResultDTO.of("각 요소별 자료글 정렬에 성공했습니다.", dtos);
+    }
 
 
 
