@@ -6,9 +6,7 @@ import net.scit.backend.schedule.dto.LargeTagDTO;
 import net.scit.backend.schedule.dto.MediumTagDTO;
 import net.scit.backend.schedule.dto.ScheduleDTO;
 import net.scit.backend.schedule.dto.SmallTagDTO;
-
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @Service
@@ -24,7 +22,7 @@ public interface ScheduleService {
     ResultDTO<SuccessDTO> createLargeTag(LargeTagDTO largeTagDTO);
 
     ResultDTO<SuccessDTO> createMediumTag(MediumTagDTO mediumTagDTO);
-
+  
     ResultDTO<SuccessDTO> createSmallTag(SmallTagDTO smallTagDTO);
 
     ResultDTO<List<LargeTagDTO>> getLargeTags(Long wsId);
