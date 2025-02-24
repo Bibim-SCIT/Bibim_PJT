@@ -3,10 +3,7 @@ package net.scit.backend.schedule.controller;
 import lombok.RequiredArgsConstructor;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
-import net.scit.backend.schedule.dto.LargeTagDTO;
-import net.scit.backend.schedule.dto.MediumTagDTO;
-import net.scit.backend.schedule.dto.ScheduleDTO;
-import net.scit.backend.schedule.dto.SmallTagDTO;
+import net.scit.backend.schedule.dto.*;
 import net.scit.backend.schedule.service.ScheduleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -47,10 +44,19 @@ public class ScheduleController {
     @PutMapping("/{scheduleNumber}/status")
     public ResponseEntity<ResultDTO<SuccessDTO>> changeScheduleStatus(@PathVariable Long scheduleNumber, @RequestParam char status) {
         ResultDTO<SuccessDTO> result = scheduleService.changeScheduleStatus(scheduleNumber, status);
-      
+        return ResponseEntity.ok(result);
+    }
+
+    @PutMapping("/{scheduleNumber}")
+    public ResponseEntity<ResultDTO<SuccessDTO>> changeSchedule(@PathVariable Long scheduleNumber,
+                                                                @RequestBody ChangeScheduleDTO changeScheduleDTO) {
+        ResultDTO<SuccessDTO> result = scheduleService.changeSchedule(scheduleNumber, changeScheduleDTO);
+        return ResponseEntity.ok(result);
+    }
+
     /**
      * 대분류 태그 생성
-     * 
+     *
      * @param largeTagDTO
      * @return
      */
@@ -59,9 +65,10 @@ public class ScheduleController {
         ResultDTO<SuccessDTO> result = scheduleService.createLargeTag(largeTagDTO);
         return ResponseEntity.ok(result);
     }
+
     /**
      * 중분류 태그 생성
-     * 
+     *
      * @param mediumTagDTO
      * @return
      */
@@ -73,7 +80,7 @@ public class ScheduleController {
 
     /**
      * 소분류 태그 생성
-     * 
+     *
      * @param smallTagDTO
      * @return
      */
@@ -91,5 +98,6 @@ public class ScheduleController {
     @GetMapping("/tag/large")
     public ResponseEntity<ResultDTO<List<LargeTagDTO>>> getLargeTags(@RequestParam Long wsId) {
         ResultDTO<List<LargeTagDTO>> result = scheduleService.getLargeTags(wsId);
+        return ResponseEntity.ok(result);
     }
 }

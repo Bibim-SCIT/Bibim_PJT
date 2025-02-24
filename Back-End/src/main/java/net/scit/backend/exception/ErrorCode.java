@@ -21,7 +21,7 @@ public enum ErrorCode {
 
     // Tag
     TAG_NOT_FOUND("해당 태그를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
-    INVALID_TAG_HIERARCHY("잘 못된 태드 계층 구조 입니다.", HttpStatus.BAD_REQUEST),
+    INVALID_TAG_HIERARCHY("잘 못된 태그 계층 구조 입니다.", HttpStatus.BAD_REQUEST),
 
     // Common
     PARSING_ERROR("파싱 오류가 발생했습니다.", HttpStatus.BAD_REQUEST),
