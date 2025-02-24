@@ -44,6 +44,12 @@ public class ScheduleController {
         return ResponseEntity.ok(result);
     }
 
+    @PutMapping("/{scheduleNumber}/status")
+    public ResponseEntity<ResultDTO<SuccessDTO>> changeScheduleStatus(@PathVariable Long scheduleNumber, @RequestParam char status) {
+        ResultDTO<SuccessDTO> result = scheduleService.changeScheduleStatus(scheduleNumber, status);
+        return ResponseEntity.ok(result);
+    }
+      
     /**
      * 대분류 태그 생성
      * 
@@ -55,6 +61,7 @@ public class ScheduleController {
         ResultDTO<SuccessDTO> result = scheduleService.createLargeTag(largeTagDTO);
         return ResponseEntity.ok(result);
     }
+
     /**
      * 중분류 태그 생성
      * 
