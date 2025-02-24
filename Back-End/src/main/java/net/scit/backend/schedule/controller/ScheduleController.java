@@ -114,7 +114,7 @@ public class ScheduleController {
         ResultDTO<List<SmallTagDTO>> result = scheduleService.getSmallTags(mediumTagNumber);
         return ResponseEntity.ok(result);
     }
-
+  
     /**
      * 대분류 태그 삭제
      * 
