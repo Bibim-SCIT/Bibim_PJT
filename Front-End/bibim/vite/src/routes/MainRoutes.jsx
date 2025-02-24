@@ -3,7 +3,7 @@ import { lazy } from 'react';
 // project imports
 import MainLayout from 'layout/MainLayout';
 import Loadable from 'ui-component/Loadable';
-import WorkDataPage from '../views/workdata';
+// import WorkDataPage from '../views/workdata';
 
 // dashboard routing
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')));
@@ -17,7 +17,9 @@ const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')))
 const DMPage = Loadable(lazy(() => import('views/dm')));
 const MeetingPage = Loadable(lazy(() => import('views/meeting')));
 const SamplePage = Loadable(lazy(() => import('views/sample-page')));
-const ReferencePage = Loadable(lazy(() => import('views/workdata')));
+const WorkDataPage = Loadable(lazy(() => import('views/workdata')));
+const WdCreatePage = Loadable(lazy(() => import('views/workdata_create')));
+const WdUpdatePage = Loadable(lazy(() => import('views/workdata_update')));
 const CalendarView = Loadable(lazy(() => import('views/schedule/calendar')));
 const GanttView = Loadable(lazy(() => import('views/schedule/gantt')));
 const OverallView = Loadable(lazy(() => import('views/schedule/overall')));
@@ -59,6 +61,14 @@ const MainRoutes = {
     {
       path: '/workdata',
       element: <WorkDataPage />
+    },
+    {
+      path: '/workdata/create',
+      element: <WdCreatePage />
+    },
+    {
+      path: '/workdata/update',
+      element: <WdUpdatePage />
     },
     {
       path: '/schedule/calendar',
