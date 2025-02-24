@@ -341,4 +341,121 @@ public class ScheduleServiceImpl implements ScheduleService {
                 // 대분류 태그 조회에 성공했습니다.
                 return ResultDTO.of("대분류 태그 조회에 성공했습니다.", largeTagDTOList);
         }
+
+        /**
+         * 중분류 태그 조회
+         * 
+         * @param largeTagNumber
+         * @return
+         */
+        @Override
+        public ResultDTO<List<MediumTagDTO>> getMediumTags(Long largeTagNumber) {
+
+                // 대분류 식별자로 대분류 태그 찾기
+                LargeTagEntity largeTagEntity = largeTagRepository.findById(largeTagNumber)
+                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+                // 중분류 태그 조회
+                List<MediumTagEntity> mediumTagEntityList = mediumTagRepository.findAllByLargeTag(largeTagEntity);
+                List<MediumTagDTO> mediumTagDTOList = new ArrayList<>();
+                for (MediumTagEntity mediumTagEntity : mediumTagEntityList) {
+                        mediumTagDTOList.add(MediumTagDTO.toDTO(mediumTagEntity));
+                }
+
+                // 중분류 태그 조회에 성공했습니다.
+                return ResultDTO.of("중분류 태그 조회에 성공했습니다.", mediumTagDTOList);
+        }
+
+        /**
+         * 소분류 태그 조회
+         * 
+         * @param mediumTagNumber
+         * @return
+         */
+        @Override
+        public ResultDTO<List<SmallTagDTO>> getSmallTags(Long mediumTagNumber) {
+
+                // 중분류 식별자로 중분류 태그 찾기
+                MediumTagEntity mediumTagEntity = mediumTagRepository.findById(mediumTagNumber)
+                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+                // 소분류 태그 조회
+                List<SmallTagEntity> smallTagEntityList = smallTagRepository.findAllByMediumTag(mediumTagEntity);
+                List<SmallTagDTO> smallTagDTOList = new ArrayList<>();
+                for (SmallTagEntity smallTagEntity : smallTagEntityList) {
+                        smallTagDTOList.add(SmallTagDTO.toDTO(smallTagEntity));
+                }
+
+                // 소분류 태그 조회에 성공했습니다.
+                return ResultDTO.of("소분류 태그 조회에 성공했습니다.", smallTagDTOList);
+        }
+
+        /**
+         * 대분류 태그 삭제
+         * 
+         * @param largeTagNumber
+         * @return
+         */
+        @Override
+        public ResultDTO<SuccessDTO> deleteLargeTag(Long largeTagNumber) {
+
+                // 대분류 태그 조회
+                LargeTagEntity largeTagEntity = largeTagRepository.findById(largeTagNumber)
+                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+                // 대분류 태그 삭제
+                largeTagRepository.delete(largeTagEntity);
+
+                SuccessDTO successDTO = SuccessDTO.builder()
+                                .success(true)
+                                .build();
+
+                return ResultDTO.of("대분류 태그 삭제에 성공했습니다.", successDTO);
+        }
+
+        /**
+         * 중분류 태그 삭제
+         * 
+         * @param mediumTagNumber
+         * @return
+         */
+        @Override
+        public ResultDTO<SuccessDTO> deleteMediumTag(Long mediumTagNumber) {
+
+                // 중분류 태그 조회
+                MediumTagEntity mediumTagEntity = mediumTagRepository.findById(mediumTagNumber)
+                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+                // 중분류 태그 삭제
+                mediumTagRepository.delete(mediumTagEntity);
+
+                SuccessDTO successDTO = SuccessDTO.builder()
+                                .success(true)
+                                .build();
+
+                return ResultDTO.of("중분류 태그 삭제에 성공했습니다.", successDTO);
+        }
+
+        /**
+         * 소분류 태그 삭제
+         * 
+         * @param smallTagNumber
+         * @return
+         */
+        @Override
+        public ResultDTO<SuccessDTO> deleteSmallTag(Long smallTagNumber) {
+
+                // 소분류 태그 조회
+                SmallTagEntity smallTagEntity = smallTagRepository.findById(smallTagNumber)
+                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+                // 소분류 태그 삭제
+                smallTagRepository.delete(smallTagEntity);
+
+                SuccessDTO successDTO = SuccessDTO.builder()
+                                .success(true)
+                                .build();
+
+                return ResultDTO.of("소분류 태그 삭제에 성공했습니다.", successDTO);
+        }
 }
