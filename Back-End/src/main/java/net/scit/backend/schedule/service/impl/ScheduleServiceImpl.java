@@ -402,4 +402,27 @@ public class ScheduleServiceImpl implements ScheduleService {
 
                 return ResultDTO.of("대분류 태그 삭제에 성공했습니다.", successDTO);
         }
+
+        /**
+         * 중분류 태그 삭제
+         * 
+         * @param mediumTagNumber
+         * @return
+         */
+        @Override
+        public ResultDTO<SuccessDTO> deleteMediumTag(Long mediumTagNumber) {
+
+                // 중분류 태그 조회
+                MediumTagEntity mediumTagEntity = mediumTagRepository.findById(mediumTagNumber)
+                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+                // 중분류 태그 삭제
+                mediumTagRepository.delete(mediumTagEntity);
+
+                SuccessDTO successDTO = SuccessDTO.builder()
+                                .success(true)
+                                .build();
+
+                return ResultDTO.of("중분류 태그 삭제에 성공했습니다.", successDTO);
+        }
 }
