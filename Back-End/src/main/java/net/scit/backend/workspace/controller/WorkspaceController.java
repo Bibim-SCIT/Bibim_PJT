@@ -132,9 +132,10 @@ public class WorkspaceController
      * @return
      */
     @DeleteMapping("/forcedrawal")
-    public String worksapceForceDrawal()
+    public ResponseEntity<ResultDTO<SuccessDTO>> worksapceForceDrawal(@RequestParam("wsId") Long wsId, @RequestParam("email") String email)
     {
-        return null;
+        ResultDTO<SuccessDTO> result = workspaceService.worksapceForceDrawal(wsId, email);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -142,9 +143,10 @@ public class WorkspaceController
      * @return
      */
     @PostMapping("/right")
-    public String wsRightCreate()
+    public ResponseEntity<ResultDTO<SuccessDTO>> wsRightCreate(@RequestParam("wsId") Long wsId, @RequestParam("newRole") String newRole)
     {
-        return null;
+        ResultDTO<SuccessDTO> result = workspaceService.worksapceRightCreate(wsId,newRole);
+        return ResponseEntity.ok(result);
     }
     
     /**
@@ -152,9 +154,10 @@ public class WorkspaceController
      * @return
      */
     @PatchMapping("/right")
-    public String wsRightGrant()
+    public ResponseEntity<ResultDTO<SuccessDTO>> wsRightGrant(@RequestParam("wsId") Long wsId,@RequestParam("email") String email,@RequestParam("chRole") Long chRole)
     {
-        return null;
+        ResultDTO<SuccessDTO> result = workspaceService.worksapceRightGrant(wsId, email, chRole);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -162,9 +165,10 @@ public class WorkspaceController
      * @return
      */
     @DeleteMapping("/right")
-    public String wsRightDelete()
+    public ResponseEntity<ResultDTO<SuccessDTO>> wsRightDelete(@RequestParam("wsId") Long wsId, @RequestParam("wsId") Long chRole)
     {
-        return null;
+        ResultDTO<SuccessDTO> result = workspaceService.worksapceRightDelete(wsId, chRole);
+        return ResponseEntity.ok(result);
     }
 
     

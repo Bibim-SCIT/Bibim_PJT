@@ -13,6 +13,7 @@ public enum ErrorCode {
     // WorkSpace
     WORKSPACE_NOT_FOUND("해당 워크스페이스를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     WORKSPACE_MEMBER_NOT_FOUND("해당 워크스페이스의 멤버가 아닙니다.", HttpStatus.FORBIDDEN),
+    WORKSPACE_MEMBER_NOT_HAVE_ROLE("해당 권한이 없습니다.", HttpStatus.FORBIDDEN),
 
     // Schedule
     INVALID_SCHEDULE_STATUS("알 수 없는 일정 상태 입니다.", HttpStatus.BAD_REQUEST),
@@ -39,7 +40,7 @@ public enum ErrorCode {
     INVALID_TOKEN("잘못된 토큰 입니다.", HttpStatus.UNAUTHORIZED),
 
     // Redis 관련 예외 추가
-    REDIS_CONNECTION_FAILED("Redis 서버에 연결할 수 없습니다.", HttpStatus.INTERNAL_SERVER_ERROR),;
+    REDIS_CONNECTION_FAILED("Redis 서버에 연결할 수 없습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
 
     String message;
     HttpStatus status;

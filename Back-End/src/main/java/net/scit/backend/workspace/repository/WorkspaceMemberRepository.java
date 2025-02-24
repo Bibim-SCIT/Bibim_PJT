@@ -21,4 +21,6 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
     // 수정 전: List<WorkspaceMemberEntity> findByWorkspaceWsId(Long wsId);
     List<WorkspaceMemberEntity> findByWorkspace_wsId(Long wsId);
 
+    List<WorkspaceMemberEntity> findByChRoleNumber_ChRoleNumber(Long chRoleNumber);
+
 }
