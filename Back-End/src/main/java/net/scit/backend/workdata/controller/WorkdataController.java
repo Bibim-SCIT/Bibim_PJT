@@ -304,4 +304,25 @@ public class WorkdataController {
         }
     }
 
+    /**
+     * 10. 검색
+     */
+    @GetMapping("/search")
+    public ResponseEntity<ResultDTO<List<WorkdataDTO>>> searchWorkdata(@RequestParam("wsId") Long wsId,
+                                                                       @RequestParam("keyword") String keyword) {
+        ResultDTO<List<WorkdataDTO>> result = workdataService.searchWorkdata(wsId, keyword);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 11. 동적 자료 정렬(writer, title, reg_date, file_name)
+     */
+    @GetMapping("/sort")
+    public ResponseEntity<ResultDTO<List<WorkdataDTO>>> getSortedWorkdata(
+            @RequestParam("wsId") Long wsId,
+            @RequestParam("sortField") String sortField,
+            @RequestParam("sortOrder") String sortOrder) {
+        ResultDTO<List<WorkdataDTO>> result = workdataService.getSortedWorkdata(wsId, sortField, sortOrder);
+        return ResponseEntity.ok(result);
+    }
 }
