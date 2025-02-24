@@ -55,7 +55,6 @@ public class ScheduleController {
         ResultDTO<SuccessDTO> result = scheduleService.createLargeTag(largeTagDTO);
         return ResponseEntity.ok(result);
     }
-
     /**
      * 중분류 태그 생성
      * 
