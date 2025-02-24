@@ -82,11 +82,24 @@ public class ScheduleController {
     /**
      * 대분류 태그 조회
      *
+     * @param wsId
      * @return
      */
     @GetMapping("/tag/large")
     public ResponseEntity<ResultDTO<List<LargeTagDTO>>> getLargeTags(@RequestParam Long wsId) {
         ResultDTO<List<LargeTagDTO>> result = scheduleService.getLargeTags(wsId);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 중분류 태그 조회
+     * 
+     * @param largeTagNumber
+     * @return
+     */
+    @GetMapping("/tag/medium")
+    public ResponseEntity<ResultDTO<List<MediumTagDTO>>> getMediumTags(@RequestParam Long largeTagNumber) {
+        ResultDTO<List<MediumTagDTO>> result = scheduleService.getMediumTags(largeTagNumber);
         return ResponseEntity.ok(result);
     }
 }
