@@ -20,7 +20,8 @@ public enum ErrorCode {
 
     // Tag
     TAG_NOT_FOUND("해당 태그를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
-    INVALID_TAG_HIERARCHY("잘 못된 태드 계층 구조 입니다.", HttpStatus.BAD_REQUEST),
+    INVALID_TAG_HIERARCHY("잘못된 태그 계층 구조 입니다.", HttpStatus.BAD_REQUEST),
+    TAG_DUPLICATE("이미 생성한 태그입니다.", HttpStatus.BAD_REQUEST),
 
     // Common
     PARSING_ERROR("파싱 오류가 발생했습니다.", HttpStatus.BAD_REQUEST),
@@ -39,7 +40,7 @@ public enum ErrorCode {
     INVALID_TOKEN("잘못된 토큰 입니다.", HttpStatus.UNAUTHORIZED),
 
     // Redis 관련 예외 추가
-    REDIS_CONNECTION_FAILED("Redis 서버에 연결할 수 없습니다.", HttpStatus.INTERNAL_SERVER_ERROR),;
+    REDIS_CONNECTION_FAILED("Redis 서버에 연결할 수 없습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
 
     String message;
     HttpStatus status;
