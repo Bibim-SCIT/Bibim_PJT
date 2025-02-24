@@ -114,6 +114,7 @@ public class ScheduleController {
         ResultDTO<List<SmallTagDTO>> result = scheduleService.getSmallTags(mediumTagNumber);
         return ResponseEntity.ok(result);
     }
+
     /**
      * 대분류 태그 삭제
      * 
@@ -135,6 +136,18 @@ public class ScheduleController {
     @DeleteMapping("/tag/medium")
     public ResponseEntity<ResultDTO<SuccessDTO>> deleteMediumTag(@RequestParam Long mediumTagNumber) {
         ResultDTO<SuccessDTO> result = scheduleService.deleteMediumTag(mediumTagNumber);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 소분류 태그 삭제
+     * 
+     * @param smallTagNumber
+     * @return
+     */
+    @DeleteMapping("/tag/small")
+    public ResponseEntity<ResultDTO<SuccessDTO>> deleteSmallTag(@RequestParam Long smallTagNumber) {
+        ResultDTO<SuccessDTO> result = scheduleService.deleteSmallTag(smallTagNumber);
         return ResponseEntity.ok(result);
     }
 }
