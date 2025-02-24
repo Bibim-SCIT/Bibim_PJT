@@ -3,7 +3,10 @@ package net.scit.backend.schedule.controller;
 import lombok.RequiredArgsConstructor;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.schedule.dto.LargeTagDTO;
+import net.scit.backend.schedule.dto.MediumTagDTO;
 import net.scit.backend.schedule.dto.ScheduleDTO;
+import net.scit.backend.schedule.dto.SmallTagDTO;
 import net.scit.backend.schedule.service.ScheduleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -44,6 +47,49 @@ public class ScheduleController {
     @PutMapping("/{scheduleNumber}/status")
     public ResponseEntity<ResultDTO<SuccessDTO>> changeScheduleStatus(@PathVariable Long scheduleNumber, @RequestParam char status) {
         ResultDTO<SuccessDTO> result = scheduleService.changeScheduleStatus(scheduleNumber, status);
+      
+    /**
+     * 대분류 태그 생성
+     * 
+     * @param largeTagDTO
+     * @return
+     */
+    @PostMapping("/tag/large")
+    public ResponseEntity<ResultDTO<SuccessDTO>> createLargeTag(@RequestBody LargeTagDTO largeTagDTO) {
+        ResultDTO<SuccessDTO> result = scheduleService.createLargeTag(largeTagDTO);
         return ResponseEntity.ok(result);
+    }
+    /**
+     * 중분류 태그 생성
+     * 
+     * @param mediumTagDTO
+     * @return
+     */
+    @PostMapping("/tag/medium")
+    public ResponseEntity<ResultDTO<SuccessDTO>> createMediumTag(@RequestBody MediumTagDTO mediumTagDTO) {
+        ResultDTO<SuccessDTO> result = scheduleService.createMediumTag(mediumTagDTO);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 소분류 태그 생성
+     * 
+     * @param smallTagDTO
+     * @return
+     */
+    @PostMapping("/tag/small")
+    public ResponseEntity<ResultDTO<SuccessDTO>> createSmallTag(@RequestBody SmallTagDTO smallTagDTO) {
+        ResultDTO<SuccessDTO> result = scheduleService.createSmallTag(smallTagDTO);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 대분류 태그 조회
+     *
+     * @return
+     */
+    @GetMapping("/tag/large")
+    public ResponseEntity<ResultDTO<List<LargeTagDTO>>> getLargeTags(@RequestParam Long wsId) {
+        ResultDTO<List<LargeTagDTO>> result = scheduleService.getLargeTags(wsId);
     }
 }

@@ -1,5 +1,6 @@
 package net.scit.backend.common;
 
+import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
@@ -8,6 +9,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Data
 @RequiredArgsConstructor(staticName = "of")
+@Builder
 public class ResultDTO<T> {
     private final String message;
     private final T data;
