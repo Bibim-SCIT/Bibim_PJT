@@ -355,4 +355,28 @@ public class ScheduleServiceImpl implements ScheduleService {
                 // 중분류 태그 조회에 성공했습니다.
                 return ResultDTO.of("중분류 태그 조회에 성공했습니다.", mediumTagDTOList);
         }
+
+        /**
+         * 소분류 태그 조회
+         * 
+         * @param mediumTagNumber
+         * @return
+         */
+        @Override
+        public ResultDTO<List<SmallTagDTO>> getSmallTags(Long mediumTagNumber) {
+
+                // 중분류 식별자로 중분류 태그 찾기
+                MediumTagEntity mediumTagEntity = mediumTagRepository.findById(mediumTagNumber)
+                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+                // 소분류 태그 조회
+                List<SmallTagEntity> smallTagEntityList = smallTagRepository.findAllByMediumTag(mediumTagEntity);
+                List<SmallTagDTO> smallTagDTOList = new ArrayList<>();
+                for (SmallTagEntity smallTagEntity : smallTagEntityList) {
+                        smallTagDTOList.add(SmallTagDTO.toDTO(smallTagEntity));
+                }
+
+                // 소분류 태그 조회에 성공했습니다.
+                return ResultDTO.of("소분류 태그 조회에 성공했습니다.", smallTagDTOList);
+        }
 }

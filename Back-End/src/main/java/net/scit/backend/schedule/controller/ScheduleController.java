@@ -102,4 +102,16 @@ public class ScheduleController {
         ResultDTO<List<MediumTagDTO>> result = scheduleService.getMediumTags(largeTagNumber);
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * 소분류 태그 조회
+     * 
+     * @param mediumTagNumber
+     * @return
+     */
+    @GetMapping("/tag/small")
+    public ResponseEntity<ResultDTO<List<SmallTagDTO>>> getSmallTags(@RequestParam Long mediumTagNumber) {
+        ResultDTO<List<SmallTagDTO>> result = scheduleService.getSmallTags(mediumTagNumber);
+        return ResponseEntity.ok(result);
+    }
 }
