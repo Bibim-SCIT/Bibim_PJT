@@ -114,6 +114,7 @@ const FileTable = ({ files, setFiles }) => {
                                 key={file.id}
                                 hover
                             >
+                                {/* 제목 */}
                                 <TableCell
                                     sx={{
                                         cursor: "pointer",
@@ -123,14 +124,21 @@ const FileTable = ({ files, setFiles }) => {
                                         textOverflow: "ellipsis"
                                     }}
                                     onClick={() => handleOpenModal(file)}
-                                >{file.title}</TableCell>
+                                >
+                                    {file.title}
+                                </TableCell>
+
+                                {/* 파일명 */}
                                 <TableCell
                                     sx={{
                                         cursor: "pointer",
                                         maxWidth: 250,  // 🔹 최대 너비 설정
                                         whiteSpace: "nowrap",
                                         overflow: "hidden",
-                                        textOverflow: "ellipsis"
+                                        textOverflow: "ellipsis",
+                                        borderRadius: 1,  // 🔹 모서리 둥글게
+                                        padding: "4px 8px", // 🔹 패딩 추가
+                                        // border: "1px solid #E0E0E0", // 🔹 테두리 추가
                                     }}
                                     onClick={() => handleOpenModal(file)}
                                 >
@@ -153,10 +161,16 @@ const FileTable = ({ files, setFiles }) => {
                                         </Typography>
                                     </Box>
                                 </TableCell>
+
+                                {/* 태그 */}
                                 <TableCell>
                                     <Chip label={file.tag} color={tagColors[file.tag] || "default"} />
                                 </TableCell>
+
+                                {/* 업로드 날짜 */}
                                 <TableCell>{file.date}</TableCell>
+
+                                {/* 업로더 */}
                                 <TableCell>
                                     {/* 👤 업로더 정렬 (Avatar + 이름 수평 정렬) */}
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -164,8 +178,16 @@ const FileTable = ({ files, setFiles }) => {
                                         <Typography variant="body2">{file.uploader}</Typography>
                                     </Box>
                                 </TableCell>
+
+                                {/* 기능 */}
                                 <TableCell>
-                                    <Button variant="contained" size="small" color="success" sx={{ marginRight: 1 }}>
+                                    <Button
+                                        variant="contained"
+                                        size="small"
+                                        color="info"
+                                        sx={{ marginRight: 1 }}
+                                        onClick={() => alert("다운로드 기능")}
+                                    >
                                         다운로드
                                     </Button>
                                     <Button variant="contained" size="small" color="error" onClick={() => handleDelete(file.id)}>
@@ -176,10 +198,10 @@ const FileTable = ({ files, setFiles }) => {
                         ))}
                     </TableBody>
                 </Table>
-            </TableContainer>
+            </TableContainer >
 
             {/* 파일 정보 모달 */}
-            <Dialog open={openModal} onClose={handleCloseModal}>
+            <Dialog Dialog open={openModal} onClose={handleCloseModal} >
                 <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     📁 파일 정보
                     <IconButton onClick={handleCloseModal}>
@@ -234,7 +256,7 @@ const FileTable = ({ files, setFiles }) => {
                     <Button variant="contained" color="warning">✏️ 파일 수정</Button>
                     <Button variant="contained" color="error" onClick={() => modalhandleDelete(selectedFile)}>🗑️ 파일 삭제</Button>
                 </DialogActions>
-            </Dialog>
+            </Dialog >
 
         </>
     );
