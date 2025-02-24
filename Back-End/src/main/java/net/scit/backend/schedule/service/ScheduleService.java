@@ -16,4 +16,6 @@ public interface ScheduleService {
     ResultDTO<ScheduleDTO> getSchedule(Long scheduleNumber);
 
     ResultDTO<SuccessDTO> assignSchedule(Long scheduleNumber);
+
+    ResultDTO<SuccessDTO> changeScheduleStatus(Long scheduleNumber, char status);
 }

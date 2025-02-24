@@ -40,4 +40,10 @@ public class ScheduleController {
         ResultDTO<SuccessDTO> result = scheduleService.assignSchedule(scheduleNumber);
         return ResponseEntity.ok(result);
     }
+
+    @PutMapping("/{scheduleNumber}/status")
+    public ResponseEntity<ResultDTO<SuccessDTO>> changeScheduleStatus(@PathVariable Long scheduleNumber, @RequestParam char status) {
+        ResultDTO<SuccessDTO> result = scheduleService.changeScheduleStatus(scheduleNumber, status);
+        return ResponseEntity.ok(result);
+    }
 }

@@ -49,10 +49,8 @@ public class ScheduleServiceImpl implements ScheduleService {
         WorkspaceEntity workspace = workspaceRepository.findById(scheduleDTO.getWsId())
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
 
-        Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository.findByWorkspaceAndMember(workspace, member);
-        if (byWorkspaceAndMember.isEmpty()) {
-            throw new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
-        }
+        workspaceMemberRepository.findByWorkspaceAndMember(workspace, member)
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
 
         // 스케쥴 등록
         ScheduleEntity scheduleEntity = ScheduleEntity.toEntity(scheduleDTO, workspace, ScheduleStatus.UNASSIGNED);
@@ -112,10 +110,8 @@ public class ScheduleServiceImpl implements ScheduleService {
         // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
         WorkspaceEntity workspace = workspaceRepository.findById(wsId).orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
 
-        Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository.findByWorkspaceAndMember(workspace, member);
-        if (byWorkspaceAndMember.isEmpty()) {
-            throw new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
-        }
+        workspaceMemberRepository.findByWorkspaceAndMember(workspace, member)
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
 
         List<ScheduleEntity> scheduleEntityList = scheduleRepository.findAllByWorkspace(workspace);
         List<ScheduleDTO> scheduleDTOList = new ArrayList<>();
@@ -152,10 +148,8 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         WorkspaceEntity workspace = scheduleEntity.getWorkspace();
 
-        Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository.findByWorkspaceAndMember(workspace, member);
-        if (byWorkspaceAndMember.isEmpty()) {
-            throw new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
-        }
+        WorkspaceMemberEntity workspaceMemberEntity = workspaceMemberRepository.findByWorkspaceAndMember(workspace, member)
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
 
         ScheduleDTO scheduleDTO = null;
 
@@ -164,7 +158,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         MemberEntity memberEntity = scheduleEntity.getMember();
         Optional<WorkspaceMemberEntity> byWorkspaceAndMember1 = workspaceMemberRepository.findByWorkspaceAndMember(workspace, memberEntity);
         if (byWorkspaceAndMember1.isPresent()) {
-            nickname = byWorkspaceAndMember.get().getNickname();
+            nickname = workspaceMemberEntity.getNickname();
         }
 
         // 해당 스케줄의 태그 가져오기
@@ -196,5 +190,39 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .build();
 
         return ResultDTO.of("해당 스케줄 담당에 성공했습니다.", successDTO);
+    }
+
+    @Override
+    public ResultDTO<SuccessDTO> changeScheduleStatus(Long scheduleNumber, char status) {
+
+        String email = AuthUtil.getLoginUserId();
+        MemberEntity member = memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        ScheduleEntity scheduleEntity = scheduleRepository.findByScheduleNumber(scheduleNumber)
+                .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        // 해당 워크스페이스 멤버인지 확인
+        WorkspaceEntity workspace = scheduleEntity.getWorkspace();
+        workspaceMemberRepository.findByWorkspaceAndMember(workspace, member)
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
+
+        // 해당 스케줄의 담당자인지 확인
+        MemberEntity scheduleMember = scheduleEntity.getMember();
+        if (!scheduleMember.equals(member)) {
+            throw new CustomException(ErrorCode.INVALID_SCHEDULE_MEMBER);
+        }
+
+        scheduleEntity.setScheduleStatus(ScheduleStatus.fromCode(status));
+        // 상태를 미배정으로 바꾸면 담당자는 자동으로 해지됨
+        if (status == '1') {
+            scheduleEntity.setMember(null);
+        }
+        scheduleRepository.save(scheduleEntity);
+
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+
+        return ResultDTO.of("해당 스케줄 상태 변경에 성공했습니다.", successDTO);
     }
 }
