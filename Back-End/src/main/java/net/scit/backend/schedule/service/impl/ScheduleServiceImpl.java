@@ -368,4 +368,27 @@ public class ScheduleServiceImpl implements ScheduleService {
                 // 소분류 태그 조회에 성공했습니다.
                 return ResultDTO.of("소분류 태그 조회에 성공했습니다.", smallTagDTOList);
         }
+
+        /**
+         * 대분류 태그 삭제
+         * 
+         * @param largeTagNumber
+         * @return
+         */
+        @Override
+        public ResultDTO<SuccessDTO> deleteLargeTag(Long largeTagNumber) {
+
+                // 대분류 태그 조회
+                LargeTagEntity largeTagEntity = largeTagRepository.findById(largeTagNumber)
+                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+                // 대분류 태그 삭제
+                largeTagRepository.delete(largeTagEntity);
+
+                SuccessDTO successDTO = SuccessDTO.builder()
+                                .success(true)
+                                .build();
+
+                return ResultDTO.of("대분류 태그 삭제에 성공했습니다.", successDTO);
+        }
 }
