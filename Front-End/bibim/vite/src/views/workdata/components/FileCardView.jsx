@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     Card, CardContent, Typography, Grid, Avatar, Chip, Box, IconButton, Menu, MenuItem, Dialog,
     DialogTitle, DialogContent, DialogActions, Button, List, ListItem, ListItemIcon, ListItemText
@@ -38,6 +39,7 @@ const FileCardView = ({ files, setFiles }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
     const [openModal, setOpenModal] = useState(false);
+    const navigate = useNavigate();
 
     // 점 3개 버튼 클릭 (메뉴 열기)
     const handleMenuOpen = (event, file) => {
@@ -76,7 +78,7 @@ const FileCardView = ({ files, setFiles }) => {
 
     // 파일 삭제 기능 (모달 상태)
     const modalhandleDelete = (file) => {
-        const confirmDelete2 = window.confirm(`"${file.name}"을(를) 정말 삭제하시겠습니까?`);
+        const confirmDelete2 = window.confirm(`"${file.files[0]}"을(를) 정말 삭제하시겠습니까?`);
         if (confirmDelete2) {
             setFiles((prevFiles) => prevFiles.filter((f) => f.id !== file.id));
             setAnchorEl(null); // 메뉴 닫기
@@ -279,7 +281,16 @@ const FileCardView = ({ files, setFiles }) => {
 
                 <DialogActions>
                     <Button variant="contained" color="primary" onClick={() => alert("다운로드 기능")}>📥 파일 다운로드</Button>
-                    <Button variant="contained" color="warning">✏️ 수정</Button>
+                    <Button
+                        variant="contained"
+                        color="warning"
+                        onClick={() => {
+                            // 수정 버튼 클릭 시 workdata/update 페이지로 이동
+                            navigate('/workdata/update');
+                        }}
+                    >
+                        ✏️ 수정
+                    </Button>
                     <Button variant="contained" color="error" onClick={() => modalhandleDelete(selectedFile)}>🗑️ 파일 삭제</Button>
                 </DialogActions>
             </Dialog>
