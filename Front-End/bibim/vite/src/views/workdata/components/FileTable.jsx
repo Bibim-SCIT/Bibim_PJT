@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Button, Avatar, Chip, Box, Dialog,
     DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemIcon, ListItemText
@@ -37,6 +38,7 @@ const FileTable = ({ files, setFiles }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
     const [openModal, setOpenModal] = useState(false);
+    const navigate = useNavigate();
 
     // 파일명 줄이기 함수
     const truncateFileName = (fileName, maxLength) => {
@@ -278,7 +280,16 @@ const FileTable = ({ files, setFiles }) => {
 
                 <DialogActions>
                     <Button variant="contained" color="primary" onClick={() => alert("다운로드 기능")}>📥 파일 다운로드</Button>
-                    <Button variant="contained" color="warning">✏️ 수정</Button>
+                    <Button
+                        variant="contained"
+                        color="warning"
+                        onClick={() => {
+                            // 수정 버튼 클릭 시 workdata/update 페이지로 이동
+                            navigate('/workdata/update');
+                        }}
+                    >
+                        ✏️ 수정
+                    </Button>
                     <Button variant="contained" color="error" onClick={() => modalhandleDelete(selectedFile)}>🗑️ 파일 삭제</Button>
                 </DialogActions>
             </Dialog >
