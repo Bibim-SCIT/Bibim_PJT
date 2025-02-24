@@ -48,8 +48,24 @@ export default function WdCreatePage() {
 
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files);
+
+        if (fileList.length + files.length > 10) {
+            alert('파일은 최대 10개까지 업로드 가능합니다.');
+            return;
+        }
+
+        const existingFileNames = fileList.map((file) => file.name);
+        const duplicateFiles = files.filter((file) => existingFileNames.includes(file.name));
+
+        if (duplicateFiles.length > 0) {
+            alert(`"${duplicateFiles[0].name}" 파일은 이미 추가되어 있습니다.`);
+            return;
+        }
+
         setFileList((prev) => [...prev, ...files]);
     };
+
+
 
     const handleRemoveFile = (index) => {
         setFileList((prev) => prev.filter((_, idx) => idx !== index));
@@ -58,17 +74,27 @@ export default function WdCreatePage() {
     const handleTagInput = (e) => {
         if (e.key === ' ' || e.key === 'Enter') {
             e.preventDefault();
+            const newTag = tagInput.replace('#', '').trim();
+
             if (tags.length >= 3) {
                 setTagError('태그는 최대 3개까지 작성 가능합니다.');
                 return;
             }
-            if (tagInput.trim()) {
-                setTags((prev) => [...prev, tagInput.replace('#', '').trim()]);
+
+            if (tags.includes(newTag)) {
+                setTagError('해당 태그는 이미 있습니다.');
+                setTagInput('');
+                return;
+            }
+
+            if (newTag) {
+                setTags((prev) => [...prev, newTag]);
                 setTagInput('');
                 setTagError('');
             }
         }
     };
+
 
     const handleTagDelete = (tagToDelete) => {
         setTags((prev) => prev.filter((tag) => tag !== tagToDelete));
@@ -136,6 +162,7 @@ export default function WdCreatePage() {
                             startIcon={<CloudUploadIcon />}
                             onClick={() => fileInputRef.current.click()}
                             sx={{ ml: 2 }}
+                            disabled={fileList.length >= 10} // 🔥 10개 이상이면 비활성화
                         >
                             업로드
                         </Button>
@@ -146,6 +173,12 @@ export default function WdCreatePage() {
                             multiple
                             onChange={handleFileChange}
                         />
+                    </Box>
+                    {/* 🔥 추가된 안내문구 */}
+                    <Box sx={{ mt: 1 }}>
+                        <Typography variant="caption" color="textSecondary">
+                            파일은 최대 10개까지 업로드 가능합니다.
+                        </Typography>
                     </Box>
                 </Grid>
 
