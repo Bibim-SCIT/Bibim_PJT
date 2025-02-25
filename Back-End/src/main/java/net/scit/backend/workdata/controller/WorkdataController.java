@@ -337,10 +337,9 @@ public class WorkdataController {
      * 12. 태그 생성
      */
     @PostMapping("/file/tag")
-    public ResponseEntity<ResultDTO<SuccessDTO>> addFileTags(
-            @RequestParam("wsId") Long wsId,
-            @RequestParam("dataNumber") Long dataNumber,
-            @RequestBody Map<String, List<String>> requestBody) {
+    public ResponseEntity<ResultDTO<SuccessDTO>> addFileTags(   @RequestParam("wsId") Long wsId,
+                                                                @RequestParam("dataNumber") Long dataNumber,
+                                                                @RequestBody Map<String, List<String>> requestBody) {
         try {
             // 1. 워크스페이스 검증 (orElseThrow() 제거)
             Optional<WorkspaceEntity> workspaceOpt = workspaceRepository.findById(wsId);
@@ -428,7 +427,66 @@ public class WorkdataController {
         }
     }
 
+    /**
+     * 13. 태그 삭제
+     */
+    @DeleteMapping("/file/tag")
+    public ResponseEntity<ResultDTO<SuccessDTO>> deleteFileTag( @RequestParam("wsId") Long wsId,
+                                                                @RequestParam("dataNumber") Long dataNumber,
+                                                                @RequestBody Map<String, String> requestBody) {
+        try {
+            // 1. 워크스페이스 검증
+            Optional<WorkspaceEntity> workspaceOpt = workspaceRepository.findById(wsId);
+            if (!workspaceOpt.isPresent()) {
+                throw new IllegalArgumentException("워크스페이스를 찾을 수 없습니다.");
+            }
+            WorkspaceEntity workspaceEntity = workspaceOpt.get();
 
+            // 2. 자료글 검증
+            Optional<WorkdataEntity> workdataOpt = workdataRepository.findByDataNumberAndWorkspaceEntity(dataNumber, workspaceEntity);
+            if (!workdataOpt.isPresent()) {
+                throw new IllegalArgumentException("자료글을 찾을 수 없습니다.");
+            }
+            WorkdataEntity workdataEntity = workdataOpt.get();
+
+            // 3. 삭제할 태그 값 확인 (JSON에서 "tag" 필드)
+            String tag = requestBody.get("tag");
+            if (tag == null || tag.trim().isEmpty()) {
+                throw new IllegalArgumentException("삭제할 태그가 입력되지 않았습니다.");
+            }
+
+            // 4. 해당 태그 엔티티 조회
+            Optional<WorkDataFileTagEntity> tagEntityOpt = workdataFileTagRepository.findByTagAndWorkdataFileEntity_WorkdataEntity(tag, workdataEntity);
+            if (!tagEntityOpt.isPresent()) {
+                throw new IllegalArgumentException("해당 태그가 존재하지 않습니다.");
+            }
+
+            // 5. 태그 삭제
+            workdataFileTagRepository.delete(tagEntityOpt.get());
+
+            SuccessDTO successDTO = SuccessDTO.builder().success(true).build();
+            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
+                    .message("태그 삭제에 성공하였습니다.")
+                    .data(successDTO)
+                    .build();
+            return ResponseEntity.ok(result);
+
+        } catch (IllegalArgumentException e) {
+            SuccessDTO failureDTO = SuccessDTO.builder().success(false).build();
+            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
+                    .message(e.getMessage())
+                    .data(failureDTO)
+                    .build();
+            return ResponseEntity.badRequest().body(result);
+        } catch (Exception e) {
+            SuccessDTO failureDTO = SuccessDTO.builder().success(false).build();
+            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
+                    .message("태그 삭제에 실패하였습니다: " + e.getMessage())
+                    .data(failureDTO)
+                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
+        }
+    }
 
 
 
