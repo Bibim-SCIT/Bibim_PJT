@@ -2,11 +2,14 @@ package net.scit.backend.workdata.repository;
 
 import io.lettuce.core.dynamic.annotation.Param;
 import net.scit.backend.workdata.entity.WorkdataEntity;
+import net.scit.backend.workdata.entity.WorkdataFileEntity;
+import net.scit.backend.workspace.entity.WorkspaceEntity;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface WorkdataRepository extends JpaRepository<WorkdataEntity, Long> {
 
@@ -27,6 +30,6 @@ public interface WorkdataRepository extends JpaRepository<WorkdataEntity, Long> 
     // WorkdataRepository.java
     List<WorkdataEntity> findByWorkspaceEntity_WsId(Long wsId, Sort sort);
 
-
-
+    //태그 등록
+    Optional<WorkdataEntity> findByDataNumberAndWorkspaceEntity(Long dataNumber, WorkspaceEntity workspaceEntity);
 }
