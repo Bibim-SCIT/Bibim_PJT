@@ -33,8 +33,8 @@ public class WorkspaceMemberEntity {
     private MemberEntity member;
 
     @ManyToOne
-    @JoinColumn(name = "ch_role_number", nullable = false)
-    private WorkspaceRoleEntity chRoleNumber;
+    @JoinColumn(name = "ch_role_number")
+    private WorkspaceChannelRoleEntity chRoleNumber;
 
     @Builder.Default
     private String wsRole = "owner";

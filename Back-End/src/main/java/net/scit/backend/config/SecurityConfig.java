@@ -1,5 +1,6 @@
 package net.scit.backend.config;
 
+//import net.scit.backend.auth.CustomOAuth2SuccessHandler;
 import net.scit.backend.auth.JwtAuthenticationFilter;
 import net.scit.backend.auth.JwtTokenProvider;
 // import net.scit.backend.member.service.CustomOAuth2UserService;
@@ -32,22 +33,26 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
-    // private final CustomOAuth2UserService customOAuth2UserService;
+//    private final CustomOAuth2SuccessHandler customOAuth2SuccessHandler;
     private final UserDetailsService userDetailsService;
     private final RedisTemplate<String, String> redisTemplate;
 
     @Lazy
     @Autowired
-    public SecurityConfig(JwtTokenProvider jwtTokenProvider, // CustomOAuth2UserService customOAuth2UserService,
-            UserDetailsService userDetailsService, RedisTemplate<String, String> redisTemplate) {
+    public SecurityConfig(JwtTokenProvider jwtTokenProvider,
+//                          CustomOAuth2SuccessHandler customOAuth2SuccessHandler,
+                            UserDetailsService userDetailsService,
+                            RedisTemplate<String, String> redisTemplate) {
         this.jwtTokenProvider = jwtTokenProvider;
-        // this.customOAuth2UserService = customOAuth2UserService;
+//        this.customOAuth2SuccessHandler = customOAuth2SuccessHandler;
         this.userDetailsService = userDetailsService;
         this.redisTemplate = redisTemplate;
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http
+//                                                  , CustomOAuth2SuccessHandler customOAuth2SuccessHandler
+                                                    ) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable()) // CSRF 비활성화 (JWT 사용 시 필요 없음)
@@ -57,25 +62,21 @@ public class SecurityConfig {
                                 "/members/login",
                                 "/members/signup/send-mail", // ✅ 이메일 인증 요청 허용
                                 "/members/signup/check-mail", // ✅ 인증 코드 확인 요청 허용
-                                "/workdata/**",
-                                "/error")
+//                                "/auth/login/oauth2/code/google","/favicon.ico", // OAuth2 콜백 URL 허용 추가
+                                "/workdata/**", //자료실 관련(추후 삭제)
+                                "/error"  )
                         .permitAll() // 로그인 엔드포인트 허용
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 전용
                         .requestMatchers("/user/**", "/schedule/**","/members/myinfo","/members/changeinfo", "/members/withdraw").hasRole("USER") // 사용자 전용
-
                         .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
                 )
-                // OAuth2 로그인 설정
-                // .oauth2Login(oauth2 -> oauth2
-                // .userInfoEndpoint(userInfo -> userInfo
-                // .userService(customOAuth2UserService) // CustomOAuth2UserService
-                // // 등록
-                // )
-                // .defaultSuccessUrl("/members/myinfo", true) // 로그인 성공 시 이동할 경로
-                // )
-                // JWT 필터 추가
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService, redisTemplate),
-                        UsernamePasswordAuthenticationFilter.class);
+//                .oauth2Login(oauth2 -> oauth2
+//                        .successHandler(customOAuth2SuccessHandler)  // 필드 주입된 것을 직접 사용
+//                )
+                .addFilterBefore(
+                        new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService, redisTemplate),
+                        UsernamePasswordAuthenticationFilter.class
+                );
         return http.build();
     }
 

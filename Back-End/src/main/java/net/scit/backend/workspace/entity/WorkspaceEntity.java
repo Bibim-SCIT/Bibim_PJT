@@ -39,7 +39,7 @@ public class WorkspaceEntity
     private List<WorkspaceChannelEntity> channels = new ArrayList<>();
 
     @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<WorkspaceRoleEntity> roles = new ArrayList<>();
+    private List<WorkspaceChannelRoleEntity> roles = new ArrayList<>();
 
     // WorkdataEntity와의 관계 설정 (OneToMany, mappedBy 수정)
     @OneToMany(mappedBy = "workspaceEntity", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
