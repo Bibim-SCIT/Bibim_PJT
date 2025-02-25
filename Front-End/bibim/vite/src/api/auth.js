@@ -1,7 +1,8 @@
-import axios from "axios";
+/* eslint-disable prettier/prettier */
+import axios from 'axios';
 
 //const API_BASE_URL = "http://your-api-url.com/members"; // 백엔드 API 기본 URL
-const API_BASE_URL = "http://localhost:8080"; // 백엔드 API 기본 URL
+const API_BASE_URL = 'http://localhost:8080'; // 백엔드 API 기본 URL
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -51,7 +52,6 @@ export const sendVerificationEmail = async (email) => {
     }
 };
 
-
 // 이메일 인증 코드 확인
 export const verifyEmailCode = async (email, code) => {
     try {
@@ -81,7 +81,7 @@ export const registerUser = async (formData) => {
     }
 };
 
-// 로그인 요청 (2025.02.25)
+// 로그인 요청
 export const loginUser = async (email, password) => {
     try {
         const response = await api.post("/members/login", { email, password });
@@ -100,8 +100,6 @@ export const loginUser = async (email, password) => {
         // ✅ 설정이 반영되었는지 콘솔 출력
         console.log("🟢 요청 헤더에 JWT 설정 완료:", api.defaults.headers.common["Authorization"]);
 
-        // return data; // ✅ 사용자 정보 반환 (250225 오후 5시)
-        //return accessToken; // ✅ 토큰 반환
         // ✅ 로그인 성공 후 즉시 사용자 정보 요청
         const userInfo = await getUserInfo();
         return userInfo; // ✅ 사용자 정보 반환
@@ -124,6 +122,7 @@ export const logoutUser = async () => {
     }
 };
 
+// 
 export const getUserInfo = async () => {
     try {
         const response = await api.get("/members/myinfo");

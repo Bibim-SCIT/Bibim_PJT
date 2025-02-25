@@ -17,7 +17,6 @@ import MiniDrawerStyled from './MiniDrawerStyled';
 
 // 워크스페이스 셀렉터 import
 import WorkspaceSelector from './WorkspaceSelector';
-
 import useConfig from 'hooks/useConfig';
 import { drawerWidth } from 'store/constant';
 
@@ -25,83 +24,84 @@ import { handlerDrawerOpen, useGetMenuMaster } from 'api/menu';
 
 // ==============================|| SIDEBAR DRAWER ||============================== //
 
-function Sidebar() {
-  const downMD = useMediaQuery((theme) => theme.breakpoints.down('md'));
+function Sidebar()
+{
+    const downMD = useMediaQuery((theme) => theme.breakpoints.down('md'));
+    const { menuMaster } = useGetMenuMaster();
+    const drawerOpen = menuMaster.isDashboardDrawerOpened;
 
-  const { menuMaster } = useGetMenuMaster();
-  const drawerOpen = menuMaster.isDashboardDrawerOpened;
+    const { miniDrawer, mode } = useConfig();
 
-  const { miniDrawer, mode } = useConfig();
-
-  const logo = useMemo(
-    () => (
-      <Box sx={{ display: 'flex', p: 2 }}>
-        <LogoSection />
-      </Box>
-    ),
-    []
-  );
-
-  const drawer = useMemo(() => {
-    const drawerContent = (
-      <>
-        <WorkspaceSelector /> {/* ✅ 1️⃣ 최상단에 워크스페이스 선택자 추가 */}
-        <MenuList /> {/* ✅ 2️⃣ 그 아래에 메뉴 리스트 추가 */}
-        {drawerOpen && <MenuCard />} {/* ✅ 3️⃣ 마지막에 MenuCard 추가 */}
-      </>
+    const logo = useMemo(
+        () => (
+            <Box sx={{ display: 'flex', p: 2 }}>
+                <LogoSection />
+            </Box>
+        ),
+        []
     );
 
-    let drawerSX = { paddingLeft: '0px', paddingRight: '0px', marginTop: '20px' };
-    if (drawerOpen) drawerSX = { paddingLeft: '16px', paddingRight: '16px', marginTop: '0px' };
+    const drawer = useMemo(() =>
+    {
+        const drawerContent = (
+            <>
+                <WorkspaceSelector /> {/* ✅ 1️⃣ 최상단에 워크스페이스 선택자 추가 */}
+                <MenuList /> {/* ✅ 2️⃣ 그 아래에 메뉴 리스트 추가 */}
+                {drawerOpen && <MenuCard />} {/* ✅ 3️⃣ 마지막에 MenuCard 추가 */}
+            </>
+        );
+
+        let drawerSX = { paddingLeft: '0px', paddingRight: '0px', marginTop: '20px' };
+        if (drawerOpen) drawerSX = { paddingLeft: '16px', paddingRight: '16px', marginTop: '0px' };
+
+        return (
+            <>
+                {downMD ? (
+                    <Box sx={drawerSX}>
+                        {drawerContent}
+                    </Box>
+                ) : (
+                    <PerfectScrollbar style={{ height: 'calc(100vh - 88px)', ...drawerSX }}>
+                        {drawerContent}
+                    </PerfectScrollbar>
+                )}
+            </>
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [downMD, drawerOpen, mode]);
 
     return (
-      <>
-        {downMD ? (
-          <Box sx={drawerSX}>
-            {drawerContent}
-          </Box>
-        ) : (
-          <PerfectScrollbar style={{ height: 'calc(100vh - 88px)', ...drawerSX }}>
-            {drawerContent}
-          </PerfectScrollbar>
-        )}
-      </>
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [downMD, drawerOpen, mode]);
-
-  return (
-    <Box component="nav" sx={{ flexShrink: { md: 0 }, width: { xs: 'auto', md: drawerWidth } }} aria-label="mailbox folders">
-      {downMD || (miniDrawer && drawerOpen) ? (
-        <Drawer
-          variant={downMD ? 'temporary' : 'persistent'}
-          anchor="left"
-          open={drawerOpen}
-          onClose={() => handlerDrawerOpen(!drawerOpen)}
-          sx={{
-            '& .MuiDrawer-paper': {
-              mt: downMD ? 0 : 11,
-              zIndex: 1099,
-              width: drawerWidth,
-              bgcolor: 'background.default',
-              color: 'text.primary',
-              borderRight: 'none'
+        <Box component="nav" sx={{ flexShrink: { md: 0 }, width: { xs: 'auto', md: drawerWidth } }} aria-label="mailbox folders">
+            {downMD || (miniDrawer && drawerOpen) ? (
+                <Drawer
+                    variant={downMD ? 'temporary' : 'persistent'}
+                    anchor="left"
+                    open={drawerOpen}
+                    onClose={() => handlerDrawerOpen(!drawerOpen)}
+                    sx={{
+                        '& .MuiDrawer-paper': {
+                            mt: downMD ? 0 : 11,
+                            zIndex: 1099,
+                            width: drawerWidth,
+                            bgcolor: 'background.default',
+                            color: 'text.primary',
+                            borderRight: 'none'
+                        }
+                    }}
+                    ModalProps={{ keepMounted: true }}
+                    color="inherit">
+                    {downMD && logo}
+                    {drawer}
+                </Drawer>
+            ) : (
+                <MiniDrawerStyled variant="permanent" open={drawerOpen}>
+                    {logo}
+                    {drawer}
+                </MiniDrawerStyled>
+            )
             }
-          }}
-          ModalProps={{ keepMounted: true }}
-          color="inherit"
-        >
-          {downMD && logo}
-          {drawer}
-        </Drawer>
-      ) : (
-        <MiniDrawerStyled variant="permanent" open={drawerOpen}>
-          {logo}
-          {drawer}
-        </MiniDrawerStyled>
-      )}
-    </Box>
-  );
+        </Box >
+    );
 }
 
 export default memo(Sidebar);
