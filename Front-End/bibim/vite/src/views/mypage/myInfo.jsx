@@ -36,11 +36,28 @@ const MyInfo = () => {
     regDate: ''
   });
 
-  // 컴포넌트가 마운트될 때 데이터를 가져오기 위한 useEffect
+  // 테스트용 데이터 설정
+  useEffect(() => {
+    // 테스트용 더미 데이터
+    const testData = {
+      email: 'test@example.com',
+      name: '김테스트',
+      nationality: 'US',  // 'KR', 'US', 'JP' 중 선택하여 테스트
+      language: 'ko',
+      profileImage: 'https://example.com/test.jpg',
+      loginStatus: 'active',
+      socialLoginCheck: 'N',
+      regDate: '2024-03-19'
+    };
+
+    setUserInfo(testData);
+  }, []);
+
+  /* 실제 API 호출 코드 (주석 처리)
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        const response = await axios.get('/members/myinfo'); 
+        const response = await axios.get('/members/myinfo');
         if (response.data.data.success) {
           setUserInfo(response.data.data);
         }
@@ -50,22 +67,27 @@ const MyInfo = () => {
     };
 
     fetchUserInfo();
-  }, []);  // 빈 배열을 넣어 마운트 시에만 실행
+  }, []); 
+  */
 
   // 사용자의 국적(nationality)에 따라 해당 국가의 현지 시간을 반환하는 함수
   const getLocalTime = (nationality) => {
+    // nationality가 없을 경우 'KR' 사용
+    const defaultNationality = 'KR';
+    const currentNationality = nationality || defaultNationality;
+    
     // timeZoneMap에서 해당 국가의 시간대를 가져옴
-    const timeZone = timeZoneMap[nationality] || 'UTC';
+    const timeZone = timeZoneMap[currentNationality];
     
     // 시간 포맷팅 (초 제외)
     const time = new Intl.DateTimeFormat('ko-KR', {
         timeZone: timeZone,
         hour: '2-digit',
         minute: '2-digit',
-        hour12: false
+        hour12: true  // 오전/오후 표시를 위해 true로 변경
     }).format(new Date());
 
-    // "9:44 KST" 형식으로 반환
+    // "오전 9:44 KST" 형식으로 반환
     return `${time} ${timeZoneAbbr[timeZone]}`;
   };
 
