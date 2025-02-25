@@ -18,7 +18,7 @@ public enum ErrorCode {
     // Schedule
     INVALID_SCHEDULE_STATUS("알 수 없는 일정 상태 입니다.", HttpStatus.BAD_REQUEST),
     SCHEDULE_NOT_FOUND("해당 스케줄을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
-    INVALID_SCHEDULE_MEMBER("해당 스케줄의 담당자가 아닙니다.", HttpStatus.BAD_REQUEST),
+    INVALID_SCHEDULE_MEMBER("해당 스케줄의 담당자가 아닙니다.", HttpStatus.FORBIDDEN),
 
     // Tag
     TAG_NOT_FOUND("해당 태그를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
