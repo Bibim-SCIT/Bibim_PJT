@@ -9,4 +9,7 @@ import java.util.Optional;
 public interface WorkdataFileRepository extends JpaRepository<WorkdataFileEntity, Long> {
 
     Optional<WorkdataFileEntity> findByWorkdataEntityAndFileName(WorkdataEntity workdataEntity, String fileName);
+
+    //태그 등록
+    WorkdataFileEntity findFirstByWorkdataEntity(WorkdataEntity workdataEntity);
 }
