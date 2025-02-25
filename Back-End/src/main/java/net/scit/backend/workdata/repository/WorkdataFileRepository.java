@@ -20,4 +20,6 @@ public interface WorkdataFileRepository extends JpaRepository<WorkdataFileEntity
     //태그 등록
     WorkdataFileEntity findFirstByWorkdataEntity(WorkdataEntity workdataEntity);
 
+    //태그 수정
+    Optional<WorkdataFileEntity> findByFileNameAndWorkdataEntity(String fileName, WorkdataEntity workdataEntity);
 }
