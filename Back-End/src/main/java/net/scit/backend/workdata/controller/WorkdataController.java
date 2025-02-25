@@ -134,26 +134,37 @@ public class WorkdataController {
      * 6. 파일 등록
      */
     @PostMapping("/file")
-    public ResponseEntity<ResultDTO<SuccessDTO>> uploadFile(@RequestParam("dataNumber") Long dataNumber,
-                                                            @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<ResultDTO<SuccessDTO>> uploadFiles(
+            @RequestParam("dataNumber") Long dataNumber,
+            @RequestParam("files") MultipartFile[] files) {  // 변경: 여러 개 파일 받음
         try {
-            // S3에 파일 업로드
-            String fileUrl = s3Uploader.upload(file, "workdata-files");
-            log.info("fileUrl: {}", fileUrl);
-
-            // WorkdataEntity 조회
+            // 1. WorkdataEntity 조회
             WorkdataEntity workdataEntity = workdataRepository.findById(dataNumber)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid dataNumber"));
 
-            // DB에 파일 정보 저장
-            WorkdataFileEntity workdataFileEntity = WorkdataFileEntity.builder()
-                    .workdataEntity(workdataEntity)
-                    .file(fileUrl)
-                    .fileName(file.getOriginalFilename())
-                    .build();
-            workdataFileRepository.save(workdataFileEntity);
+            // 2. 현재 업로드된 파일 개수 확인
+            int existingFileCount = workdataFileRepository.countByWorkdataEntity(workdataEntity);
 
-            // 성공 응답 생성
+            // 3. 새로 추가할 파일 개수와 합산하여 10개 초과 여부 확인
+            if (existingFileCount + files.length > 10) {
+                throw new IllegalArgumentException("최대 10개의 파일만 업로드할 수 있습니다.");
+            }
+
+            // 4. 파일 업로드 반복 처리
+            for (MultipartFile file : files) {
+                String fileUrl = s3Uploader.upload(file, "workdata-files");
+                log.info("업로드된 파일 URL: {}", fileUrl);
+
+                // 5. DB에 파일 정보 저장
+                WorkdataFileEntity workdataFileEntity = WorkdataFileEntity.builder()
+                        .workdataEntity(workdataEntity)
+                        .file(fileUrl)
+                        .fileName(file.getOriginalFilename())
+                        .build();
+                workdataFileRepository.save(workdataFileEntity);
+            }
+
+            // 6. 성공 응답 생성
             SuccessDTO successDTO = SuccessDTO.builder().success(true).build();
             ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
                     .message("파일 등록에 성공하였습니다.")
@@ -161,6 +172,13 @@ public class WorkdataController {
                     .build();
             return ResponseEntity.ok(result);
 
+        } catch (IllegalArgumentException e) {
+            SuccessDTO failureDTO = SuccessDTO.builder().success(false).build();
+            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
+                    .message(e.getMessage())
+                    .data(failureDTO)
+                    .build();
+            return ResponseEntity.badRequest().body(result);
         } catch (Exception e) {
             SuccessDTO failureDTO = SuccessDTO.builder().success(false).build();
             ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
@@ -171,60 +189,62 @@ public class WorkdataController {
         }
     }
 
+
+
     /**
      * 7. 파일 다운로드
      */
     @GetMapping("/file")
     public ResponseEntity<InputStreamResource> downloadFile(@RequestParam("dataNumber") Long dataNumber,
-                                                            @RequestParam("fileName") String fileName) {
+                                                            @RequestParam("fileNumber") Long fileNumber) {
         try {
-            // WorkdataEntity 찾기
+            // 자료글 조회
             WorkdataEntity workdataEntity = workdataRepository.findById(dataNumber)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid dataNumber"));
 
-            // WorkdataFileEntity 찾기
-            WorkdataFileEntity workdataFileEntity = workdataFileRepository.findByWorkdataEntityAndFileName(workdataEntity, fileName)
+            // fileNumber로 해당 파일 조회
+            WorkdataFileEntity workdataFileEntity = (WorkdataFileEntity) workdataFileRepository.findByWorkdataEntityAndFileNumber(workdataEntity, fileNumber)
                     .orElseThrow(() -> new IllegalArgumentException("File not found"));
 
             // S3에서 파일 다운로드
             String fileUrl = workdataFileEntity.getFile();
             S3Object s3Object = s3Uploader.download(fileUrl);
-
-            // InputStream을 InputStreamResource로 변환 (스트림은 닫지 않음)
             InputStreamResource resource = new InputStreamResource(s3Object.getObjectContent());
 
-            // 파일 다운로드 응답 생성
+            // 다운로드 응답 생성 (파일명은 원본 fileName 사용)
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + workdataFileEntity.getFileName() + "\"")
                     .body(resource);
 
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();  // 잘못된 요청
+            return ResponseEntity.badRequest().build();
         } catch (Exception e) {
-            return ResponseEntity.status(500).build();  // 기타 에러
+            return ResponseEntity.status(500).build();
         }
     }
+
+
 
     /**
      * 8. 파일 삭제
      */
     @DeleteMapping("/file")
     public ResponseEntity<ResultDTO<SuccessDTO>> deleteFile(@RequestParam("dataNumber") Long dataNumber,
-                                                            @RequestParam("fileName") String fileName) {
+                                                            @RequestParam("fileNumber") Long fileNumber) {
         try {
-            // WorkdataEntity 조회
+            // 자료글 조회
             WorkdataEntity workdataEntity = workdataRepository.findById(dataNumber)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid dataNumber"));
 
-            // WorkdataFileEntity 조회
-            WorkdataFileEntity workdataFileEntity = workdataFileRepository.findByWorkdataEntityAndFileName(workdataEntity, fileName)
+            // fileNumber로 해당 파일 조회
+            WorkdataFileEntity workdataFileEntity = (WorkdataFileEntity) workdataFileRepository.findByWorkdataEntityAndFileNumber(workdataEntity, fileNumber)
                     .orElseThrow(() -> new IllegalArgumentException("File not found"));
 
-            // S3 키 추출 및 S3 파일 삭제
+            // S3 파일 삭제
             String fileUrl = workdataFileEntity.getFile();
             URL url = new URL(fileUrl);
-            String key = url.getPath().substring(1);
+            String key = url.getPath().substring(1); // 앞의 '/' 제거
             s3Uploader.deleteFile(key);
 
             // DB 레코드 삭제
@@ -254,20 +274,21 @@ public class WorkdataController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
         }
     }
+
     /**
      * 9. 파일 수정(기존 파일 삭제 & 새로운 파일 업로드)
      */
     @PutMapping("/file")
     public ResponseEntity<ResultDTO<SuccessDTO>> updateFile(@RequestParam("dataNumber") Long dataNumber,
-                                                            @RequestParam("fileName") String fileName,
+                                                            @RequestParam("fileNumber") Long fileNumber,
                                                             @RequestParam("file") MultipartFile newFile) {
         try {
-            // WorkdataEntity 조회
+            // 자료글 조회
             WorkdataEntity workdataEntity = workdataRepository.findById(dataNumber)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid dataNumber"));
 
-            // 기존 파일 정보 조회
-            WorkdataFileEntity workdataFileEntity = workdataFileRepository.findByWorkdataEntityAndFileName(workdataEntity, fileName)
+            // fileNumber로 기존 파일 조회
+            WorkdataFileEntity workdataFileEntity = (WorkdataFileEntity) workdataFileRepository.findByWorkdataEntityAndFileNumber(workdataEntity, fileNumber)
                     .orElseThrow(() -> new IllegalArgumentException("File not found"));
 
             // 기존 파일 S3 삭제
@@ -279,7 +300,7 @@ public class WorkdataController {
             // 새로운 파일 업로드
             String newFileUrl = s3Uploader.upload(newFile, "workdata-files");
 
-            // DB 파일 정보 갱신
+            // DB 정보 갱신 (파일 URL 및 원본 파일명 업데이트)
             workdataFileEntity.setFile(newFileUrl);
             workdataFileEntity.setFileName(newFile.getOriginalFilename());
             workdataFileRepository.save(workdataFileEntity);
@@ -308,6 +329,7 @@ public class WorkdataController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
         }
     }
+
 
     /**
      * 10. 검색
