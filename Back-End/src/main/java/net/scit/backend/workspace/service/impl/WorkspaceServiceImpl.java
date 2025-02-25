@@ -1,8 +1,16 @@
 package net.scit.backend.workspace.service.impl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -19,22 +27,14 @@ import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.workspace.dto.InvateWorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
+import net.scit.backend.workspace.entity.WorkspaceChannelRoleEntity;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
-import net.scit.backend.workspace.entity.WorkspaceRoleEntity;
 import net.scit.backend.workspace.repository.WorkspaceChennelRepository;
+import net.scit.backend.workspace.repository.WorkspaceChennelRoleRepository;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import net.scit.backend.workspace.repository.WorkspaceRepository;
-import net.scit.backend.workspace.repository.WorkspaceRoleRepository;
 import net.scit.backend.workspace.service.WorkspaceService;
-
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.access.method.P;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +44,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final MemberRepository memberRepository;
-    private final WorkspaceRoleRepository workspaceRoleRepository;
+    private final WorkspaceChennelRoleRepository workspaceRoleRepository;
     private final WorkspaceChennelRepository workspaceChennelRepository;
 
     private final RedisTemplate<String, String> redisTemplate;
@@ -108,7 +108,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         workspaceEntity = workspaceRepository.saveAndFlush(workspaceEntity);
 
         // 채널의 기본 역할을 추가함
-        WorkspaceRoleEntity workspaceRoleEntity = WorkspaceRoleEntity.builder()
+        WorkspaceChannelRoleEntity workspaceRoleEntity = WorkspaceChannelRoleEntity.builder()
                 .workspace(workspaceEntity).build();
         workspaceRoleRepository.saveAndFlush(workspaceRoleEntity);
 
@@ -131,7 +131,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         // 워크스페이스 채널 생성
         WorkspaceChannelEntity workspaceChannelEntity = WorkspaceChannelEntity.builder()
                 .workspace(workspaceEntity)
-                .workspaceRole(workspaceRoleEntity)
+                .workspaceRole(null)
                 .channelName("새 채널")
                 .build();
         workspaceChennelRepository.save(workspaceChannelEntity);
@@ -279,7 +279,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         }
 
         // 0. 해당 유저가 이미 워크스페이스에 존재하는지 확인
-        if (workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email).isEmpty()) {
+        if (!workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email).isEmpty()) {
             SuccessDTO successDTO = SuccessDTO.builder()
                     .success(false)
                     .build();
@@ -336,17 +336,18 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         // DB에서 현재 워크스페이스에 대한 정보를 가져옴
         WorkspaceEntity workspaceEntity = workspaceRepository.findById(invateWorkspaceDTO.getWsID()).get();
         // DB에서 현재 워크스페이스 채널 권한 중 기본 권한 정보를 가져옴
-        WorkspaceRoleEntity workspaceRoleEntity = workspaceRoleRepository.findByWorkspace_wsIdAndChRole(invateWorkspaceDTO.getWsID(),"None").get();
+        WorkspaceChannelRoleEntity workspaceRoleEntity = workspaceRoleRepository
+                .findByWorkspace_wsIdAndChRole(invateWorkspaceDTO.getWsID(), "None").get();
 
         // 워크스페이스 멤버 엔티티에 저장
         WorkspaceMemberEntity workspaceMemberEntity = WorkspaceMemberEntity.builder()
-                                                        .workspace(workspaceEntity)
-                                                        .member(memberEntity)
-                                                        .wsRole("user")
-                                                        .chRoleNumber(workspaceRoleEntity)
-                                                        .nickname(memberEntity.getName())
-                                                        .profileImage(memberEntity.getProfileImage())
-                                                        .build();
+                .workspace(workspaceEntity)
+                .member(memberEntity)
+                .wsRole("user")
+                .chRoleNumber(workspaceRoleEntity)
+                .nickname(memberEntity.getName())
+                .profileImage(memberEntity.getProfileImage())
+                .build();
 
         workspaceMemberRepository.save(workspaceMemberEntity);
 
@@ -386,5 +387,135 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 .build();
         // 결과 반환
         return ResultDTO.of("워크스페이스 탈퇴에 성공했습니다.", successDTO);
+    }
+
+    @Override
+    @Transactional
+    public ResultDTO<SuccessDTO> worksapceForceDrawal(Long wsId, String email) {
+        // 현재 로그인 한 이메일을 받음
+        String e = AuthUtil.getLoginUserId();
+
+        WorkspaceMemberEntity workspaceMemberEntity = workspaceMemberRepository
+                .findByWorkspace_wsIdAndMember_Email(wsId, e).get();
+
+        // 권한 확인
+        if (!workspaceMemberEntity.getWsRole().equals("owner")) {
+            // 성공시 DTO 저장
+            SuccessDTO successDTO = SuccessDTO.builder()
+                    .success(false)
+                    .build();
+            // 결과 반환
+            return ResultDTO.of("해당 권한이 존재하지 않습니다.", successDTO);
+        }
+
+        // 해당 되는 멤버 삭제
+        workspaceMemberRepository.deleteByWorkspace_wsIdAndMember_Email(wsId, email);
+
+        // 성공시 DTO 저장
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+        // 결과 반환
+        return ResultDTO.of("워크스페이스 강퇴에 성공했습니다.", successDTO);
+    }
+
+    /**
+     * 채널 권한 생성
+     */
+    @Override
+    public ResultDTO<SuccessDTO> worksapceRightCreate(Long wsId, String newRole) {
+        WorkspaceEntity workspaceEntity = workspaceRepository.findById(wsId).get();
+        WorkspaceChannelRoleEntity workspaceChannelRoleEntity = WorkspaceChannelRoleEntity.builder()
+                .workspace(workspaceEntity).chRole(newRole).build();
+        workspaceRoleRepository.save(workspaceChannelRoleEntity);
+        // 성공시 DTO 저장
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+        // 결과 반환
+        return ResultDTO.of("워크스페이스 채널 권한 생성에 성공했습니다.", successDTO);
+    }
+
+    /**
+     * 채널 권한 부여
+     */
+    @Override
+    @Transactional
+    public ResultDTO<SuccessDTO> worksapceRightGrant(Long wsId, String email, Long chRole) {
+        // 현재 로그인 한 이메일을 받음
+        String e = AuthUtil.getLoginUserId();
+        // 현재 로그인 한 유저의 권한 확인
+        WorkspaceMemberEntity isOwner = workspaceMemberRepository
+                .findByWorkspace_wsIdAndMember_Email(wsId, e).get();
+
+        // 권한 확인
+        if (!isOwner.getWsRole().equals("owner")) {
+            // 성공시 DTO 저장
+            SuccessDTO successDTO = SuccessDTO.builder()
+                    .success(false)
+                    .build();
+            // 결과 반환
+            return ResultDTO.of("해당 권한이 존재하지 않습니다.", successDTO);
+        }
+
+        // workspaceMember 테이블에서 해당 유저 검색
+        WorkspaceMemberEntity workspaceMemberEntity = workspaceMemberRepository
+                .findByWorkspace_wsIdAndMember_Email(wsId, email).get();
+        // WorkspaceChannelRole 테이블에서 해당 권한 가져오기
+        WorkspaceChannelRoleEntity workspaceChannelRoleEntity = workspaceRoleRepository.findById(chRole).get();
+
+        workspaceMemberEntity.setChRoleNumber(workspaceChannelRoleEntity);
+        workspaceMemberRepository.save(workspaceMemberEntity);
+
+        // 성공시 DTO 저장
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+        // 결과 반환
+        return ResultDTO.of("워크스페이스 채널 권한 부여에 성공했습니다.", successDTO);
+    }
+
+    /**
+     * 제대로 작동 안됨!!!!!
+     * 보류!!!!!!
+     * 채널 권한 삭제
+     */
+    @Override
+    @Transactional
+    public ResultDTO<SuccessDTO> worksapceRightDelete(Long wsId, Long chRole) {
+        // 현재 로그인 한 이메일을 받음
+        String e = AuthUtil.getLoginUserId();
+        // 현재 로그인 한 유저의 권한 확인
+        WorkspaceMemberEntity isOwner = workspaceMemberRepository
+                .findByWorkspace_wsIdAndMember_Email(wsId, e).get();
+
+        // 권한 확인
+        if (!isOwner.getWsRole().equals("owner")) {
+            // 성공시 DTO 저장
+            SuccessDTO successDTO = SuccessDTO.builder()
+                    .success(false)
+                    .build();
+            // 결과 반환
+            return ResultDTO.of("해당 권한이 존재하지 않습니다.", successDTO);
+        }
+
+        // // 현재 해당 권한을 가지고 있는 사람들이 있는가 확인
+        // List<WorkspaceMemberEntity> workspaceMemberEntities = workspaceMemberRepository.findByWorkspace_wsId(wsId);
+
+        // workspaceMemberEntities.stream()
+        //         .filter(member -> member.getChRoleNumber() != null)
+        //         .filter(member -> member.getChRoleNumber().getChRoleNumber().equals(chRole))
+        //         .forEach(member -> member.setChRoleNumber(null));
+        
+        // workspaceMemberRepository.saveAll(workspaceMemberEntities);
+
+        workspaceRoleRepository.deleteById(chRole);
+
+        // 성공시 DTO 저장
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+        // 결과 반환
+        return ResultDTO.of("워크스페이스 채널 권한 삭제에 성공했습니다.", successDTO);
     }
 }

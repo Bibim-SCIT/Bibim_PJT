@@ -23,8 +23,8 @@ public class WorkspaceChannelEntity {
     private Long channelNumber;
 
     @ManyToOne
-    @JoinColumn(name = "ch_role_number", nullable = false)
-    private WorkspaceRoleEntity workspaceRole;
+    @JoinColumn(name = "ch_role_number")
+    private WorkspaceChannelRoleEntity workspaceRole;
 
     @ManyToOne
     @JoinColumn(name = "ws_id", nullable = false)
