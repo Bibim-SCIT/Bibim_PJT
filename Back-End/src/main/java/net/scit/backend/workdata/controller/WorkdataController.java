@@ -1,8 +1,7 @@
 package net.scit.backend.workdata.controller;
 
 import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import jakarta.annotation.Resource;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
@@ -27,7 +26,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -488,7 +486,88 @@ public class WorkdataController {
         }
     }
 
+    /**
+     * 14. 태그 수정
+     */
+    @PutMapping("/file/tag")
+    public ResponseEntity<ResultDTO<SuccessDTO>> updateFileTag(
+            @RequestParam("wsId") Long wsId,
+            @RequestParam("dataNumber") Long dataNumber,
+            @RequestBody Map<String, String> requestBody) {
+        try {
+            // 1. 워크스페이스 검증
+            Optional<WorkspaceEntity> workspaceOpt = workspaceRepository.findById(wsId);
+            if (!workspaceOpt.isPresent()) {
+                throw new IllegalArgumentException("워크스페이스를 찾을 수 없습니다.");
+            }
+            WorkspaceEntity workspaceEntity = workspaceOpt.get();
 
+            // 2. 자료글 검증
+            Optional<WorkdataEntity> workdataOpt = workdataRepository.findByDataNumberAndWorkspaceEntity(dataNumber, workspaceEntity);
+            if (!workdataOpt.isPresent()) {
+                throw new IllegalArgumentException("자료글을 찾을 수 없습니다.");
+            }
+            WorkdataEntity workdataEntity = workdataOpt.get();
+
+            // 3. 요청 본문에서 기존 태그와 새 태그 값 추출
+            String oldTag = requestBody.get("oldTag");
+            String newTag = requestBody.get("newTag");
+
+            if (oldTag == null || oldTag.trim().isEmpty()) {
+                throw new IllegalArgumentException("수정할 기존 태그가 입력되지 않았습니다.");
+            }
+            if (newTag == null || newTag.trim().isEmpty()) {
+                throw new IllegalArgumentException("새로운 태그가 입력되지 않았습니다.");
+            }
+
+            // 4. 새로운 태그 유효성 검사
+            if (newTag.matches("^[가-힣]+$")) {  // 한글인 경우
+                if (newTag.length() > 3) {
+                    throw new IllegalArgumentException("한글 태그는 3글자 이하로 입력해주세요.");
+                }
+            } else if (newTag.matches("^[a-zA-Z]+$")) {  // 영어인 경우
+                if (newTag.length() > 5) {
+                    throw new IllegalArgumentException("영어 태그는 5글자 이하로 입력해주세요.");
+                }
+            } else {
+                throw new IllegalArgumentException("태그는 한글 또는 영어만 사용 가능합니다.");
+            }
+
+            // 5. 기존 태그 엔티티 조회 (자료글에 연결된 태그 중 oldTag와 일치하는 엔티티)
+            Optional<WorkDataFileTagEntity> tagEntityOpt = workdataFileTagRepository.findByTagAndWorkdataFileEntity_WorkdataEntity(oldTag, workdataEntity);
+            if (!tagEntityOpt.isPresent()) {
+                throw new IllegalArgumentException("해당 태그가 존재하지 않습니다.");
+            }
+            WorkDataFileTagEntity tagEntity = tagEntityOpt.get();
+
+            // 6. 태그 수정 (새로운 태그 값으로 업데이트)
+            tagEntity.setTag(newTag);
+            workdataFileTagRepository.save(tagEntity);
+
+            // 7. 성공 응답 반환
+            SuccessDTO successDTO = SuccessDTO.builder().success(true).build();
+            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
+                    .message("태그 수정에 성공하였습니다.")
+                    .data(successDTO)
+                    .build();
+            return ResponseEntity.ok(result);
+
+        } catch (IllegalArgumentException e) {
+            SuccessDTO failureDTO = SuccessDTO.builder().success(false).build();
+            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
+                    .message(e.getMessage())
+                    .data(failureDTO)
+                    .build();
+            return ResponseEntity.badRequest().body(result);
+        } catch (Exception e) {
+            SuccessDTO failureDTO = SuccessDTO.builder().success(false).build();
+            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
+                    .message("태그 수정에 실패하였습니다: " + e.getMessage())
+                    .data(failureDTO)
+                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
+        }
+    }
 
 
 }
