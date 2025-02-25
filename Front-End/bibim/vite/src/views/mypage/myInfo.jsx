@@ -8,8 +8,11 @@ import EmailIcon from '@mui/icons-material/Email';
 import LockResetIcon from '@mui/icons-material/LockReset';
 import PersonOffIcon from '@mui/icons-material/PersonOff';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const MyInfo = () => {
+  const navigate = useNavigate();
+
   // 상태 관리를 위한 useState
   const [userInfo, setUserInfo] = useState({
     email: '',
@@ -38,6 +41,11 @@ const MyInfo = () => {
     fetchUserInfo();
   }, []);  // 빈 배열을 넣어 마운트 시에만 실행
 
+  // 설정 아이콘 클릭 핸들러
+  const handleSettingsClick = () => {
+    navigate('/mypage/update');
+  };
+
   return (
     <Box sx={{ width: '100%' }}>
       <Box sx={{ 
@@ -47,8 +55,11 @@ const MyInfo = () => {
         borderRadius: 1,
         boxShadow: 1
       }}>
-        {/* 설정 버튼 */}
-        <IconButton sx={{ position: 'absolute', top: 8, right: 8 }}>
+        {/* 설정 버튼에 onClick 추가 */}
+        <IconButton 
+          sx={{ position: 'absolute', top: 8, right: 8 }}
+          onClick={handleSettingsClick}
+        >
           <SettingsIcon />
         </IconButton>
 
