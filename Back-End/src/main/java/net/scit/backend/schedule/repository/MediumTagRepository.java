@@ -1,3 +1,4 @@
+
 package net.scit.backend.schedule.repository;
 
 import net.scit.backend.schedule.entity.LargeTagEntity;
@@ -14,4 +15,6 @@ public interface MediumTagRepository extends JpaRepository<MediumTagEntity, Long
     Optional<MediumTagEntity> findByTagName(String mediumTagName);
 
     List<MediumTagEntity> findAllByLargeTag(LargeTagEntity largeTagEntity);
+
+    Optional<MediumTagEntity> findByTagNameAndLargeTag_LargeTagNumber(String tagName, Long largeTagNumber);
 }

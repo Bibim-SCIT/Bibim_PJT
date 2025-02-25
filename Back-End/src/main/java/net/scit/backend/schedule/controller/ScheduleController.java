@@ -1,6 +1,7 @@
 package net.scit.backend.schedule.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.schedule.dto.LargeTagDTO;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/schedule")
@@ -45,11 +47,12 @@ public class ScheduleController {
     }
 
     @PutMapping("/{scheduleNumber}/status")
-    public ResponseEntity<ResultDTO<SuccessDTO>> changeScheduleStatus(@PathVariable Long scheduleNumber, @RequestParam char status) {
+    public ResponseEntity<ResultDTO<SuccessDTO>> changeScheduleStatus(@PathVariable Long scheduleNumber,
+            @RequestParam char status) {
         ResultDTO<SuccessDTO> result = scheduleService.changeScheduleStatus(scheduleNumber, status);
         return ResponseEntity.ok(result);
     }
-      
+
     /**
      * 대분류 태그 생성
      * 
@@ -70,6 +73,10 @@ public class ScheduleController {
      */
     @PostMapping("/tag/medium")
     public ResponseEntity<ResultDTO<SuccessDTO>> createMediumTag(@RequestBody MediumTagDTO mediumTagDTO) {
+
+        // mediumTagDTO.getLargeTagNumber()가 null인지 확인 // 요청 데이터 로그 출력
+        log.info("Received MediumTagDTO: {}", mediumTagDTO);
+
         ResultDTO<SuccessDTO> result = scheduleService.createMediumTag(mediumTagDTO);
         return ResponseEntity.ok(result);
     }
