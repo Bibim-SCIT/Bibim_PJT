@@ -376,12 +376,6 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .tagName(largeTagDTO.getTagName())
                 .tagColor(largeTagDTO.getTagColor())
                 .build();
-      
-                mediumTagRepository.save(mediumTagEntity);
-
-                SuccessDTO successDTO = SuccessDTO.builder()
-                                .success(true)
-                                .build();
 
         largeTagRepository.save(largeTagEntity);
 
