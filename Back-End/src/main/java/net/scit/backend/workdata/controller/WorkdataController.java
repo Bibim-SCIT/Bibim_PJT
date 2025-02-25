@@ -51,6 +51,7 @@ public class WorkdataController {
     private final WorkdataFileTagRepository workdataFileTagRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
 
+
     /**
      * 1. 자료글 전체 조회
      */
@@ -177,40 +178,66 @@ public class WorkdataController {
     }
 
 
-
-
-
-
-
-
-
-
-
     /**
-     * 4. 자료실 삭제
+     * 자료글 삭제(게시글 + 파일 + 태그 일괄 삭제)
      */
     @DeleteMapping("")
-    public ResultDTO<SuccessDTO> deleteWorkdata(@RequestParam Long wsId,
-                                                @RequestParam Long dataNumber,
-                                                @RequestBody DeleteRequestBody requestBody) {
+    public ResponseEntity<ResultDTO<SuccessDTO>> deleteWorkdata(
+            @RequestParam Long wsId,
+            @RequestParam Long dataNumber) {
 
-        // 이메일 값을 RequestBody에서 받아서 서비스 메소드에 전달
-        return workdataService.workdataDelete(wsId, dataNumber, requestBody.getUserName());
-    }
+        try {
+            // 1. 로그인 사용자 이메일 & 워크스페이스 검증
+            String email = AuthUtil.getLoginUserId();
 
-    // 이메일을 RequestBody로 받을 때 사용하는 DTO 클래스
-    public static class DeleteRequestBody {
-        private String userName; // 이메일 주소
+            // (wsId, email)이 같은지 확인
+            Optional<WorkspaceMemberEntity> optionalMember =
+                    workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email);
+            if (optionalMember.isEmpty()) {
+                throw new IllegalArgumentException("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.");
+            }
 
-        public String getUserName() {
-            return userName;
+            // 2. 자료글 조회
+            WorkspaceEntity workspaceEntity = workspaceRepository.findById(wsId)
+                    .orElseThrow(() -> new IllegalArgumentException("워크스페이스를 찾을 수 없습니다."));
+            WorkdataEntity workdataEntity = workdataRepository.findByDataNumberAndWorkspaceEntity(dataNumber, workspaceEntity)
+                    .orElseThrow(() -> new IllegalArgumentException("자료글을 찾을 수 없습니다."));
+
+            // 3. 작성자와 현재 로그인 사용자가 같은지 확인 (옵션)
+            if (!workdataEntity.getWriter().equals(email)) {
+                throw new IllegalArgumentException("본인만 삭제할 수 있습니다.");
+            }
+
+            // 4. 자료글(WorkdataEntity) 자체 삭제
+            //    Cascade 설정에 의해 파일, 태그도 함께 삭제됨 (DB 연관관계)
+            workdataRepository.delete(workdataEntity);
+
+            // 5. 성공 응답 생성
+            SuccessDTO successDTO = SuccessDTO.builder().success(true).build();
+            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
+                    .message("자료글 및 관련 파일/태그 삭제(컬럼 Cascade)에 성공하였습니다.")
+                    .data(successDTO)
+                    .build();
+            return ResponseEntity.ok(result);
+
+        } catch (IllegalArgumentException e) {
+            // 잘못된 요청
+            SuccessDTO failureDTO = SuccessDTO.builder().success(false).build();
+            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
+                    .message(e.getMessage())
+                    .data(failureDTO)
+                    .build();
+            return ResponseEntity.badRequest().body(result);
+        } catch (Exception e) {
+            // 기타 예외
+            SuccessDTO failureDTO = SuccessDTO.builder().success(false).build();
+            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
+                    .message("자료글 삭제 중 오류 발생: " + e.getMessage())
+                    .data(failureDTO)
+                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
         }
-
-        public void setUserName(String userName) {
-            this.userName = userName;
-        }
     }
-
 
     /**
      * 5. 자료글 수정
@@ -228,10 +255,6 @@ public class WorkdataController {
         ResultDTO<WorkdataDTO> result = workdataService.workdataUpdate(wsId, dataNumber, workdataDTO);
         return ResponseEntity.ok(result);
     }
-
-
-
-
 
     /**
      * 7. 파일 다운로드
@@ -267,9 +290,8 @@ public class WorkdataController {
     }
 
 
-
     /**
-     * 8. 파일 삭제
+     * 8. 파일 개별 삭제
      */
     @DeleteMapping("/file")
     public ResponseEntity<ResultDTO<SuccessDTO>> deleteFile(@RequestParam("dataNumber") Long dataNumber,
@@ -398,7 +420,7 @@ public class WorkdataController {
 
 
     /**
-     * 13. 태그 삭제
+     * 13. 태그 개별 삭제
      */
     @DeleteMapping("/file/tag")
     public ResponseEntity<ResultDTO<SuccessDTO>> deleteFileTag( @RequestParam("wsId") Long wsId,
