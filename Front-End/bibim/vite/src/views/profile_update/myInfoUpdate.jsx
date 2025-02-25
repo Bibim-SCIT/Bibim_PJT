@@ -32,6 +32,16 @@ const MyInfoUpdate = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // 현재 시간을 위한 state 추가
+  const [currentTime, setCurrentTime] = useState('');
+
+  // timeZoneMap과 Select의 value를 일치시킴
+  const timeZoneMap = {
+    'ko': 'Asia/Seoul',
+    'en': 'America/New_York',
+    'jp': 'Asia/Tokyo'
+  };
+
   // 입력 필드 변경 핸들러
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -209,11 +219,10 @@ const MyInfoUpdate = () => {
                 name="language"
                 value={formData.language}
                 onChange={handleChange}
-                variant="outlined"
               >
-                <MenuItem value="ko">한국어 / Korean</MenuItem>
-                <MenuItem value="en">영어 / English</MenuItem>
-                <MenuItem value="jp">일본어 / Japanese</MenuItem>
+                <MenuItem value="ko">한국 / Korea</MenuItem>
+                <MenuItem value="en">미국 / America</MenuItem>
+                <MenuItem value="jp">일본 / Japan</MenuItem>
               </Select>
             </FormControl>
             </Box>
@@ -227,14 +236,17 @@ const MyInfoUpdate = () => {
           }}>
             <Box sx={{ width: '40%' }}>
               <Typography variant="body2" sx={{ mb: 1 }}>사용 언어</Typography>
-              <TextField
-                fullWidth
+             <FormControl fullWidth size="small">
+              <Select
                 name="language"
                 value={formData.language}
                 onChange={handleChange}
-                variant="outlined"
-                size="small"
-              />
+              >
+                <MenuItem value="ko">한국어 / Korean</MenuItem>
+                <MenuItem value="en">영어 / English</MenuItem>
+                <MenuItem value="jp">일본어 / Japanese</MenuItem>
+              </Select>
+            </FormControl>
             </Box>
           </Grid>
           
