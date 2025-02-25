@@ -3,6 +3,7 @@ package net.scit.backend.workdata.service;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.workdata.dto.WorkdataDTO;
+import net.scit.backend.workdata.entity.WorkdataEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,4 +31,6 @@ public interface WorkdataService {
 
     //자료 동적 정렬(writer, title, reg_date, file_name)
     ResultDTO<List<WorkdataDTO>> getSortedWorkdata(Long wsId, String sortField, String sortOrder);
+
+    WorkdataEntity createWorkdataAndReturnEntity(Long wsId, WorkdataDTO workdataDTO);
 }
