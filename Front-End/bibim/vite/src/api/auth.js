@@ -5,8 +5,8 @@ const API_BASE_URL = "http://localhost:8080"; // 백엔드 API 기본 URL
 
 // 이메일 중복 확인
 export const checkEmail = async (email) => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/check-email`, {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/check-email`, {
             params: { email },
         });
         return response.data;
@@ -60,5 +60,4 @@ export const registerUser = async (formData) => {
         throw error.response?.data || "회원가입 요청 오류";
     }
 };
-
 

@@ -31,3 +31,4 @@ public class AuthUtil {
    return null;  // 인증된 사용자가 없다면 null 반환
  }
 }
+

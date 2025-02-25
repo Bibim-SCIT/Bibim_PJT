@@ -2,6 +2,7 @@ package net.scit.backend.schedule.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import net.scit.backend.schedule.dto.LargeTagDTO;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 
 @Entity
@@ -23,4 +24,12 @@ public class LargeTagEntity {
 
     private String tagName;
     private String tagColor;
+
+    public static LargeTagEntity toEntity(LargeTagDTO largeTagDTO, WorkspaceEntity workspace) {
+        return LargeTagEntity.builder()
+                .workspace(workspace)
+                .tagName(largeTagDTO.getTagName())
+                .tagColor(largeTagDTO.getTagColor())
+                .build();
+    }
 }

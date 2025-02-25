@@ -24,7 +24,7 @@ public class WorkspaceChannelEntity {
 
     @ManyToOne
     @JoinColumn(name = "ch_role_number", nullable = false)
-    private WorkspaceRoleEntity workspaceRole;
+    private WorkspaceChannelRoleEntity workspaceRole;
 
     @ManyToOne
     @JoinColumn(name = "ws_id", nullable = false)

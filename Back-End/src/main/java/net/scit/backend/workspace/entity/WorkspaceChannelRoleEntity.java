@@ -12,7 +12,7 @@ import lombok.*;
 @Entity
 @Builder
 @Table(name = "workspace_role")
-public class WorkspaceRoleEntity 
+public class WorkspaceChannelRoleEntity 
 {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,7 +23,7 @@ public class WorkspaceRoleEntity
     private WorkspaceEntity workspace;
 
     @Builder.Default
-    private String chRole = "None";
+    private String chRole = "Owner";
 
     @OneToMany(mappedBy = "workspaceRole", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WorkspaceChannelEntity> channels = new ArrayList<>();

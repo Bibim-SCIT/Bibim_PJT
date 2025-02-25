@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.workspace.dto.InvateWorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 
@@ -18,5 +19,22 @@ public interface WorkspaceService
 
     ResultDTO<SuccessDTO> workspaceDelete(String wsName);
 
-    ResultDTO<List<WorkspaceDTO>> workspaceList();   
+    List<WorkspaceDTO> workspaceList();   
+    
+    ResultDTO<SuccessDTO> workspaceUpdate(String wsName,String newName,MultipartFile file) ;
+
+    ResultDTO<SuccessDTO> workspaseInvate(Long wsId, String email);
+
+    public ResultDTO<SuccessDTO> workspaseAdd(InvateWorkspaceDTO invateWorkspaceDTO);
+
+    public ResultDTO<SuccessDTO> workspaceWithDrwal(Long wsId);
+
+    public ResultDTO<SuccessDTO> worksapceForceDrawal(Long wsId, String email);
+
+    ResultDTO<SuccessDTO> worksapceRightCreate(Long wsId, String newRole);
+
+    ResultDTO<SuccessDTO> worksapceRightGrant(Long wsId, String email,Long chRole);
+
+    ResultDTO<SuccessDTO> worksapceRightDelete(Long wsId, Long chRole);
+
 }

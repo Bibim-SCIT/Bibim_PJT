@@ -114,27 +114,27 @@ public class MemberServiceImpl implements MemberService {
         return ResultDTO.of("회원 가입에 성공했습니다.", successDTO);
     }
 
-    /**
-     * 이메일 중복 체크 하는 메소드
-     * 
-     * @param email 회원가입 신청한 email
-     * @return 중복체크 후 결과 확인
-     */
-    @Override
-    public ResultDTO<SuccessDTO> checkEmail(String email) {
-        // email 중복 검사
-        Optional<MemberEntity> byEmail = memberRepository.findByEmail(email);
-        if (byEmail.isPresent()) {
-            throw new CustomException(ErrorCode.EMAIL_DUPLICATE);
-        }
-
-        // 성공시 DTO 저장
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
-        // 결과 반환
-        return ResultDTO.of("이메일 중복 체크에 성공했습니다.", successDTO);
-    }
+//    /**
+//     * 이메일 중복 체크 하는 메소드
+//     *
+//     * @param email 회원가입 신청한 email
+//     * @return 중복체크 후 결과 확인
+//     */
+//    @Override
+//    public ResultDTO<SuccessDTO> checkEmail(String email) {
+//        // email 중복 검사
+//        Optional<MemberEntity> byEmail = memberRepository.findByEmail(email);
+//        if (byEmail.isPresent()) {
+//            throw new CustomException(ErrorCode.EMAIL_DUPLICATE);
+//        }
+//
+//        // 성공시 DTO 저장
+//        SuccessDTO successDTO = SuccessDTO.builder()
+//                .success(true)
+//                .build();
+//        // 결과 반환
+//        return ResultDTO.of("이메일 중복 체크에 성공했습니다.", successDTO);
+//    }
 
     /**
      * 회원가입 인증 메일 보내는 메소드
@@ -144,6 +144,12 @@ public class MemberServiceImpl implements MemberService {
      */
     @Override
     public ResultDTO<SuccessDTO> signupSendMail(String email) {
+
+        // 이미 가입한 회원인지 확인
+        Optional<MemberEntity> byEmail = memberRepository.findByEmail(email);
+        if (byEmail.isPresent()) {
+            throw new CustomException(ErrorCode.EMAIL_DUPLICATE);
+        }
 
         // email 양식
         String title = "BIBIM 회원가입 인증메일";
@@ -243,6 +249,7 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public ResultDTO<SuccessDTO> logout() {
+
         String email = AuthUtil.getLoginUserId();
         memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
