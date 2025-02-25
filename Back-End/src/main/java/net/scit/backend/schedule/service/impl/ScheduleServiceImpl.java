@@ -21,9 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +39,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     /**
      * 새로운 스케줄 생성
+     *
      * @param scheduleDTO
      * @return
      */
@@ -110,6 +110,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     /**
      * 워크스페이스의 모든 스케줄 정보 가져오기
+     *
      * @param wsId
      * @return
      */
@@ -129,27 +130,40 @@ public class ScheduleServiceImpl implements ScheduleService {
         workspaceMemberRepository.findByWorkspaceAndMember(workspace, member)
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
 
-        // 해당 워크스페이스의 전체 스케줄 정보 가져오기
-        List<ScheduleEntity> scheduleEntityList = scheduleRepository.findAllByWorkspace(workspace);
-        List<ScheduleDTO> scheduleDTOList = new ArrayList<>();
-        for (ScheduleEntity scheduleEntity : scheduleEntityList) {
-            // 해당 스케줄의 담당자 찾기
-            String nickname = null;
-            MemberEntity memberEntity = scheduleEntity.getMember();
-            Optional<WorkspaceMemberEntity> byWorkspaceAndMember1 = workspaceMemberRepository.findByWorkspaceAndMember(workspace, memberEntity);
-            if (byWorkspaceAndMember1.isPresent()) {
-                nickname = byWorkspaceAndMember1.get().getNickname();
-            }
+        // 워크스페이스 내 모든 멤버의 닉네임을 한 번에 가져오기
+        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findByWorkspace(workspace);
+        Map<String, String> memberNicknames = workspaceMembers.stream()
+                .collect(Collectors.toMap(
+                        wm -> wm.getMember().getEmail(),  // 멤버의 이메일을 ID로 사용
+                        WorkspaceMemberEntity::getNickname));
 
-            // 해당 스케줄의 태그 가져오기
-            Optional<ScheduleTagEntity> bySchedule = scheduleTagRepository.findBySchedule(scheduleEntity);
-            if (bySchedule.isEmpty()) {
-                scheduleDTOList.add(ScheduleDTO.toDTO(scheduleEntity, nickname, null));
-            } else {
-                ScheduleTagEntity scheduleTagEntity = bySchedule.get();
-                scheduleDTOList.add(ScheduleDTO.toDTO(scheduleEntity, nickname, scheduleTagEntity));
-            }
-        }
+        // 해당 워크스페이스의 전체 스케줄 정보 가져오기
+        List<ScheduleEntity> schedules = scheduleRepository.findAllByWorkspace(workspace);
+
+        // 스케줄에 관련된 태그를 미리 가져오기
+        List<ScheduleTagEntity> scheduleTags = scheduleTagRepository.findBySchedules(schedules);
+
+        List<ScheduleDTO> scheduleDTOList = schedules.stream()
+                .map(scheduleEntity -> {
+                    // 해당 스케줄의 담당자의 이메일로 닉네임을 가져오기
+                    String nickname;
+                    if (scheduleEntity.getMember() != null) {
+                        nickname = memberNicknames.get(scheduleEntity.getMember().getEmail());
+                    } else {
+                        nickname = null;
+                    }
+
+                    // 해당 스케줄의 태그를 미리 가져오기
+                    Optional<ScheduleTagEntity> scheduleTagOptional = scheduleTags.stream()
+                            .filter(tag -> tag.getSchedule().equals(scheduleEntity))
+                            .findFirst();
+
+                    // 태그가 없을 때, 있으 때 ScheduleTagEntity 반환
+                    return scheduleTagOptional
+                            .map(scheduleTagEntity -> ScheduleDTO.toDTO(scheduleEntity, nickname, scheduleTagEntity))
+                            .orElseGet(() -> ScheduleDTO.toDTO(scheduleEntity, nickname));
+                })
+                .collect(Collectors.toList());
 
         return ResultDTO.of("팀 스케줄 리스트를 불러 왔습니다.", scheduleDTOList);
     }
@@ -168,27 +182,21 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         WorkspaceEntity workspace = scheduleEntity.getWorkspace();
 
-        WorkspaceMemberEntity workspaceMemberEntity = workspaceMemberRepository.findByWorkspaceAndMember(workspace, member)
+        // 사용자가 속한 워크스페이스인지 확인하기
+        workspaceMemberRepository.findByWorkspaceAndMember(workspace, member)
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
 
-        ScheduleDTO scheduleDTO = null;
 
         // 담당자 찾아오기
-        String nickname = null;
-        MemberEntity memberEntity = scheduleEntity.getMember();
-        Optional<WorkspaceMemberEntity> byWorkspaceAndMember1 = workspaceMemberRepository.findByWorkspaceAndMember(workspace, memberEntity);
-        if (byWorkspaceAndMember1.isPresent()) {
-            nickname = workspaceMemberEntity.getNickname();
-        }
+        String nickname = workspaceMemberRepository.findByWorkspaceAndMember(workspace, member)
+                .map(WorkspaceMemberEntity::getNickname)
+                .orElse(null);
+
 
         // 해당 스케줄의 태그 가져오기
-        Optional<ScheduleTagEntity> bySchedule = scheduleTagRepository.findBySchedule(scheduleEntity);
-        if (bySchedule.isEmpty()) {
-            scheduleDTO = ScheduleDTO.toDTO(scheduleEntity, nickname, null);
-        } else {
-            ScheduleTagEntity scheduleTagEntity = bySchedule.get();
-            scheduleDTO = ScheduleDTO.toDTO(scheduleEntity, nickname, scheduleTagEntity);
-        }
+        ScheduleDTO scheduleDTO = scheduleTagRepository.findBySchedule(scheduleEntity)
+                .map(scheduleTagEntity -> ScheduleDTO.toDTO(scheduleEntity, nickname, scheduleTagEntity))
+                .orElseGet(() -> ScheduleDTO.toDTO(scheduleEntity, nickname));
 
         return ResultDTO.of("스케줄 상세 조회에 성공했습니다.", scheduleDTO);
     }
@@ -281,59 +289,72 @@ public class ScheduleServiceImpl implements ScheduleService {
             throw new CustomException(ErrorCode.INVALID_SCHEDULE_MEMBER);
         }
 
+        Optional<ScheduleTagEntity> bySchedule = scheduleTagRepository.findBySchedule(scheduleEntity);
+        if (bySchedule.isPresent()) {
+            ScheduleTagEntity scheduleTagEntity = bySchedule.get();
 
-        // 태그 계층 구조 검사
-        // 대분류가 있을 때만 등록
-        if (!changeScheduleDTO.getTag1().isEmpty()) {
-            String largeTagName = changeScheduleDTO.getTag1();
-            LargeTagEntity largeTagEntity = largeTagRepository.findByTagName(largeTagName)
-                    .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
-
-            // 중분류는 없는데 소분류는 있을 때 exception
-            if (changeScheduleDTO.getTag2().isEmpty() && !changeScheduleDTO.getTag3().isEmpty()) {
-                throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
-            }
-
-            // 중분류 있을 때
-            MediumTagEntity mediumTagEntity = null;
-            if (!changeScheduleDTO.getTag2().isEmpty()) {
-                String mediumTagName = changeScheduleDTO.getTag2();
-                mediumTagEntity = mediumTagRepository.findByTagName(mediumTagName)
+            // 태그 계층 구조 검사
+            // 대분류가 있을 때만 등록
+            if (!changeScheduleDTO.getTag1().isEmpty()) {
+                String largeTagName = changeScheduleDTO.getTag1();
+                LargeTagEntity largeTagEntity = largeTagRepository.findByTagName(largeTagName)
                         .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+                // 중분류는 없는데 소분류는 있을 때 exception
+                if (changeScheduleDTO.getTag2().isEmpty() && !changeScheduleDTO.getTag3().isEmpty()) {
+                    throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
+                }
+
+                // 중분류 있을 때
+                MediumTagEntity mediumTagEntity = null;
+                if (!changeScheduleDTO.getTag2().isEmpty()) {
+                    String mediumTagName = changeScheduleDTO.getTag2();
+                    mediumTagEntity = mediumTagRepository.findByTagName(mediumTagName)
+                            .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+                }
+
+                // 소분류 있을 때
+                SmallTagEntity smallTagEntity = null;
+                if (!changeScheduleDTO.getTag3().isEmpty()) {
+                    String smallTagName = changeScheduleDTO.getTag3();
+                    smallTagEntity = smallTagRepository.findByTagName(smallTagName)
+                            .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+                }
+
+                ScheduleTagEntity updateScheduleTag = scheduleTagEntity.toBuilder()
+                        .schedule(scheduleEntity)
+                        .largeTag(largeTagEntity)
+                        .mediumTag(mediumTagEntity)
+                        .smallTag(smallTagEntity)
+                        .build();
+
+                scheduleTagRepository.save(updateScheduleTag);
+            } else {
+                // 대분류가 없는데 중분류, 소분류가 있을 때
+                if (!changeScheduleDTO.getTag2().isEmpty() || !changeScheduleDTO.getTag3().isEmpty()) {
+                    throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
+                }
+
+                scheduleTagRepository.delete(scheduleTagEntity);
             }
-
-            // 소분류 있을 때
-            SmallTagEntity smallTagEntity = null;
-            if (!changeScheduleDTO.getTag3().isEmpty()) {
-                String smallTagName = changeScheduleDTO.getTag3();
-                smallTagEntity = smallTagRepository.findByTagName(smallTagName)
-                        .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
-            }
-
-            ScheduleTagEntity scheduleTagEntity = ScheduleTagEntity.builder()
-                    .schedule(scheduleEntity)
-                    .largeTag(largeTagEntity)
-                    .mediumTag(mediumTagEntity)
-                    .smallTag(smallTagEntity)
-                    .build();
-
-            scheduleTagRepository.save(scheduleTagEntity);
         }
 
+
         // 새로운 정보로 스케줄 수정
-        scheduleEntity.toBuilder()
+        ScheduleEntity updateSchedule = scheduleEntity.toBuilder()
                 .scheduleTitle(changeScheduleDTO.getScheduleTitle())
                 .scheduleContent(changeScheduleDTO.getScheduleContent())
                 .scheduleModifytime(LocalDateTime.now())
                 .scheduleStartdate(changeScheduleDTO.getScheduleStartDate())
                 .scheduleFinishdate(changeScheduleDTO.getScheduleFinishDate())
                 .build();
+        scheduleRepository.save(updateSchedule);
 
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
                 .build();
 
-        return ResultDTO.of("팀 스케줄 수정에 성공했습니다.", successDTO);
+        return ResultDTO.of("스케줄 수정에 성공했습니다.", successDTO);
     }
 
     /**
