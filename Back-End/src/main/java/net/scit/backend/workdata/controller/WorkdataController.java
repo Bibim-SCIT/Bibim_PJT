@@ -491,24 +491,28 @@ public class WorkdataController {
      * 2. 검색
      */
     @GetMapping("/search")
-    public ResponseEntity<ResultDTO<List<WorkdataDTO>>> searchWorkdata(@RequestParam("wsId") Long wsId,
-                                                                       @RequestParam("keyword") String keyword) {
-        ResultDTO<List<WorkdataDTO>> result = workdataService.searchWorkdata(wsId, keyword);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<ResultDTO<List<WorkdataDTO>>> searchWorkdata(
+            @RequestParam Long wsId,
+            @RequestParam String keyword,
+            @RequestParam(required = false, defaultValue = "regDate") String sort,
+            @RequestParam(required = false, defaultValue = "desc") String order) {
+
+        // 1. 로그인 사용자 이메일 조회
+        String userEmail = AuthUtil.getLoginUserId();
+
+        // 2. 워크스페이스 검증
+        Optional<WorkspaceMemberEntity> optionalMember =
+                workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, userEmail);
+        if (optionalMember.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(ResultDTO.of("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.", new ArrayList<>()));
+        }
+
+        // 3. 서비스 호출
+        return ResponseEntity.ok(workdataService.searchWorkdata(wsId, keyword, sort, order));
     }
 
 
-    /**
-     * 3. 동적 자료 정렬(writer, title, reg_date, file_name)
-     */
-    @GetMapping("/sort")
-    public ResponseEntity<ResultDTO<List<WorkdataDTO>>> getSortedWorkdata(
-            @RequestParam("wsId") Long wsId,
-            @RequestParam("sortField") String sortField,
-            @RequestParam("sortOrder") String sortOrder) {
-        ResultDTO<List<WorkdataDTO>> result = workdataService.getSortedWorkdata(wsId, sortField, sortOrder);
-        return ResponseEntity.ok(result);
-    }
 
 
 

@@ -19,20 +19,9 @@ public interface WorkdataService {
     //자료글 개별 조회
     ResponseEntity<ResultDTO<WorkdataTotalSearchDTO>> workdataDetail(Long wsId, Long dataNumber);
 
-    //자료글 생성
-    ResultDTO<SuccessDTO> workdataCreate(Long wsId, WorkdataDTO workdataDTO);
-
-    //자료글 삭제
-    ResultDTO<SuccessDTO> workdataDelete(Long wsId, Long dataNumber, String currentUserEmail);
-
-    //자료글 수정
-    ResultDTO<WorkdataDTO> workdataUpdate(Long wsId, Long dataNumber, WorkdataDTO workdataDTO);
+    WorkdataEntity createWorkdataAndReturnEntity(Long wsId, WorkdataDTO workdataDTO);
 
     //자료 검색(workdata의 title, writer 기반)
-    ResultDTO<List<WorkdataDTO>> searchWorkdata(Long wsId, String keyword);
+    ResultDTO<List<WorkdataDTO>> searchWorkdata(Long wsId, String keyword, String sort, String order);
 
-    //자료 동적 정렬(writer, title, reg_date, file_name)
-    ResultDTO<List<WorkdataDTO>> getSortedWorkdata(Long wsId, String sortField, String sortOrder);
-
-    WorkdataEntity createWorkdataAndReturnEntity(Long wsId, WorkdataDTO workdataDTO);
 }

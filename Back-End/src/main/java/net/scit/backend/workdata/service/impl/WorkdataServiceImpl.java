@@ -161,33 +161,6 @@ public class WorkdataServiceImpl implements WorkdataService {
      * @param workdataDTO
      * @return
      */
-    @Override
-    @Transactional
-    public ResultDTO<SuccessDTO> workdataCreate(Long wsId, WorkdataDTO workdataDTO) {
-        log.info("wsId: {}", wsId);
-        log.info("workdataDTO: {}", workdataDTO.toString());
-
-        // WorkspaceEntity 조회
-        WorkspaceEntity workspaceEntity = workspaceRepository.findById(wsId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 워크스페이스가 존재하지 않습니다. ID: " + wsId));
-
-        // MemberEntity 조회
-        MemberEntity memberEntity = memberRepository.findByEmail(workdataDTO.getWriter())
-                .orElseThrow(() -> new IllegalArgumentException("이메일이 존재하지 않습니다: " + workdataDTO.getWriter()));
-
-        // WorkdataEntity 생성
-        WorkdataEntity workdataEntity = WorkdataEntity.toEntity(workdataDTO, workspaceEntity);
-        workdataEntity.setWriter(memberEntity.getEmail()); // writer는 수정 불가
-
-        workdataRepository.save(workdataEntity);
-
-        // SuccessDTO 객체 생성 (빌더 패턴 사용)
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
-
-        return ResultDTO.of("자료글 생성에 성공했습니다.", successDTO);
-    }
 
 
     /**
@@ -197,29 +170,6 @@ public class WorkdataServiceImpl implements WorkdataService {
      * @param currentUserEmail
      * @return
      */
-    @Override
-    @Transactional
-    public ResultDTO<SuccessDTO> workdataDelete(Long wsId, Long dataNumber, String currentUserEmail) {
-        WorkdataEntity workdataEntity = workdataRepository.findById(dataNumber)
-                .orElseThrow(() -> new IllegalArgumentException("자료글을 찾을 수 없습니다."));
-
-        // 현재 로그인한 사용자가 작성자인지 확인
-        if (!workdataEntity.getWriter().equals(currentUserEmail)) {
-            SuccessDTO failDTO = SuccessDTO.builder()
-                    .success(false)
-                    .build();
-            return ResultDTO.of("본인만 삭제할 수 있습니다.", failDTO);
-        }
-
-        workdataRepository.delete(workdataEntity);
-
-        // SuccessDTO 객체 생성 (빌더 패턴 사용)
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
-
-        return ResultDTO.of("자료글 삭제에 성공했습니다.", successDTO);
-    }
 
 
     /**
@@ -229,38 +179,6 @@ public class WorkdataServiceImpl implements WorkdataService {
      * @param workdataDTO
      * @return
      */
-    @Override
-    @Transactional
-    public ResultDTO<WorkdataDTO> workdataUpdate(Long wsId, Long dataNumber, WorkdataDTO workdataDTO) {
-        // dataNumber에 해당하는 자료글 조회
-        WorkdataEntity workdataEntity = workdataRepository.findById(dataNumber)
-                .orElseThrow(() -> new IllegalArgumentException("자료글을 찾을 수 없습니다."));
-
-        // workdataDTO에서 가져온 작성자 이메일
-        String currentUserEmail = workdataDTO.getWriter();  // 현재 로그인된 사용자의 이메일
-
-        // 작성자와 현재 로그인된 사용자 이메일 비교
-        if (!workdataEntity.getWriter().equals(currentUserEmail)) {
-            return ResultDTO.of("본인만 수정할 수 있습니다.", null);
-        }
-
-        // 수정 작업
-        workdataEntity.setTitle(workdataDTO.getTitle());
-        workdataEntity.setContent(workdataDTO.getContent());
-        workdataEntity.setRegDate(LocalDateTime.now());  // 수정 시간 갱신
-
-        // 워크스페이스 업데이트
-        WorkspaceEntity workspaceEntity = workspaceRepository.findById(wsId)
-                .orElseThrow(() -> new IllegalArgumentException("워크스페이스를 찾을 수 없습니다."));
-        workdataEntity.setWorkspaceEntity(workspaceEntity);
-
-        // DB에 저장
-        workdataRepository.save(workdataEntity);
-
-        // 수정된 자료글 DTO 반환
-        WorkdataDTO updatedWorkdataDTO = WorkdataDTO.toDTO(workdataEntity);
-        return ResultDTO.of("자료글 수정에 성공했습니다.", updatedWorkdataDTO);
-    }
 
 
     /**
@@ -271,90 +189,55 @@ public class WorkdataServiceImpl implements WorkdataService {
      */
     @Override
     @Transactional
-    public ResultDTO<List<WorkdataDTO>> searchWorkdata(Long wsId, String keyword) {
-        // 1. WorkspaceEntity 조회
+    public ResultDTO<List<WorkdataDTO>> searchWorkdata(Long wsId, String keyword, String sort, String order) {
+        // 1. 워크스페이스 존재 여부 확인
         WorkspaceEntity workspaceEntity = workspaceRepository.findById(wsId)
                 .orElseThrow(() -> new IllegalArgumentException("워크스페이스를 찾을 수 없습니다."));
 
-        // 2. 검색: 워크스페이스 내에서 writer, title, fileName에 keyword가 포함된 자료글 조회
+        // 2. 검색: 워크스페이스 내에서 writer, title, fileName, tag에 keyword가 포함된 자료글 조회
+        //    workdataRepository.searchByWorkspaceAndKeyword(wsId, keyword) 는 아래와 같이 정의되어 있어야 합니다.
+        //    예시:
+        //    @Query("SELECT DISTINCT w FROM WorkdataEntity w " +
+        //           "LEFT JOIN w.workdataFile f " +
+        //           "LEFT JOIN f.workdataFileTag t " +
+        //           "WHERE w.workspaceEntity.wsId = :wsId " +
+        //           "AND (LOWER(w.writer) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+        //           "OR LOWER(w.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+        //           "OR LOWER(f.fileName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+        //           "OR LOWER(t.tag) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+        //    List<WorkdataEntity> searchByWorkspaceAndKeyword(@Param("wsId") Long wsId, @Param("keyword") String keyword);
         List<WorkdataEntity> entities = workdataRepository.searchByWorkspaceAndKeyword(wsId, keyword);
 
-        // 검색 결과가 없을 경우 메시지 반환
         if (entities.isEmpty()) {
             return ResultDTO.of("게시물이 존재하지 않습니다.", List.of());
         }
 
-        // 3. 검색 결과를 DTO로 변환하여 반환
+        // 3. 검색 결과를 DTO로 변환
         List<WorkdataDTO> dtos = entities.stream()
                 .map(WorkdataDTO::toDTO)
-                .toList();
+                .collect(Collectors.toList());
+
+        // 4. 정렬 적용 (writer, title, regDate 기준)
+        Comparator<WorkdataDTO> comparator;
+        switch (sort) {
+            case "writer":
+                comparator = Comparator.comparing(WorkdataDTO::getWriter, String.CASE_INSENSITIVE_ORDER);
+                break;
+            case "title":
+                comparator = Comparator.comparing(WorkdataDTO::getTitle, String.CASE_INSENSITIVE_ORDER);
+                break;
+            case "regDate":
+            default:
+                comparator = Comparator.comparing(WorkdataDTO::getRegDate);
+                break;
+        }
+        if ("desc".equalsIgnoreCase(order)) {
+            comparator = comparator.reversed();
+        }
+        dtos = dtos.stream().sorted(comparator).collect(Collectors.toList());
 
         return ResultDTO.of("검색 결과 조회에 성공했습니다.", dtos);
     }
 
-
-    /**
-     * 11. 자료 동적 정렬(writer, title, reg_date, file_name)
-     * @param wsId
-     * @param sortField
-     * @param sortOrder
-     * @return
-     */
-    @Override
-    @Transactional
-    public ResultDTO<List<WorkdataDTO>> getSortedWorkdata(Long wsId, String sortField, String sortOrder) {
-        // 정렬 방향 결정 (asc 또는 desc)
-        Sort.Direction direction = sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
-        String property;
-
-        // 정렬 요소에 따른 엔티티 필드 매핑 (WorkdataEntity 기준)
-        switch (sortField.toLowerCase()) {
-            case "writer":
-                property = "writer";
-                break;
-            case "title":
-                property = "title";
-                break;
-            case "reg_date":
-                property = "regDate";
-                break;
-            case "file_name":
-                // WorkdataEntity와 연결된 WorkdataFileEntity의 fileName 필드
-                property = "workdataFile.fileName";
-                break;
-            default:
-                // 기본 정렬: reg_date 내림차순
-                property = "regDate";
-                direction = Sort.Direction.DESC;
-                break;
-        }
-        Sort sort = Sort.by(direction, property);
-
-        // 워크스페이스에 속한 자료글 조회 (정렬 적용)
-        List<WorkdataEntity> entities = workdataRepository.findByWorkspaceEntity_WsId(wsId, sort);
-        List<WorkdataDTO> dtos = entities.stream()
-                .map(WorkdataDTO::toDTO)
-                .toList();
-
-        return ResultDTO.of("각 요소별 자료글 정렬에 성공했습니다.", dtos);
-    }
-
-
-    //자료글 생성 통합본 메서드 추가
-    @Transactional
-    public WorkdataEntity createWorkdataAndReturnEntity(Long wsId, WorkdataDTO dto) {
-        // 1. WorkspaceEntity 찾기
-        WorkspaceEntity ws = workspaceRepository.findById(wsId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 워크스페이스가 존재하지 않습니다. wsId=" + wsId));
-
-        // 2. WorkdataEntity 생성 (dto + ws)
-        WorkdataEntity entity = WorkdataEntity.toEntity(dto, ws);
-
-        // 3. 자료글 저장
-        workdataRepository.save(entity);
-
-        // 4. 생성된 WorkdataEntity 반환
-        return entity;
-    }
 
 }
