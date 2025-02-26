@@ -17,7 +17,7 @@ public interface WorkdataService {
     ResponseEntity<ResultDTO<List<WorkdataTotalSearchDTO>>> workdata(Long wsId, String sort, String order);
 
     //자료글 개별 조회
-    ResultDTO<WorkdataDTO> workdataDetail(Long wsId, Long dataNumber);
+    ResponseEntity<ResultDTO<WorkdataTotalSearchDTO>> workdataDetail(Long wsId, Long dataNumber);
 
     //자료글 생성
     ResultDTO<SuccessDTO> workdataCreate(Long wsId, WorkdataDTO workdataDTO);

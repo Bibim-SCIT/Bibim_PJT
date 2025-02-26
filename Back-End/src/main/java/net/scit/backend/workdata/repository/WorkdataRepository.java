@@ -19,6 +19,8 @@ public interface WorkdataRepository extends JpaRepository<WorkdataEntity, Long> 
             "WHERE w.workspaceEntity.wsId = :wsId")
     List<WorkdataEntity> findWithFilesAndTags(@Param("wsId") Long wsId);
 
+    //개별 게시물 조회
+    Optional<WorkdataEntity> findByDataNumberAndWorkspaceEntity_WsId(Long dataNumber, Long wsId);
 
     //검색 기능
     @Query("SELECT DISTINCT w FROM WorkdataEntity w " +

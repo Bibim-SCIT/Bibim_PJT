@@ -124,23 +124,34 @@ public class WorkdataServiceImpl implements WorkdataService {
      */
     @Override
     @Transactional
-    public ResultDTO<WorkdataDTO> workdataDetail(Long wsId, Long dataNumber) {
-        // Workdata 조회: dataNumber에 해당하는 자료글을 찾아야 함
-        WorkdataEntity workdataEntity = workdataRepository.findById(dataNumber)
-                .orElseThrow(() -> new IllegalArgumentException("자료글을 찾을 수 없습니다."));
+    public ResponseEntity<ResultDTO<WorkdataTotalSearchDTO>> workdataDetail(Long wsId, Long dataNumber) {
+        // 1. 자료글 조회 (워크스페이스 ID + 자료 번호)
+        WorkdataEntity workdataEntity = workdataRepository.findByDataNumberAndWorkspaceEntity_WsId(dataNumber, wsId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 자료글을 찾을 수 없습니다."));
 
-        // Workspace 유효성 검사: wsId에 해당하는 워크스페이스가 존재하는지 확인
-        WorkspaceEntity workspaceEntity = workspaceRepository.findById(wsId)
-                .orElseThrow(() -> new IllegalArgumentException("워크스페이스를 찾을 수 없습니다."));
+        // 2. DTO 변환
+        WorkdataTotalSearchDTO dto = WorkdataTotalSearchDTO.toWorkdataTotalSearchDTO(workdataEntity);
 
-        // 워크스페이스와 연결된 자료글인지를 확인 (필요 시 추가적인 로직)
-        if (!workdataEntity.getWorkspaceEntity().getWsId().equals(workspaceEntity.getWsId())) {
-            return ResultDTO.of("이 자료글은 해당 워크스페이스와 관련이 없습니다.", null);
-        }
+        // 3. 파일 이름 리스트 변환 (Set 적용)
+        Set<String> fileNames = Optional.ofNullable(workdataEntity.getWorkdataFile())
+                .orElse(Collections.emptySet()) // Set 사용
+                .stream()
+                .map(WorkdataFileEntity::getFileName)
+                .collect(Collectors.toSet());
+        dto.setFileNames(new ArrayList<>(fileNames)); // DTO에는 List로 저장
 
-        // WorkdataDTO 변환하여 반환
-        WorkdataDTO workdataDTO = WorkdataDTO.toDTO(workdataEntity);
-        return ResultDTO.of("자료글 상세 정보 조회 성공", workdataDTO);
+        // 4. 태그 리스트 변환 (Set 적용)
+        Set<String> tags = Optional.ofNullable(workdataEntity.getWorkdataFile())
+                .orElse(Collections.emptySet())
+                .stream()
+                .flatMap(file -> Optional.ofNullable(file.getWorkdataFileTag())
+                        .orElse(Collections.emptySet())
+                        .stream())
+                .map(WorkDataFileTagEntity::getTag)
+                .collect(Collectors.toSet());
+        dto.setTags(new ArrayList<>(tags)); // DTO에는 List로 저장
+
+        return ResponseEntity.ok(ResultDTO.of("자료글 개별 조회에 성공했습니다.", dto));
     }
 
 

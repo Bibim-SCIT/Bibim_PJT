@@ -463,16 +463,28 @@ public class WorkdataController {
 
 
     /**
-     * 1-4-2) 자료글 개별 조회
+     * 1-4-2) 자료실 개별 조회
      */
     @GetMapping("/detail")
-    public ResponseEntity<ResultDTO<WorkdataDTO>> workdataDetail(@RequestParam Long wsId,
-                                                                 @RequestParam Long dataNumber) {
+    public ResponseEntity<ResultDTO<WorkdataTotalSearchDTO>> workdataDetail(
+            @RequestParam Long wsId,
+            @RequestParam Long dataNumber) {
 
-        // 전체 조회에서 접속 시 상세 정보 반환
-        ResultDTO<WorkdataDTO> result = workdataService.workdataDetail(wsId, dataNumber);
-        return ResponseEntity.ok(result);
+        // 1. 로그인 사용자 이메일 조회
+        String userEmail = AuthUtil.getLoginUserId();
+
+        // 2. 워크스페이스 검증
+        Optional<WorkspaceMemberEntity> optionalMember =
+                workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, userEmail);
+        if (optionalMember.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(ResultDTO.of("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.", null));
+        }
+
+        // 3. 서비스 호출
+        return workdataService.workdataDetail(wsId, dataNumber);
     }
+
 
 
     /**
