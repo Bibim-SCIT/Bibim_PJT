@@ -91,7 +91,7 @@ const MainRoutes = {
       element: <MyPage />
     },
     {
-      path: '/profile_update',
+      path: '/mypage/update',
       element: <ProfileUpdatePage />
     }
   ]
