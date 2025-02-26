@@ -49,6 +49,12 @@ dependencies {
     // WebClient 의존성 (Spring WebFlux)
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
+    // websokect 의존성
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    
+    // Reactor Netty (WebFlux와 함께 사용 시 필요)
+    implementation 'org.springframework.boot:spring-boot-starter-reactor-netty'
+
     //oauth2 관련 속성
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
