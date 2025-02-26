@@ -2,6 +2,9 @@ package net.scit.backend.workdata.controller;
 
 import com.amazonaws.services.s3.model.S3Object;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,10 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -51,25 +51,48 @@ public class WorkdataController {
     private final WorkspaceRepository workspaceRepository;
     private final WorkdataFileTagRepository workdataFileTagRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
+    private final ObjectMapper objectMapper;
+
+
+    /**
+     * 문자열(JSON 배열)을 List<T>로 파싱하는 헬퍼 메서드
+     * @param jsonStr JSON 배열 문자열
+     * @param typeRef 변환할 타입 (예: new TypeReference<List<String>>() {})
+     * @return 변환된 List<T> 또는 변환 실패 시 빈 리스트
+     */
+    private <T> List<T> parseJsonArray(String jsonStr, TypeReference<List<T>> typeRef) {
+        if (jsonStr == null || jsonStr.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+        try {
+            return objectMapper.readValue(jsonStr, typeRef);
+        } catch (JsonProcessingException e) {
+            log.warn("JSON 파싱 오류: {}", e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+
 
     /**
      * 1-1) 자료글 등록(+ 파일, 태그)
      */
     @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ResultDTO<SuccessDTO>> workdataCreate(@RequestParam("wsId") Long wsId,
-                                                                @RequestParam("title") String title,
-                                                                @RequestParam("content") String content,
-                                                                @RequestParam(value = "files", required = false) MultipartFile[] files,
-                                                                @RequestParam(value = "tags", required = false) List<String> tags) {
+    public ResponseEntity<ResultDTO<SuccessDTO>> workdataCreate(
+            @RequestParam("wsId") Long wsId,
+            @RequestParam("title") String title,
+            @RequestParam("content") String content,
+            @RequestParam(value = "files", required = false) MultipartFile[] files,
+            @RequestParam(value = "tags", required = false) java.util.List<String> tags) {
 
         try {
             // 1. 현재 로그인한 사용자의 이메일 가져오기
             String email = AuthUtil.getLoginUserId();
 
             // 2. 워크스페이스 & 사용자 검증
-            Optional<WorkspaceMemberEntity> optionalWsId =
-                    workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email);
-            if (optionalWsId.isEmpty()) {
+            Optional<WorkspaceMemberEntity> optionalWs = workspaceMemberRepository
+                    .findByWorkspace_wsIdAndMember_Email(wsId, email);
+            if (optionalWs.isEmpty()) {
                 throw new IllegalArgumentException("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.");
             }
 
@@ -79,74 +102,16 @@ public class WorkdataController {
             workdataDTO.setContent(content);
             workdataDTO.setWriter(email);
 
-            // 4. 자료글 생성 후, 생성된 WorkdataEntity를 바로 반환받는다고 가정
-            //    (Service에서 save 한 다음 Entity 혹은 Entity의 id를 돌려주는 방식)
-            WorkdataEntity workdataEntity = workdataService.createWorkdataAndReturnEntity(wsId, workdataDTO);
+            // 4. 서비스 호출 (자료글 생성, 파일 업로드, 태그 추가 모두 처리)
+            workdataService.createWorkdata(wsId, workdataDTO, files, tags);
 
-            // 5. 파일 업로드 (파일이 존재하는 경우)
-            if (files != null && files.length > 0) {
-                int existingFileCount = workdataFileRepository.countByWorkdataEntity(workdataEntity);
-
-                if (existingFileCount + files.length > 10) {
-                    throw new IllegalArgumentException("최대 10개의 파일만 업로드할 수 있습니다.");
-                }
-
-                for (MultipartFile file : files) {
-                    // S3에 업로드
-                    String fileUrl = s3Uploader.upload(file, "workdata-files");
-
-                    // WorkdataFileEntity 생성 & 저장
-                    WorkdataFileEntity workdataFileEntity = WorkdataFileEntity.builder()
-                            .workdataEntity(workdataEntity)
-                            .file(fileUrl)
-                            .fileName(file.getOriginalFilename())
-                            .build();
-                    workdataFileRepository.save(workdataFileEntity);
-                }
-            }
-            // 6. 태그 추가 (태그가 존재하는 경우)
-            if (tags != null && !tags.isEmpty()) {
-                int currentTagCount = workdataFileTagRepository.countByWorkdataFileEntity_WorkdataEntity(workdataEntity);
-
-                if (currentTagCount + tags.size() > 3) {
-                    throw new IllegalArgumentException("이미 태그가 3개 등록되어 더 이상 추가할 수 없습니다.");
-                }
-
-                // 파일 중 하나를 찾아 태그 추가(첫 번째 파일 사용 예시)
-                WorkdataFileEntity firstFileEntity =
-                        workdataFileRepository.findFirstByWorkdataEntity(workdataEntity);
-                if (firstFileEntity == null) {
-                    throw new IllegalArgumentException("해당 자료글에 연결된 파일이 없습니다.");
-                }
-
-                for (String tag : tags) {
-                    // 한글 3글자 이하, 영어 5글자 이하, 한글·영어만 허용
-                    if (tag.matches("^[가-힣]+$") && tag.length() > 3) {
-                        throw new IllegalArgumentException("한글 태그는 3글자 이하로 입력해주세요.");
-                    } else if (tag.matches("^[a-zA-Z]+$") && tag.length() > 5) {
-                        throw new IllegalArgumentException("영어 태그는 5글자 이하로 입력해주세요.");
-                    } else if (!tag.matches("^[가-힣a-zA-Z]+$")) {
-                        throw new IllegalArgumentException("태그는 한글 또는 영어만 사용 가능합니다.");
-                    }
-
-                    WorkDataFileTagEntity tagEntity = WorkDataFileTagEntity.builder()
-                            .workdataFileEntity(firstFileEntity)
-                            .tag(tag)
-                            .build();
-                    workdataFileTagRepository.save(tagEntity);
-                }
-            }
-
-            // ✅ 최종 성공 응답
+            // 5. 성공 응답 반환
             SuccessDTO successDTO = SuccessDTO.builder().success(true).build();
-            return ResponseEntity.ok(
-                    ResultDTO.of("자료글 등록, 파일 업로드, 태그 추가 완료!", successDTO)
-            );
+            return ResponseEntity.ok(ResultDTO.of("자료글 등록, 파일 업로드, 태그 추가 완료!", successDTO));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(ResultDTO.of(e.getMessage(), SuccessDTO.builder().success(false).build()));
-
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResultDTO.of("처리 중 오류 발생: " + e.getMessage(), SuccessDTO.builder().success(false).build()));
@@ -155,62 +120,33 @@ public class WorkdataController {
 
 
     /**
-     * 1-2.1) 자료글 삭제(게시글 + 파일 + 태그 일괄 삭제)
+     * 1-2.1) 자료글 삭제(+파일, 태그)
      */
     @DeleteMapping("")
     public ResponseEntity<ResultDTO<SuccessDTO>> deleteWorkdata(@RequestParam Long wsId,
                                                                 @RequestParam Long dataNumber) {
-
         try {
             // 1. 로그인 사용자 이메일 & 워크스페이스 검증
             String email = AuthUtil.getLoginUserId();
-
-            // (wsId, email)이 같은지 확인
             Optional<WorkspaceMemberEntity> optionalMember =
                     workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email);
             if (optionalMember.isEmpty()) {
-                throw new IllegalArgumentException("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.");
+                return ResponseEntity.badRequest()
+                        .body(ResultDTO.of("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.",
+                                SuccessDTO.builder().success(false).build()));
             }
 
-            // 2. 자료글 조회
-            WorkspaceEntity workspaceEntity = workspaceRepository.findById(wsId)
-                    .orElseThrow(() -> new IllegalArgumentException("워크스페이스를 찾을 수 없습니다."));
-            WorkdataEntity workdataEntity = workdataRepository.findByDataNumberAndWorkspaceEntity(dataNumber, workspaceEntity)
-                    .orElseThrow(() -> new IllegalArgumentException("자료글을 찾을 수 없습니다."));
-
-            // 3. 작성자와 현재 로그인 사용자가 같은지 확인 (옵션)
-            if (!workdataEntity.getWriter().equals(email)) {
-                throw new IllegalArgumentException("본인만 삭제할 수 있습니다.");
-            }
-
-            // 4. 자료글(WorkdataEntity) 자체 삭제
-            //    Cascade 설정에 의해 파일, 태그도 함께 삭제됨 (DB 연관관계)
-            workdataRepository.delete(workdataEntity);
-
-            // 5. 성공 응답 생성
-            SuccessDTO successDTO = SuccessDTO.builder().success(true).build();
-            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
-                    .message("자료글 및 관련 파일/태그 삭제(컬럼 Cascade)에 성공하였습니다.")
-                    .data(successDTO)
-                    .build();
+            // 2. 서비스 호출 (삭제 로직 처리)
+            ResultDTO<SuccessDTO> result = workdataService.deleteWorkdata(wsId, dataNumber, email);
             return ResponseEntity.ok(result);
 
         } catch (IllegalArgumentException e) {
-            // 잘못된 요청
-            SuccessDTO failureDTO = SuccessDTO.builder().success(false).build();
-            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
-                    .message(e.getMessage())
-                    .data(failureDTO)
-                    .build();
-            return ResponseEntity.badRequest().body(result);
+            return ResponseEntity.badRequest()
+                    .body(ResultDTO.of(e.getMessage(), SuccessDTO.builder().success(false).build()));
         } catch (Exception e) {
-            // 기타 예외
-            SuccessDTO failureDTO = SuccessDTO.builder().success(false).build();
-            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
-                    .message("자료글 삭제 중 오류 발생: " + e.getMessage())
-                    .data(failureDTO)
-                    .build();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResultDTO.of("자료글 삭제 중 오류 발생: " + e.getMessage(),
+                            SuccessDTO.builder().success(false).build()));
         }
     }
 
@@ -278,163 +214,85 @@ public class WorkdataController {
 
 
     /**
-     * 1-3. 자료글 수정(파일, 태그 일괄 수정)
+     * 1-3) 자료글 수정(파일, 태그 일괄 수정)
+     * - 폼(form-data)으로 전달된 JSON 문자열을 Controller에서 미리 파싱
+     * - Service에는 이미 변환된 객체(List나 Map 등)를 전달
      */
     @PutMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ResultDTO<SuccessDTO>> workdataUpdate(@RequestParam Long wsId,
-            @RequestParam Long dataNumber,
+    public ResponseEntity<ResultDTO<SuccessDTO>> workdataUpdate(
+            @RequestParam Long wsId,             // 워크스페이스 ID
+            @RequestParam Long dataNumber,        // 수정할 자료글 ID
             @RequestParam(value = "title", required = false) String title,
             @RequestParam(value = "content", required = false) String content,
 
-            // 파일 삭제 목록 (JSON 배열) 예: ["file1.jpg","file2.png"]
+            // 삭제할 파일 목록(JSON 배열) 예: ["file1.png","file2.jpg"]
             @RequestParam(value = "deleteFiles", required = false) String deleteFilesJson,
 
-            // 태그 수정 목록 (JSON 배열)
-            // 예: [ { "oldTag": "java", "newTag": "spring" }, { "oldTag": "db", "newTag": "mysql"} ]
+            // 태그 수정 목록(JSON 배열)
+            // 예: [ { "oldTag": "백", "newTag": "비빔" } ]
             @RequestParam(value = "tagRequests", required = false) String tagRequestsJson,
+
+            // 삭제할 태그 목록(JSON 배열) 예: ["frontend", "백"]
+            @RequestParam(value = "deleteTags", required = false) String deleteTagsJson,
+
+            // 새로 추가할 태그 목록(JSON 배열) 예: ["backend","api"]
+            @RequestParam(value = "newTags", required = false) String newTagsJson,
 
             // 새로 추가할 파일들
             @RequestParam(value = "files", required = false) MultipartFile[] newFiles
     ) {
         try {
-            // 1. 로그인 사용자 이메일
-            String userEmail = AuthUtil.getLoginUserId(); // JWT/세션 등 실제 구현
+            // 1. 로그인 사용자 이메일 조회
+            String userEmail = AuthUtil.getLoginUserId();
 
             // 2. 워크스페이스 검증
             Optional<WorkspaceMemberEntity> optionalMember =
                     workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, userEmail);
             if (optionalMember.isEmpty()) {
-                // 실패 응답
-                SuccessDTO failDto = SuccessDTO.builder().success(false).build();
                 return ResponseEntity.badRequest()
-                        .body(ResultDTO.of("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.", failDto));
+                        .body(ResultDTO.of("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.",
+                                SuccessDTO.builder().success(false).build()));
             }
 
-            // 3. 자료글 조회
-            WorkspaceEntity workspaceEntity = workspaceRepository.findById(wsId)
-                    .orElseThrow(() -> new IllegalArgumentException("워크스페이스를 찾을 수 없습니다."));
-            WorkdataEntity workdataEntity = workdataRepository.findByDataNumberAndWorkspaceEntity(dataNumber, workspaceEntity)
-                    .orElseThrow(() -> new IllegalArgumentException("자료글을 찾을 수 없습니다."));
+            // 3. JSON 문자열 -> List or List<Map<String,String>> 변환
+            List<String> deleteFiles = parseJsonArray(deleteFilesJson, new TypeReference<List<String>>() {});
+            log.info("deleteFiles: {}", deleteFiles);
 
-            // 4. 작성자 검증
-            if (!workdataEntity.getWriter().equals(userEmail)) {
-                SuccessDTO failDto = SuccessDTO.builder().success(false).build();
-                return ResponseEntity.badRequest()
-                        .body(ResultDTO.of("본인만 수정할 수 있습니다.", failDto));
-            }
+            List<Map<String, String>> tagRequests = parseJsonArray(tagRequestsJson,
+                    new TypeReference<List<Map<String, String>>>() {});
+            log.info("tagRequests: {}", tagRequests);
 
-            // 5. 파일 삭제
-            if (deleteFilesJson != null && !deleteFilesJson.isEmpty()) {
-                ObjectMapper objectMapper = new ObjectMapper();
-                List<?> rawDeleteList = objectMapper.readValue(deleteFilesJson, List.class);  // List<Object>
-                List<String> deleteFiles = rawDeleteList.stream()
-                        .map(Object::toString)
-                        .collect(Collectors.toList());
+            List<String> deleteTags = parseJsonArray(deleteTagsJson, new TypeReference<List<String>>() {});
+            log.info("deleteTags: {}", deleteTags);
 
-                for (String fileName : deleteFiles) {
-                    Optional<WorkdataFileEntity> fileEntityOpt =
-                            workdataFileRepository.findByFileNameAndWorkdataEntity(fileName, workdataEntity);
-                    if (fileEntityOpt.isPresent()) {
-                        WorkdataFileEntity fileEntity = fileEntityOpt.get();
+            List<String> newTags = parseJsonArray(newTagsJson, new TypeReference<List<String>>() {});
+            log.info("newTags: {}", newTags);
 
-                        // S3 파일 삭제
-                        String fileUrl = fileEntity.getFile();
-                        URL url = new URL(fileUrl);
-                        String key = url.getPath().substring(1);
-                        s3Uploader.deleteFile(key);
-
-                        // DB에서 파일 삭제
-                        workdataFileRepository.delete(fileEntity);
-                    }
-                }
-            }
-
-            // 6. 태그 수정
-            if (tagRequestsJson != null && !tagRequestsJson.isEmpty()) {
-                ObjectMapper objectMapper = new ObjectMapper();
-                List<?> rawTagList = objectMapper.readValue(tagRequestsJson, List.class);  // List<Object>
-                // 예: [ { "oldTag": "java", "newTag": "spring" }, ...]
-                // 다운캐스팅 후 Map<String, String> 변환
-                List<Map<String, String>> tagRequests = rawTagList.stream()
-                        .map(obj -> (Map<String, String>) obj)
-                        .collect(Collectors.toList());
-
-                for (Map<String, String> tagRequest : tagRequests) {
-                    String oldTag = tagRequest.get("oldTag");
-                    String newTag = tagRequest.get("newTag");
-
-                    if (oldTag == null || oldTag.trim().isEmpty()) {
-                        throw new IllegalArgumentException("수정할 기존 태그가 입력되지 않았습니다.");
-                    }
-                    if (newTag == null || newTag.trim().isEmpty()) {
-                        throw new IllegalArgumentException("새로운 태그가 입력되지 않았습니다.");
-                    }
-
-                    // 태그 유효성 검사 (한글 3글자 이하, 영어 5글자 이하, 한글/영어만)
-                    if (newTag.matches("^[가-힣]+$") && newTag.length() > 3) {
-                        throw new IllegalArgumentException("한글 태그는 3글자 이하로 입력해주세요.");
-                    } else if (newTag.matches("^[a-zA-Z]+$") && newTag.length() > 5) {
-                        throw new IllegalArgumentException("영어 태그는 5글자 이하로 입력해주세요.");
-                    } else if (!newTag.matches("^[가-힣a-zA-Z]+$")) {
-                        throw new IllegalArgumentException("태그는 한글 또는 영어만 사용 가능합니다.");
-                    }
-
-                    // 기존 태그 엔티티 조회
-                    Optional<WorkDataFileTagEntity> tagEntityOpt =
-                            workdataFileTagRepository.findByTagAndWorkdataFileEntity_WorkdataEntity(oldTag, workdataEntity);
-                    if (tagEntityOpt.isEmpty()) {
-                        throw new IllegalArgumentException("해당 태그가 존재하지 않습니다.");
-                    }
-
-                    // 태그 수정
-                    WorkDataFileTagEntity tagEntity = tagEntityOpt.get();
-                    tagEntity.setTag(newTag);
-                    workdataFileTagRepository.save(tagEntity);
-                }
-            }
-
-            // 7. 새 파일 업로드 (기존 파일 유지)
-            if (newFiles != null && newFiles.length > 0) {
-                for (MultipartFile file : newFiles) {
-                    String fileUrl = s3Uploader.upload(file, "workdata-files");
-                    WorkdataFileEntity newFileEntity = WorkdataFileEntity.builder()
-                            .workdataEntity(workdataEntity)
-                            .file(fileUrl)
-                            .fileName(file.getOriginalFilename())
-                            .build();
-                    workdataFileRepository.save(newFileEntity);
-                }
-            }
-
-            // 8. 자료글 (제목, 내용) 수정
-            if (title != null) {
-                workdataEntity.setTitle(title);
-            }
-            if (content != null) {
-                workdataEntity.setContent(content);
-            }
-            workdataRepository.save(workdataEntity);
-
-            // ✅ 9. 성공 응답
-            SuccessDTO successDto = SuccessDTO.builder().success(true).build();
-            return ResponseEntity.ok(
-                    ResultDTO.of("자료글 수정, 파일 삭제/추가, 태그 수정 완료!", successDto)
+            // 4. 서비스 호출
+            ResultDTO<SuccessDTO> result = workdataService.updateWorkdata(
+                    wsId,
+                    dataNumber,
+                    title,
+                    content,
+                    deleteFiles,      // List<String>
+                    tagRequests,      // List<Map<String,String>>
+                    deleteTags,       // List<String>
+                    newTags,          // List<String>
+                    newFiles,         // MultipartFile[]
+                    userEmail
             );
+
+            return ResponseEntity.ok(result);
 
         } catch (IllegalArgumentException e) {
-            // 잘못된 요청
-            SuccessDTO failDto = SuccessDTO.builder().success(false).build();
-            return ResponseEntity.badRequest().body(
-                    ResultDTO.of(e.getMessage(), failDto)
-            );
-
+            return ResponseEntity.badRequest()
+                    .body(ResultDTO.of(e.getMessage(), SuccessDTO.builder().success(false).build()));
         } catch (Exception e) {
-            // 기타 서버 오류
-            SuccessDTO failDto = SuccessDTO.builder().success(false).build();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ResultDTO.of("자료글 수정 중 오류 발생: " + e.getMessage(), failDto));
+                    .body(ResultDTO.of("자료글 수정 중 오류 발생: " + e.getMessage(), SuccessDTO.builder().success(false).build()));
         }
     }
+
 
 
     /**
