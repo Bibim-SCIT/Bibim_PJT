@@ -19,20 +19,27 @@ import MainCard from 'ui-component/cards/MainCard';
 import { fetchUserInfo, updateProfile, uploadProfileImage, deleteProfileImage } from 'api/members';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 
+/**
+ * 회원 정보 수정 컴포넌트
+ * 사용자가 자신의 프로필 정보와 이미지를 업데이트할 수 있는 폼을 제공
+ */
 const MyInfoUpdate = () => {
   // 상태 관리를 위한 useState 훅 정의
-  const [profileImage, setProfileImage] = useState(null);    // 프로필 이미지 상태
-  const [previewImage, setPreviewImage] = useState(null);  // 미리보기용 URL
+  const [profileImage, setProfileImage] = useState(null);    // 프로필 이미지 파일 상태
+  const [previewImage, setPreviewImage] = useState(null);    // 이미지 미리보기용 URL
   const [fileInputKey, setFileInputKey] = useState(Date.now()); // 파일 input 초기화용 key
   const [formData, setFormData] = useState({                 // 사용자 정보 폼 데이터
     name: '',
     nationality: '',
     language: ''
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);  // 로딩 상태
+  const [error, setError] = useState(null);       // 에러 상태
 
-  // 입력 필드 변경 핸들러
+  /**
+   * 입력 필드 변경 핸들러
+   * @param {Event} e - 입력 필드 변경 이벤트
+   */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevState => ({
@@ -41,6 +48,10 @@ const MyInfoUpdate = () => {
     }));
   };
 
+  /**
+   * 폼 제출 핸들러
+   * @param {Event} e - 폼 제출 이벤트
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -54,6 +65,7 @@ const MyInfoUpdate = () => {
         language: formData.language
       };
       
+      // API 호출하여 프로필 업데이트
       const result = await updateProfile(dataToSend, profileImage);
       
       if (result.success) {
@@ -67,6 +79,10 @@ const MyInfoUpdate = () => {
     }
   };
 
+  /**
+   * 이미지 업로드 핸들러
+   * @param {Event} event - 파일 입력 변경 이벤트
+   */
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -75,6 +91,10 @@ const MyInfoUpdate = () => {
     }
   };
 
+  /**
+   * 이미지 삭제 핸들러
+   * 선택된 이미지와 미리보기를 초기화
+   */
   const handleDeleteImage = () => {
     // 선택된 이미지 파일 초기화
     setProfileImage(null);
@@ -89,8 +109,11 @@ const MyInfoUpdate = () => {
     setFileInputKey(Date.now());
   };
 
+  /**
+   * 컴포넌트 마운트 시 사용자 정보 로드
+   */
   useEffect(() => {
-    // fetchProfileData 대신 fetchUserInfo 사용
+    // 사용자 데이터 설정 함수
     const setUserData = (userData) => {
       setFormData({
         email: userData.email || '',
@@ -103,6 +126,7 @@ const MyInfoUpdate = () => {
       }
     };
     
+    // API 호출하여 사용자 정보 가져오기
     fetchUserInfo(setUserData, setLoading, setError);
   }, []);
 
@@ -278,6 +302,5 @@ const MyInfoUpdate = () => {
     </MainCard>
   );
 };
-
 
 export default MyInfoUpdate;
