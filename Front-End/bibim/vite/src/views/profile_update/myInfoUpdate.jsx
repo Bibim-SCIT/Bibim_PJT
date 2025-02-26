@@ -16,7 +16,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import EmailIcon from '@mui/icons-material/Email';
 import Avatar from '@mui/material/Avatar';
 import MainCard from 'ui-component/cards/MainCard';
-import { fetchProfileData, updateProfile, uploadProfileImage, deleteProfileImage } from 'api/members';
+import { fetchUserInfo, updateProfile, uploadProfileImage, deleteProfileImage } from 'api/members';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 
 const MyInfoUpdate = () => {
@@ -26,21 +26,11 @@ const MyInfoUpdate = () => {
   const [fileInputKey, setFileInputKey] = useState(Date.now()); // 파일 input 초기화용 key
   const [formData, setFormData] = useState({                 // 사용자 정보 폼 데이터
     name: '',
-    country: '',
+    nationality: '',
     language: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  // 현재 시간을 위한 state 추가
-  const [currentTime, setCurrentTime] = useState('');
-
-  // timeZoneMap과 Select의 value를 일치시킴
-  const timeZoneMap = {
-    'ko': 'Asia/Seoul',
-    'en': 'America/New_York',
-    'jp': 'Asia/Tokyo'
-  };
 
   // 입력 필드 변경 핸들러
   const handleChange = (e) => {
@@ -55,9 +45,22 @@ const MyInfoUpdate = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      const result = await updateProfile(formData, profileImage);
-      // 성공 처리
+      setError(null);
+      
+      // 필요한 데이터만 전송
+      const dataToSend = {
+        name: formData.name,
+        nationality: formData.nationality,
+        language: formData.language
+      };
+      
+      const result = await updateProfile(dataToSend, profileImage);
+      
+      if (result.success) {
+        alert('프로필이 성공적으로 업데이트되었습니다.');
+      }
     } catch (error) {
+      console.error('프로필 업데이트 오류:', error);
       setError('프로필 업데이트에 실패했습니다.');
     } finally {
       setLoading(false);
@@ -87,20 +90,21 @@ const MyInfoUpdate = () => {
   };
 
   useEffect(() => {
-    fetchProfileData().then(data => {
+    // fetchProfileData 대신 fetchUserInfo 사용
+    const setUserData = (userData) => {
       setFormData({
-        name: data.name,
-        country: data.country,
-        language: data.language
+        email: userData.email || '',
+        name: userData.name || '',
+        nationality: userData.nationality || '',
+        language: userData.language || ''
       });
-      setProfileImage(data.profileImage);
-      setPreviewImage(data.profileImage); // 프로필 이미지 URL 설정
-    }).catch(error => {
-      setError('프로필 정보를 불러오는데 실패했습니다.');
-      console.error(error);
-    });
+      if (userData.profileImage) {
+        setPreviewImage(userData.profileImage);
+      }
+    };
+    
+    fetchUserInfo(setUserData, setLoading, setError);
   }, []);
-
 
   return (
     <MainCard title="회원정보 수정">
@@ -182,7 +186,7 @@ const MyInfoUpdate = () => {
           }}>
             <EmailIcon sx={{ fontSize: 16, color: '#666' }} />
             <Typography variant="body2" color="#666">
-              minsu.kim@example.com
+              {formData.email}
             </Typography>
           </Grid>
 
@@ -216,13 +220,13 @@ const MyInfoUpdate = () => {
               <Typography variant="body2" sx={{ mb: 1 }}>국적</Typography>
              <FormControl fullWidth size="small">
               <Select
-                name="language"
-                value={formData.language}
+                name="nationality"
+                value={formData.nationality}
                 onChange={handleChange}
               >
-                <MenuItem value="ko">한국 / Korea</MenuItem>
-                <MenuItem value="en">미국 / America</MenuItem>
-                <MenuItem value="jp">일본 / Japan</MenuItem>
+                <MenuItem value="KR">한국 / Korea</MenuItem>
+                <MenuItem value="US">미국 / America</MenuItem>
+                <MenuItem value="JP">일본 / Japan</MenuItem>
               </Select>
             </FormControl>
             </Box>
@@ -262,6 +266,8 @@ const MyInfoUpdate = () => {
               <Button 
                 variant="contained" 
                 color="primary"
+                onClick={handleSubmit}
+                disabled={loading}
               >
                 저장
               </Button>
@@ -272,5 +278,6 @@ const MyInfoUpdate = () => {
     </MainCard>
   );
 };
+
 
 export default MyInfoUpdate;
