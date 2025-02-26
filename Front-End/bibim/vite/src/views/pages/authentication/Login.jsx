@@ -73,7 +73,7 @@ export default function Login() {
           </Grid>
         </Grid>
         <Grid sx={{ px: 3, my: 3 }} size={12}>
-          <AuthFooter />
+          {/* <AuthFooter /> */}
         </Grid>
       </Grid>
     </AuthWrapper1>
