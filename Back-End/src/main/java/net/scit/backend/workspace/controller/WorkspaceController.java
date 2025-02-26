@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.workspace.dto.InvateWorkspaceDTO;
+import net.scit.backend.workspace.dto.UpdateWorkspaceMemberDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
 import net.scit.backend.workspace.service.WorkspaceService;
@@ -188,18 +189,31 @@ public class WorkspaceController
     @GetMapping("/myinfo")
     public ResponseEntity<ResultDTO<WorkspaceMemberDTO>> getWorkspaceMemberInfo(
             @RequestParam(required = true, name = "wsId") Long wsId) {
-        log.info("워크스페이스 회원 정보 조회 요청: wsId={}", wsId);
         try {
             ResultDTO<WorkspaceMemberDTO> result = workspaceService.getWorkspaceMemberInfo(wsId);
-            log.info("워크스페이스 회원 정보 조회 완료: {}", result);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
-            log.error("워크스페이스 회원 정보 조회 실패: {}", e.getMessage());
             throw e;
         }
     }
 
-    
-
-
+    /**
+     * 워크스페이스 내 회원 정보 수정
+     * @param wsId 워크스페이스 ID
+     * @param updateInfo 수정할 정보
+     * @param file 프로필 이미지 파일 (선택)
+     * @return 수정 결과
+     */
+    @PutMapping("/myinfo")
+    public ResponseEntity<ResultDTO<SuccessDTO>> updateWorkspaceMemberInfo(
+            @RequestParam Long wsId,
+            @RequestPart(value = "info") UpdateWorkspaceMemberDTO updateInfo,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
+        try {
+            ResultDTO<SuccessDTO> result = workspaceService.updateWorkspaceMemberInfo(wsId, updateInfo, file);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            throw e;
+        }
+    }
 }

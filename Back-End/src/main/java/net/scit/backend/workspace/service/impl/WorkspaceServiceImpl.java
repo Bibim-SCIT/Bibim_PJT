@@ -1,5 +1,6 @@
 package net.scit.backend.workspace.service.impl;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -36,6 +37,7 @@ import net.scit.backend.workspace.repository.WorkspaceChennelRoleRepository;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import net.scit.backend.workspace.repository.WorkspaceRepository;
 import net.scit.backend.workspace.service.WorkspaceService;
+import net.scit.backend.workspace.dto.UpdateWorkspaceMemberDTO;
 
 @Service
 @RequiredArgsConstructor
@@ -339,6 +341,51 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 .build();
 
         return ResultDTO.of("워크스페이스 회원 정보 조회 성공", workspaceMemberDTO);
+    }
+
+    /**
+     * 워크스페이스 내 회원 정보 수정
+     * @param wsId 워크스페이스 ID
+     * @param updateInfo 수정할 정보
+     * @param file 프로필 이미지 파일 (선택)
+     * @return 수정 결과
+     * 
+     */
+    @Override
+    @Transactional
+    public ResultDTO<SuccessDTO> updateWorkspaceMemberInfo(Long wsId, UpdateWorkspaceMemberDTO updateInfo, MultipartFile file) {
+        // JWT에서 로그인한 유저 이메일 가져오기
+        String email = AuthUtil.getLoginUserId();
+
+        // WorkSpace_Member 테이블에서 이메일과 wsId로 회원 정보 조회
+        WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email)
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
+
+        // 닉네임 업데이트
+        if (updateInfo.getNickname() != null && !updateInfo.getNickname().isEmpty()) {
+            workspaceMember.setNickname(updateInfo.getNickname());
+        }
+
+        // 프로필 이미지 업데이트
+        if (file != null && !file.isEmpty()) {
+            try {
+                // 기존 이미지가 있다면 삭제
+                if (workspaceMember.getProfileImage() != null && !workspaceMember.getProfileImage().isEmpty()) {
+                    s3Uploader.deleteFile(workspaceMember.getProfileImage());
+                }
+                // 새 이미지 업로드
+                String imageUrl = s3Uploader.upload(file, "workspace-profile-images");
+                workspaceMember.setProfileImage(imageUrl);
+            } catch (IOException e) {
+                throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
+            }
+        }
+
+        // 변경사항 저장
+        workspaceMemberRepository.save(workspaceMember);
+
+        return ResultDTO.of("워크스페이스 회원 정보가 성공적으로 수정되었습니다.", 
+                SuccessDTO.builder().success(true).build());
     }
 
 }

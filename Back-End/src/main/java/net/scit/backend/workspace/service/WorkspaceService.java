@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.workspace.dto.InvateWorkspaceDTO;
+import net.scit.backend.workspace.dto.UpdateWorkspaceMemberDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
 
@@ -38,5 +39,7 @@ public interface WorkspaceService
     ResultDTO<SuccessDTO> worksapceRightDelete(Long wsId, Long chRole);
 
     ResultDTO<WorkspaceMemberDTO> getWorkspaceMemberInfo(Long wsId);
+
+    ResultDTO<SuccessDTO> updateWorkspaceMemberInfo(Long wsId, UpdateWorkspaceMemberDTO updateInfo, MultipartFile file);
 
 }
