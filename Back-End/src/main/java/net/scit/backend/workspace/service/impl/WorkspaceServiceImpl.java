@@ -22,6 +22,7 @@ import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.workspace.dto.InvateWorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
+import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
 import net.scit.backend.workspace.entity.*;
 import net.scit.backend.workspace.repository.*;
 import net.scit.backend.workspace.service.WorkspaceService;
@@ -299,6 +300,35 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                         .build());
 
         return ResultDTO.of("워크스페이스 추가에 성공했습니다.", SuccessDTO.builder().success(true).build());
+    }
+
+    /**
+     * 워크스페이스 내 회원 정보 조회
+     * 
+     * @param wsId 조회할 워크스페이스 ID
+     * @return 워크스페이스 내 회원 정보
+     */
+    @Override
+    public ResultDTO<WorkspaceMemberDTO> getWorkspaceMemberInfo(Long wsId) { // ✅ wsId 적용
+        // ✅ JWT에서 로그인한 유저 이메일 가져오기
+        String email = AuthUtil.getLoginUserId();
+
+        // ✅ WorkSpace_Member 테이블에서 이메일과 wsId로 회원 정보 조회
+        WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email)
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
+
+        // ✅ Member 테이블에서 기본 회원 정보(name) 조회
+        MemberEntity member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // ✅ DTO 변환
+        WorkspaceMemberDTO workspaceMemberDTO = WorkspaceMemberDTO.builder()
+                .name(member.getName())  // 기본 회원 이름
+                .nickname(workspaceMember.getNickname())  // 워크스페이스 내 닉네임
+                .profileImage(workspaceMember.getProfileImage())  // 워크스페이스 내 프로필 이미지
+                .build();
+
+        return ResultDTO.of("워크스페이스 회원 정보 조회 성공", workspaceMemberDTO);
     }
 
 }

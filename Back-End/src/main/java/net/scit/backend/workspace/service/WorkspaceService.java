@@ -10,6 +10,8 @@ import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.workspace.dto.InvateWorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
+import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
+import net.scit.backend.workspace.dto.WorkspaceUserInfoDTO;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 
 @Service
@@ -36,5 +38,7 @@ public interface WorkspaceService
     ResultDTO<SuccessDTO> worksapceRightGrant(Long wsId, String email,Long chRole);
 
     ResultDTO<SuccessDTO> worksapceRightDelete(Long wsId, Long chRole);
+
+    ResultDTO<WorkspaceMemberDTO> getWorkspaceMemberInfo(Long wsId);
 
 }

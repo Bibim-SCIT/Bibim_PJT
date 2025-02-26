@@ -6,6 +6,8 @@ import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.workspace.dto.InvateWorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
+import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
+import net.scit.backend.workspace.dto.WorkspaceUserInfoDTO;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.service.WorkspaceService;
 
@@ -168,6 +170,21 @@ public class WorkspaceController
     public ResponseEntity<ResultDTO<SuccessDTO>> wsRightDelete(@RequestParam("wsId") Long wsId, @RequestParam("wsId") Long chRole)
     {
         ResultDTO<SuccessDTO> result = workspaceService.worksapceRightDelete(wsId, chRole);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 워크스페이스 내 회원 정보 조회
+     * 
+     * @param wsId 조회할 워크스페이스 ID
+     * @return
+     */
+    @GetMapping("/myinfo")
+    public ResponseEntity<ResultDTO<WorkspaceMemberDTO>> getWorkspaceMemberInfo(
+            @RequestParam Long wsId) {
+
+        // ✅ 서비스 호출
+        ResultDTO<WorkspaceMemberDTO> result = workspaceService.getWorkspaceMemberInfo(wsId);
         return ResponseEntity.ok(result);
     }
 
