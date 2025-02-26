@@ -491,11 +491,10 @@ public class WorkdataController {
      * 2. 검색
      */
     @GetMapping("/search")
-    public ResponseEntity<ResultDTO<List<WorkdataDTO>>> searchWorkdata(
-            @RequestParam Long wsId,
-            @RequestParam String keyword,
-            @RequestParam(required = false, defaultValue = "regDate") String sort,
-            @RequestParam(required = false, defaultValue = "desc") String order) {
+    public ResponseEntity<ResultDTO<List<WorkdataDTO>>> searchWorkdata( @RequestParam Long wsId,
+                                                                        @RequestParam String keyword,
+                                                                        @RequestParam(required = false, defaultValue = "regDate") String sort,
+                                                                        @RequestParam(required = false, defaultValue = "desc") String order) {
 
         // 1. 로그인 사용자 이메일 조회
         String userEmail = AuthUtil.getLoginUserId();
@@ -511,11 +510,6 @@ public class WorkdataController {
         // 3. 서비스 호출
         return ResponseEntity.ok(workdataService.searchWorkdata(wsId, keyword, sort, order));
     }
-
-
-
-
-
 
 
 }

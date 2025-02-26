@@ -161,7 +161,22 @@ public class WorkdataServiceImpl implements WorkdataService {
      * @param workdataDTO
      * @return
      */
+    //자료글 생성 통합본 메서드 추가
+    @Transactional
+    public WorkdataEntity createWorkdataAndReturnEntity(Long wsId, WorkdataDTO dto) {
+        // 1. WorkspaceEntity 찾기
+        WorkspaceEntity ws = workspaceRepository.findById(wsId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 워크스페이스가 존재하지 않습니다. wsId=" + wsId));
 
+        // 2. WorkdataEntity 생성 (dto + ws)
+        WorkdataEntity entity = WorkdataEntity.toEntity(dto, ws);
+
+        // 3. 자료글 저장
+        workdataRepository.save(entity);
+
+        // 4. 생성된 WorkdataEntity 반환
+        return entity;
+    }
 
     /**
      * 4. 자료글 삭제
