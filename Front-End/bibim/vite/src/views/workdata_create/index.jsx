@@ -1,9 +1,11 @@
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, TextField, Button, Avatar, Chip, Stack, Grid, Paper, IconButton, List, ListItem, ListItemIcon, ListItemText, Alert } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import CloseIcon from '@mui/icons-material/Close';
 import MainCard from 'ui-component/cards/MainCard';
+// api import
+import { createWorkdata, getCurrentUser } from '../../api/workdata';
 
 // 프로필 이미지 임시 데이터
 import CatImg from 'assets/images/cat_profile.jpg';
@@ -20,7 +22,20 @@ import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile'; // defaul
 export default function WdCreatePage() {
     const navigate = useNavigate();
 
-    const currentUser = { id: 'user123', name: '임성준', avatar: CatImg };
+    // ✅ currentUser를 API에서 가져오기
+    const [currentUser, setCurrentUser] = useState(null);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const userData = await getCurrentUser();
+                setCurrentUser(userData);
+            } catch (error) {
+                console.error("사용자 정보를 불러오는 데 실패했습니다:", error);
+            }
+        };
+        fetchUser();
+    }, []);
 
     // 파일 아이콘 
     const fileTypeIcons = {
@@ -101,10 +116,50 @@ export default function WdCreatePage() {
         setTagError('');
     };
 
-    const handleUpload = () => {
-        alert(`업로드 제목: ${title}, 설명: ${content}, 태그: ${tags.join(', ')}, 파일 수: ${fileList.length}`);
-        navigate('/workdata');
+    // const handleUpload = () => {
+    //     alert(`업로드 제목: ${title}, 설명: ${content}, 태그: ${tags.join(', ')}, 파일 수: ${fileList.length}`);
+    //     navigate('/workdata');
+    // };
+
+    // const handleUpload = async () => {
+    //     if (!title.trim() || !content.trim()) {
+    //         alert('제목과 설명을 입력해주세요.');
+    //         return;
+    //     }
+
+    //     try {
+    //         const response = await createWorkdata(1, title, content, fileList, tags);
+    //         alert(response.message);
+    //         navigate('/workdata'); // 성공 시 목록 페이지로 이동
+    //     } catch (error) {
+    //         alert(`업로드 실패: ${error}`);
+    //     }
+    // };
+
+    const handleUpload = async () => {
+        if (!title.trim() || !content.trim()) {
+            alert('제목과 설명을 입력해주세요.');
+            return;
+        }
+
+        if (!currentUser) {
+            alert('사용자 정보를 불러오는 중입니다.');
+            return;
+        }
+
+        // 나중에 해당 아이디가 워크스페이스 있는지 확인 
+        const wsId = 9; // ✅ 이 값이 실제 워크스페이스 ID와 일치하는지 확인 필요
+
+        try {
+            console.log("🟢 업로드 요청 데이터:", { wsId, title, content, tags, fileList });
+            const response = await createWorkdata(wsId, title, content, fileList, tags);
+            alert(response.message);
+            navigate('/workdata'); // 성공 시 목록 페이지로 이동
+        } catch (error) {
+            alert(`업로드 실패: ${error}`);
+        }
     };
+
 
     return (
         <MainCard title="자료실 글 작성">
@@ -124,10 +179,15 @@ export default function WdCreatePage() {
                     <Typography variant="subtitle1">작성자</Typography>
                 </Grid>
                 <Grid item xs={10}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar src={currentUser.avatar} sx={{ mr: 1 }} />
-                        <Typography>{currentUser.name} ({currentUser.id})</Typography>
-                    </Box>
+                    {currentUser ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Avatar src={currentUser.
+                                profileImage || '/default-avatar.png'} sx={{ mr: 1 }} />
+                            <Typography>{currentUser.name} ({currentUser.email})</Typography>
+                        </Box>
+                    ) : (
+                        <Typography>로딩 중...</Typography>
+                    )}
                 </Grid>
 
                 <Grid item xs={2}>
