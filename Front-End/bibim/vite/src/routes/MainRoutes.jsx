@@ -20,8 +20,8 @@ const GanttView = Loadable(lazy(() => import('views/schedule/gantt')));
 const OverallView = Loadable(lazy(() => import('views/schedule/overall')));
 const WsSelectPage = Loadable(lazy(() => import('views/ws-select')));
 const WsSettingPage = Loadable(lazy(() => import('views/ws-setting')));
-const ProfileUpdatePage = Loadable(lazy(() => import('views/profile_update')));
 const MyPage = Loadable(lazy(() => import('views/mypage')));
+const MyPageUpdatePage = Loadable(lazy(() => import('views/mypage_update')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -92,7 +92,7 @@ const MainRoutes = {
     },
     {
       path: '/mypage/update',
-      element: <ProfileUpdatePage />
+      element: <MyPageUpdatePage />
     }
   ]
 };
