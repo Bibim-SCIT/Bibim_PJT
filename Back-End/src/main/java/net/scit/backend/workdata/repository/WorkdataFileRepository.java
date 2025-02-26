@@ -9,13 +9,8 @@ import java.util.Optional;
 
 public interface WorkdataFileRepository extends JpaRepository<WorkdataFileEntity, Long> {
 
-    Optional<Object> findByWorkdataEntityAndFileNumber(WorkdataEntity workdataEntity, Long fileNumber);
-
     //파일 개수 계산
     int countByWorkdataEntity(WorkdataEntity workdataEntity);
-
-    //파일 목록 조회
-    List<WorkdataFileEntity> findByWorkdataEntity(WorkdataEntity workdataEntity);
 
     //태그 등록
     WorkdataFileEntity findFirstByWorkdataEntity(WorkdataEntity workdataEntity);

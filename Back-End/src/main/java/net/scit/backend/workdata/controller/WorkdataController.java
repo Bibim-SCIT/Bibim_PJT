@@ -10,6 +10,7 @@ import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.component.S3Uploader;
 import net.scit.backend.workdata.dto.WorkdataDTO;
+import net.scit.backend.workdata.dto.WorkdataTotalSearchDTO;
 import net.scit.backend.workdata.entity.WorkDataFileTagEntity;
 import net.scit.backend.workdata.entity.WorkdataEntity;
 import net.scit.backend.workdata.entity.WorkdataFileEntity;
@@ -30,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -279,8 +281,7 @@ public class WorkdataController {
      * 1-3. 자료글 수정(파일, 태그 일괄 수정)
      */
     @PutMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ResultDTO<SuccessDTO>> workdataUpdate(
-            @RequestParam Long wsId,
+    public ResponseEntity<ResultDTO<SuccessDTO>> workdataUpdate(@RequestParam Long wsId,
             @RequestParam Long dataNumber,
             @RequestParam(value = "title", required = false) String title,
             @RequestParam(value = "content", required = false) String content,
@@ -437,12 +438,27 @@ public class WorkdataController {
 
 
     /**
-     * 1-4-1) 자료글 전체 조회
+     * 1-4-1) 자료글 전체 조회(+태그별 정렬)
      */
     @GetMapping("")
-    public ResponseEntity<ResultDTO<List<WorkdataDTO>>> workdata(@RequestParam Long wsId) {
-        ResultDTO<List<WorkdataDTO>> result = workdataService.workdata(wsId);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<ResultDTO<List<WorkdataTotalSearchDTO>>> workdata(
+            @RequestParam Long wsId,
+            @RequestParam(required = false, defaultValue = "regDate") String sort,
+            @RequestParam(required = false, defaultValue = "desc") String order) {
+
+        // 1. 로그인 사용자 이메일 조회
+        String userEmail = AuthUtil.getLoginUserId();
+
+        // 2. 워크스페이스 검증
+        Optional<WorkspaceMemberEntity> optionalMember =
+                workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, userEmail);
+        if (optionalMember.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(ResultDTO.of("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.", new ArrayList<>()));
+        }
+
+        // 3. 서비스 호출 (반환 타입 일치)
+        return workdataService.workdata(wsId, sort, order);
     }
 
 

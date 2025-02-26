@@ -8,7 +8,10 @@ import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.workdata.dto.WorkdataDTO;
+import net.scit.backend.workdata.dto.WorkdataTotalSearchDTO;
+import net.scit.backend.workdata.entity.WorkDataFileTagEntity;
 import net.scit.backend.workdata.entity.WorkdataEntity;
+import net.scit.backend.workdata.entity.WorkdataFileEntity;
 import net.scit.backend.workdata.repository.WorkdataFileRepository;
 import net.scit.backend.workdata.repository.WorkdataFileTagRepository;
 import net.scit.backend.workdata.repository.WorkdataRepository;
@@ -16,13 +19,14 @@ import net.scit.backend.workdata.service.WorkdataService;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.repository.WorkspaceRepository;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -50,24 +54,66 @@ public class WorkdataServiceImpl implements WorkdataService {
 
 
     /**
-     * 1. 자료글 전체 조회
+     * 1. 자료글 전체 조회(+정렬)
+     *
      * @return
      */
     @Override
     @Transactional
-    public ResultDTO<List<WorkdataDTO>> workdata(Long wsId) {
-        // 특정 워크스페이스에 속한 자료만 조회
-        List<WorkdataEntity> workdataEntities = workdataRepository.findByWorkspaceEntity_WsId(wsId);
+    public ResponseEntity<ResultDTO<List<WorkdataTotalSearchDTO>>> workdata(Long wsId, String sort, String order) {
+        // 특정 워크스페이스에 속한 자료 조회 (파일과 태그 포함)
+        List<WorkdataEntity> workdataEntities = workdataRepository.findWithFilesAndTags(wsId);
 
-        // Entity -> DTO 변환
-        List<WorkdataDTO> workdataDTOs = workdataEntities.stream()
-                .map(WorkdataDTO::toDTO)
-                .toList();
-        log.info("조회된 자료 수: {}", workdataDTOs.size());
+        // 데이터 가공 및 변환
+        List<WorkdataTotalSearchDTO> responseDTOs = workdataEntities.stream().map(entity -> {
+            WorkdataTotalSearchDTO dto = WorkdataTotalSearchDTO.toWorkdataTotalSearchDTO(entity);
 
-        // 결과 반환
-        return ResultDTO.of("자료글 전체 조회에 성공했습니다.", workdataDTOs);
+            // 📌 파일 이름 리스트 처리 (Set 적용)
+            Set<String> fileNames = Optional.ofNullable(entity.getWorkdataFile())
+                    .orElse(Collections.emptySet())  // Set으로 변경
+                    .stream()
+                    .map(WorkdataFileEntity::getFileName)
+                    .collect(Collectors.toSet()); // Set으로 변환
+            dto.setFileNames(new ArrayList<>(fileNames)); // DTO에는 List로 저장
+
+            // 📌 태그 처리 (각 파일의 태그를 낱개별로, Set 적용)
+            Set<String> tags = Optional.ofNullable(entity.getWorkdataFile())
+                    .orElse(Collections.emptySet()) // Set으로 변경
+                    .stream()
+                    .flatMap(file -> Optional.ofNullable(file.getWorkdataFileTag())
+                            .orElse(Collections.emptySet()) // Set으로 변경
+                            .stream())
+                    .map(WorkDataFileTagEntity::getTag)
+                    .collect(Collectors.toSet()); // Set으로 변환
+            dto.setTags(new ArrayList<>(tags)); // DTO에는 List로 저장
+
+            return dto;
+        }).collect(Collectors.toList());
+
+        // 정렬 적용
+        Comparator<WorkdataTotalSearchDTO> comparator;
+        switch (sort) {
+            case "writer":
+                comparator = Comparator.comparing(WorkdataTotalSearchDTO::getWriter, String.CASE_INSENSITIVE_ORDER);
+                break;
+            case "title":
+                comparator = Comparator.comparing(WorkdataTotalSearchDTO::getTitle, String.CASE_INSENSITIVE_ORDER);
+                break;
+            case "regDate":
+            default:
+                comparator = Comparator.comparing(WorkdataTotalSearchDTO::getRegDate);
+                break;
+        }
+        if ("desc".equalsIgnoreCase(order)) {
+            comparator = comparator.reversed();
+        }
+        responseDTOs = responseDTOs.stream().sorted(comparator).collect(Collectors.toList());
+        log.info("조회된 자료 수: {}, 정렬 기준: {}, 정렬 방향: {}", responseDTOs.size(), sort, order);
+
+        // ✅ 컨트롤러 반환 형식과 일치하도록 수정된 return 문
+        return ResponseEntity.ok(ResultDTO.of("자료글 전체 조회에 성공했습니다.", responseDTOs));
     }
+
 
 
     /**
