@@ -1,8 +1,16 @@
 package net.scit.backend.workspace.service.impl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -23,15 +31,10 @@ import net.scit.backend.workspace.entity.WorkspaceChannelRoleEntity;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import net.scit.backend.workspace.repository.WorkspaceChennelRepository;
+import net.scit.backend.workspace.repository.WorkspaceChennelRoleRepository;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import net.scit.backend.workspace.repository.WorkspaceRepository;
-import net.scit.backend.workspace.repository.WorkspaceChennelRoleRepository;
 import net.scit.backend.workspace.service.WorkspaceService;
-
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-
-import org.springframework.data.redis.core.RedisTemplate;
 
 @Service
 @RequiredArgsConstructor
@@ -128,7 +131,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         // 워크스페이스 채널 생성
         WorkspaceChannelEntity workspaceChannelEntity = WorkspaceChannelEntity.builder()
                 .workspace(workspaceEntity)
-                .workspaceRole(workspaceRoleEntity)
+                .workspaceRole(null)
                 .channelName("새 채널")
                 .build();
         workspaceChennelRepository.save(workspaceChannelEntity);
@@ -473,6 +476,8 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     }
 
     /**
+     * 제대로 작동 안됨!!!!!
+     * 보류!!!!!!
      * 채널 권한 삭제
      */
     @Override
@@ -494,21 +499,17 @@ public class WorkspaceServiceImpl implements WorkspaceService {
             return ResultDTO.of("해당 권한이 존재하지 않습니다.", successDTO);
         }
 
-        // 현재 해당 권한을 가지고 있는 사람들이 있는가 확인
-        List<WorkspaceMemberEntity> workspaceMemberEntities = workspaceMemberRepository.findByWorkspace_wsId(wsId);
+        // // 현재 해당 권한을 가지고 있는 사람들이 있는가 확인
+        // List<WorkspaceMemberEntity> workspaceMemberEntities = workspaceMemberRepository.findByWorkspace_wsId(wsId);
 
-        workspaceMemberEntities.forEach(member -> {
-            Optional.ofNullable(member.getChRoleNumber())
-                    .map(WorkspaceChannelRoleEntity::getChRoleNumber)
-                    .filter(roleNumber -> roleNumber.equals(chRole))
-                    .ifPresent(roleNumber -> member.setChRoleNumber(null));
-        });
-        workspaceMemberRepository.saveAll(workspaceMemberEntities); // DB에 변경 사항 저장
-        WorkspaceChannelRoleEntity roleEntity = workspaceRoleRepository.findById(chRole)
-                .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_DUPLICATE));
-        log.info("삭제하려는 권한 ID: " + roleEntity.getChRoleNumber());
+        // workspaceMemberEntities.stream()
+        //         .filter(member -> member.getChRoleNumber() != null)
+        //         .filter(member -> member.getChRoleNumber().getChRoleNumber().equals(chRole))
+        //         .forEach(member -> member.setChRoleNumber(null));
+        
+        // workspaceMemberRepository.saveAll(workspaceMemberEntities);
 
-        workspaceRoleRepository.delete(roleEntity);
+        workspaceRoleRepository.deleteById(chRole);
 
         // 성공시 DTO 저장
         SuccessDTO successDTO = SuccessDTO.builder()

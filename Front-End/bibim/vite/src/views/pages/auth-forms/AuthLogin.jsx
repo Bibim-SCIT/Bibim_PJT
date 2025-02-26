@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useContext } from "react";
+import { Link, useNavigate } from 'react-router-dom';
+import { loginUser } from "../../../api/auth"; // 로그인 API
+import { ConfigContext } from "../../../contexts/ConfigContext"; // 기존 ConfigContext 사용
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -30,10 +32,16 @@ import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 
 export default function AuthLogin() {
   const theme = useTheme();
+  const navigate = useNavigate();
+  const { setUser, setToken } = useContext(ConfigContext); // ConfigContext 활용
 
   const [checked, setChecked] = useState(true);
 
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
@@ -41,6 +49,45 @@ export default function AuthLogin() {
   const handleMouseDownPassword = (event) => {
     event.preventDefault();
   };
+
+  // const handleLogin = async (e) => {
+  //   e.preventDefault();
+  //   try {
+  //     const { accessToken } = await loginUser(email, password);
+
+  //     setToken(accessToken); // ✅ 토큰 설정
+  //     setUser({ email }); // ✅ 로그인한 사용자 정보 설정
+
+  //     navigate("/"); // 메인 페이지 이동
+  //   } catch (err) {
+  //     console.error("로그인 오류:", err);
+  //     setError(err.message || "로그인 실패");
+  //   }
+  // };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      // ✅ 로그인 후 사용자 정보를 받아옴
+      const userInfo = await loginUser(email, password);
+
+      // ✅ 토큰을 Context에 설정
+      setToken(localStorage.getItem("token"));
+
+      // ✅ 사용자 정보 업데이트 (email, profileImage 포함)
+      setUser(userInfo);
+
+      console.log("🟢 로그인 후 사용자 정보:", userInfo);
+
+      // ✅ 사용자 정보가 업데이트된 후 메인 페이지 이동
+      navigate("/");
+
+    } catch (err) {
+      console.error("❌ 로그인 오류:", err);
+      setError(err.message || "로그인 실패");
+    }
+  };
+
 
   // Google 로그인 성공 시 실행되는 함수
   const handleGoogleLoginSuccess = (response) => {
@@ -65,59 +112,74 @@ export default function AuthLogin() {
 
   return (
     <>
-      {/* 이메일 입력창 */}
-      <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
-        <InputLabel htmlFor="outlined-adornment-email-login">이메일 / email adress</InputLabel>
-        <OutlinedInput id="outlined-adornment-email-login" type="email" placeholder="이메일을 입력해주세요" name="email" inputProps={{}} />
-      </FormControl>
-
-      {/* 비밀번호 입력창 */}
-      <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
-        <InputLabel htmlFor="outlined-adornment-password-login">비밀번호 / password</InputLabel>
-        <OutlinedInput
-          id="outlined-adornment-password-login"
-          type={showPassword ? 'text' : 'password'}
-          placeholder='비밀번호를 입력해주세요'
-          name="password"
-          endAdornment={
-            <InputAdornment position="end">
-              <IconButton
-                aria-label="toggle password visibility"
-                onClick={handleClickShowPassword}
-                onMouseDown={handleMouseDownPassword}
-                edge="end"
-                size="large"
-              >
-                {showPassword ? <Visibility /> : <VisibilityOff />}
-              </IconButton>
-            </InputAdornment>
-          }
-          inputProps={{}}
-          label="Password"
-        />
-      </FormControl>
-
-      <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-        <Grid>
-          <FormControlLabel
-            control={<Checkbox checked={checked} onChange={(event) => setChecked(event.target.checked)} name="checked" color="primary" />}
-            label="로그인 상태로 유지"
+      <form onSubmit={handleLogin}>
+        {/* 이메일 입력창 */}
+        <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
+          <InputLabel htmlFor="outlined-adornment-email-login">이메일 / email adress</InputLabel>
+          <OutlinedInput
+            id="outlined-adornment-email-login"
+            type="email"
+            placeholder="이메일을 입력해주세요"
+            name="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            inputProps={{}}
           />
+        </FormControl>
+
+        {/* 비밀번호 입력창 */}
+        <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
+          <InputLabel htmlFor="outlined-adornment-password-login">비밀번호 / password</InputLabel>
+          <OutlinedInput
+            id="outlined-adornment-password-login"
+            type={showPassword ? 'text' : 'password'}
+            placeholder='비밀번호를 입력해주세요'
+            name="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            endAdornment={
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle password visibility"
+                  onClick={handleClickShowPassword}
+                  onMouseDown={handleMouseDownPassword}
+                  edge="end"
+                  size="large"
+                >
+                  {showPassword ? <Visibility /> : <VisibilityOff />}
+                </IconButton>
+              </InputAdornment>
+            }
+            inputProps={{}}
+            label="Password"
+          />
+        </FormControl>
+
+        {error && <p style={{ color: "red" }}>{error}</p>}
+
+        <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+          <Grid>
+            <FormControlLabel
+              control={<Checkbox checked={checked} onChange={(event) => setChecked(event.target.checked)} name="checked" color="primary" />}
+              label="로그인 상태로 유지"
+            />
+          </Grid>
+          {/* <Grid>
+            <Typography variant="subtitle1" component={Link} to="/forgot-password" color="secondary" sx={{ textDecoration: 'none' }}>
+              비밀번호를 잊어버리셨나요?
+            </Typography>
+          </Grid> */}
         </Grid>
-        {/* <Grid>
-          <Typography variant="subtitle1" component={Link} to="/forgot-password" color="secondary" sx={{ textDecoration: 'none' }}>
-            비밀번호를 잊어버리셨나요?
-          </Typography>
-        </Grid> */}
-      </Grid>
-      {/* 버튼 박스 */}
-      <Box sx={{ mt: 2 }}>
-        <AnimateButton>
-          <Button color="secondary" fullWidth size="large" type="submit" variant="contained">
-            로그인
-          </Button>
-        </AnimateButton>
-      </Box>
+        {/* 버튼 박스 */}
+        <Box sx={{ mt: 2 }}>
+          <AnimateButton>
+            <Button color="secondary" fullWidth size="large" type="submit" variant="contained">
+              로그인
+            </Button>
+          </AnimateButton>
+        </Box>
+
+      </form>
       <Box sx={{ mt: 2 }}>
         <AnimateButton>
           <Button color="secondary" fullWidth size="large" type="submit" variant="contained" href='/pages/register'>
