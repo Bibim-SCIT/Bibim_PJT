@@ -55,26 +55,6 @@ public class WorkdataController {
 
 
     /**
-     * 문자열(JSON 배열)을 List<T>로 파싱하는 헬퍼 메서드
-     * @param jsonStr JSON 배열 문자열
-     * @param typeRef 변환할 타입 (예: new TypeReference<List<String>>() {})
-     * @return 변환된 List<T> 또는 변환 실패 시 빈 리스트
-     */
-    private <T> List<T> parseJsonArray(String jsonStr, TypeReference<List<T>> typeRef) {
-        if (jsonStr == null || jsonStr.trim().isEmpty()) {
-            return Collections.emptyList();
-        }
-        try {
-            return objectMapper.readValue(jsonStr, typeRef);
-        } catch (JsonProcessingException e) {
-            log.warn("JSON 파싱 오류: {}", e.getMessage());
-            return Collections.emptyList();
-        }
-    }
-
-
-
-    /**
      * 1-1) 자료글 등록(+ 파일, 태그)
      */
     @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -214,84 +194,75 @@ public class WorkdataController {
 
 
     /**
-     * 1-3) 자료글 수정(파일, 태그 일괄 수정)
-     * - 폼(form-data)으로 전달된 JSON 문자열을 Controller에서 미리 파싱
-     * - Service에는 이미 변환된 객체(List나 Map 등)를 전달
+     * 1-3) 자료글 수정 (파일, 태그 일괄 수정)
+     * JSON 데이터는 @RequestPart로 받습니다.
+     *
+     * Postman에서는 multipart/form-data로 요청하되,
+     * 각 JSON 필드(tagRequests, deleteFiles, deleteTags, newTags)는
+     * "Content-Type"을 "application/json"으로 설정해서 전송하세요.
      */
-    @PutMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ResultDTO<SuccessDTO>> workdataUpdate(
-            @RequestParam Long wsId,             // 워크스페이스 ID
-            @RequestParam Long dataNumber,        // 수정할 자료글 ID
-            @RequestParam(value = "title", required = false) String title,
-            @RequestParam(value = "content", required = false) String content,
+//    @PutMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    public ResponseEntity<ResultDTO<SuccessDTO>> workdataUpdate(
+//            @RequestParam Long wsId,
+//            @RequestParam Long dataNumber,
+//            @RequestParam(value = "title", required = false) String title,
+//            @RequestParam(value = "content", required = false) String content,
+//
+//            // JSON 데이터를 String으로 받고, 컨트롤러에서 List로 변환
+//            @RequestParam(value = "deleteFiles", required = false) String deleteFilesJson,
+//            @RequestParam(value = "oldTags", required = false) String oldTagsJson, // 기존 태그
+//            @RequestParam(value = "newTags", required = false) String newTagsJson, // 새로운 태그
+//
+//            // 새 파일 추가
+//            @RequestParam(value = "files", required = false) MultipartFile[] newFiles
+//    ) {
+//        try {
+//            String userEmail = AuthUtil.getLoginUserId();
+//            log.info("로그인 사용자: {}", userEmail);
+//
+//            // JSON 문자열을 List로 변환
+//            List<String> deleteFiles = parseJsonArray(deleteFilesJson, new TypeReference<List<String>>() {});
+//            List<String> oldTags = parseJsonArray(oldTagsJson, new TypeReference<List<String>>() {});
+//            List<String> newTags = parseJsonArray(newTagsJson, new TypeReference<List<String>>() {});
+//
+//            // 서비스 호출
+//            ResultDTO<SuccessDTO> result = workdataService.updateWorkdata(
+//                    wsId, dataNumber, title, content,
+//                    deleteFiles, oldTags, newTags,
+//                    newFiles, userEmail
+//            );
+//
+//            return ResponseEntity.ok(result);
+//
+//        } catch (IllegalArgumentException e) {
+//            log.error("IllegalArgumentException 발생: {}", e.getMessage());
+//            return ResponseEntity.badRequest()
+//                    .body(ResultDTO.of(e.getMessage(), SuccessDTO.builder().success(false).build()));
+//        } catch (Exception e) {
+//            log.error("자료글 수정 중 오류 발생: {}", e.getMessage(), e);
+//            return ResponseEntity.status(500)
+//                    .body(ResultDTO.of("자료글 수정 중 오류 발생: " + e.getMessage(),
+//                            SuccessDTO.builder().success(false).build()));
+//        }
+//    }
+//
+//    /**
+//     * JSON 문자열을 List<T>로 변환하는 헬퍼 메서드
+//     */
+//    private <T> List<T> parseJsonArray(String jsonStr, TypeReference<List<T>> typeRef) {
+//        if (jsonStr == null || jsonStr.trim().isEmpty()) {
+//            return Collections.emptyList();
+//        }
+//        try {
+//            ObjectMapper objectMapper = new ObjectMapper();
+//            return objectMapper.readValue(jsonStr, typeRef);
+//        } catch (JsonProcessingException e) {
+//            log.warn("JSON 파싱 오류: {}", e.getMessage());
+//            return Collections.emptyList();
+//        }
+//    }
 
-            // 삭제할 파일 목록(JSON 배열) 예: ["file1.png","file2.jpg"]
-            @RequestParam(value = "deleteFiles", required = false) String deleteFilesJson,
 
-            // 태그 수정 목록(JSON 배열)
-            // 예: [ { "oldTag": "백", "newTag": "비빔" } ]
-            @RequestParam(value = "tagRequests", required = false) String tagRequestsJson,
-
-            // 삭제할 태그 목록(JSON 배열) 예: ["frontend", "백"]
-            @RequestParam(value = "deleteTags", required = false) String deleteTagsJson,
-
-            // 새로 추가할 태그 목록(JSON 배열) 예: ["backend","api"]
-            @RequestParam(value = "newTags", required = false) String newTagsJson,
-
-            // 새로 추가할 파일들
-            @RequestParam(value = "files", required = false) MultipartFile[] newFiles
-    ) {
-        try {
-            // 1. 로그인 사용자 이메일 조회
-            String userEmail = AuthUtil.getLoginUserId();
-
-            // 2. 워크스페이스 검증
-            Optional<WorkspaceMemberEntity> optionalMember =
-                    workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, userEmail);
-            if (optionalMember.isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(ResultDTO.of("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.",
-                                SuccessDTO.builder().success(false).build()));
-            }
-
-            // 3. JSON 문자열 -> List or List<Map<String,String>> 변환
-            List<String> deleteFiles = parseJsonArray(deleteFilesJson, new TypeReference<List<String>>() {});
-            log.info("deleteFiles: {}", deleteFiles);
-
-            List<Map<String, String>> tagRequests = parseJsonArray(tagRequestsJson,
-                    new TypeReference<List<Map<String, String>>>() {});
-            log.info("tagRequests: {}", tagRequests);
-
-            List<String> deleteTags = parseJsonArray(deleteTagsJson, new TypeReference<List<String>>() {});
-            log.info("deleteTags: {}", deleteTags);
-
-            List<String> newTags = parseJsonArray(newTagsJson, new TypeReference<List<String>>() {});
-            log.info("newTags: {}", newTags);
-
-            // 4. 서비스 호출
-            ResultDTO<SuccessDTO> result = workdataService.updateWorkdata(
-                    wsId,
-                    dataNumber,
-                    title,
-                    content,
-                    deleteFiles,      // List<String>
-                    tagRequests,      // List<Map<String,String>>
-                    deleteTags,       // List<String>
-                    newTags,          // List<String>
-                    newFiles,         // MultipartFile[]
-                    userEmail
-            );
-
-            return ResponseEntity.ok(result);
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .body(ResultDTO.of(e.getMessage(), SuccessDTO.builder().success(false).build()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ResultDTO.of("자료글 수정 중 오류 발생: " + e.getMessage(), SuccessDTO.builder().success(false).build()));
-        }
-    }
 
 
 

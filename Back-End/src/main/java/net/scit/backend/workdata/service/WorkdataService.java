@@ -25,18 +25,18 @@ public interface WorkdataService {
     ResultDTO<SuccessDTO> deleteWorkdata(Long wsId, Long dataNumber, String email);
 
     //1-3) 자료글 수정(+ 파일, 태그)
-    ResultDTO<SuccessDTO> updateWorkdata(
-            Long wsId,
-            Long dataNumber,
-            String title,
-            String content,
-            List<String> deleteFiles,
-            List<Map<String, String>> tagRequests,
-            List<String> deleteTags,
-            List<String> newTags,
-            MultipartFile[] newFiles,
-            String userEmail
-    );
+//    ResultDTO<SuccessDTO> updateWorkdata(
+//            Long wsId,
+//            Long dataNumber,
+//            String title,
+//            String content,
+//            List<String> deleteFiles,
+//            List<String> oldTags,
+//            List<String> newTags,
+//            MultipartFile[] newFiles,
+//            String userEmail
+//    );
+
 
 
 
