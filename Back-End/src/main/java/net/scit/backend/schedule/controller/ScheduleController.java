@@ -111,8 +111,9 @@ public class ScheduleController {
      * @return
      */
     @GetMapping("/tag/medium")
-    public ResponseEntity<ResultDTO<List<MediumTagDTO>>> getMediumTags(@RequestParam Long largeTagNumber) {
-        ResultDTO<List<MediumTagDTO>> result = scheduleService.getMediumTags(largeTagNumber);
+    public ResponseEntity<ResultDTO<List<MediumTagDTO>>> getMediumTags(@RequestParam(name = "wsId") Long wsId,
+            @RequestParam(name = "largeTagNumber") Long largeTagNumber) {
+        ResultDTO<List<MediumTagDTO>> result = scheduleService.getMediumTags(wsId, largeTagNumber);
         return ResponseEntity.ok(result);
     }
 

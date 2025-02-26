@@ -15,11 +15,13 @@ import net.scit.backend.schedule.entity.MediumTagEntity;
 public class MediumTagDTO {
 
     private Long largeTagNumber;
+    private Long mediumTagNumber;
     private String tagName;
 
     public static MediumTagDTO toDTO(MediumTagEntity mediumTagEntity) {
         return MediumTagDTO.builder()
                 .largeTagNumber(mediumTagEntity.getLargeTag().getLargeTagNumber())
+                .mediumTagNumber(mediumTagEntity.getMediumTagNumber())
                 .tagName(mediumTagEntity.getTagName())
                 .build();
     }

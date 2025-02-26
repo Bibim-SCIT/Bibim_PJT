@@ -508,7 +508,22 @@ public class ScheduleServiceImpl implements ScheduleService {
          * @return
          */
         @Override
-        public ResultDTO<List<MediumTagDTO>> getMediumTags(Long largeTagNumber) {
+        public ResultDTO<List<MediumTagDTO>> getMediumTags(Long wsId, Long largeTagNumber) {
+
+                // 토큰으로 사용자 정보 가져오기
+                String email = AuthUtil.getLoginUserId();
+                MemberEntity member = memberRepository.findByEmail(email)
+                                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+                // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
+                WorkspaceEntity workspace = workspaceRepository.findById(wsId)
+                                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
+
+                Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository
+                                .findByWorkspaceAndMember(workspace, member);
+                if (byWorkspaceAndMember.isEmpty()) {
+                        throw new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
+                }
 
                 // 대분류 식별자로 대분류 태그 찾기
                 LargeTagEntity largeTagEntity = largeTagRepository.findById(largeTagNumber)

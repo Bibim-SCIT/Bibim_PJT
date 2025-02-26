@@ -15,12 +15,14 @@ import net.scit.backend.schedule.entity.LargeTagEntity;
 public class LargeTagDTO {
 
     private Long wsId;
+    private Long largeTagNumber;
     private String tagName;
     private String tagColor;
 
     public static LargeTagDTO toDTO(LargeTagEntity largeTagEntity) {
         return LargeTagDTO.builder()
                 .wsId(largeTagEntity.getWorkspace().getWsId())
+                .largeTagNumber(largeTagEntity.getLargeTagNumber())
                 .tagName(largeTagEntity.getTagName())
                 .tagColor(largeTagEntity.getTagColor())
                 .build();
