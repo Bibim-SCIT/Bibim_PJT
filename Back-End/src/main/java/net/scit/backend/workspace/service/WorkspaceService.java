@@ -11,8 +11,6 @@ import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.workspace.dto.InvateWorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
-import net.scit.backend.workspace.dto.WorkspaceUserInfoDTO;
-import net.scit.backend.workspace.entity.WorkspaceEntity;
 
 @Service
 public interface WorkspaceService

@@ -1,5 +1,20 @@
 package net.scit.backend.workspace.controller;
 
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
@@ -7,16 +22,7 @@ import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.workspace.dto.InvateWorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
-import net.scit.backend.workspace.dto.WorkspaceUserInfoDTO;
-import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.service.WorkspaceService;
-
-import java.util.List;
-
-import org.hibernate.annotations.Fetch;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 
 
@@ -181,11 +187,16 @@ public class WorkspaceController
      */
     @GetMapping("/myinfo")
     public ResponseEntity<ResultDTO<WorkspaceMemberDTO>> getWorkspaceMemberInfo(
-            @RequestParam Long wsId) {
-
-        // ✅ 서비스 호출
-        ResultDTO<WorkspaceMemberDTO> result = workspaceService.getWorkspaceMemberInfo(wsId);
-        return ResponseEntity.ok(result);
+            @RequestParam(required = true, name = "wsId") Long wsId) {
+        log.info("워크스페이스 회원 정보 조회 요청: wsId={}", wsId);
+        try {
+            ResultDTO<WorkspaceMemberDTO> result = workspaceService.getWorkspaceMemberInfo(wsId);
+            log.info("워크스페이스 회원 정보 조회 완료: {}", result);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("워크스페이스 회원 정보 조회 실패: {}", e.getMessage());
+            throw e;
+        }
     }
 
     

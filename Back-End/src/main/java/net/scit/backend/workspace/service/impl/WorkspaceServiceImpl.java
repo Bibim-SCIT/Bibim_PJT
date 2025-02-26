@@ -1,6 +1,10 @@
 package net.scit.backend.workspace.service.impl;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.redis.core.RedisTemplate;
@@ -23,8 +27,14 @@ import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.workspace.dto.InvateWorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
-import net.scit.backend.workspace.entity.*;
-import net.scit.backend.workspace.repository.*;
+import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
+import net.scit.backend.workspace.entity.WorkspaceChannelRoleEntity;
+import net.scit.backend.workspace.entity.WorkspaceEntity;
+import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
+import net.scit.backend.workspace.repository.WorkspaceChennelRepository;
+import net.scit.backend.workspace.repository.WorkspaceChennelRoleRepository;
+import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
+import net.scit.backend.workspace.repository.WorkspaceRepository;
 import net.scit.backend.workspace.service.WorkspaceService;
 
 @Service
@@ -309,19 +319,19 @@ public class WorkspaceServiceImpl implements WorkspaceService {
      * @return 워크스페이스 내 회원 정보
      */
     @Override
-    public ResultDTO<WorkspaceMemberDTO> getWorkspaceMemberInfo(Long wsId) { // ✅ wsId 적용
-        // ✅ JWT에서 로그인한 유저 이메일 가져오기
+    public ResultDTO<WorkspaceMemberDTO> getWorkspaceMemberInfo(Long wsId) {
+        // JWT에서 로그인한 유저 이메일 가져오기
         String email = AuthUtil.getLoginUserId();
 
-        // ✅ WorkSpace_Member 테이블에서 이메일과 wsId로 회원 정보 조회
+        // WorkSpace_Member 테이블에서 이메일과 wsId로 회원 정보 조회
         WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email)
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
 
-        // ✅ Member 테이블에서 기본 회원 정보(name) 조회
+        // Member 테이블에서 기본 회원 정보(name) 조회
         MemberEntity member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        // ✅ DTO 변환
+        // DTO 변환
         WorkspaceMemberDTO workspaceMemberDTO = WorkspaceMemberDTO.builder()
                 .name(member.getName())  // 기본 회원 이름
                 .nickname(workspaceMember.getNickname())  // 워크스페이스 내 닉네임
