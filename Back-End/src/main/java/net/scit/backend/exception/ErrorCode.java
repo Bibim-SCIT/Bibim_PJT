@@ -9,6 +9,7 @@ public enum ErrorCode {
     EMAIL_DUPLICATE("이미 가입한 이메일 입니다.", HttpStatus.BAD_REQUEST),
     MEMBER_NOT_FOUND("해당하는 회원이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
     INVALID_PASSWORD("비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
+    MEMBER_HAVE_NOT_ROLE("해당 권한이 존재하지 않습니다.", HttpStatus.FORBIDDEN),
 
     // WorkSpace
     WORKSPACE_NOT_FOUND("해당 워크스페이스를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),

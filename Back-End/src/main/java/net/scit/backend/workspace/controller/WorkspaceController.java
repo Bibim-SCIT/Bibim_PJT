@@ -58,7 +58,7 @@ public class WorkspaceController
      * @return
      */
     @DeleteMapping("")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceDelete(@RequestParam String wsName)
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceDelete(@RequestParam("wsName") String wsName)
     {
         ResultDTO<SuccessDTO> result = workspaceService.workspaceDelete(wsName);
         return ResponseEntity.ok(result);
@@ -72,8 +72,8 @@ public class WorkspaceController
      * @return
      */
     @PutMapping("")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceUpdate(@RequestParam String wsName,
-                                                                 @RequestParam String newName, 
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceUpdate(@RequestParam("wsName") String wsName,
+                                                                 @RequestParam("newName") String newName, 
                                                                  @RequestPart(value = "file", required = false) MultipartFile file) 
     {
         ResultDTO<SuccessDTO> result = workspaceService.workspaceUpdate(wsName,newName,file);
