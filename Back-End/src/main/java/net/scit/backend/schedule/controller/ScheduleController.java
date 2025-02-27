@@ -52,7 +52,7 @@ public class ScheduleController {
 
     @PutMapping("/{scheduleNumber}")
     public ResponseEntity<ResultDTO<SuccessDTO>> changeSchedule(@PathVariable Long scheduleNumber,
-                                                                @RequestBody ChangeScheduleDTO changeScheduleDTO) {
+            @RequestBody ChangeScheduleDTO changeScheduleDTO) {
         ResultDTO<SuccessDTO> result = scheduleService.changeSchedule(scheduleNumber, changeScheduleDTO);
         return ResponseEntity.ok(result);
     }
@@ -110,10 +110,10 @@ public class ScheduleController {
      * @return
      */
     @GetMapping("/tag/large")
-    public ResponseEntity<ResultDTO<List<LargeTagDTO>>> getLargeTags(@RequestParam Long wsId) {
+    public ResponseEntity<ResultDTO<List<LargeTagDTO>>> getLargeTags(@RequestParam(name = "wsId") Long wsId) {
         ResultDTO<List<LargeTagDTO>> result = scheduleService.getLargeTags(wsId);
         return ResponseEntity.ok(result);
-      
+
     }
 
     /**

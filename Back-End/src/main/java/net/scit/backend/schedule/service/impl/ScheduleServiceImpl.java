@@ -580,28 +580,39 @@ public class ScheduleServiceImpl implements ScheduleService {
 
                 return ResultDTO.of("소분류 태그가 생성되었습니다.", successDTO);
         }
-  
-    /**
-     * 대분류 태그 조회
-     *
-     * @return
-     */
-    @Override
-    public ResultDTO<List<LargeTagDTO>> getLargeTags(Long wsId) {
 
-        // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
-        WorkspaceEntity workspace = workspaceRepository.findById(wsId)
-                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
+        /**
+         * 대분류 태그 조회
+         *
+         * @return
+         */
+        @Override
+        public ResultDTO<List<LargeTagDTO>> getLargeTags(Long wsId) {
 
-        // 대분류 태그 조회
-        List<LargeTagEntity> largeTagEntityList = largeTagRepository.findAllByWorkspace(workspace);
-        List<LargeTagDTO> largeTagDTOList = new ArrayList<>();
-        for (LargeTagEntity largeTagEntity : largeTagEntityList) {
-            largeTagDTOList.add(LargeTagDTO.toDTO(largeTagEntity));
-        }
+                // 토큰으로 사용자 정보 가져오기
+                String email = AuthUtil.getLoginUserId();
+                MemberEntity member = memberRepository.findByEmail(email)
+                                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        // 대분류 태그 조회에 성공했습니다.
-        return ResultDTO.of("대분류 태그 조회에 성공했습니다.", largeTagDTOList);
+                // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
+                WorkspaceEntity workspace = workspaceRepository.findById(wsId)
+                                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
+
+                Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository
+                                .findByWorkspaceAndMember(workspace, member);
+                if (byWorkspaceAndMember.isEmpty()) {
+                        throw new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
+                }
+
+                // 대분류 태그 조회
+                List<LargeTagEntity> largeTagEntityList = largeTagRepository.findAllByWorkspace(workspace);
+                List<LargeTagDTO> largeTagDTOList = new ArrayList<>();
+                for (LargeTagEntity largeTagEntity : largeTagEntityList) {
+                        largeTagDTOList.add(LargeTagDTO.toDTO(largeTagEntity));
+                }
+
+                // 대분류 태그 조회에 성공했습니다.
+                return ResultDTO.of("대분류 태그 조회에 성공했습니다.", largeTagDTOList);
     }
   
     /**
