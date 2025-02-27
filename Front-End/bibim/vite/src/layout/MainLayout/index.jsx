@@ -60,7 +60,8 @@ export default function MainLayout() {
           {/* breadcrumb */}
           <Breadcrumbs />
           <Outlet />
-          <Footer />
+          {/* 밑에 나오는 것들 */}
+          {/* <Footer /> */}
         </Box>
       </MainContentStyled>
       <Customization />

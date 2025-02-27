@@ -80,7 +80,8 @@ export default function AuthLogin() {
       console.log("🟢 로그인 후 사용자 정보:", userInfo);
 
       // ✅ 사용자 정보가 업데이트된 후 메인 페이지 이동
-      navigate("/");
+      // navigate("/");
+      navigate("/ws-select");
 
     } catch (err) {
       console.error("❌ 로그인 오류:", err);
