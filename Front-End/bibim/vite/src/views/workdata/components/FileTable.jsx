@@ -40,6 +40,12 @@ const FileTable = ({ files, setFiles }) => {
     const [openModal, setOpenModal] = useState(false);
     const navigate = useNavigate();
 
+    console.log("📌 FileTable에서 받은 files 데이터:", files); // ✅ 전달된 데이터 확인
+
+    if (!files || files.length === 0) {
+        return <Typography sx={{ p: 2 }}>📂 등록된 파일이 없습니다.</Typography>;
+    }
+
     // 파일명 줄이기 함수
     const truncateFileName = (fileName, maxLength) => {
         const parts = fileName.split(".");
