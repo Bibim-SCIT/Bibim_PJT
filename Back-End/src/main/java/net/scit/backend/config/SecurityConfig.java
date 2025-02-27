@@ -1,11 +1,12 @@
 package net.scit.backend.config;
 
 //import net.scit.backend.auth.CustomOAuth2SuccessHandler;
-import net.scit.backend.auth.JwtAuthenticationFilter;
-import net.scit.backend.auth.JwtTokenProvider;
-// import net.scit.backend.member.service.CustomOAuth2UserService;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -19,15 +20,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
-import net.scit.backend.member.service.MemberDetailsService;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
+import net.scit.backend.auth.JwtAuthenticationFilter;
+import net.scit.backend.auth.JwtTokenProvider;
 
 @Configuration
 @EnableWebSecurity
@@ -72,7 +67,8 @@ public class SecurityConfig {
                         .permitAll() // 로그인 엔드포인트 허용
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 전용
                         .requestMatchers("/user/**", "/schedule/**", "/members/myinfo", "/members/changeinfo",
-                                "/members/withdraw")
+                                "/members/withdraw",
+                                "/workspace/**")
                         .hasRole("USER") // 사용자 전용
                         .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
                 )

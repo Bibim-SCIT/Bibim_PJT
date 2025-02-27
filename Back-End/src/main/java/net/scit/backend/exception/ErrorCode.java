@@ -9,6 +9,7 @@ public enum ErrorCode {
     EMAIL_DUPLICATE("이미 가입한 이메일 입니다.", HttpStatus.BAD_REQUEST),
     MEMBER_NOT_FOUND("해당하는 회원이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
     INVALID_PASSWORD("비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
+    MEMBER_HAVE_NOT_ROLE("해당 권한이 존재하지 않습니다.", HttpStatus.FORBIDDEN),
 
     // WorkSpace
     WORKSPACE_NOT_FOUND("해당 워크스페이스를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
@@ -24,6 +25,7 @@ public enum ErrorCode {
     TAG_NOT_FOUND("해당 태그를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     INVALID_TAG_HIERARCHY("잘못된 태그 계층 구조 입니다.", HttpStatus.BAD_REQUEST),
     TAG_DUPLICATE("이미 생성한 태그입니다.", HttpStatus.BAD_REQUEST),
+    INVALID_REQUEST("잘못된 요청입니다.", HttpStatus.BAD_REQUEST),
 
     // Common
     PARSING_ERROR("파싱 오류가 발생했습니다.", HttpStatus.BAD_REQUEST),
