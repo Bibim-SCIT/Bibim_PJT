@@ -5,7 +5,7 @@ import router from 'routes';
 
 // redux
 import { Provider } from 'react-redux';
-import store from './store/workspaceStroe';
+import store from './store/workspaceStore';
 
 // project imports
 import NavigationScroll from 'layout/NavigationScroll';
@@ -16,8 +16,7 @@ import ThemeCustomization from 'themes';
 
 // ==============================|| APP ||============================== //
 
-export default function App()
-{
+export default function App() {
   return (
     <Provider store={store}>
       <ThemeCustomization>

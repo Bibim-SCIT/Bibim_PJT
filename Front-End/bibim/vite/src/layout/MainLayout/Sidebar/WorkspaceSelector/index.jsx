@@ -4,19 +4,20 @@ import { Box, Typography, Avatar, Tooltip, Button, Menu, MenuItem, Modal, TextFi
 import useConfig from 'hooks/useConfig';
 import { useDispatch, useSelector } from 'react-redux';
 import { loadWorkspace } from 'store/workspaceRedux';
+import CreateWorkspaceModal from '../../../../views/ws-select/components/CreateWorkspaceModal';
 
 // ✅ 모달창의 스타일 설정
-const modalStyle = {
-    position: 'absolute', // 화면 중앙에 모달을 배치
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)', // 정확히 중앙에 위치하도록 조정
-    width: 400,
-    bgcolor: 'background.paper', // 배경색
-    boxShadow: 24,
-    p: 4,
-    borderRadius: 2 // 모서리를 둥글게 설정
-};
+// const modalStyle = {
+//     position: 'absolute', // 화면 중앙에 모달을 배치
+//     top: '50%',
+//     left: '50%',
+//     transform: 'translate(-50%, -50%)', // 정확히 중앙에 위치하도록 조정
+//     width: 400,
+//     bgcolor: 'background.paper', // 배경색
+//     boxShadow: 24,
+//     p: 4,
+//     borderRadius: 2 // 모서리를 둥글게 설정
+// };
 
 const WorkspaceSelector = () => {
     const dispatch = useDispatch(); // Redux의 dispatch 함수 사용
@@ -37,7 +38,7 @@ const WorkspaceSelector = () => {
     const [modalOpen, setModalOpen] = useState(false);
 
     // ✅ 모달창 입력 필드 상태 관리
-    const [newWorkspaceName, setNewWorkspaceName] = useState('');
+    // const [newWorkspaceName, setNewWorkspaceName] = useState('');
 
     // ✅ 컴포넌트가 처음 렌더링될 때 Redux에서 데이터 가져오기
     useEffect(() => {
@@ -56,16 +57,16 @@ const WorkspaceSelector = () => {
     };
 
     // ✅ 모달창 열기
-    const handleOpenModal = () => {
-        setModalOpen(true); // 모달 열기
-        setAnchorEl(null); // 메뉴 닫기 (선택 메뉴에서 버튼을 클릭했을 때 메뉴가 닫히도록 처리)
-    };
+    // const handleOpenModal = () => {
+    //     setModalOpen(true); // 모달 열기
+    //     setAnchorEl(null); // 메뉴 닫기 (선택 메뉴에서 버튼을 클릭했을 때 메뉴가 닫히도록 처리)
+    // };
 
     // ✅ 모달창 닫기
-    const handleCloseModal = () => {
-        setModalOpen(false); // 모달 닫기
-        setNewWorkspaceName(''); // 입력 필드 초기화
-    };
+    // const handleCloseModal = () => {
+    //     setModalOpen(false); // 모달 닫기
+    //     setNewWorkspaceName(''); // 입력 필드 초기화
+    // };
 
     // ✅ 워크스페이스 생성 버튼 클릭 시 실행되는 함수
     const handleCreateWorkspace = () => {
@@ -105,7 +106,7 @@ const WorkspaceSelector = () => {
                         <Button
                             variant="contained"
                             fullWidth
-                            onClick={handleOpenModal} // 클릭 시 모달 열기
+                            onClick={() => setModalOpen(true)}
                             sx={{ height: 36, textTransform: 'none' }}
                         >
                             워크스페이스 생성
@@ -130,12 +131,16 @@ const WorkspaceSelector = () => {
                             </Button>
 
                             {/* ✅ 워크스페이스 선택 메뉴 */}
-                            <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)} sx={{ width: '100%' }}>
-                                {/* ✅ 워크스페이스 목록 표시 */}
-                                {workspaces.map((ws) => (
+                            {/* <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)} sx={{ width: '100%' }}> */}
+                            {/* ✅ 워크스페이스 목록 표시 */}
+                            {/* {workspaces.map((ws) => (
                                     <MenuItem key={ws.wsId} onClick={() => handleSelect(ws)}>
                                         {ws.wsName}
                                     </MenuItem>
+                                ))} */}
+                            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+                                {workspaces.map((ws) => (
+                                    <MenuItem key={ws.id}>{ws.name}</MenuItem>
                                 ))}
 
                                 {/* ✅ 최하단의 파란색 버튼 (워크스페이스 생성) */}
@@ -143,7 +148,7 @@ const WorkspaceSelector = () => {
                                     <Button
                                         variant="contained"
                                         fullWidth
-                                        onClick={handleOpenModal}
+                                        onClick={() => setModalOpen(true)}
                                         sx={{
                                             backgroundColor: '#1976d2',
                                             color: '#ffffff',
@@ -164,34 +169,7 @@ const WorkspaceSelector = () => {
             )}
 
             {/* ✅ 워크스페이스 생성 모달창 */}
-            <Modal open={modalOpen} onClose={handleCloseModal}>
-                <Box sx={modalStyle}>
-                    {/* ✅ 모달 제목 */}
-                    <Typography variant="h6" component="h2" mb={2}>
-                        워크스페이스 생성
-                    </Typography>
-
-                    {/* ✅ 워크스페이스 이름 입력 필드 */}
-                    <TextField
-                        fullWidth
-                        label="워크스페이스 이름"
-                        variant="outlined"
-                        value={newWorkspaceName}
-                        onChange={(e) => setNewWorkspaceName(e.target.value)} // 입력값을 상태에 저장
-                        sx={{ mb: 2 }}
-                    />
-
-                    {/* ✅ 생성하기 버튼 */}
-                    <Button
-                        variant="contained"
-                        fullWidth
-                        onClick={handleCreateWorkspace} // 클릭 시 생성 함수 실행
-                        disabled={!newWorkspaceName.trim()} // 입력값이 없으면 버튼 비활성화
-                    >
-                        생성하기
-                    </Button>
-                </Box>
-            </Modal>
+            <CreateWorkspaceModal open={modalOpen} onClose={() => setModalOpen(false)} />
         </Box>
     );
 };
