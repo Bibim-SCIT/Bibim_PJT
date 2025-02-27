@@ -1,12 +1,10 @@
 package net.scit.backend.workdata.repository;
 
 import io.lettuce.core.dynamic.annotation.Param;
-import jakarta.transaction.Transactional;
 import net.scit.backend.workdata.entity.WorkDataFileTagEntity;
 import net.scit.backend.workdata.entity.WorkdataEntity;
 import net.scit.backend.workdata.entity.WorkdataFileEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
@@ -28,4 +26,6 @@ public interface WorkdataFileTagRepository extends JpaRepository<WorkDataFileTag
     // 개별 태그 조회 (태그명과 자료글을 기준으로 조회)
     Optional<WorkDataFileTagEntity> findByTagAndWorkdataFileEntity_WorkdataEntity(String tag, WorkdataEntity workdataEntity);
 
+    //고아 태그 문제 해결
+    List<WorkDataFileTagEntity> findByWorkdataFileEntity(WorkdataFileEntity fileEntity);
 }
