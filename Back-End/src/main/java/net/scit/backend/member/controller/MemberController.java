@@ -1,6 +1,5 @@
 package net.scit.backend.member.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
@@ -126,7 +125,7 @@ public class MemberController {
      * @return 회원 정보
      */
     @GetMapping("/myinfo")
-    public ResponseEntity<ResultDTO<MyInfoDTO>> myInfo(HttpServletRequest request) {
+    public ResponseEntity<ResultDTO<MyInfoDTO>> myInfo() {
         return ResponseEntity.ok(memberService.myInfo());
     }
 

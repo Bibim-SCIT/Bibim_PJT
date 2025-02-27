@@ -122,7 +122,7 @@ export const logoutUser = async () => {
     }
 };
 
-// 
+// 사용자 정보 가져오기 
 export const getUserInfo = async () => {
     try {
         const response = await api.get("/members/myinfo");

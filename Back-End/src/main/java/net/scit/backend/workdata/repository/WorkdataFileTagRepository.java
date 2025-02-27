@@ -18,10 +18,14 @@ public interface WorkdataFileTagRepository extends JpaRepository<WorkDataFileTag
     @Query("SELECT COUNT(t) FROM WorkDataFileTagEntity t WHERE t.workdataFileEntity.workdataEntity = :workdataEntity")
     int countByWorkdataFileEntity_WorkdataEntity(@Param("workdataEntity") WorkdataEntity workdataEntity);
 
-    //개별 태그 삭제
-        @Query("SELECT t FROM WorkDataFileTagEntity t WHERE t.tag = :tag AND t.workdataFileEntity.workdataEntity = :workdataEntity")
-        Optional<WorkDataFileTagEntity> findByTagAndWorkdataFileEntity_WorkdataEntity(@Param("tag") String tag, @Param("workdataEntity") WorkdataEntity workdataEntity);
+    //1-3)태그 수정
+    // 해당 자료글에 속한 모든 태그 조회
+    List<WorkDataFileTagEntity> findByWorkdataFileEntity_WorkdataEntity(WorkdataEntity workdataEntity);
 
+    // 태그명 목록에 해당하는 태그들을 자료글과 함께 조회
+    List<WorkDataFileTagEntity> findByTagInAndWorkdataFileEntity_WorkdataEntity(List<String> tags, WorkdataEntity workdataEntity);
 
+    // 개별 태그 조회 (태그명과 자료글을 기준으로 조회)
+    Optional<WorkDataFileTagEntity> findByTagAndWorkdataFileEntity_WorkdataEntity(String tag, WorkdataEntity workdataEntity);
 
 }

@@ -26,13 +26,16 @@ public class ScheduleDTO {
     private LocalDateTime scheduleFinishDate;
 
     public static ScheduleDTO toDTO(ScheduleEntity scheduleEntity, String nickname, ScheduleTagEntity scheduleTagEntity) {
+        String tag2 = (scheduleTagEntity.getMediumTag() != null) ? scheduleTagEntity.getMediumTag().getTagName() : null; // null 처리 추가
+        String tag3 = (scheduleTagEntity.getSmallTag() != null) ? scheduleTagEntity.getSmallTag().getTagName() : null; // null 처리 추가
+
         return ScheduleDTO.builder()
                 .wsId(scheduleEntity.getWorkspace().getWsId())
                 .scheduleNumber(scheduleEntity.getScheduleNumber())
                 .nickname(nickname)
                 .tag1(scheduleTagEntity.getLargeTag().getTagName())
-                .tag2(scheduleTagEntity.getMediumTag().getTagName())
-                .tag3(scheduleTagEntity.getSmallTag().getTagName())
+                .tag2(tag2)
+                .tag3(tag3)
                 .scheduleTitle(scheduleEntity.getScheduleTitle())
                 .scheduleContent(scheduleEntity.getScheduleContent())
                 .scheduleStatus(scheduleEntity.getScheduleStatus())
