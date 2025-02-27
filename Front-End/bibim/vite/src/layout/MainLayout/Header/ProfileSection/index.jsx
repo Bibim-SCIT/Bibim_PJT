@@ -169,10 +169,12 @@ export default function ProfileSection() {
                         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                           <Typography variant="h4">반갑습니다.</Typography>
                           <Typography component="span" variant="h4" sx={{ fontWeight: 400 }}>
-                            {user ? user.email : "Guest"} {/* ✅ 현재 로그인한 사용자 이메일 표시 */}
+                            {user ? user.name : "Guest"} {/* ✅ 현재 로그인한 사용자 이메일 표시 */}
                           </Typography>
                         </Stack>
-                        <Typography variant="subtitle2">Project Admin</Typography>
+                        <Typography variant="subtitle2">
+                          {user ? user.email : "test@email"} {/* ✅ 현재 로그인한 사용자 이메일 표시 */}
+                        </Typography>
                       </Stack>
                       <OutlinedInput
                         sx={{ width: '100%', pr: 1, pl: 2, my: 2 }}

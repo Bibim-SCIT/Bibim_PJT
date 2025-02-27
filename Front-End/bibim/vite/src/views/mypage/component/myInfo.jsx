@@ -107,7 +107,7 @@ const MyInfo = () => {
           p: 3,
           position: 'relative',
           bgcolor: 'background.paper',
-          borderRadius: 1,
+          borderRadius: 3,
           boxShadow: 1
         }}>
           {/* 설정 버튼 */}
@@ -119,16 +119,6 @@ const MyInfo = () => {
           </IconButton>
 
           <Stack direction="row" spacing={4} sx={{ mt: 2 }}>
-            {/* 프로필 이미지에 실제 데이터 연결 */}
-            {/* <Avatar
-              sx={{
-                width: 150,
-                height: 150,
-                mt: 2
-              }}
-              alt={`${userInfo.name}의 프로필 이미지`}
-              src={userInfo.profileImage}
-            /> */}
             <GlowingAvatar src={userInfo.profileImage} alt={`${userInfo.name}의 프로필`} />
 
 
