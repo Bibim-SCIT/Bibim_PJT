@@ -1,6 +1,5 @@
 package net.scit.backend.workdata.controller;
 
-import com.amazonaws.services.s3.model.S3Object;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -16,7 +15,6 @@ import net.scit.backend.workdata.dto.WorkdataDTO;
 import net.scit.backend.workdata.dto.WorkdataTotalSearchDTO;
 import net.scit.backend.workdata.entity.WorkDataFileTagEntity;
 import net.scit.backend.workdata.entity.WorkdataEntity;
-import net.scit.backend.workdata.entity.WorkdataFileEntity;
 import net.scit.backend.workdata.repository.WorkdataFileRepository;
 import net.scit.backend.workdata.repository.WorkdataFileTagRepository;
 import net.scit.backend.workdata.repository.WorkdataRepository;
@@ -32,10 +30,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-
-import java.net.URL;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Controller
 @RestController
@@ -58,12 +53,11 @@ public class WorkdataController {
      * 1-1) 자료글 등록(+ 파일, 태그)
      */
     @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ResultDTO<SuccessDTO>> workdataCreate(
-            @RequestParam("wsId") Long wsId,
-            @RequestParam("title") String title,
-            @RequestParam("content") String content,
-            @RequestParam(value = "files", required = false) MultipartFile[] files,
-            @RequestParam(value = "tags", required = false) java.util.List<String> tags) {
+    public ResponseEntity<ResultDTO<SuccessDTO>> workdataCreate(@RequestParam("wsId") Long wsId,
+                                                                @RequestParam("title") String title,
+                                                                @RequestParam("content") String content,
+                                                                @RequestParam(value = "files", required = false) MultipartFile[] files,
+                                                                @RequestParam(value = "tags", required = false) java.util.List<String> tags) {
 
         try {
             // 1. 현재 로그인한 사용자의 이메일 가져오기
@@ -194,6 +188,23 @@ public class WorkdataController {
 
 
     /**
+     * 문자열(JSON 배열)을 List<T>로 변환하는 헬퍼 메서드
+     * @param jsonStr JSON 배열 문자열
+     * @param typeRef 변환할 타입 (예: new TypeReference<List<String>>() {})
+     * @return 변환된 List<T> 또는 변환 실패 시 빈 리스트 반환
+     */
+    private <T> List<T> parseJsonArray(String jsonStr, TypeReference<List<T>> typeRef) {
+        if (jsonStr == null || jsonStr.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+        try {
+            return objectMapper.readValue(jsonStr, typeRef);
+        } catch (JsonProcessingException e) {
+            log.warn("JSON 파싱 오류: {}", e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+    /**
      * 1-3) 자료글 수정 (파일, 태그 일괄 수정)
      * JSON 데이터는 @RequestPart로 받습니다.
      *
@@ -201,79 +212,42 @@ public class WorkdataController {
      * 각 JSON 필드(tagRequests, deleteFiles, deleteTags, newTags)는
      * "Content-Type"을 "application/json"으로 설정해서 전송하세요.
      */
-//    @PutMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-//    public ResponseEntity<ResultDTO<SuccessDTO>> workdataUpdate(
-//            @RequestParam Long wsId,
-//            @RequestParam Long dataNumber,
-//            @RequestParam(value = "title", required = false) String title,
-//            @RequestParam(value = "content", required = false) String content,
-//
-//            // JSON 데이터를 String으로 받고, 컨트롤러에서 List로 변환
-//            @RequestParam(value = "deleteFiles", required = false) String deleteFilesJson,
-//            @RequestParam(value = "oldTags", required = false) String oldTagsJson, // 기존 태그
-//            @RequestParam(value = "newTags", required = false) String newTagsJson, // 새로운 태그
-//
-//            // 새 파일 추가
-//            @RequestParam(value = "files", required = false) MultipartFile[] newFiles
-//    ) {
-//        try {
-//            String userEmail = AuthUtil.getLoginUserId();
-//            log.info("로그인 사용자: {}", userEmail);
-//
-//            // JSON 문자열을 List로 변환
-//            List<String> deleteFiles = parseJsonArray(deleteFilesJson, new TypeReference<List<String>>() {});
-//            List<String> oldTags = parseJsonArray(oldTagsJson, new TypeReference<List<String>>() {});
-//            List<String> newTags = parseJsonArray(newTagsJson, new TypeReference<List<String>>() {});
-//
-//            // 서비스 호출
-//            ResultDTO<SuccessDTO> result = workdataService.updateWorkdata(
-//                    wsId, dataNumber, title, content,
-//                    deleteFiles, oldTags, newTags,
-//                    newFiles, userEmail
-//            );
-//
-//            return ResponseEntity.ok(result);
-//
-//        } catch (IllegalArgumentException e) {
-//            log.error("IllegalArgumentException 발생: {}", e.getMessage());
-//            return ResponseEntity.badRequest()
-//                    .body(ResultDTO.of(e.getMessage(), SuccessDTO.builder().success(false).build()));
-//        } catch (Exception e) {
-//            log.error("자료글 수정 중 오류 발생: {}", e.getMessage(), e);
-//            return ResponseEntity.status(500)
-//                    .body(ResultDTO.of("자료글 수정 중 오류 발생: " + e.getMessage(),
-//                            SuccessDTO.builder().success(false).build()));
-//        }
-//    }
-//
-//    /**
-//     * JSON 문자열을 List<T>로 변환하는 헬퍼 메서드
-//     */
-//    private <T> List<T> parseJsonArray(String jsonStr, TypeReference<List<T>> typeRef) {
-//        if (jsonStr == null || jsonStr.trim().isEmpty()) {
-//            return Collections.emptyList();
-//        }
-//        try {
-//            ObjectMapper objectMapper = new ObjectMapper();
-//            return objectMapper.readValue(jsonStr, typeRef);
-//        } catch (JsonProcessingException e) {
-//            log.warn("JSON 파싱 오류: {}", e.getMessage());
-//            return Collections.emptyList();
-//        }
-//    }
+    @PutMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResultDTO<SuccessDTO>> workdataUpdate(@RequestParam Long wsId,
+                                                                @RequestParam Long dataNumber,
+                                                                @RequestParam(value = "title", required = false) String title,
+                                                                @RequestParam(value = "content", required = false) String content,
+                                                                @RequestParam(value = "deleteFiles", required = false) String deleteFilesJson,
+                                                                @RequestParam(value = "newTags", required = false) String newTagsJson,
+                                                                @RequestParam(value = "files", required = false) MultipartFile[] newFiles) {
+        try {
+            // JSON 문자열 파싱
+            List<String> deleteFiles = parseJsonArray(deleteFilesJson, new TypeReference<List<String>>() {});
+            List<String> newTags = parseJsonArray(newTagsJson, new TypeReference<List<String>>() {});
 
+            // 이메일은 서비스 내부에서 AuthUtil을 통해 가져옵니다.
+            ResultDTO<SuccessDTO> result = workdataService.updateWorkdata(
+                    wsId, dataNumber, title, content,
+                    deleteFiles, newTags, newFiles
+            );
 
-
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("자료글 수정 중 오류 발생: {}", e.getMessage(), e);
+            return ResponseEntity.status(500)
+                    .body(ResultDTO.of("자료글 수정 중 오류 발생: " + e.getMessage(),
+                            SuccessDTO.builder().success(false).build()));
+        }
+    }
 
 
     /**
      * 1-4-1) 자료글 전체 조회(+태그별 정렬)
      */
     @GetMapping("")
-    public ResponseEntity<ResultDTO<List<WorkdataTotalSearchDTO>>> workdata(
-            @RequestParam Long wsId,
-            @RequestParam(required = false, defaultValue = "regDate") String sort,
-            @RequestParam(required = false, defaultValue = "desc") String order) {
+    public ResponseEntity<ResultDTO<List<WorkdataTotalSearchDTO>>> workdata(@RequestParam Long wsId,
+                                                                            @RequestParam(required = false, defaultValue = "regDate") String sort,
+                                                                            @RequestParam(required = false, defaultValue = "desc") String order) {
 
         // 1. 로그인 사용자 이메일 조회
         String userEmail = AuthUtil.getLoginUserId();
@@ -295,9 +269,8 @@ public class WorkdataController {
      * 1-4-2) 자료실 개별 조회
      */
     @GetMapping("/detail")
-    public ResponseEntity<ResultDTO<WorkdataTotalSearchDTO>> workdataDetail(
-            @RequestParam Long wsId,
-            @RequestParam Long dataNumber) {
+    public ResponseEntity<ResultDTO<WorkdataTotalSearchDTO>> workdataDetail(@RequestParam Long wsId,
+                                                                            @RequestParam Long dataNumber) {
 
         // 1. 로그인 사용자 이메일 조회
         String userEmail = AuthUtil.getLoginUserId();

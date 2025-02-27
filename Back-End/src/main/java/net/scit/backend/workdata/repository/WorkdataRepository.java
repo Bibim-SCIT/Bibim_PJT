@@ -3,7 +3,6 @@ package net.scit.backend.workdata.repository;
 import io.lettuce.core.dynamic.annotation.Param;
 import net.scit.backend.workdata.entity.WorkdataEntity;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -32,10 +31,6 @@ public interface WorkdataRepository extends JpaRepository<WorkdataEntity, Long> 
             "OR LOWER(f.fileName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "OR LOWER(t.tag) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     List<WorkdataEntity> searchByWorkspaceAndKeyword(@Param("wsId") Long wsId, @Param("keyword") String keyword);
-
-    //정렬 기능
-    // WorkdataRepository.java
-    List<WorkdataEntity> findByWorkspaceEntity_WsId(Long wsId, Sort sort);
 
     //태그 등록
     Optional<WorkdataEntity> findByDataNumberAndWorkspaceEntity(Long dataNumber, WorkspaceEntity workspaceEntity);

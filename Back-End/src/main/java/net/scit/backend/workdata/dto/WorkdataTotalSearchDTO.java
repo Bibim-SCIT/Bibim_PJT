@@ -13,19 +13,25 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class WorkdataTotalSearchDTO {
+    private Long dataNumber;
     private String writer;
     private String title;
+    private String content;
     private LocalDateTime regDate;
-    private List<String> fileNames; // 파일 이름 리스트
-    private List<String> tags; // 태그 리스트
+    private List<String> fileNames; // 기존 파일 이름 리스트
+    private List<String> fileUrls;  // 추가된 파일 다운로드 URL 리스트
+    private List<String> tags;
 
     public static WorkdataTotalSearchDTO toWorkdataTotalSearchDTO(WorkdataEntity entity) {
         return WorkdataTotalSearchDTO.builder()
+                .dataNumber(entity.getDataNumber())
                 .writer(entity.getWriter())
                 .title(entity.getTitle())
+                .content(entity.getContent())
                 .regDate(entity.getRegDate())
-                .fileNames(new ArrayList<>()) // 기본값 설정, 후에 추가
-                .tags(new ArrayList<>()) // 기본값 설정, 후에 추가
+                .fileNames(new ArrayList<>()) // 기본값 설정
+                .fileUrls(new ArrayList<>())  // 기본값 설정
+                .tags(new ArrayList<>()) // 기본값 설정
                 .build();
     }
 }

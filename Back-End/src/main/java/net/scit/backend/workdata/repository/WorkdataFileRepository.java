@@ -18,7 +18,4 @@ public interface WorkdataFileRepository extends JpaRepository<WorkdataFileEntity
 
     // 자료글에 연결된 첫 번째 파일을 Optional로 반환 (Optional 사용)
     Optional<WorkdataFileEntity> findFirstByWorkdataEntity(WorkdataEntity workdataEntity);
-
-    //일괄 수정 시 사용
-    List<WorkdataFileEntity> findByWorkdataEntity(WorkdataEntity workdataEntity);
 }

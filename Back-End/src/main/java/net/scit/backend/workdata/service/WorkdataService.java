@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 public interface WorkdataService {
@@ -25,20 +24,15 @@ public interface WorkdataService {
     ResultDTO<SuccessDTO> deleteWorkdata(Long wsId, Long dataNumber, String email);
 
     //1-3) 자료글 수정(+ 파일, 태그)
-//    ResultDTO<SuccessDTO> updateWorkdata(
-//            Long wsId,
-//            Long dataNumber,
-//            String title,
-//            String content,
-//            List<String> deleteFiles,
-//            List<String> oldTags,
-//            List<String> newTags,
-//            MultipartFile[] newFiles,
-//            String userEmail
-//    );
-
-
-
+    ResultDTO<SuccessDTO> updateWorkdata(
+            Long wsId,
+            Long dataNumber,
+            String title,
+            String content,
+            List<String> deleteFiles,
+            List<String> newTags,
+            MultipartFile[] newFiles
+    );
 
     //자료글 전체 조회
     ResponseEntity<ResultDTO<List<WorkdataTotalSearchDTO>>> workdata(Long wsId, String sort, String order);
