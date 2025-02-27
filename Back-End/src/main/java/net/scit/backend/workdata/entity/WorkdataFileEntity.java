@@ -3,10 +3,6 @@ package net.scit.backend.workdata.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,18 +16,14 @@ public class WorkdataFileEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long fileNumber;
 
-    // WorkdataEntity와의 관계 설정 (ManyToOne)
+    /**
+     * 부모인 WorkdataEntity와 다대일 관계
+     * dataNumber 컬럼을 통해 부모 PK를 참조
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "data_number")
     private WorkdataEntity workdataEntity;
 
     private String file;
     private String fileName;
-
-    // WorkDataFileTagEntity와의 관계 설정 (OneToMany, mappedBy 수정)
-    @OneToMany(mappedBy = "workdataFileEntity", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<WorkDataFileTagEntity> workdataFileTag = new HashSet<>();
-
-
-
 }

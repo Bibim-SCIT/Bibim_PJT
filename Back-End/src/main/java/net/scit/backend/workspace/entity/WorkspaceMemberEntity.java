@@ -1,14 +1,12 @@
 package net.scit.backend.workspace.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 import net.scit.backend.member.entity.MemberEntity;
+import net.scit.backend.workdata.entity.WorkdataEntity;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -44,6 +42,10 @@ public class WorkspaceMemberEntity {
     // 워크스페이스 내부에서 사용하는 닉네임
     private String nickname;
 
-    // 워크스페이스에서 사용하는 프로필 이미지지
+    // 워크스페이스에서 사용하는 프로필 이미지
     private String profileImage;
+
+    // WorkdataEntity와 Set으로 연결 (중복 방지 및 조인 최적화)
+    @OneToMany(mappedBy = "workspaceMember", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<WorkdataEntity> workdataEntities = new HashSet<>();
 }
