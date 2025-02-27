@@ -114,6 +114,9 @@ const CalendarWrapper = styled(Box)({
   },
   '& .fc-day-today': {
     backgroundColor: '#f8f9fa !important',
+    '&:hover': {
+      backgroundColor: '#f1f3f5 !important',
+    }
   },
   '& .fc-day-today .fc-daygrid-day-number': {
     backgroundColor: 'transparent',
@@ -147,9 +150,6 @@ const CalendarWrapper = styled(Box)({
     margin: '0',
     padding: '4px',
   },
-  '& .fc-day-today:hover': {
-    backgroundColor: '#f1f3f5 !important',
-  }
 });
 
 const Calendar = () => {
