@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Typography, Avatar, Button, Card } from '@mui/material';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
@@ -11,6 +11,39 @@ export default function WorkspaceList({ workspaces = [], onCreate }) {
     const [modalOpen, setModalOpen] = useState(false);
 
     console.log("📌 현재 workspaces 배열:", workspaces);
+
+    // 로딩속도 측정 (삭제할 코드)
+    // useEffect(() => {
+    //     workspaces.forEach((ws) => {
+    //         console.log(`🖼️ 이미지 URL 확인: ${ws.wsImg}`);
+    //         if (ws.wsImg) {
+    //             const timerLabel = `🖼️ 이미지 로딩 시간 - ${ws.wsName}`;
+
+    //             // 🛑 기존 타이머가 존재하면 종료 후 새 타이머 시작
+    //             try {
+    //                 console.timeEnd(timerLabel);
+    //             } catch (e) {
+    //                 // 타이머가 없으면 무시
+    //             }
+
+    //             console.time(timerLabel);
+
+    //             const img = new Image();
+    //             img.src = ws.wsImg; // S3 이미지 URL 사용
+
+    //             img.onload = () => {
+    //                 console.timeEnd(timerLabel);
+    //                 console.log(`✅ 이미지 로딩 성공: ${ws.wsImg}`);
+    //             };
+
+    //             img.onerror = () => {
+    //                 console.timeEnd(timerLabel);
+    //                 console.error(`❌ 이미지 로딩 실패: ${ws.wsImg}`);
+    //             };
+    //         }
+    //     });
+    // }, [workspaces]);
+
 
 
     return (
