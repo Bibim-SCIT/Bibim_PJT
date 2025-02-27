@@ -119,6 +119,7 @@ public class ScheduleController {
     /**
      * 중분류 태그 조회
      * 
+     * @param wsId
      * @param largeTagNumber
      * @return
      */
@@ -132,12 +133,16 @@ public class ScheduleController {
     /**
      * 소분류 태그 조회
      * 
+     * @param wsId
+     * @param largeTagNumber
      * @param mediumTagNumber
      * @return
      */
     @GetMapping("/tag/small")
-    public ResponseEntity<ResultDTO<List<SmallTagDTO>>> getSmallTags(@RequestParam Long mediumTagNumber) {
-        ResultDTO<List<SmallTagDTO>> result = scheduleService.getSmallTags(mediumTagNumber);
+    public ResponseEntity<ResultDTO<List<SmallTagDTO>>> getSmallTags(@RequestParam(name = "wsId") Long wsId,
+            @RequestParam(name = "largeTagNumber") Long largeTagNumber,
+            @RequestParam(name = "mediumTagNumber") Long mediumTagNumber) {
+        ResultDTO<List<SmallTagDTO>> result = scheduleService.getSmallTags(wsId, largeTagNumber, mediumTagNumber);
         return ResponseEntity.ok(result);
     }
 

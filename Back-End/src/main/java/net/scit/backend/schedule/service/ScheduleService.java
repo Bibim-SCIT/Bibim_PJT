@@ -32,7 +32,7 @@ public interface ScheduleService {
 
     ResultDTO<List<MediumTagDTO>> getMediumTags(Long wsId, Long largeTagNumber);
 
-    ResultDTO<List<SmallTagDTO>> getSmallTags(Long mediumTagNumber);
+    ResultDTO<List<SmallTagDTO>> getSmallTags(Long wsId, Long largeTagNumber, Long mediumTagNumber);
 
     ResultDTO<SuccessDTO> deleteLargeTag(Long largeTagNumber);
 
