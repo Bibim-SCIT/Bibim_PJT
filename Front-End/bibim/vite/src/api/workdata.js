@@ -143,24 +143,26 @@ export const updateWorkdata = async (wsId, dataNumber, title, content, deleteFil
 // };
 
 // ✅ 자료실 전체 조회 API
-export const getWorkdataList = async (wsId) => {
+export const getWorkdataList = async (wsId, sort = "regDate", order = "desc") => {
     try {
-        const response = await api.get('/workdata', { params: { wsId } });
-        return response.data.data; // ✅ 백엔드에서 받은 데이터 중 'data' 부분만 반환
+        const response = await api.get('/workdata', { params: { wsId, sort, order } });
+        return response.data.data; // ✅ 백엔드에서 받은 'data' 부분만 반환
     } catch (error) {
         throw error.response?.data || "자료 목록 조회 실패";
     }
 };
 
-// ✅ 자료 상세 조회 API
+
+// ✅ 자료실 상세 조회 API
 export const getWorkdataDetail = async (wsId, dataNumber) => {
     try {
         const response = await api.get('/workdata/detail', { params: { wsId, dataNumber } });
-        return response.data.data; // ✅ 백엔드에서 받은 데이터 중 'data' 부분만 반환
+        return response.data.data; // ✅ 백엔드에서 받은 'data' 부분만 반환
     } catch (error) {
         throw error.response?.data || "자료 상세 조회 실패";
     }
 };
+
 
 // 자료 검색 API
 export const searchWorkdata = async (wsId, keyword) => {
@@ -181,3 +183,4 @@ export const getSortedWorkdata = async (wsId, sortField, sortOrder) => {
         throw error.response?.data || error.message;
     }
 };
+
