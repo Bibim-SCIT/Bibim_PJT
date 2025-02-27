@@ -7,10 +7,21 @@ import 'swiper/css/navigation';
 import { Navigation, Pagination } from 'swiper/modules';
 import CreateWorkspaceModal from './CreateWorkspaceModal';
 
-export default function WorkspaceList({ workspaces = [], onCreate }) {
+export default function WorkspaceList({ workspaces = [], onSelect }) {
     const [modalOpen, setModalOpen] = useState(false);
 
     console.log("📌 현재 workspaces 배열:", workspaces);
+
+    // const handleChangeWorkspace = (workspace) => {
+    //     // Redux에 현재 워크스페이스 설정
+    //     dispatch(setActiveWorkspace(workspace));
+
+    //     // localStorage에 현재 워크스페이스 저장 (새로고침해도 유지되도록)
+    //     localStorage.setItem('activeWorkspace', JSON.stringify(workspace));
+
+    //     // 대시보드로 이동
+    //     navigate('/dashboard');
+    // };
 
     // 로딩속도 측정 (삭제할 코드)
     // useEffect(() => {
@@ -99,7 +110,12 @@ export default function WorkspaceList({ workspaces = [], onCreate }) {
                                 <Typography variant="subtitle1" sx={{ mt: 1 }}>
                                     {ws.wsName}
                                 </Typography>
-                                <Button variant="contained" size="small" sx={{ mt: 1 }}>
+                                <Button
+                                    variant="contained"
+                                    size="small"
+                                    sx={{ mt: 1 }}
+                                    onClick={() => onSelect(ws)} // ✅ 클릭 시 선택
+                                >
                                     변경
                                 </Button>
                             </Card>
