@@ -20,6 +20,8 @@ public interface ScheduleService {
 
     ResultDTO<SuccessDTO> changeSchedule(Long scheduleNumber, ChangeScheduleDTO changeScheduleDTO);
 
+    ResultDTO<SuccessDTO> deleteSchedule(Long scheduleNumber);
+
     ResultDTO<SuccessDTO> createLargeTag(LargeTagDTO largeTagDTO);
 
     ResultDTO<SuccessDTO> createMediumTag(MediumTagDTO mediumTagDTO);

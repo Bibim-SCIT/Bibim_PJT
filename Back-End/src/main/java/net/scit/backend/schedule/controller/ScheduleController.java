@@ -56,6 +56,12 @@ public class ScheduleController {
         ResultDTO<SuccessDTO> result = scheduleService.changeSchedule(scheduleNumber, changeScheduleDTO);
         return ResponseEntity.ok(result);
     }
+
+    @DeleteMapping("/{scheduleNumber}")
+    public ResponseEntity<ResultDTO<SuccessDTO>> deleteSchedule(@PathVariable Long scheduleNumber) {
+        ResultDTO<SuccessDTO> result = scheduleService.deleteSchedule(scheduleNumber);
+        return ResponseEntity.ok(result);
+    }
   
     /**
      * 대분류 태그 생성

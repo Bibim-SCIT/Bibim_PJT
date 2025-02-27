@@ -42,8 +42,8 @@ public class ScheduleServiceImpl implements ScheduleService {
     /**
      * 새로운 스케줄 생성
      *
-     * @param scheduleDTO
-     * @return
+     * @param scheduleDTO // 스케줄 DTO
+     * @return 메시지와 성공여부
      */
     @Transactional
     @Override
@@ -67,7 +67,6 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         // 태그 등록
         // 대분류가 있을 때만 등록
-
         if (!scheduleDTO.getTag1().isEmpty()) {
             String largeTagName = scheduleDTO.getTag1();
             LargeTagEntity largeTagEntity = largeTagRepository.findByTagName(largeTagName)
@@ -113,8 +112,8 @@ public class ScheduleServiceImpl implements ScheduleService {
     /**
      * 워크스페이스의 모든 스케줄 정보 가져오기
      *
-     * @param wsId
-     * @return
+     * @param wsId // 워크스페이스 식별자
+     * @return 메시지와 해당 워크스페이스의 스케줄 리스트
      */
     @Override
     public ResultDTO<List<ScheduleDTO>> getSchedules(Long wsId) {
@@ -170,6 +169,12 @@ public class ScheduleServiceImpl implements ScheduleService {
         return ResultDTO.of("팀 스케줄 리스트를 불러 왔습니다.", scheduleDTOList);
     }
 
+    /**
+     * 특정 스케줄의 정보
+     *
+     * @param scheduleNumber // 스케줄 식별자
+     * @return 메시지와 특정 스케줄의 정보
+     */
     @Override
     public ResultDTO<ScheduleDTO> getSchedule(Long scheduleNumber) {
 
@@ -203,6 +208,12 @@ public class ScheduleServiceImpl implements ScheduleService {
         return ResultDTO.of("스케줄 상세 조회에 성공했습니다.", scheduleDTO);
     }
 
+    /**
+     * 스케줄 담당자 지정
+     *
+     * @param scheduleNumber // 스케줄 식별자
+     * @return 메시지와 성공여부
+     */
     @Override
     public ResultDTO<SuccessDTO> assignSchedule(Long scheduleNumber) {
 
@@ -230,6 +241,13 @@ public class ScheduleServiceImpl implements ScheduleService {
         return ResultDTO.of("해당 스케줄 담당에 성공했습니다.", successDTO);
     }
 
+    /**
+     * 스케줄 상태 수정
+     *
+     * @param scheduleNumber // 스케줄 식별자
+     * @param status         // 스케줄 상태 번호
+     * @return 메시지와 성공여부
+     */
     @Override
     public ResultDTO<SuccessDTO> changeScheduleStatus(Long scheduleNumber, char status) {
 
@@ -267,6 +285,13 @@ public class ScheduleServiceImpl implements ScheduleService {
         return ResultDTO.of("해당 스케줄 상태 변경에 성공했습니다.", successDTO);
     }
 
+    /**
+     * 스케줄 정보 수정
+     *
+     * @param scheduleNumber    // 스케줄 식별자
+     * @param changeScheduleDTO // 수정하려는 스케줄 정보
+     * @return 메시지와 성공여부
+     */
     @Transactional
     @Override
     public ResultDTO<SuccessDTO> changeSchedule(Long scheduleNumber, ChangeScheduleDTO changeScheduleDTO) {
@@ -279,6 +304,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         // 스케줄 식별자로 특정 스케줄 정보 가져오기
         ScheduleEntity scheduleEntity = scheduleRepository.findByScheduleNumber(scheduleNumber)
                 .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
+
         WorkspaceEntity workspace = scheduleEntity.getWorkspace();
 
         // 해당 워크스페이스 멤버인지 확인
@@ -287,60 +313,96 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         // 담당자 혹은 권한이 오너인지 확인
         MemberEntity scheduleMemnber = scheduleEntity.getMember();
-        if (!scheduleMemnber.equals(member) && !workspaceMemberEntity.getMember().getRoles().equals("owner")) {
-            throw new CustomException(ErrorCode.INVALID_SCHEDULE_MEMBER);
-        }
+        boolean isOwner = "owner".equals(workspaceMemberEntity.getWsRole());
 
-        Optional<ScheduleTagEntity> bySchedule = scheduleTagRepository.findBySchedule(scheduleEntity);
-        if (bySchedule.isPresent()) {
-            ScheduleTagEntity scheduleTagEntity = bySchedule.get();
-
-            // 태그 계층 구조 검사
-            // 대분류가 있을 때만 등록
-            if (!changeScheduleDTO.getTag1().isEmpty()) {
-                String largeTagName = changeScheduleDTO.getTag1();
-                LargeTagEntity largeTagEntity = largeTagRepository.findByTagName(largeTagName)
-                        .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
-
-                // 중분류는 없는데 소분류는 있을 때 exception
-                if (changeScheduleDTO.getTag2().isEmpty() && !changeScheduleDTO.getTag3().isEmpty()) {
-                    throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
-                }
-
-                // 중분류 있을 때
-                MediumTagEntity mediumTagEntity = null;
-                if (!changeScheduleDTO.getTag2().isEmpty()) {
-                    String mediumTagName = changeScheduleDTO.getTag2();
-                    mediumTagEntity = mediumTagRepository.findByTagName(mediumTagName)
-                            .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
-                }
-
-                // 소분류 있을 때
-                SmallTagEntity smallTagEntity = null;
-                if (!changeScheduleDTO.getTag3().isEmpty()) {
-                    String smallTagName = changeScheduleDTO.getTag3();
-                    smallTagEntity = smallTagRepository.findByTagName(smallTagName)
-                            .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
-                }
-
-                ScheduleTagEntity updateScheduleTag = scheduleTagEntity.toBuilder()
-                        .schedule(scheduleEntity)
-                        .largeTag(largeTagEntity)
-                        .mediumTag(mediumTagEntity)
-                        .smallTag(smallTagEntity)
-                        .build();
-
-                scheduleTagRepository.save(updateScheduleTag);
-            } else {
-                // 대분류가 없는데 중분류, 소분류가 있을 때
-                if (!changeScheduleDTO.getTag2().isEmpty() || !changeScheduleDTO.getTag3().isEmpty()) {
-                    throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
-                }
-
-                scheduleTagRepository.delete(scheduleTagEntity);
+        if (scheduleMemnber == null) {
+            // 담당자가 없으면 오너 권한만 체크
+            if (!isOwner) {
+                throw new CustomException(ErrorCode.INVALID_SCHEDULE_MEMBER);
+            }
+        } else {
+            // 담당자가 있을 경우, 담당자이거나 오너여야 함
+            if (!scheduleMemnber.equals(member) && !isOwner) {
+                throw new CustomException(ErrorCode.INVALID_SCHEDULE_MEMBER);
             }
         }
 
+        scheduleTagRepository.findBySchedule(scheduleEntity).ifPresentOrElse(scheduleTagEntity -> {
+                    // 태그 계층 구조 검사
+                    // 대분류가 있을 때
+                    if (!changeScheduleDTO.getTag1().isEmpty()) {
+                        String largeTagName = changeScheduleDTO.getTag1();
+                        LargeTagEntity largeTagEntity = largeTagRepository.findByTagName(largeTagName)
+                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+                        // 중분류는 없지만 소분류가 있을 때
+                        if (changeScheduleDTO.getTag2().isEmpty() && !changeScheduleDTO.getTag3().isEmpty()) {
+                            throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
+                        }
+
+                        // 중분류가 있을 때와 없을 때
+                        MediumTagEntity mediumTagEntity = changeScheduleDTO.getTag2().isEmpty() ? null :
+                                mediumTagRepository.findByTagName(changeScheduleDTO.getTag2())
+                                        .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+                        // 소분류가 있을 때와 없을 때
+                        SmallTagEntity smallTagEntity = changeScheduleDTO.getTag3().isEmpty() ? null :
+                                smallTagRepository.findByTagName(changeScheduleDTO.getTag3())
+                                        .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+                        ScheduleTagEntity tagEntity = scheduleTagEntity.toBuilder()
+                                .schedule(scheduleEntity)
+                                .largeTag(largeTagEntity)
+                                .mediumTag(mediumTagEntity)
+                                .smallTag(smallTagEntity)
+                                .build();
+
+                        scheduleTagRepository.save(tagEntity);
+                    } else {
+                        if (!changeScheduleDTO.getTag2().isEmpty() || !changeScheduleDTO.getTag3().isEmpty()) {
+                            throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
+                        }
+
+                        scheduleTagRepository.delete(scheduleTagEntity);
+                    }
+                },
+                () -> {
+                    // scheduleTagEntity가 존재하지 않을 때 실행
+                    if (!changeScheduleDTO.getTag1().isEmpty()) {
+                        String largeTagName = changeScheduleDTO.getTag1();
+                        LargeTagEntity largeTagEntity = largeTagRepository.findByTagName(largeTagName)
+                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+                        // 중분류는 없지만 소분류가 있을 때
+                        if (changeScheduleDTO.getTag2().isEmpty() && !changeScheduleDTO.getTag3().isEmpty()) {
+                            throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
+                        }
+
+                        // 중분류가 있을 때와 없을 때
+                        MediumTagEntity mediumTagEntity = changeScheduleDTO.getTag2().isEmpty() ? null :
+                                mediumTagRepository.findByTagName(changeScheduleDTO.getTag2())
+                                        .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+                        // 소분류가 있을 때와 없을 때
+                        SmallTagEntity smallTagEntity = changeScheduleDTO.getTag3().isEmpty() ? null :
+                                smallTagRepository.findByTagName(changeScheduleDTO.getTag3())
+                                        .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+                        ScheduleTagEntity scheduleTagEntity = ScheduleTagEntity.builder()
+                                .schedule(scheduleEntity)
+                                .largeTag(largeTagEntity)
+                                .mediumTag(mediumTagEntity)
+                                .smallTag(smallTagEntity)
+                                .build();
+
+                        scheduleTagRepository.save(scheduleTagEntity);
+
+                    } else {
+                        if (!changeScheduleDTO.getTag2().isEmpty() || !changeScheduleDTO.getTag3().isEmpty()) {
+                            throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
+                        }
+                    }
+                });
 
         // 새로운 정보로 스케줄 수정
         ScheduleEntity updateSchedule = scheduleEntity.toBuilder()
@@ -358,7 +420,61 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         return ResultDTO.of("스케줄 수정에 성공했습니다.", successDTO);
     }
-  
+
+    /**
+     * 특정 스케줄 삭제
+     *
+     * @param scheduleNumber // 스케줄 식별자
+     * @return 메시지와 성공여부
+     */
+    @Transactional
+    @Override
+    public ResultDTO<SuccessDTO> deleteSchedule(Long scheduleNumber) {
+
+        // 토큰으로 사용자 정보 가져오기
+        String email = AuthUtil.getLoginUserId();
+        MemberEntity member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // 스케줄 식별자로 특정 스케줄 정보 가져오기
+        ScheduleEntity scheduleEntity = scheduleRepository.findByScheduleNumber(scheduleNumber)
+                .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        WorkspaceEntity workspace = scheduleEntity.getWorkspace();
+
+        // 해당 워크스페이스 멤버인지 확인
+        WorkspaceMemberEntity workspaceMemberEntity = workspaceMemberRepository.findByWorkspaceAndMember(workspace, member)
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
+
+        // 담당자 혹은 권한이 오너인지 확인
+        MemberEntity scheduleMemnber = scheduleEntity.getMember();
+        boolean isOwner = "owner".equals(workspaceMemberEntity.getWsRole());
+
+        if (scheduleMemnber == null) {
+            // 담당자가 없으면 오너 권한만 체크
+            if (!isOwner) {
+                throw new CustomException(ErrorCode.INVALID_SCHEDULE_MEMBER);
+            }
+        } else {
+            // 담당자가 있을 경우, 담당자이거나 오너여야 함
+            if (!scheduleMemnber.equals(member) && !isOwner) {
+                throw new CustomException(ErrorCode.INVALID_SCHEDULE_MEMBER);
+            }
+        }
+
+        // 해당 스케줄의 태그 가져오고 삭제
+        scheduleTagRepository.findBySchedule(scheduleEntity)
+                .ifPresent(scheduleTagRepository::delete);
+
+        scheduleRepository.delete(scheduleEntity);
+
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+
+        return ResultDTO.of("스케줄 삭제에 성공했습니다.", successDTO);
+    }
+
     /**
      * 대분류 태그 생성
      *
@@ -468,120 +584,121 @@ public class ScheduleServiceImpl implements ScheduleService {
         // 대분류 태그 조회에 성공했습니다.
         return ResultDTO.of("대분류 태그 조회에 성공했습니다.", largeTagDTOList);
     }
-        /**
-         * 중분류 태그 조회
-         * 
-         * @param largeTagNumber
-         * @return
-         */
-        @Override
-        public ResultDTO<List<MediumTagDTO>> getMediumTags(Long largeTagNumber) {
 
-                // 대분류 식별자로 대분류 태그 찾기
-                LargeTagEntity largeTagEntity = largeTagRepository.findById(largeTagNumber)
-                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+    /**
+     * 중분류 태그 조회
+     *
+     * @param largeTagNumber
+     * @return
+     */
+    @Override
+    public ResultDTO<List<MediumTagDTO>> getMediumTags(Long largeTagNumber) {
 
-                // 중분류 태그 조회
-                List<MediumTagEntity> mediumTagEntityList = mediumTagRepository.findAllByLargeTag(largeTagEntity);
-                List<MediumTagDTO> mediumTagDTOList = new ArrayList<>();
-                for (MediumTagEntity mediumTagEntity : mediumTagEntityList) {
-                        mediumTagDTOList.add(MediumTagDTO.toDTO(mediumTagEntity));
-                }
+        // 대분류 식별자로 대분류 태그 찾기
+        LargeTagEntity largeTagEntity = largeTagRepository.findById(largeTagNumber)
+                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
 
-                // 중분류 태그 조회에 성공했습니다.
-                return ResultDTO.of("중분류 태그 조회에 성공했습니다.", mediumTagDTOList);
+        // 중분류 태그 조회
+        List<MediumTagEntity> mediumTagEntityList = mediumTagRepository.findAllByLargeTag(largeTagEntity);
+        List<MediumTagDTO> mediumTagDTOList = new ArrayList<>();
+        for (MediumTagEntity mediumTagEntity : mediumTagEntityList) {
+            mediumTagDTOList.add(MediumTagDTO.toDTO(mediumTagEntity));
         }
 
-        /**
-         * 소분류 태그 조회
-         * 
-         * @param mediumTagNumber
-         * @return
-         */
-        @Override
-        public ResultDTO<List<SmallTagDTO>> getSmallTags(Long mediumTagNumber) {
+        // 중분류 태그 조회에 성공했습니다.
+        return ResultDTO.of("중분류 태그 조회에 성공했습니다.", mediumTagDTOList);
+    }
 
-                // 중분류 식별자로 중분류 태그 찾기
-                MediumTagEntity mediumTagEntity = mediumTagRepository.findById(mediumTagNumber)
-                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+    /**
+     * 소분류 태그 조회
+     *
+     * @param mediumTagNumber
+     * @return
+     */
+    @Override
+    public ResultDTO<List<SmallTagDTO>> getSmallTags(Long mediumTagNumber) {
 
-                // 소분류 태그 조회
-                List<SmallTagEntity> smallTagEntityList = smallTagRepository.findAllByMediumTag(mediumTagEntity);
-                List<SmallTagDTO> smallTagDTOList = new ArrayList<>();
-                for (SmallTagEntity smallTagEntity : smallTagEntityList) {
-                        smallTagDTOList.add(SmallTagDTO.toDTO(smallTagEntity));
-                }
+        // 중분류 식별자로 중분류 태그 찾기
+        MediumTagEntity mediumTagEntity = mediumTagRepository.findById(mediumTagNumber)
+                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
 
-                // 소분류 태그 조회에 성공했습니다.
-                return ResultDTO.of("소분류 태그 조회에 성공했습니다.", smallTagDTOList);
+        // 소분류 태그 조회
+        List<SmallTagEntity> smallTagEntityList = smallTagRepository.findAllByMediumTag(mediumTagEntity);
+        List<SmallTagDTO> smallTagDTOList = new ArrayList<>();
+        for (SmallTagEntity smallTagEntity : smallTagEntityList) {
+            smallTagDTOList.add(SmallTagDTO.toDTO(smallTagEntity));
         }
 
-        /**
-         * 대분류 태그 삭제
-         * 
-         * @param largeTagNumber
-         * @return
-         */
-        @Override
-        public ResultDTO<SuccessDTO> deleteLargeTag(Long largeTagNumber) {
+        // 소분류 태그 조회에 성공했습니다.
+        return ResultDTO.of("소분류 태그 조회에 성공했습니다.", smallTagDTOList);
+    }
 
-                // 대분류 태그 조회
-                LargeTagEntity largeTagEntity = largeTagRepository.findById(largeTagNumber)
-                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+    /**
+     * 대분류 태그 삭제
+     *
+     * @param largeTagNumber
+     * @return
+     */
+    @Override
+    public ResultDTO<SuccessDTO> deleteLargeTag(Long largeTagNumber) {
 
-                // 대분류 태그 삭제
-                largeTagRepository.delete(largeTagEntity);
+        // 대분류 태그 조회
+        LargeTagEntity largeTagEntity = largeTagRepository.findById(largeTagNumber)
+                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
 
-                SuccessDTO successDTO = SuccessDTO.builder()
-                                .success(true)
-                                .build();
+        // 대분류 태그 삭제
+        largeTagRepository.delete(largeTagEntity);
 
-                return ResultDTO.of("대분류 태그 삭제에 성공했습니다.", successDTO);
-        }
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
 
-        /**
-         * 중분류 태그 삭제
-         * 
-         * @param mediumTagNumber
-         * @return
-         */
-        @Override
-        public ResultDTO<SuccessDTO> deleteMediumTag(Long mediumTagNumber) {
+        return ResultDTO.of("대분류 태그 삭제에 성공했습니다.", successDTO);
+    }
 
-                // 중분류 태그 조회
-                MediumTagEntity mediumTagEntity = mediumTagRepository.findById(mediumTagNumber)
-                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+    /**
+     * 중분류 태그 삭제
+     *
+     * @param mediumTagNumber
+     * @return
+     */
+    @Override
+    public ResultDTO<SuccessDTO> deleteMediumTag(Long mediumTagNumber) {
 
-                // 중분류 태그 삭제
-                mediumTagRepository.delete(mediumTagEntity);
+        // 중분류 태그 조회
+        MediumTagEntity mediumTagEntity = mediumTagRepository.findById(mediumTagNumber)
+                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
 
-                SuccessDTO successDTO = SuccessDTO.builder()
-                                .success(true)
-                                .build();
+        // 중분류 태그 삭제
+        mediumTagRepository.delete(mediumTagEntity);
 
-                return ResultDTO.of("중분류 태그 삭제에 성공했습니다.", successDTO);
-        }
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
 
-        /**
-         * 소분류 태그 삭제
-         * 
-         * @param smallTagNumber
-         * @return
-         */
-        @Override
-        public ResultDTO<SuccessDTO> deleteSmallTag(Long smallTagNumber) {
+        return ResultDTO.of("중분류 태그 삭제에 성공했습니다.", successDTO);
+    }
 
-                // 소분류 태그 조회
-                SmallTagEntity smallTagEntity = smallTagRepository.findById(smallTagNumber)
-                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+    /**
+     * 소분류 태그 삭제
+     *
+     * @param smallTagNumber
+     * @return
+     */
+    @Override
+    public ResultDTO<SuccessDTO> deleteSmallTag(Long smallTagNumber) {
 
-                // 소분류 태그 삭제
-                smallTagRepository.delete(smallTagEntity);
+        // 소분류 태그 조회
+        SmallTagEntity smallTagEntity = smallTagRepository.findById(smallTagNumber)
+                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
 
-                SuccessDTO successDTO = SuccessDTO.builder()
-                                .success(true)
-                                .build();
+        // 소분류 태그 삭제
+        smallTagRepository.delete(smallTagEntity);
 
-                return ResultDTO.of("소분류 태그 삭제에 성공했습니다.", successDTO);
-        }
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+
+        return ResultDTO.of("소분류 태그 삭제에 성공했습니다.", successDTO);
+    }
 }
