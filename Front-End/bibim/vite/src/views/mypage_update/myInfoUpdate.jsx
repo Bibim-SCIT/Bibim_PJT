@@ -332,6 +332,15 @@ const MyInfoUpdate = () => {
               justifyContent: 'flex-end',
               '& button': { minWidth: '80px' }
             }}>
+              {/* 취소 버튼 추가 */}
+              <Button 
+                variant="outlined" 
+                color="secondary"
+                onClick={() => navigate('/mypage')}
+              >
+                취소
+              </Button>
+              
               {/* 저장 버튼 */}
               <Button 
                 variant="contained" 
