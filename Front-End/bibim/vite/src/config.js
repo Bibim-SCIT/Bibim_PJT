@@ -1,4 +1,4 @@
-export const DASHBOARD_PATH = '/sample-page';
+export const LOGO_PATH = '/ws-select';
 
 const config = {
   fontFamily: `'Roboto', sans-serif`,

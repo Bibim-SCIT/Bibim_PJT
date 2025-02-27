@@ -20,13 +20,6 @@ export default function Logo() {
   const theme = useTheme();
 
   return (
-    /**
-     * if you want to use image instead of svg uncomment following, and comment out <svg> element.
-     *
-     * <img src={theme.palette.mode === ThemeMode.DARK ? logoDark : logo} alt="Berry" width="100" />
-     *
-     */
-    // <img src={rabbit} alt="Rabbit" width="25" height="25" />
     <img src={bibim} alt="Rabbit" width="150" height="40" />
 
     // <svg width="92" height="32" viewBox="0 0 92 32" fill="none" xmlns="http://www.w3.org/2000/svg">

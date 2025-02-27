@@ -8,11 +8,6 @@ import Loadable from 'ui-component/Loadable';
 // dashboard routing
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')));
 
-// utilities routing
-// const UtilsTypography = Loadable(lazy(() => import('views/utilities/Typography')));
-// const UtilsColor = Loadable(lazy(() => import('views/utilities/Color')));
-// const UtilsShadow = Loadable(lazy(() => import('views/utilities/Shadow')));
-
 // sample page routing
 const DMPage = Loadable(lazy(() => import('views/dm')));
 const MeetingPage = Loadable(lazy(() => import('views/meeting')));
@@ -23,9 +18,10 @@ const WdUpdatePage = Loadable(lazy(() => import('views/workdata_update')));
 const CalendarView = Loadable(lazy(() => import('views/schedule/calendar')));
 const GanttView = Loadable(lazy(() => import('views/schedule/gantt')));
 const OverallView = Loadable(lazy(() => import('views/schedule/overall')));
+const WsSelectPage = Loadable(lazy(() => import('views/ws-select')));
 const WsSettingPage = Loadable(lazy(() => import('views/ws-setting')));
-const ProfileUpdatePage = Loadable(lazy(() => import('views/profile_update')));
 const MyPage = Loadable(lazy(() => import('views/mypage')));
+const MyPageUpdatePage = Loadable(lazy(() => import('views/mypage_update')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -83,6 +79,10 @@ const MainRoutes = {
       element: <OverallView />
     },
     {
+      path: '/ws-select',
+      element: <WsSelectPage />
+    },
+    {
       path: '/ws-setting',
       element: <WsSettingPage />
     },
@@ -92,7 +92,7 @@ const MainRoutes = {
     },
     {
       path: '/mypage/update',
-      element: <ProfileUpdatePage />
+      element: <MyPageUpdatePage />
     }
   ]
 };

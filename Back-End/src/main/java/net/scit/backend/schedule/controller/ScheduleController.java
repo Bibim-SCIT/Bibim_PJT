@@ -1,6 +1,7 @@
 package net.scit.backend.schedule.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.schedule.dto.*;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/schedule")
@@ -42,7 +44,8 @@ public class ScheduleController {
     }
 
     @PutMapping("/{scheduleNumber}/status")
-    public ResponseEntity<ResultDTO<SuccessDTO>> changeScheduleStatus(@PathVariable Long scheduleNumber, @RequestParam char status) {
+    public ResponseEntity<ResultDTO<SuccessDTO>> changeScheduleStatus(@PathVariable Long scheduleNumber,
+            @RequestParam char status) {
         ResultDTO<SuccessDTO> result = scheduleService.changeScheduleStatus(scheduleNumber, status);
         return ResponseEntity.ok(result);
     }
@@ -51,6 +54,12 @@ public class ScheduleController {
     public ResponseEntity<ResultDTO<SuccessDTO>> changeSchedule(@PathVariable Long scheduleNumber,
                                                                 @RequestBody ChangeScheduleDTO changeScheduleDTO) {
         ResultDTO<SuccessDTO> result = scheduleService.changeSchedule(scheduleNumber, changeScheduleDTO);
+        return ResponseEntity.ok(result);
+    }
+
+    @DeleteMapping("/{scheduleNumber}")
+    public ResponseEntity<ResultDTO<SuccessDTO>> deleteSchedule(@PathVariable Long scheduleNumber) {
+        ResultDTO<SuccessDTO> result = scheduleService.deleteSchedule(scheduleNumber);
         return ResponseEntity.ok(result);
     }
   
@@ -74,6 +83,10 @@ public class ScheduleController {
      */
     @PostMapping("/tag/medium")
     public ResponseEntity<ResultDTO<SuccessDTO>> createMediumTag(@RequestBody MediumTagDTO mediumTagDTO) {
+
+        // mediumTagDTO.getLargeTagNumber()가 null인지 확인 // 요청 데이터 로그 출력
+        log.info("Received MediumTagDTO: {}", mediumTagDTO);
+
         ResultDTO<SuccessDTO> result = scheduleService.createMediumTag(mediumTagDTO);
         return ResponseEntity.ok(result);
     }
