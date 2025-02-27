@@ -35,7 +35,7 @@ const tagColors = {
     "디자인": "secondary"
 };
 
-const FileCardView = ({ files, setFiles }) => {
+const FileCardView = ({ files, setFiles, loading }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
     const [openModal, setOpenModal] = useState(false);
@@ -96,6 +96,16 @@ const FileCardView = ({ files, setFiles }) => {
     const handleCloseModal = () => {
         setOpenModal(false);
     };
+
+    // ✅ 로딩 중일 때 표시
+    if (loading) {
+        return <Typography variant="h3" sx={{ p: 2, textAlign: "center" }}>⏳ 데이터 로딩 중...</Typography>;
+    }
+
+    // ✅ 데이터가 없을 때만 "파일이 없습니다" 표시
+    if (!files || files.length === 0) {
+        return <Typography variant="h3" sx={{ p: 2, textAlign: "center" }}>📂 등록된 파일이 없습니다.</Typography>;
+    }
 
     return (
         <>
