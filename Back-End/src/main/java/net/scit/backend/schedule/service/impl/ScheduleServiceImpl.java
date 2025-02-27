@@ -615,28 +615,43 @@ public class ScheduleServiceImpl implements ScheduleService {
                 return ResultDTO.of("대분류 태그 조회에 성공했습니다.", largeTagDTOList);
     }
   
-    /**
-     * 중분류 태그 조회
-     *
-     * @param largeTagNumber
-     * @return
-     */
-    @Override
-    public ResultDTO<List<MediumTagDTO>> getMediumTags(Long largeTagNumber) {
+        /**
+         * 중분류 태그 조회
+         * 
+         * @param largeTagNumber
+         * @return
+         */
+        @Override
+        public ResultDTO<List<MediumTagDTO>> getMediumTags(Long wsId, Long largeTagNumber) {
 
-        // 대분류 식별자로 대분류 태그 찾기
-        LargeTagEntity largeTagEntity = largeTagRepository.findById(largeTagNumber)
-                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+                // 토큰으로 사용자 정보 가져오기
+                String email = AuthUtil.getLoginUserId();
+                MemberEntity member = memberRepository.findByEmail(email)
+                                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        // 중분류 태그 조회
-        List<MediumTagEntity> mediumTagEntityList = mediumTagRepository.findAllByLargeTag(largeTagEntity);
-        List<MediumTagDTO> mediumTagDTOList = new ArrayList<>();
-        for (MediumTagEntity mediumTagEntity : mediumTagEntityList) {
-            mediumTagDTOList.add(MediumTagDTO.toDTO(mediumTagEntity));
-        }
+                // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
+                WorkspaceEntity workspace = workspaceRepository.findById(wsId)
+                                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
 
-        // 중분류 태그 조회에 성공했습니다.
-        return ResultDTO.of("중분류 태그 조회에 성공했습니다.", mediumTagDTOList);
+                Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository
+                                .findByWorkspaceAndMember(workspace, member);
+                if (byWorkspaceAndMember.isEmpty()) {
+                        throw new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
+                }
+
+                // 대분류 식별자로 대분류 태그 찾기
+                LargeTagEntity largeTagEntity = largeTagRepository.findById(largeTagNumber)
+                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+                // 중분류 태그 조회
+                List<MediumTagEntity> mediumTagEntityList = mediumTagRepository.findAllByLargeTag(largeTagEntity);
+                List<MediumTagDTO> mediumTagDTOList = new ArrayList<>();
+                for (MediumTagEntity mediumTagEntity : mediumTagEntityList) {
+                        mediumTagDTOList.add(MediumTagDTO.toDTO(mediumTagEntity));
+                }
+
+                // 중분류 태그 조회에 성공했습니다.
+                return ResultDTO.of("중분류 태그 조회에 성공했습니다.", mediumTagDTOList);
     }
 
     /**
