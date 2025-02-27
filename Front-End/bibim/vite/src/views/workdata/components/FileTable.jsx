@@ -34,11 +34,23 @@ const tagColors = {
     "디자인": "secondary"
 };
 
-const FileTable = ({ files, setFiles }) => {
+const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
     const [openModal, setOpenModal] = useState(false);
     const navigate = useNavigate();
+
+    console.log("📌 FileTable에서 받은 files 데이터:", files); // ✅ 전달된 데이터 확인
+
+    // ✅ 로딩 중일 때 표시
+    if (loading) {
+        return <Typography variant="h3" sx={{ p: 2, textAlign: "center" }}>⏳ 데이터 로딩 중...</Typography>;
+    }
+
+    // ✅ 데이터가 없을 때만 "파일이 없습니다" 표시
+    if (!files || files.length === 0) {
+        return <Typography variant="h3" sx={{ p: 2, textAlign: "center" }}>📂 등록된 파일이 없습니다.</Typography>;
+    }
 
     // 파일명 줄이기 함수
     const truncateFileName = (fileName, maxLength) => {
@@ -90,20 +102,34 @@ const FileTable = ({ files, setFiles }) => {
         setOpenModal(false);
     };
 
+    // 컬럼 클릭시 정렬 변경
+    const handleSort = (field) => {
+        setSortField(field);
+        setSortOrder((prevOrder) => (prevOrder === "asc" ? "desc" : "asc"));
+    };
+
+
     return (
         <>
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead>
                         <TableRow>
-                            <TableCell>제목</TableCell>
+                            <TableCell onClick={() => onSort("title")} sx={{ cursor: "pointer" }}>
+                                제목 {sortField === "title" && (sortOrder === "asc" ? "⬆️" : "⬇️")}
+                            </TableCell>
                             <TableCell>파일명</TableCell>
                             <TableCell>태그</TableCell>
-                            <TableCell>업로드 날짜</TableCell>
-                            <TableCell>업로더</TableCell>
+                            <TableCell onClick={() => onSort("regDate")} sx={{ cursor: "pointer" }}>
+                                업로드 날짜 {sortField === "regDate" && (sortOrder === "asc" ? "⬆️" : "⬇️")}
+                            </TableCell>
+                            <TableCell onClick={() => onSort("writer")} sx={{ cursor: "pointer" }}>
+                                업로더 {sortField === "writer" && (sortOrder === "asc" ? "⬆️" : "⬇️")}
+                            </TableCell>
                             <TableCell>기능</TableCell>
                         </TableRow>
                     </TableHead>
+
                     <TableBody>
                         {files.map((file) => (
                             <TableRow

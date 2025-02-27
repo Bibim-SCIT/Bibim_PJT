@@ -14,4 +14,6 @@ public interface SmallTagRepository extends JpaRepository<SmallTagEntity, Long> 
     Optional<SmallTagEntity> findByTagName(String smallTagName);
 
     List<SmallTagEntity> findAllByMediumTag(MediumTagEntity mediumTagEntity);
+
+    Optional<SmallTagEntity> findByMediumTagAndTagName(MediumTagEntity mediumTagEntity, String tagName);
 }

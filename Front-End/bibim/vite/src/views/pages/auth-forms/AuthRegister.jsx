@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -34,6 +34,7 @@ import { checkEmail, sendVerificationEmail, verifyEmailCode, registerUser } from
 
 export default function AuthRegister() {
   const theme = useTheme();
+  const navigate = useNavigate();
 
   // 기존 코드 (기존 세팅되어있던)
   const [showPassword, setShowPassword] = useState(false);
@@ -196,6 +197,7 @@ export default function AuthRegister() {
         },
       });
       alert("회원가입이 완료되었습니다!");
+      navigate("/");
     } catch (error) {
       alert(error.message || "회원가입 중 오류가 발생했습니다.");
     }

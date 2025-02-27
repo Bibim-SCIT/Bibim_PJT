@@ -2,13 +2,15 @@ package net.scit.backend.workdata.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
 @Builder
 @Entity
 @Table(name="workdata_file")
@@ -28,7 +30,8 @@ public class WorkdataFileEntity {
 
     // WorkDataFileTagEntity와의 관계 설정 (OneToMany, mappedBy 수정)
     @OneToMany(mappedBy = "workdataFileEntity", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<WorkDataFileTagEntity> workdataFile;
+    private Set<WorkDataFileTagEntity> workdataFileTag = new HashSet<>();
+
 
 
 }

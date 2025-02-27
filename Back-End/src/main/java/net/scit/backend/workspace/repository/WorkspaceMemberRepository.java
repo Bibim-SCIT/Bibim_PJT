@@ -1,10 +1,13 @@
 package net.scit.backend.workspace.repository;
 
+import io.lettuce.core.dynamic.annotation.Param;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
+import org.springframework.data.jpa.repository.Query;
+
 import java.util.Optional;
 
 public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMemberEntity,Long> {
@@ -21,7 +24,10 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
     // 수정 전: List<WorkspaceMemberEntity> findByWorkspaceWsId(Long wsId);
     List<WorkspaceMemberEntity> findByWorkspace_wsId(Long wsId);
 
+    List<WorkspaceMemberEntity> findByChRoleNumber_ChRoleNumber(Long chRoleNumber);
+
     List<WorkspaceMemberEntity> findByWorkspace(WorkspaceEntity workspace);
   
     List<WorkspaceMemberEntity> findByWorkspace_wsIdAndChRoleNumber_ChRoleNumber(Long wsId,Long chRoleNumber);
+
 }

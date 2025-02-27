@@ -1,20 +1,29 @@
 package net.scit.backend.workspace.controller;
 
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.workspace.dto.InvateWorkspaceDTO;
+import net.scit.backend.workspace.dto.UpdateWorkspaceMemberDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
-import net.scit.backend.workspace.entity.WorkspaceEntity;
+import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
 import net.scit.backend.workspace.service.WorkspaceService;
-
-import java.util.List;
-
-import org.hibernate.annotations.Fetch;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 
 
@@ -58,7 +67,7 @@ public class WorkspaceController
      * @return
      */
     @DeleteMapping("")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceDelete(@RequestParam String wsName)
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceDelete(@RequestParam("wsName") String wsName)
     {
         ResultDTO<SuccessDTO> result = workspaceService.workspaceDelete(wsName);
         return ResponseEntity.ok(result);
@@ -72,8 +81,8 @@ public class WorkspaceController
      * @return
      */
     @PutMapping("")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceUpdate(@RequestParam String wsName,
-                                                                 @RequestParam String newName, 
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceUpdate(@RequestParam("wsName") String wsName,
+                                                                 @RequestParam("newName") String newName, 
                                                                  @RequestPart(value = "file", required = false) MultipartFile file) 
     {
         ResultDTO<SuccessDTO> result = workspaceService.workspaceUpdate(wsName,newName,file);
@@ -171,7 +180,40 @@ public class WorkspaceController
         return ResponseEntity.ok(result);
     }
 
-    
+    /**
+     * 워크스페이스 내 회원 정보 조회
+     * 
+     * @param wsId 조회할 워크스페이스 ID
+     * @return
+     */
+    @GetMapping("/myinfo")
+    public ResponseEntity<ResultDTO<WorkspaceMemberDTO>> getWorkspaceMemberInfo(
+            @RequestParam(required = true, name = "wsId") Long wsId) {
+        try {
+            ResultDTO<WorkspaceMemberDTO> result = workspaceService.getWorkspaceMemberInfo(wsId);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            throw e;
+        }
+    }
 
-
+    /**
+     * 워크스페이스 내 회원 정보 수정
+     * @param wsId 워크스페이스 ID
+     * @param updateInfo 수정할 정보
+     * @param file 프로필 이미지 파일 (선택)
+     * @return 수정 결과
+     */
+    @PutMapping("/myinfo")
+    public ResponseEntity<ResultDTO<SuccessDTO>> updateWorkspaceMemberInfo(
+            @RequestParam Long wsId,
+            @RequestPart(value = "info") UpdateWorkspaceMemberDTO updateInfo,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
+        try {
+            ResultDTO<SuccessDTO> result = workspaceService.updateWorkspaceMemberInfo(wsId, updateInfo, file);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            throw e;
+        }
+    }
 }
