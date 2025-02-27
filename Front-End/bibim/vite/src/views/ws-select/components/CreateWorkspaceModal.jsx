@@ -41,15 +41,6 @@ const CreateWorkspaceModal = ({ open, onClose }) => {
     };
 
     // ✅ 워크스페이스 생성 요청
-    // const handleCreate = async () => {
-    //     try {
-    //         await createWorkspace(workspaceName, workspaceImage);
-    //         dispatch(loadWorkspace()); // 워크스페이스 목록 새로 불러오기
-    //         onClose(); // 모달 닫기
-    //     } catch (error) {
-    //         console.error('워크스페이스 생성 실패:', error);
-    //     }
-    // };
     const handleCreate = async () => {
         const token = localStorage.getItem("token");
         if (!token) {

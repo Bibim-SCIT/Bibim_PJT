@@ -1,4 +1,6 @@
 import { RouterProvider } from 'react-router-dom';
+import { useContext } from "react";
+import { ConfigContext } from "contexts/ConfigContext";
 
 // routing
 import router from 'routes';
@@ -17,6 +19,10 @@ import ThemeCustomization from 'themes';
 // ==============================|| APP ||============================== //
 
 export default function App() {
+  const context = useContext(ConfigContext);
+  console.log("🔍 ConfigContext 내부 상태:", context);
+
+
   return (
     <Provider store={store}>
       <ThemeCustomization>

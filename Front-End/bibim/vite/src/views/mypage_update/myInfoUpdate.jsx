@@ -21,7 +21,8 @@ import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import { getUserInfo } from 'api/auth';
 import { updateUserInfo } from 'api/members';
 import { useNavigate } from 'react-router-dom';
-
+import { useContext } from "react";
+import { ConfigContext } from "contexts/ConfigContext";
 
 // ✅ 국적 매핑 (코드 → 풀 네임)
 const nationalityMap = {
@@ -38,6 +39,8 @@ const languageMap = {
 };
 
 const MyInfoUpdate = () => {
+  const { user, setUser } = useContext(ConfigContext);
+
   // ✅ 상태 관리
   const [loading, setLoading] = useState(true);  // 초기 로딩 상태는 true로 설정
   const [error, setError] = useState(null);  // 에러 상태 추가
@@ -72,7 +75,7 @@ const MyInfoUpdate = () => {
           email: data.email || "",
           profileImage: data.profileImage || "",
         });
-        
+
         // 프로필 이미지가 있으면 미리보기 설정
         if (data.profileImage) {
           setPreviewImage(data.profileImage);
@@ -106,10 +109,14 @@ const MyInfoUpdate = () => {
     setUpdating(true);
     try {
       await updateUserInfo(formData, profileImage);  // API 호출 시 profileImage 전달
-      
+
+      // 최신 사용자 정보 다시 불러오기
+      const updatedUser = await getUserInfo();
+      setUser(updatedUser); // 🔹 Context의 사용자 정보 업데이트
+
       // 업데이트 성공 알림
       alert("회원 정보가 수정되었습니다!");
-      
+
       // 프로필 페이지로 이동
       navigate('/mypage');
     } catch (error) {
@@ -146,7 +153,7 @@ const MyInfoUpdate = () => {
       setPreviewImage(null);
     }
     setFileInputKey(Date.now());  // 파일 input 초기화를 위한 key 갱신
-    
+
     // 프로필 이미지 필드도 초기화
     setFormData({
       ...formData,
@@ -182,75 +189,75 @@ const MyInfoUpdate = () => {
         <Grid container spacing={2}>
           {/* 프로필 이미지 섹션 */}
           <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', mt: 1, mb: 1 }}>
-            <Box sx={{ 
-                position: 'relative',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 1
+            <Box sx={{
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 1
             }}>
-                <Avatar 
-                    sx={{ 
-                        width: 120,
-                        height: 120,
-                        bgcolor: '#f5f5f5',
-                        cursor: 'pointer'
-                    }}
-                    alt="프로필 이미지"
-                    src={previewImage}
-                    onClick={() => document.getElementById('profile-upload').click()}
+              <Avatar
+                sx={{
+                  width: 120,
+                  height: 120,
+                  bgcolor: '#f5f5f5',
+                  cursor: 'pointer'
+                }}
+                alt="프로필 이미지"
+                src={previewImage}
+                onClick={() => document.getElementById('profile-upload').click()}
+              >
+                {!previewImage && <CameraAltIcon />}
+              </Avatar>
+              <input
+                id="profile-upload"
+                key={fileInputKey}
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={handleImageUpload}
+              />
+
+              {/* 이미지 관리 버튼 그룹 */}
+              <Stack sx={{
+                flexDirection: 'row',
+                gap: 2,
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%'
+              }}>
+                <Button
+                  variant="text"
+                  onClick={handleDeleteImage}
+                  size="small"
                 >
-                    {!previewImage && <CameraAltIcon />}
-                </Avatar>
-                <input
-                    id="profile-upload"
+                  이미지 삭제
+                </Button>
+
+                <Button
+                  variant="contained"
+                  component="label"
+                  size="small"
+                >
+                  이미지 설정
+                  <input
                     key={fileInputKey}
                     type="file"
                     hidden
                     accept="image/*"
                     onChange={handleImageUpload}
-                />
-                
-                {/* 이미지 관리 버튼 그룹 */}
-                <Stack sx={{ 
-                    flexDirection: 'row',
-                    gap: 2,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '100%'
-                }}>
-                    <Button
-                        variant="text"
-                        onClick={handleDeleteImage}
-                        size="small"
-                    >
-                        이미지 삭제
-                    </Button>
-
-                    <Button 
-                        variant="contained"
-                        component="label"
-                        size="small"
-                    >
-                        이미지 설정
-                        <input
-                            key={fileInputKey}
-                            type="file"
-                            hidden
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                        />
-                    </Button>
-                </Stack>
+                  />
+                </Button>
+              </Stack>
             </Box>
           </Grid>
 
           {/* 사용자 이메일 표시 영역 */}
-          <Grid item xs={12} sx={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            gap: 0.5, 
+          <Grid item xs={12} sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 0.5,
             mt: 0,
             mb: 0
           }}>
@@ -262,7 +269,7 @@ const MyInfoUpdate = () => {
 
           {/* 사용자 정보 입력 필드 영역 */}
           {/* 이름 입력 필드 */}
-          <Grid item xs={12} sx={{ 
+          <Grid item xs={12} sx={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center'
@@ -281,69 +288,69 @@ const MyInfoUpdate = () => {
           </Grid>
 
           {/* 국적 선택 필드 */}
-          <Grid item xs={12} sx={{ 
+          <Grid item xs={12} sx={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center'
           }}>
             <Box sx={{ width: '40%' }}>
               <Typography variant="body2" sx={{ mb: 1 }}>국적</Typography>
-             <FormControl fullWidth size="small">
-              <Select
-                name="nationality"
-                value={formData.nationality}
-                onChange={handleChange}
-              >
-                <MenuItem value="KR">한국 / Korea</MenuItem>
-                <MenuItem value="US">미국 / America</MenuItem>
-                <MenuItem value="JP">일본 / Japan</MenuItem>
-              </Select>
-            </FormControl>
+              <FormControl fullWidth size="small">
+                <Select
+                  name="nationality"
+                  value={formData.nationality}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="KR">한국 / Korea</MenuItem>
+                  <MenuItem value="US">미국 / America</MenuItem>
+                  <MenuItem value="JP">일본 / Japan</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
           </Grid>
 
           {/* 사용 언어 입력 필드 */}
-          <Grid item xs={12} sx={{ 
+          <Grid item xs={12} sx={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center'
           }}>
             <Box sx={{ width: '40%' }}>
               <Typography variant="body2" sx={{ mb: 1 }}>사용 언어</Typography>
-             <FormControl fullWidth size="small">
-              <Select
-                name="language"
-                value={formData.language}
-                onChange={handleChange}
-              >
-                <MenuItem value="ko">한국어 / Korean</MenuItem>
-                <MenuItem value="en">영어 / English</MenuItem>
-                <MenuItem value="jp">일본어 / Japanese</MenuItem>
-              </Select>
-            </FormControl>
+              <FormControl fullWidth size="small">
+                <Select
+                  name="language"
+                  value={formData.language}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="ko">한국어 / Korean</MenuItem>
+                  <MenuItem value="en">영어 / English</MenuItem>
+                  <MenuItem value="jp">일본어 / Japanese</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
           </Grid>
-          
+
           {/* 하단 버튼 영역 */}
           <Grid item xs={12} sx={{ mt: 2 }}>
-            <Box sx={{ 
-              display: 'flex', 
-              gap: 1, 
+            <Box sx={{
+              display: 'flex',
+              gap: 1,
               justifyContent: 'flex-end',
               '& button': { minWidth: '80px' }
             }}>
               {/* 취소 버튼 추가 */}
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 color="secondary"
                 onClick={() => navigate('/mypage')}
               >
                 취소
               </Button>
-              
+
               {/* 저장 버튼 */}
-              <Button 
-                variant="contained" 
+              <Button
+                variant="contained"
                 color="primary"
                 onClick={handleSubmit}
                 disabled={updating}
