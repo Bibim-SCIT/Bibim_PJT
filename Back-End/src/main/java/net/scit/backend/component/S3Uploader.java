@@ -46,24 +46,24 @@ public class S3Uploader {
         return amazonS3.getUrl(bucket, fileName).toString();
     }
     
-    public String extractFileNameFromUrl(String fileUrl) {
-      try {
-          // URL 객체 생성
-          URL url = new URL(fileUrl);
+  //   public String extractFileNameFromUrl(String fileUrl) {
+  //     try {
+  //         // URL 객체 생성
+  //         URL url = new URL(fileUrl);
   
-          // 경로 추출 (버킷명 이후의 경로)
-          String fullPath = url.getPath(); // 예: "/workspace-images/6e62c522-d61f-4d41-96b8-a100646cf0ca.png"
+  //         // 경로 추출 (버킷명 이후의 경로)
+  //         String fullPath = url.getPath(); // 예: "/workspace-images/6e62c522-d61f-4d41-96b8-a100646cf0ca.png"
   
-          // 첫 '/' 제거 (필수)
-          if (fullPath.startsWith("/")) {
-              fullPath = fullPath.substring(1);
-          }
+  //         // 첫 '/' 제거 (필수)
+  //         if (fullPath.startsWith("/")) {
+  //             fullPath = fullPath.substring(1);
+  //         }
   
-          return fullPath; // "workspace-images/6e62c522-d61f-4d41-96b8-a100646cf0ca.png"
-      } catch (MalformedURLException e) {
-          throw new CustomException(ErrorCode.IMAGE_EXCEPTION);
-      }
-  }
+  //         return fullPath; // "workspace-images/6e62c522-d61f-4d41-96b8-a100646cf0ca.png"
+  //     } catch (MalformedURLException e) {
+  //         throw new CustomException(ErrorCode.IMAGE_EXCEPTION);
+  //     }
+  // }
   
 
   public void deleteFile(String fileName) {
@@ -105,14 +105,6 @@ public class S3Uploader {
         }
     }
 
-    public void deleteFileByUrl(String fileUrl) {
-        if (fileUrl == null || fileUrl.isEmpty()) {
-            return; // URL이 없으면 무시
-        }
-        
-        String fileName = extractFileNameFromUrl(fileUrl);
-        deleteFile(fileName);
-    }
 
 //
 //  public void deleteFolder(Long auctionId) {
