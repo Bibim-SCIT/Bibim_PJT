@@ -17,10 +17,13 @@ public class WorkDataFileTagEntity {
     @Column(name="file_tag_number", nullable=false)
     private Long fileTagNumber;
 
-    // WorkdataFileEntity와의 관계 설정 (ManyToOne)
+    /**
+     * 부모인 WorkdataEntity와 다대일 관계
+     * file_number가 아니라 data_number로 직접 매핑
+     */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "file_number", nullable = false)
-    private WorkdataFileEntity workdataFileEntity;
+    @JoinColumn(name = "data_number", nullable = false)
+    private WorkdataEntity workdataEntity;
 
     private String tag;
 }

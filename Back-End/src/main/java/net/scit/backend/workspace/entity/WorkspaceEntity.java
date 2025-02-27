@@ -41,9 +41,9 @@ public class WorkspaceEntity
     @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WorkspaceChannelRoleEntity> roles = new ArrayList<>();
 
-    // WorkdataEntity와의 관계 설정 (OneToMany, mappedBy 수정)
-    @OneToMany(mappedBy = "workspaceEntity", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<WorkdataEntity> workdata = new ArrayList<>();  // workdata가 연결될 workspace를 참조합니다.
+//    // WorkdataEntity와의 관계 설정 (OneToMany, mappedBy 수정)
+//    @OneToMany(mappedBy = "workspaceEntity", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    private List<WorkdataEntity> workdata = new ArrayList<>();  // workdata가 연결될 workspace를 참조합니다.
 
     // @OneToMany(mappedBy = "workSpace", cascade = CascadeType.ALL, orphanRemoval = true)
     // private List<Record> records = new ArrayList<>();
