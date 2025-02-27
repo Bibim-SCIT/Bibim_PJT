@@ -1,9 +1,18 @@
 package net.scit.backend.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+// Spring Boot의 설정 클래스임을 나타내는 어노테이션
 @Configuration
-public class WebSocketConfig {
+
+// WebSocket을 활성화하고 메시지 브로커를 사용하도록 설정하는 어노테이션
+@EnableWebSocketMessageBroker
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
     /**
      * 메시지 브로커를 설정하는 메서드
      * - 메시지를 전송하고 받을 경로를 설정함
@@ -41,7 +50,7 @@ public class WebSocketConfig {
          * - 클라이언트는 "ws://localhost:8080/ws"로 연결 요청을 보낼 수 있음.
          */
         registry.addEndpoint("/ws")
-
+                
                 /**
                  * 2️⃣ CORS(Cross-Origin Resource Sharing) 허용
                  * - React 클라이언트(`http://localhost:3000`)에서 WebSocket 요청을 보낼 수 있도록 허용함.

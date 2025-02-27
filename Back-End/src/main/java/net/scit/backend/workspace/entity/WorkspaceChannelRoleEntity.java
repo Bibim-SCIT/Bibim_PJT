@@ -23,7 +23,7 @@ public class WorkspaceChannelRoleEntity
     private WorkspaceEntity workspace;
 
     @Builder.Default
-    private String chRole = "Owner";
+    private String chRole = "None";
 
     @OneToMany(mappedBy = "workspaceRole", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WorkspaceChannelEntity> channels = new ArrayList<>();
