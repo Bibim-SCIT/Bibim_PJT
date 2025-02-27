@@ -1,21 +1,30 @@
 package net.scit.backend.workdata.controller;
 
 import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import jakarta.annotation.Resource;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.scit.backend.auth.AuthUtil;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.component.S3Uploader;
 import net.scit.backend.workdata.dto.WorkdataDTO;
+import net.scit.backend.workdata.dto.WorkdataTotalSearchDTO;
+import net.scit.backend.workdata.entity.WorkDataFileTagEntity;
 import net.scit.backend.workdata.entity.WorkdataEntity;
 import net.scit.backend.workdata.entity.WorkdataFileEntity;
 import net.scit.backend.workdata.repository.WorkdataFileRepository;
+import net.scit.backend.workdata.repository.WorkdataFileTagRepository;
 import net.scit.backend.workdata.repository.WorkdataRepository;
 import net.scit.backend.workdata.service.WorkdataService;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
+import net.scit.backend.workspace.entity.WorkspaceEntity;
+import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
+import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
+import net.scit.backend.workspace.repository.WorkspaceRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,10 +32,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
+
 import java.net.URL;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RestController
@@ -39,196 +48,129 @@ public class WorkdataController {
     private final WorkdataRepository workdataRepository;
     private final WorkdataFileRepository workdataFileRepository;
     private final S3Uploader s3Uploader;
+    private final WorkspaceRepository workspaceRepository;
+    private final WorkdataFileTagRepository workdataFileTagRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
+    private final ObjectMapper objectMapper;
 
 
     /**
-     * 1. 자료글 전체 조회
+     * 1-1) 자료글 등록(+ 파일, 태그)
      */
-    @GetMapping("")
-    public ResponseEntity<ResultDTO<List<WorkdataDTO>>> workdata(@RequestParam Long wsId) {
-        ResultDTO<List<WorkdataDTO>> result = workdataService.workdata(wsId);
-        return ResponseEntity.ok(result);
+    @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResultDTO<SuccessDTO>> workdataCreate(
+            @RequestParam("wsId") Long wsId,
+            @RequestParam("title") String title,
+            @RequestParam("content") String content,
+            @RequestParam(value = "files", required = false) MultipartFile[] files,
+            @RequestParam(value = "tags", required = false) java.util.List<String> tags) {
+
+        try {
+            // 1. 현재 로그인한 사용자의 이메일 가져오기
+            String email = AuthUtil.getLoginUserId();
+
+            // 2. 워크스페이스 & 사용자 검증
+            Optional<WorkspaceMemberEntity> optionalWs = workspaceMemberRepository
+                    .findByWorkspace_wsIdAndMember_Email(wsId, email);
+            if (optionalWs.isEmpty()) {
+                throw new IllegalArgumentException("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.");
+            }
+
+            // 3. WorkdataDTO 객체 생성
+            WorkdataDTO workdataDTO = new WorkdataDTO();
+            workdataDTO.setTitle(title);
+            workdataDTO.setContent(content);
+            workdataDTO.setWriter(email);
+
+            // 4. 서비스 호출 (자료글 생성, 파일 업로드, 태그 추가 모두 처리)
+            workdataService.createWorkdata(wsId, workdataDTO, files, tags);
+
+            // 5. 성공 응답 반환
+            SuccessDTO successDTO = SuccessDTO.builder().success(true).build();
+            return ResponseEntity.ok(ResultDTO.of("자료글 등록, 파일 업로드, 태그 추가 완료!", successDTO));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(ResultDTO.of(e.getMessage(), SuccessDTO.builder().success(false).build()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResultDTO.of("처리 중 오류 발생: " + e.getMessage(), SuccessDTO.builder().success(false).build()));
+        }
     }
 
 
     /**
-     * 2. 자료글 개별 조회
-     */
-    @GetMapping("/detail")
-    public ResponseEntity<ResultDTO<WorkdataDTO>> workdataDetail(@RequestParam Long wsId,
-                                                                 @RequestParam Long dataNumber) {
-
-        // 전체 조회에서 접속 시 상세 정보 반환
-        ResultDTO<WorkdataDTO> result = workdataService.workdataDetail(wsId, dataNumber);
-        return ResponseEntity.ok(result);
-    }
-
-
-    /**
-     * 3. 자료글 등록
-     */
-    @PostMapping("")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workdataCreate(@RequestParam Long wsId,
-                                                                @RequestBody WorkdataDTO workdataDTO,
-                                                                @RequestHeader("userEmail") String userEmail) {
-
-        // writer 값을 자동으로 설정 (현재 로그인한 사용자 정보)
-        workdataDTO.setWriter(userEmail);  // 헤더에서 받아온 이메일을 writer로 설정
-
-        // 서비스 호출
-        ResultDTO<SuccessDTO> result = workdataService.workdataCreate(wsId, workdataDTO);
-        return ResponseEntity.ok(result);
-    }
-
-
-    /**
-     * 4. 자료실 삭제
+     * 1-2.1) 자료글 삭제(+파일, 태그)
      */
     @DeleteMapping("")
-    public ResultDTO<SuccessDTO> deleteWorkdata(@RequestParam Long wsId,
-                                                @RequestParam Long dataNumber,
-                                                @RequestBody DeleteRequestBody requestBody) {
-
-        // 이메일 값을 RequestBody에서 받아서 서비스 메소드에 전달
-        return workdataService.workdataDelete(wsId, dataNumber, requestBody.getUserName());
-    }
-
-    // 이메일을 RequestBody로 받을 때 사용하는 DTO 클래스
-    public static class DeleteRequestBody {
-        private String userName; // 이메일 주소
-
-        public String getUserName() {
-            return userName;
-        }
-
-        public void setUserName(String userName) {
-            this.userName = userName;
-        }
-    }
-
-
-    /**
-     * 5. 자료글 수정
-     */
-    @PutMapping("")
-    public ResponseEntity<ResultDTO<WorkdataDTO>> workdataUpdate(@RequestParam Long wsId,
-                                                                 @RequestParam Long dataNumber,
-                                                                 @RequestBody WorkdataDTO workdataDTO,
-                                                                 @RequestHeader("userName") String userName) {
-
-        // workdataDTO에 작성자(userName) 설정
-        workdataDTO.setWriter(userName);
-
-        // 서비스 호출
-        ResultDTO<WorkdataDTO> result = workdataService.workdataUpdate(wsId, dataNumber, workdataDTO);
-        return ResponseEntity.ok(result);
-    }
-
-
-    /**
-     * 6. 파일 등록
-     */
-    @PostMapping("/file")
-    public ResponseEntity<ResultDTO<SuccessDTO>> uploadFile(@RequestParam("dataNumber") Long dataNumber,
-                                                            @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<ResultDTO<SuccessDTO>> deleteWorkdata(@RequestParam Long wsId,
+                                                                @RequestParam Long dataNumber) {
         try {
-            // S3에 파일 업로드
-            String fileUrl = s3Uploader.upload(file, "workdata-files");
-            log.info("fileUrl: {}", fileUrl);
+            // 1. 로그인 사용자 이메일 & 워크스페이스 검증
+            String email = AuthUtil.getLoginUserId();
+            Optional<WorkspaceMemberEntity> optionalMember =
+                    workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email);
+            if (optionalMember.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(ResultDTO.of("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.",
+                                SuccessDTO.builder().success(false).build()));
+            }
 
-            // WorkdataEntity 조회
-            WorkdataEntity workdataEntity = workdataRepository.findById(dataNumber)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid dataNumber"));
-
-            // DB에 파일 정보 저장
-            WorkdataFileEntity workdataFileEntity = WorkdataFileEntity.builder()
-                    .workdataEntity(workdataEntity)
-                    .file(fileUrl)
-                    .fileName(file.getOriginalFilename())
-                    .build();
-            workdataFileRepository.save(workdataFileEntity);
-
-            // 성공 응답 생성
-            SuccessDTO successDTO = SuccessDTO.builder().success(true).build();
-            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
-                    .message("파일 등록에 성공하였습니다.")
-                    .data(successDTO)
-                    .build();
+            // 2. 서비스 호출 (삭제 로직 처리)
+            ResultDTO<SuccessDTO> result = workdataService.deleteWorkdata(wsId, dataNumber, email);
             return ResponseEntity.ok(result);
 
-        } catch (Exception e) {
-            SuccessDTO failureDTO = SuccessDTO.builder().success(false).build();
-            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
-                    .message("파일 등록에 실패하였습니다: " + e.getMessage())
-                    .data(failureDTO)
-                    .build();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
-        }
-    }
-
-    /**
-     * 7. 파일 다운로드
-     */
-    @GetMapping("/file")
-    public ResponseEntity<InputStreamResource> downloadFile(@RequestParam("dataNumber") Long dataNumber,
-                                                            @RequestParam("fileName") String fileName) {
-        try {
-            // WorkdataEntity 찾기
-            WorkdataEntity workdataEntity = workdataRepository.findById(dataNumber)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid dataNumber"));
-
-            // WorkdataFileEntity 찾기
-            WorkdataFileEntity workdataFileEntity = workdataFileRepository.findByWorkdataEntityAndFileName(workdataEntity, fileName)
-                    .orElseThrow(() -> new IllegalArgumentException("File not found"));
-
-            // S3에서 파일 다운로드
-            String fileUrl = workdataFileEntity.getFile();
-            S3Object s3Object = s3Uploader.download(fileUrl);
-
-            // InputStream을 InputStreamResource로 변환 (스트림은 닫지 않음)
-            InputStreamResource resource = new InputStreamResource(s3Object.getObjectContent());
-
-            // 파일 다운로드 응답 생성
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
-                    .body(resource);
-
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();  // 잘못된 요청
+            return ResponseEntity.badRequest()
+                    .body(ResultDTO.of(e.getMessage(), SuccessDTO.builder().success(false).build()));
         } catch (Exception e) {
-            return ResponseEntity.status(500).build();  // 기타 에러
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResultDTO.of("자료글 삭제 중 오류 발생: " + e.getMessage(),
+                            SuccessDTO.builder().success(false).build()));
         }
     }
 
+
     /**
-     * 8. 파일 삭제
+     * 1-2.2) 태그 개별 삭제
      */
-    @DeleteMapping("/file")
-    public ResponseEntity<ResultDTO<SuccessDTO>> deleteFile(@RequestParam("dataNumber") Long dataNumber,
-                                                            @RequestParam("fileName") String fileName) {
+    @DeleteMapping("/file/tag")
+    public ResponseEntity<ResultDTO<SuccessDTO>> deleteFileTag( @RequestParam("wsId") Long wsId,
+                                                                @RequestParam("dataNumber") Long dataNumber,
+                                                                @RequestBody Map<String, String> requestBody) {
         try {
-            // WorkdataEntity 조회
-            WorkdataEntity workdataEntity = workdataRepository.findById(dataNumber)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid dataNumber"));
+            // 1. 워크스페이스 검증
+            Optional<WorkspaceEntity> workspaceOpt = workspaceRepository.findById(wsId);
+            if (!workspaceOpt.isPresent()) {
+                throw new IllegalArgumentException("워크스페이스를 찾을 수 없습니다.");
+            }
+            WorkspaceEntity workspaceEntity = workspaceOpt.get();
 
-            // WorkdataFileEntity 조회
-            WorkdataFileEntity workdataFileEntity = workdataFileRepository.findByWorkdataEntityAndFileName(workdataEntity, fileName)
-                    .orElseThrow(() -> new IllegalArgumentException("File not found"));
+            // 2. 자료글 검증
+            Optional<WorkdataEntity> workdataOpt = workdataRepository.findByDataNumberAndWorkspaceEntity(dataNumber, workspaceEntity);
+            if (!workdataOpt.isPresent()) {
+                throw new IllegalArgumentException("자료글을 찾을 수 없습니다.");
+            }
+            WorkdataEntity workdataEntity = workdataOpt.get();
 
-            // S3 키 추출 및 S3 파일 삭제
-            String fileUrl = workdataFileEntity.getFile();
-            URL url = new URL(fileUrl);
-            String key = url.getPath().substring(1);
-            s3Uploader.deleteFile(key);
+            // 3. 삭제할 태그 값 확인 (JSON에서 "tag" 필드)
+            String tag = requestBody.get("tag");
+            if (tag == null || tag.trim().isEmpty()) {
+                throw new IllegalArgumentException("삭제할 태그가 입력되지 않았습니다.");
+            }
 
-            // DB 레코드 삭제
-            workdataFileRepository.delete(workdataFileEntity);
+            // 4. 해당 태그 엔티티 조회
+            Optional<WorkDataFileTagEntity> tagEntityOpt = workdataFileTagRepository.findByTagAndWorkdataFileEntity_WorkdataEntity(tag, workdataEntity);
+            if (!tagEntityOpt.isPresent()) {
+                throw new IllegalArgumentException("해당 태그가 존재하지 않습니다.");
+            }
 
-            // 성공 응답 생성
+            // 5. 태그 삭제
+            workdataFileTagRepository.delete(tagEntityOpt.get());
+
             SuccessDTO successDTO = SuccessDTO.builder().success(true).build();
             ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
-                    .message("파일 삭제에 성공하였습니다.")
+                    .message("태그 삭제에 성공하였습니다.")
                     .data(successDTO)
                     .build();
             return ResponseEntity.ok(result);
@@ -243,86 +185,160 @@ public class WorkdataController {
         } catch (Exception e) {
             SuccessDTO failureDTO = SuccessDTO.builder().success(false).build();
             ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
-                    .message("파일 삭제에 실패하였습니다: " + e.getMessage())
+                    .message("태그 삭제에 실패하였습니다: " + e.getMessage())
                     .data(failureDTO)
                     .build();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
         }
     }
+
+
     /**
-     * 9. 파일 수정(기존 파일 삭제 & 새로운 파일 업로드)
+     * 1-3) 자료글 수정 (파일, 태그 일괄 수정)
+     * JSON 데이터는 @RequestPart로 받습니다.
+     *
+     * Postman에서는 multipart/form-data로 요청하되,
+     * 각 JSON 필드(tagRequests, deleteFiles, deleteTags, newTags)는
+     * "Content-Type"을 "application/json"으로 설정해서 전송하세요.
      */
-    @PutMapping("/file")
-    public ResponseEntity<ResultDTO<SuccessDTO>> updateFile(@RequestParam("dataNumber") Long dataNumber,
-                                                            @RequestParam("fileName") String fileName,
-                                                            @RequestParam("file") MultipartFile newFile) {
-        try {
-            // WorkdataEntity 조회
-            WorkdataEntity workdataEntity = workdataRepository.findById(dataNumber)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid dataNumber"));
+//    @PutMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    public ResponseEntity<ResultDTO<SuccessDTO>> workdataUpdate(
+//            @RequestParam Long wsId,
+//            @RequestParam Long dataNumber,
+//            @RequestParam(value = "title", required = false) String title,
+//            @RequestParam(value = "content", required = false) String content,
+//
+//            // JSON 데이터를 String으로 받고, 컨트롤러에서 List로 변환
+//            @RequestParam(value = "deleteFiles", required = false) String deleteFilesJson,
+//            @RequestParam(value = "oldTags", required = false) String oldTagsJson, // 기존 태그
+//            @RequestParam(value = "newTags", required = false) String newTagsJson, // 새로운 태그
+//
+//            // 새 파일 추가
+//            @RequestParam(value = "files", required = false) MultipartFile[] newFiles
+//    ) {
+//        try {
+//            String userEmail = AuthUtil.getLoginUserId();
+//            log.info("로그인 사용자: {}", userEmail);
+//
+//            // JSON 문자열을 List로 변환
+//            List<String> deleteFiles = parseJsonArray(deleteFilesJson, new TypeReference<List<String>>() {});
+//            List<String> oldTags = parseJsonArray(oldTagsJson, new TypeReference<List<String>>() {});
+//            List<String> newTags = parseJsonArray(newTagsJson, new TypeReference<List<String>>() {});
+//
+//            // 서비스 호출
+//            ResultDTO<SuccessDTO> result = workdataService.updateWorkdata(
+//                    wsId, dataNumber, title, content,
+//                    deleteFiles, oldTags, newTags,
+//                    newFiles, userEmail
+//            );
+//
+//            return ResponseEntity.ok(result);
+//
+//        } catch (IllegalArgumentException e) {
+//            log.error("IllegalArgumentException 발생: {}", e.getMessage());
+//            return ResponseEntity.badRequest()
+//                    .body(ResultDTO.of(e.getMessage(), SuccessDTO.builder().success(false).build()));
+//        } catch (Exception e) {
+//            log.error("자료글 수정 중 오류 발생: {}", e.getMessage(), e);
+//            return ResponseEntity.status(500)
+//                    .body(ResultDTO.of("자료글 수정 중 오류 발생: " + e.getMessage(),
+//                            SuccessDTO.builder().success(false).build()));
+//        }
+//    }
+//
+//    /**
+//     * JSON 문자열을 List<T>로 변환하는 헬퍼 메서드
+//     */
+//    private <T> List<T> parseJsonArray(String jsonStr, TypeReference<List<T>> typeRef) {
+//        if (jsonStr == null || jsonStr.trim().isEmpty()) {
+//            return Collections.emptyList();
+//        }
+//        try {
+//            ObjectMapper objectMapper = new ObjectMapper();
+//            return objectMapper.readValue(jsonStr, typeRef);
+//        } catch (JsonProcessingException e) {
+//            log.warn("JSON 파싱 오류: {}", e.getMessage());
+//            return Collections.emptyList();
+//        }
+//    }
 
-            // 기존 파일 정보 조회
-            WorkdataFileEntity workdataFileEntity = workdataFileRepository.findByWorkdataEntityAndFileName(workdataEntity, fileName)
-                    .orElseThrow(() -> new IllegalArgumentException("File not found"));
 
-            // 기존 파일 S3 삭제
-            String oldFileUrl = workdataFileEntity.getFile();
-            URL url = new URL(oldFileUrl);
-            String oldKey = url.getPath().substring(1);
-            s3Uploader.deleteFile(oldKey);
 
-            // 새로운 파일 업로드
-            String newFileUrl = s3Uploader.upload(newFile, "workdata-files");
 
-            // DB 파일 정보 갱신
-            workdataFileEntity.setFile(newFileUrl);
-            workdataFileEntity.setFileName(newFile.getOriginalFilename());
-            workdataFileRepository.save(workdataFileEntity);
-
-            // 성공 응답 생성
-            SuccessDTO successDTO = SuccessDTO.builder().success(true).build();
-            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
-                    .message("파일 수정에 성공하였습니다.")
-                    .data(successDTO)
-                    .build();
-            return ResponseEntity.ok(result);
-
-        } catch (IllegalArgumentException e) {
-            SuccessDTO failureDTO = SuccessDTO.builder().success(false).build();
-            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
-                    .message(e.getMessage())
-                    .data(failureDTO)
-                    .build();
-            return ResponseEntity.badRequest().body(result);
-        } catch (Exception e) {
-            SuccessDTO failureDTO = SuccessDTO.builder().success(false).build();
-            ResultDTO<SuccessDTO> result = ResultDTO.<SuccessDTO>builder()
-                    .message("파일 수정에 실패하였습니다: " + e.getMessage())
-                    .data(failureDTO)
-                    .build();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
-        }
-    }
 
     /**
-     * 10. 검색
+     * 1-4-1) 자료글 전체 조회(+태그별 정렬)
+     */
+    @GetMapping("")
+    public ResponseEntity<ResultDTO<List<WorkdataTotalSearchDTO>>> workdata(
+            @RequestParam Long wsId,
+            @RequestParam(required = false, defaultValue = "regDate") String sort,
+            @RequestParam(required = false, defaultValue = "desc") String order) {
+
+        // 1. 로그인 사용자 이메일 조회
+        String userEmail = AuthUtil.getLoginUserId();
+
+        // 2. 워크스페이스 검증
+        Optional<WorkspaceMemberEntity> optionalMember =
+                workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, userEmail);
+        if (optionalMember.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(ResultDTO.of("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.", new ArrayList<>()));
+        }
+
+        // 3. 서비스 호출 (반환 타입 일치)
+        return workdataService.workdata(wsId, sort, order);
+    }
+
+
+    /**
+     * 1-4-2) 자료실 개별 조회
+     */
+    @GetMapping("/detail")
+    public ResponseEntity<ResultDTO<WorkdataTotalSearchDTO>> workdataDetail(
+            @RequestParam Long wsId,
+            @RequestParam Long dataNumber) {
+
+        // 1. 로그인 사용자 이메일 조회
+        String userEmail = AuthUtil.getLoginUserId();
+
+        // 2. 워크스페이스 검증
+        Optional<WorkspaceMemberEntity> optionalMember =
+                workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, userEmail);
+        if (optionalMember.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(ResultDTO.of("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.", null));
+        }
+
+        // 3. 서비스 호출
+        return workdataService.workdataDetail(wsId, dataNumber);
+    }
+
+
+
+    /**
+     * 2. 검색
      */
     @GetMapping("/search")
-    public ResponseEntity<ResultDTO<List<WorkdataDTO>>> searchWorkdata(@RequestParam("wsId") Long wsId,
-                                                                       @RequestParam("keyword") String keyword) {
-        ResultDTO<List<WorkdataDTO>> result = workdataService.searchWorkdata(wsId, keyword);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<ResultDTO<List<WorkdataDTO>>> searchWorkdata( @RequestParam Long wsId,
+                                                                        @RequestParam String keyword,
+                                                                        @RequestParam(required = false, defaultValue = "regDate") String sort,
+                                                                        @RequestParam(required = false, defaultValue = "desc") String order) {
+
+        // 1. 로그인 사용자 이메일 조회
+        String userEmail = AuthUtil.getLoginUserId();
+
+        // 2. 워크스페이스 검증
+        Optional<WorkspaceMemberEntity> optionalMember =
+                workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, userEmail);
+        if (optionalMember.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(ResultDTO.of("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.", new ArrayList<>()));
+        }
+
+        // 3. 서비스 호출
+        return ResponseEntity.ok(workdataService.searchWorkdata(wsId, keyword, sort, order));
     }
 
-    /**
-     * 11. 동적 자료 정렬(writer, title, reg_date, file_name)
-     */
-    @GetMapping("/sort")
-    public ResponseEntity<ResultDTO<List<WorkdataDTO>>> getSortedWorkdata(
-            @RequestParam("wsId") Long wsId,
-            @RequestParam("sortField") String sortField,
-            @RequestParam("sortOrder") String sortOrder) {
-        ResultDTO<List<WorkdataDTO>> result = workdataService.getSortedWorkdata(wsId, sortField, sortOrder);
-        return ResponseEntity.ok(result);
-    }
+
 }

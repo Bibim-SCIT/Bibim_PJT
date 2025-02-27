@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 
+// 로그인 상태 확인용 import
+import { useContext } from "react";
+import { ConfigContext } from "../../../../contexts/ConfigContext";
+import { logoutUser } from "../../../../api/auth"; // ✅ 로그아웃 API 불러오기
+
 // material-ui
 import { useTheme } from '@mui/material/styles';
 import Avatar from '@mui/material/Avatar';
@@ -23,7 +28,6 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
 // project imports
-import UpgradePlanCard from './UpgradePlanCard';
 import MainCard from 'ui-component/cards/MainCard';
 import Transitions from 'ui-component/extended/Transitions';
 import useConfig from 'hooks/useConfig';
@@ -45,6 +49,16 @@ export default function ProfileSection() {
   const [selectedIndex] = useState(-1);
   const [open, setOpen] = useState(false);
   const navigate = useNavigate(); // 추가
+
+  // 로그인 상태 관련
+  const { user, logout } = useContext(ConfigContext);
+
+  console.log("🟢 현재 로그인한 사용자 정보222:", user); // ✅ 콘솔에서 user 객체 전체 확인
+
+  useEffect(() => {
+    console.log("🔹 현재 로그인된 사용자 정보333:", user);
+  }, [user]);
+
 
   /**
    * anchorRef is used on different components and specifying one type leads to other components throwing an error
@@ -80,8 +94,16 @@ export default function ProfileSection() {
 
   // 회원 정보 수정 페이지로 이동하는 함수
   const handleProfileUpdate = () => {
-    navigate('/profile_update');
+    navigate('/mypage/update');
     setOpen(false); // 메뉴 닫기
+  };
+
+  // 로그아웃 처리
+  const handleLogout = async () => {
+    await logoutUser(); // API 호출 (토큰 삭제)
+    logout(); // ConfigContext에서 로그인 상태 초기화
+    navigate("/pages/login"); // 로그인 페이지로 이동
+    setOpen(false);
   };
 
   return (
@@ -98,8 +120,8 @@ export default function ProfileSection() {
         }}
         icon={
           <Avatar
-            // src={User1}
-            src={cat}
+            key={user?.profileImage} // ✅ key 속성을 추가하여 상태 변경 시 다시 렌더링되도록 함
+            src={user?.profileImage || cat} // ✅ 프로필 이미지 적용, 없으면 기본 이미지
             alt="user-images"
             sx={{
               ...theme.typography.mediumAvatar,
@@ -147,10 +169,12 @@ export default function ProfileSection() {
                         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                           <Typography variant="h4">반갑습니다.</Typography>
                           <Typography component="span" variant="h4" sx={{ fontWeight: 400 }}>
-                            협업 전문가님
+                            {user ? user.name : "Guest"} {/* ✅ 현재 로그인한 사용자 이메일 표시 */}
                           </Typography>
                         </Stack>
-                        <Typography variant="subtitle2">Project Admin</Typography>
+                        <Typography variant="subtitle2">
+                          {user ? user.email : "test@email"} {/* ✅ 현재 로그인한 사용자 이메일 표시 */}
+                        </Typography>
                       </Stack>
                       <OutlinedInput
                         sx={{ width: '100%', pr: 1, pl: 2, my: 2 }}
@@ -191,42 +215,44 @@ export default function ProfileSection() {
                           '& .MuiListItemButton-root': { mt: 0.5 }
                         }}
                       >
-                        {/* 내 프로필 버튼 */}
-                        <ListItemButton
-                          sx={{ borderRadius: `${borderRadius}px` }}
-                          selected={selectedIndex === 0}
-                          onClick={handleMypage}
-                        >
-                          <ListItemIcon>
-                            <IconUser stroke={1.5} size="20px" />
-                          </ListItemIcon>
-                          <ListItemText primary={<Typography variant="body2">내 프로필</Typography>} />
-                        </ListItemButton>
-                        {/* 회원정보 수정 버튼 */}
-                        <ListItemButton
-                          sx={{ borderRadius: `${borderRadius}px` }}
-                          selected={selectedIndex === 1}
-                          onClick={handleProfileUpdate}
-                        >
-                          <ListItemIcon>
-                            <IconSettings stroke={1.5} size="20px" />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={
-                              <Grid container spacing={1} sx={{ justifyContent: 'space-between' }}>
-                                <Grid>
-                                  <Typography variant="body2">회원 정보 수정</Typography>
-                                </Grid>
-                              </Grid>
-                            }
-                          />
-                        </ListItemButton>
-                        <ListItemButton sx={{ borderRadius: `${borderRadius}px` }} selected={selectedIndex === 4}>
-                          <ListItemIcon>
-                            <IconLogout stroke={1.5} size="20px" />
-                          </ListItemIcon>
-                          <ListItemText primary={<Typography variant="body2">Logout</Typography>} />
-                        </ListItemButton>
+                        {user ? (
+                          <>
+                            {/* 로그인한 경우 보이는 메뉴 */}
+                            <ListItemButton sx={{ borderRadius: `${borderRadius}px` }} onClick={handleMypage}>
+                              <ListItemIcon>
+                                <IconUser stroke={1.5} size="20px" />
+                              </ListItemIcon>
+                              <ListItemText primary={<Typography variant="body2">내 프로필</Typography>} />
+                            </ListItemButton>
+
+                            <ListItemButton sx={{ borderRadius: `${borderRadius}px` }} onClick={handleProfileUpdate}>
+                              <ListItemIcon>
+                                <IconSettings stroke={1.5} size="20px" />
+                              </ListItemIcon>
+                              <ListItemText primary={<Typography variant="body2">회원 정보 수정</Typography>} />
+                            </ListItemButton>
+
+                            <ListItemButton sx={{ borderRadius: `${borderRadius}px` }} onClick={handleLogout}>
+                              <ListItemIcon>
+                                <IconLogout stroke={1.5} size="20px" />
+                              </ListItemIcon>
+                              <ListItemText primary={<Typography variant="body2">로그아웃</Typography>} />
+                            </ListItemButton>
+                          </>
+                        ) : (
+                          <>
+                            {/* 로그인하지 않은 경우 보이는 메뉴 */}
+                            <ListItemButton
+                              sx={{ borderRadius: `${borderRadius}px` }}
+                              onClick={() => navigate("/pages/login")}
+                            >
+                              <ListItemIcon>
+                                <IconUser stroke={1.5} size="20px" />
+                              </ListItemIcon>
+                              <ListItemText primary={<Typography variant="body2">로그인</Typography>} />
+                            </ListItemButton>
+                          </>
+                        )}
                       </List>
                     </Box>
                   </MainCard>

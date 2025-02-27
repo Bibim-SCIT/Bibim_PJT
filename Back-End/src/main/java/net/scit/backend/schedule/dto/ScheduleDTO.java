@@ -40,4 +40,20 @@ public class ScheduleDTO {
                 .scheduleFinishDate(scheduleEntity.getScheduleFinishdate())
                 .build();
     }
+
+    public static ScheduleDTO toDTO(ScheduleEntity scheduleEntity, String nickname) {
+        return ScheduleDTO.builder()
+                .wsId(scheduleEntity.getWorkspace().getWsId())
+                .scheduleNumber(scheduleEntity.getScheduleNumber())
+                .nickname(nickname)
+                .tag1(null)
+                .tag2(null)
+                .tag3(null)
+                .scheduleTitle(scheduleEntity.getScheduleTitle())
+                .scheduleContent(scheduleEntity.getScheduleContent())
+                .scheduleStatus(scheduleEntity.getScheduleStatus())
+                .scheduleStartDate(scheduleEntity.getScheduleStartdate())
+                .scheduleFinishDate(scheduleEntity.getScheduleFinishdate())
+                .build();
+    }
 }
