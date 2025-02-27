@@ -11,6 +11,9 @@ const api = axios.create({
     }
 });
 
+// ✅ `api`를 export 추가
+export { api };
+
 // ✅ 요청 시 자동으로 JWT 추가
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem("token");

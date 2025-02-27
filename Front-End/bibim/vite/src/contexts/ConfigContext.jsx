@@ -83,6 +83,20 @@ function ConfigProvider({ children }) {
       fetchUserInfo(); // ✅ 로그인 후 즉시 실행
     }
   }, []);
+  // useEffect(() => {
+  //   const savedToken = localStorage.getItem('token');
+  //   if (savedToken) {
+  //     console.log("🟢 저장된 토큰 감지됨:", savedToken);
+  //     setToken(savedToken);
+
+  //     // ✅ 저장된 토큰을 axios 헤더에 자동 설정
+  //     api.defaults.headers.common["Authorization"] = `Bearer ${savedToken}`;
+  //     console.log("🟢 요청 헤더에 저장된 토큰 설정 완료:", api.defaults.headers.common["Authorization"]);
+
+  //     fetchUserInfo(); // ✅ 로그인 후 즉시 실행
+  //   }
+  // }, []);
+
 
   // 로그아웃 함수
   const logout = () => {
