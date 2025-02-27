@@ -1,6 +1,7 @@
 package net.scit.backend.schedule.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.auth.AuthUtil;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
@@ -24,11 +25,12 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ScheduleServiceImpl implements ScheduleService {
-
-    private final ScheduleRepository scheduleRepository;
+  
+   private final ScheduleRepository scheduleRepository;
     private final MemberRepository memberRepository;
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
@@ -404,7 +406,6 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .largeTag(largeTagEntity)
                 .tagName(mediumTagDTO.getTagName())
                 .build();
-
 
         mediumTagRepository.save(mediumTagEntity);
 
