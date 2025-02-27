@@ -10,125 +10,171 @@ import {
   FormControl,
   Select,
   InputLabel,
-  MenuItem
+  MenuItem,
+  CircularProgress
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import EmailIcon from '@mui/icons-material/Email';
 import Avatar from '@mui/material/Avatar';
 import MainCard from 'ui-component/cards/MainCard';
-import { fetchUserInfo, updateProfile, uploadProfileImage, deleteProfileImage } from 'api/members';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import { getUserInfo } from 'api/auth';
+import { updateUserInfo } from 'api/members';
+import { useNavigate } from 'react-router-dom';
 
-/**
- * 회원 정보 수정 컴포넌트
- * 사용자가 자신의 프로필 정보와 이미지를 업데이트할 수 있는 폼을 제공
- */
+
+// ✅ 국적 매핑 (코드 → 풀 네임)
+const nationalityMap = {
+  'KR': '대한민국 / Republic of Korea',
+  'US': '미국 / America',
+  'JP': '일본 / Japan'
+};
+
+// ✅ 사용 언어 매핑 (코드 → 풀 네임)
+const languageMap = {
+  'ko': '한국어 / Korean',
+  'en': '영어 / English',
+  'jp': '일본어 / Japanese'
+};
+
 const MyInfoUpdate = () => {
-  // 상태 관리를 위한 useState 훅 정의
-  const [profileImage, setProfileImage] = useState(null);    // 프로필 이미지 파일 상태
-  const [previewImage, setPreviewImage] = useState(null);    // 이미지 미리보기용 URL
-  const [fileInputKey, setFileInputKey] = useState(Date.now()); // 파일 input 초기화용 key
-  const [formData, setFormData] = useState({                 // 사용자 정보 폼 데이터
-    name: '',
-    nationality: '',
-    language: ''
+  // ✅ 상태 관리
+  const [loading, setLoading] = useState(true);  // 초기 로딩 상태는 true로 설정
+  const [error, setError] = useState(null);  // 에러 상태 추가
+  const [userInfo, setUserInfo] = useState(null);  // 전체 사용자 정보
+  const [formData, setFormData] = useState({  // 폼 데이터 상태
+    name: "",
+    nationality: "",
+    language: "",
+    email: "",
+    profileImage: "",
   });
-  const [loading, setLoading] = useState(false);  // 로딩 상태
-  const [error, setError] = useState(null);       // 에러 상태
+  const [profileImage, setProfileImage] = useState(null);  // 프로필 이미지 파일
+  const [previewImage, setPreviewImage] = useState(null);  // 이미지 미리보기 URL
+  const [fileInputKey, setFileInputKey] = useState(Date.now());  // 파일 input 초기화용 key
+  const [updating, setUpdating] = useState(false);  // 업데이트 중 상태 (저장 버튼 비활성화용)
+  const navigate = useNavigate();
 
   /**
-   * 입력 필드 변경 핸들러
-   * @param {Event} e - 입력 필드 변경 이벤트
+   * 최초 마운트 시 사용자 정보 조회
+   * auth.js의 getUserInfo API를 호출하여 사용자 정보 가져옴
    */
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prevState => ({
-      ...prevState,
-      [name]: value
-    }));
+  useEffect(() => {
+    const fetchUserData = async () => {
+      setLoading(true);
+      try {
+        const data = await getUserInfo();
+        setUserInfo(data);
+        setFormData({
+          name: data.name || "",
+          nationality: data.nationality || "",
+          language: data.language || "",
+          email: data.email || "",
+          profileImage: data.profileImage || "",
+        });
+        
+        // 프로필 이미지가 있으면 미리보기 설정
+        if (data.profileImage) {
+          setPreviewImage(data.profileImage);
+        }
+      } catch (err) {
+        console.error("❌ 사용자 정보 가져오기 실패:", err);
+        setError("회원 정보를 불러오는 중 오류가 발생했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  /**
+   * 폼 입력값 변경 핸들러
+   * @param {Event} event - 입력 필드의 변경 이벤트
+   * event.target.name을 key로 사용하여 해당 필드값 업데이트
+   */
+  const handleChange = (event) => {
+    setFormData({ ...formData, [event.target.name]: event.target.value });
   };
 
   /**
-   * 폼 제출 핸들러
-   * @param {Event} e - 폼 제출 이벤트
+   * 회원 정보 수정 제출 핸들러
+   * members.js의 updateUserInfo API를 호출하여 서버에 수정 요청
+   * 성공 시 최신 정보를 다시 불러옴
    */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    setUpdating(true);
     try {
-      setLoading(true);
-      setError(null);
+      await updateUserInfo(formData, profileImage);  // API 호출 시 profileImage 전달
       
-      // 필요한 데이터만 전송
-      const dataToSend = {
-        name: formData.name,
-        nationality: formData.nationality,
-        language: formData.language
-      };
+      // 업데이트 성공 알림
+      alert("회원 정보가 수정되었습니다!");
       
-      // API 호출하여 프로필 업데이트
-      const result = await updateProfile(dataToSend, profileImage);
-      
-      if (result.success) {
-        alert('프로필이 성공적으로 업데이트되었습니다.');
-      }
+      // 프로필 페이지로 이동
+      navigate('/mypage');
     } catch (error) {
-      console.error('프로필 업데이트 오류:', error);
-      setError('프로필 업데이트에 실패했습니다.');
+      console.error("❌ 회원 정보 수정 실패:", error);
+      setError("회원 정보 수정에 실패했습니다.");
+      alert("회원 정보 수정에 실패했습니다.");
     } finally {
-      setLoading(false);
+      setUpdating(false);
     }
   };
 
   /**
    * 이미지 업로드 핸들러
+   * 선택된 이미지 파일을 상태에 저장하고 미리보기 생성
    * @param {Event} event - 파일 입력 변경 이벤트
    */
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
       setProfileImage(file);  // 실제 파일 저장
-      setPreviewImage(URL.createObjectURL(file));  // 미리보기 URL 생성
+      setPreviewImage(URL.createObjectURL(file));  // 브라우저 메모리에 미리보기 URL 생성
     }
   };
 
   /**
    * 이미지 삭제 핸들러
-   * 선택된 이미지와 미리보기를 초기화
+   * 프로필 이미지와 미리보기를 초기화하고 
+   * 파일 input을 리셋하기 위해 key값 갱신
    */
   const handleDeleteImage = () => {
-    // 선택된 이미지 파일 초기화
-    setProfileImage(null);
-    
-    // 미리보기 URL 초기화
+    setProfileImage(null);  // 이미지 파일 초기화
     if (previewImage) {
-        URL.revokeObjectURL(previewImage);  // 메모리 정리
-        setPreviewImage(null);
+      URL.revokeObjectURL(previewImage);  // 브라우저 메모리에서 미리보기 URL 제거
+      setPreviewImage(null);
     }
+    setFileInputKey(Date.now());  // 파일 input 초기화를 위한 key 갱신
     
-    // 파일 input 초기화
-    setFileInputKey(Date.now());
+    // 프로필 이미지 필드도 초기화
+    setFormData({
+      ...formData,
+      profileImage: ""
+    });
   };
 
-  /**
-   * 컴포넌트 마운트 시 사용자 정보 로드
-   */
-  useEffect(() => {
-    // 사용자 데이터 설정 함수
-    const setUserData = (userData) => {
-      setFormData({
-        email: userData.email || '',
-        name: userData.name || '',
-        nationality: userData.nationality || '',
-        language: userData.language || ''
-      });
-      if (userData.profileImage) {
-        setPreviewImage(userData.profileImage);
-      }
-    };
-    
-    // API 호출하여 사용자 정보 가져오기
-    fetchUserInfo(setUserData, setLoading, setError);
-  }, []);
+  // 로딩 중이면 로딩 인디케이터 표시
+  if (loading) {
+    return (
+      <MainCard title="회원정보 수정">
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
+          <CircularProgress />
+        </Box>
+      </MainCard>
+    );
+  }
+
+  // 에러가 있으면 에러 메시지 표시
+  if (error) {
+    return (
+      <MainCard title="회원정보 수정">
+        <Box sx={{ p: 3, textAlign: 'center', color: 'error.main' }}>
+          <Typography>{error}</Typography>
+        </Box>
+      </MainCard>
+    );
+  }
 
   return (
     <MainCard title="회원정보 수정">
@@ -219,7 +265,7 @@ const MyInfoUpdate = () => {
           <Grid item xs={12} sx={{ 
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center'  // 중앙 정렬
+            alignItems: 'center'
           }}>
             <Box sx={{ width: '40%' }}>
               <Typography variant="body2" sx={{ mb: 1 }}>이름</Typography>
@@ -291,9 +337,9 @@ const MyInfoUpdate = () => {
                 variant="contained" 
                 color="primary"
                 onClick={handleSubmit}
-                disabled={loading}
+                disabled={updating}
               >
-                저장
+                {updating ? '저장 중...' : '저장'}
               </Button>
             </Box>
           </Grid>
