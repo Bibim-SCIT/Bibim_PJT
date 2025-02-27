@@ -9,7 +9,7 @@ import MainCard from "ui-component/cards/MainCard";
 import { useNavigate } from "react-router-dom";
 
 // components
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import FileTable from "./components/FileTable";
 import FileCardView from "./components/FileCardView";
 import SearchBar from "./components/SearchBar";
@@ -125,22 +125,74 @@ export default function WorkDataPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedTag, setSelectedTag] = useState("전체");
     const [viewMode, setViewMode] = useState("table"); // "table" or "card"
+    const [loading, setLoading] = useState(true);  // ✅ 로딩 상태 추가
 
     // ✅ 전체 조회 API 호출
+    // ✅ 처음 API 요청할 때만 실행 (정렬할 때는 새로 요청하지 않음)
     useEffect(() => {
         const fetchWorkdata = async () => {
             try {
-                const wsId = 9; // ✅ 워크스페이스 ID (임시 값)
-                const data = await getWorkdataList(wsId);
+                setLoading(true);  // ✅ API 요청 시작 전에 로딩 상태 true
+                const wsId = 9;
+                const data = await getWorkdataList(wsId, "regDate", "desc"); // ✅ 최초 한 번만 가져오기
                 console.log("📌 불러온 자료 목록:", data);
-                setFiles(data); // ✅ 조회한 데이터로 상태 업데이트
+
+                if (Array.isArray(data)) {
+                    const formattedData = data.map((item) => ({
+                        id: item.dataNumber,
+                        title: item.title,
+                        files: item.fileNames || ["파일 없음"],
+                        tags: item.tags || [],
+                        date: item.regDate.split("T")[0],
+                        uploader: item.writer,
+                        avatar: "/avatars/default.png"
+                    }));
+                    setFiles(formattedData);
+                } else {
+                    console.error("❌ API에서 받은 데이터가 배열이 아님:", data);
+                    setFiles([]);
+                }
             } catch (error) {
                 console.error("❌ 자료 목록 조회 실패:", error);
+                setFiles([]);
+            } finally {
+                setLoading(false);  // ✅ 데이터 로딩 완료 후 로딩 상태 false
             }
         };
 
         fetchWorkdata();
-    }, []);
+    }, []);  // ✅ 최초 한 번만 실행 (정렬할 때는 재요청 안 함)
+
+    // ✅ 정렬 함수 (프론트에서 정렬)
+    const [sortField, setSortField] = useState("regDate");
+    const [sortOrder, setSortOrder] = useState("desc");
+
+    const handleSort = (field) => {
+        setSortField(field);
+        setSortOrder(prevOrder => (prevOrder === "asc" ? "desc" : "asc"));
+    };
+
+    // ✅ 클라이언트 측에서 정렬 수행
+    const sortedFiles = useMemo(() => {
+        return [...files].sort((a, b) => {
+            if (sortField === "title" || sortField === "uploader") {
+                return sortOrder === "asc"
+                    ? a[sortField].localeCompare(b[sortField])
+                    : b[sortField].localeCompare(a[sortField]);
+            }
+            if (sortField === "date") {
+                // ✅ "YYYY-MM-DD" -> Date 객체 변환하여 비교
+                const [yearA, monthA, dayA] = a.date.split("-").map(Number);
+                const [yearB, monthB, dayB] = b.date.split("-").map(Number);
+                const dateA = new Date(yearA, monthA - 1, dayA);
+                const dateB = new Date(yearB, monthB - 1, dayB);
+
+                return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+            }
+            return 0;
+        });
+    }, [files, sortField, sortOrder]);  // ✅ files가 변경될 때만 정렬 실행
+
 
 
     // 🔍 파일 검색 및 필터링
@@ -201,11 +253,18 @@ export default function WorkDataPage() {
                 </Box>
             </Box>
 
-            {/* 📌 테이블 뷰 vs 카드 뷰 전환 */}
+            {/* 🔄 테이블 뷰 vs 카드 뷰 전환 */}
             {viewMode === "table" ? (
-                <FileTable files={filteredFiles} setFiles={setFiles} />
+                <FileTable
+                    files={sortedFiles}
+                    setFiles={setFiles}
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                    loading={loading}  // ✅ 로딩 상태 전달
+                />
             ) : (
-                <FileCardView files={filteredFiles} setFiles={setFiles} />
+                <FileCardView files={sortedFiles} setFiles={setFiles} loading={loading} />
             )}
 
 

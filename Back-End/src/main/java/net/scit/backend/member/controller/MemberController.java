@@ -1,18 +1,34 @@
 package net.scit.backend.member.controller;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import net.scit.backend.common.ResultDTO;
-import net.scit.backend.common.SuccessDTO;
-import net.scit.backend.member.dto.*;
-import net.scit.backend.member.service.MemberService;
-import net.scit.backend.member.service.MemberDetailsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.auth.JwtTokenProvider;
+import net.scit.backend.common.ResultDTO;
+import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.member.dto.ChangePasswordDTO;
+import net.scit.backend.member.dto.LoginRequest;
+import net.scit.backend.member.dto.MemberDTO;
+import net.scit.backend.member.dto.MyInfoDTO;
+import net.scit.backend.member.dto.SignupDTO;
+import net.scit.backend.member.dto.TokenDTO;
+import net.scit.backend.member.dto.UpdateInfoDTO;
+import net.scit.backend.member.dto.VerificationDTO;
+import net.scit.backend.member.service.MemberDetailsService;
+import net.scit.backend.member.service.MemberService;
 
 /**
  * Member 관련 업무 메소드가 지정된 Controller

@@ -63,6 +63,7 @@ public class SecurityConfig {
                                 "/members/signup/check-mail", // ✅ 인증 코드 확인 요청 허용
                                 // "/auth/login/oauth2/code/google","/favicon.ico", // OAuth2 콜백 URL 허용 추가
                                 "/workdata/**", // 자료실 관련(추후 삭제)
+                                "/workspace/**",
                                 "/error")
                         .permitAll() // 로그인 엔드포인트 허용
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 전용

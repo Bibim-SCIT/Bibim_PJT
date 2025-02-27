@@ -24,6 +24,7 @@ public class ScheduleDTO {
     private ScheduleStatus scheduleStatus;
     private LocalDateTime scheduleStartDate;
     private LocalDateTime scheduleFinishDate;
+    private String color;
 
     public static ScheduleDTO toDTO(ScheduleEntity scheduleEntity, String nickname, ScheduleTagEntity scheduleTagEntity) {
         String tag2 = (scheduleTagEntity.getMediumTag() != null) ? scheduleTagEntity.getMediumTag().getTagName() : null; // null 처리 추가
@@ -41,6 +42,7 @@ public class ScheduleDTO {
                 .scheduleStatus(scheduleEntity.getScheduleStatus())
                 .scheduleStartDate(scheduleEntity.getScheduleStartdate())
                 .scheduleFinishDate(scheduleEntity.getScheduleFinishdate())
+                .color(scheduleTagEntity.getLargeTag().getTagColor())
                 .build();
     }
 
@@ -57,6 +59,7 @@ public class ScheduleDTO {
                 .scheduleStatus(scheduleEntity.getScheduleStatus())
                 .scheduleStartDate(scheduleEntity.getScheduleStartdate())
                 .scheduleFinishDate(scheduleEntity.getScheduleFinishdate())
+                .color("#DBE2EF") // 태그가 없을 때 디폴트 색상
                 .build();
     }
 }
