@@ -475,311 +475,311 @@ public class ScheduleServiceImpl implements ScheduleService {
         return ResultDTO.of("스케줄 삭제에 성공했습니다.", successDTO);
     }
 
-        /**
-         * 대분류 태그 생성
-         *
-         * @param largeTagDTO
-         * @return
-         */
-        @Override
-        public ResultDTO<SuccessDTO> createLargeTag(LargeTagDTO largeTagDTO) {
+    /**
+     * 대분류 태그 생성
+     *
+     * @param largeTagDTO
+     * @return
+     */
+    @Override
+    public ResultDTO<SuccessDTO> createLargeTag(LargeTagDTO largeTagDTO) {
 
-                // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
-                WorkspaceEntity workspace = workspaceRepository.findById(largeTagDTO.getWsId())
-                                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
+        // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
+        WorkspaceEntity workspace = workspaceRepository.findById(largeTagDTO.getWsId())
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
 
-                // 대분류 태그 생성
-                LargeTagEntity largeTagEntity = LargeTagEntity.builder()
-                                .workspace(workspace)
-                                .tagName(largeTagDTO.getTagName())
-                                .tagColor(largeTagDTO.getTagColor())
-                                .build();
+        // 대분류 태그 생성
+        LargeTagEntity largeTagEntity = LargeTagEntity.builder()
+                .workspace(workspace)
+                .tagName(largeTagDTO.getTagName())
+                .tagColor(largeTagDTO.getTagColor())
+                .build();
 
-                largeTagRepository.save(largeTagEntity);
+        largeTagRepository.save(largeTagEntity);
 
-                SuccessDTO successDTO = SuccessDTO.builder()
-                                .success(true)
-                                .build();
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
 
-                return ResultDTO.of("대분류 태그가 생성되었습니다.", successDTO);
-        }
-
-        /**
-         * 중분류 태그 생성
-         *
-         * @param mediumTagDTO
-         * @return
-         */
-        @Override
-        public ResultDTO<SuccessDTO> createMediumTag(MediumTagDTO mediumTagDTO) {
-
-                // 대분류 식별자로 대분류 태그 찾기
-                LargeTagEntity largeTagEntity = largeTagRepository.findById(mediumTagDTO.getLargeTagNumber())
-                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
-
-                // 중분류 태그 생성
-                MediumTagEntity mediumTagEntity = MediumTagEntity.builder()
-                                .largeTag(largeTagEntity)
-                                .tagName(mediumTagDTO.getTagName())
-                                .build();
-
-                mediumTagRepository.save(mediumTagEntity);
-
-                SuccessDTO successDTO = SuccessDTO.builder()
-                                .success(true)
-                                .build();
-
-                return ResultDTO.of("중분류 태그가 생성되었습니다.", successDTO);
-
-        }
-
-        /**
-         * 소분류 태그 생성
-         *
-         * @param smallTagDTO
-         * @return
-         */
-        @Override
-        public ResultDTO<SuccessDTO> createSmallTag(SmallTagDTO smallTagDTO) {
-
-                // 토큰으로 사용자 정보 가져오기
-                String email = AuthUtil.getLoginUserId();
-                MemberEntity member = memberRepository.findByEmail(email)
-                                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-                // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
-                WorkspaceEntity workspace = workspaceRepository.findById(smallTagDTO.getWsId())
-                                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
-
-                Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository
-                                .findByWorkspaceAndMember(workspace, member);
-                if (byWorkspaceAndMember.isEmpty()) {
-                        throw new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
-                }
-
-                // 중분류 식별자로 중분류 태그 찾기
-                MediumTagEntity mediumTagEntity = mediumTagRepository.findById(smallTagDTO.getMediumTagNumber())
-                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
-
-                // 중분류 태그 식별자와 소분류 태그명이 같은 경우 중복 체크
-                Optional<SmallTagEntity> byMediumTagAndTagName = smallTagRepository.findByMediumTagAndTagName(
-                                mediumTagEntity,
-                                smallTagDTO.getTagName());
-                if (byMediumTagAndTagName.isPresent()) {
-                        throw new CustomException(ErrorCode.TAG_DUPLICATE);
-                }
-
-                // 소분류 태그 생성
-                SmallTagEntity smallTagEntity = SmallTagEntity.toEntity(smallTagDTO, mediumTagEntity);
-
-                smallTagRepository.save(smallTagEntity);
-
-                SuccessDTO successDTO = SuccessDTO.builder()
-                                .success(true)
-                                .build();
-
-                return ResultDTO.of("소분류 태그가 생성되었습니다.", successDTO);
-        }
-
-        /**
-         * 대분류 태그 조회
-         *
-         * @return
-         */
-        @Override
-        public ResultDTO<List<LargeTagDTO>> getLargeTags(Long wsId) {
-
-                // 토큰으로 사용자 정보 가져오기
-                String email = AuthUtil.getLoginUserId();
-                MemberEntity member = memberRepository.findByEmail(email)
-                                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-                // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
-                WorkspaceEntity workspace = workspaceRepository.findById(wsId)
-                                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
-
-                Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository
-                                .findByWorkspaceAndMember(workspace, member);
-                if (byWorkspaceAndMember.isEmpty()) {
-                        throw new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
-                }
-
-                // 대분류 태그 조회
-                List<LargeTagEntity> largeTagEntityList = largeTagRepository.findAllByWorkspace(workspace);
-                List<LargeTagDTO> largeTagDTOList = new ArrayList<>();
-                for (LargeTagEntity largeTagEntity : largeTagEntityList) {
-                        largeTagDTOList.add(LargeTagDTO.toDTO(largeTagEntity));
-                }
-
-                // 대분류 태그 조회에 성공했습니다.
-                return ResultDTO.of("대분류 태그 조회에 성공했습니다.", largeTagDTOList);
-    }
-  
-        /**
-         * 중분류 태그 조회
-         * 
-         * @param largeTagNumber
-         * @return
-         */
-        @Override
-        public ResultDTO<List<MediumTagDTO>> getMediumTags(Long wsId, Long largeTagNumber) {
-
-                // 토큰으로 사용자 정보 가져오기
-                String email = AuthUtil.getLoginUserId();
-                MemberEntity member = memberRepository.findByEmail(email)
-                                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-                // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
-                WorkspaceEntity workspace = workspaceRepository.findById(wsId)
-                                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
-
-                Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository
-                                .findByWorkspaceAndMember(workspace, member);
-                if (byWorkspaceAndMember.isEmpty()) {
-                        throw new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
-                }
-
-                // 대분류 식별자로 대분류 태그 찾기
-                LargeTagEntity largeTagEntity = largeTagRepository.findById(largeTagNumber)
-                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
-
-                // 대분류가 해당 스페이스에 속한 대분류인지 확인
-                if (!largeTagEntity.getWorkspace().equals(workspace)) {
-                        throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
-                }
-
-                // 중분류 태그 조회
-                List<MediumTagEntity> mediumTagEntityList = mediumTagRepository.findAllByLargeTag(largeTagEntity);
-                List<MediumTagDTO> mediumTagDTOList = new ArrayList<>();
-                for (MediumTagEntity mediumTagEntity : mediumTagEntityList) {
-                        mediumTagDTOList.add(MediumTagDTO.toDTO(mediumTagEntity));
-                }
-
-                // 중분류 태그 조회에 성공했습니다.
-                return ResultDTO.of("중분류 태그 조회에 성공했습니다.", mediumTagDTOList);
+        return ResultDTO.of("대분류 태그가 생성되었습니다.", successDTO);
     }
 
-        /**
-         * 소분류 태그 조회
-         * 
-         * @param wsId
-         * @param largeTagNumber
-         * @param mediumTagNumber
-         * @return
-         */
-        @Override
-        public ResultDTO<List<SmallTagDTO>> getSmallTags(Long wsId, Long largeTagNumber, Long mediumTagNumber) {
+    /**
+     * 중분류 태그 생성
+     *
+     * @param mediumTagDTO
+     * @return
+     */
+    @Override
+    public ResultDTO<SuccessDTO> createMediumTag(MediumTagDTO mediumTagDTO) {
 
-                // 토큰으로 사용자 정보 가져오기
-                String email = AuthUtil.getLoginUserId();
-                MemberEntity member = memberRepository.findByEmail(email)
-                                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+        // 대분류 식별자로 대분류 태그 찾기
+        LargeTagEntity largeTagEntity = largeTagRepository.findById(mediumTagDTO.getLargeTagNumber())
+                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
 
-                // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
-                WorkspaceEntity workspace = workspaceRepository.findById(wsId)
-                                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
+        // 중분류 태그 생성
+        MediumTagEntity mediumTagEntity = MediumTagEntity.builder()
+                .largeTag(largeTagEntity)
+                .tagName(mediumTagDTO.getTagName())
+                .build();
 
-                Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository
-                                .findByWorkspaceAndMember(workspace, member);
-                if (byWorkspaceAndMember.isEmpty()) {
-                        throw new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
-                }
+        mediumTagRepository.save(mediumTagEntity);
 
-                // 대분류 식별자로 대분류 태그 찾기
-                LargeTagEntity largeTagEntity = largeTagRepository.findById(largeTagNumber)
-                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
 
-                // 대분류가 해당 스페이스에 속한 대분류인지 확인
-                if (!largeTagEntity.getWorkspace().equals(workspace)) {
-                        throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
-                }
+        return ResultDTO.of("중분류 태그가 생성되었습니다.", successDTO);
 
-                // 중분류 식별자로 중분류 태그 찾기
-                MediumTagEntity mediumTagEntity = mediumTagRepository.findById(mediumTagNumber)
-                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+    }
 
-                // 중분류가 해당 대분류에 속한 중분류인지 확인
-                if (!mediumTagEntity.getLargeTag().equals(largeTagEntity)) {
-                        throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
-                }
+    /**
+     * 소분류 태그 생성
+     *
+     * @param smallTagDTO
+     * @return
+     */
+    @Override
+    public ResultDTO<SuccessDTO> createSmallTag(SmallTagDTO smallTagDTO) {
 
-                // 소분류 태그 조회
-                List<SmallTagEntity> smallTagEntityList = smallTagRepository.findAllByMediumTag(mediumTagEntity);
-                List<SmallTagDTO> smallTagDTOList = new ArrayList<>();
-                for (SmallTagEntity smallTagEntity : smallTagEntityList) {
-                        smallTagDTOList.add(SmallTagDTO.toDTO(smallTagEntity));
-                }
+        // 토큰으로 사용자 정보 가져오기
+        String email = AuthUtil.getLoginUserId();
+        MemberEntity member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-                // 소분류 태그 조회에 성공했습니다.
-                return ResultDTO.of("소분류 태그 조회에 성공했습니다.", smallTagDTOList);
+        // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
+        WorkspaceEntity workspace = workspaceRepository.findById(smallTagDTO.getWsId())
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
+
+        Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository
+                .findByWorkspaceAndMember(workspace, member);
+        if (byWorkspaceAndMember.isEmpty()) {
+            throw new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
         }
 
-        /**
-         * 대분류 태그 삭제
-         * 
-         * @param largeTagNumber
-         * @return
-         */
-        @Override
-        public ResultDTO<SuccessDTO> deleteLargeTag(Long largeTagNumber) {
+        // 중분류 식별자로 중분류 태그 찾기
+        MediumTagEntity mediumTagEntity = mediumTagRepository.findById(smallTagDTO.getMediumTagNumber())
+                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
 
-                // 대분류 태그 조회
-                LargeTagEntity largeTagEntity = largeTagRepository.findById(largeTagNumber)
-                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
-
-                // 대분류 태그 삭제
-                largeTagRepository.delete(largeTagEntity);
-
-                SuccessDTO successDTO = SuccessDTO.builder()
-                                .success(true)
-                                .build();
-
-                return ResultDTO.of("대분류 태그 삭제에 성공했습니다.", successDTO);
+        // 중분류 태그 식별자와 소분류 태그명이 같은 경우 중복 체크
+        Optional<SmallTagEntity> byMediumTagAndTagName = smallTagRepository.findByMediumTagAndTagName(
+                mediumTagEntity,
+                smallTagDTO.getTagName());
+        if (byMediumTagAndTagName.isPresent()) {
+            throw new CustomException(ErrorCode.TAG_DUPLICATE);
         }
 
-        /**
-         * 중분류 태그 삭제
-         * 
-         * @param mediumTagNumber
-         * @return
-         */
-        @Override
-        public ResultDTO<SuccessDTO> deleteMediumTag(Long mediumTagNumber) {
+        // 소분류 태그 생성
+        SmallTagEntity smallTagEntity = SmallTagEntity.toEntity(smallTagDTO, mediumTagEntity);
 
-                // 중분류 태그 조회
-                MediumTagEntity mediumTagEntity = mediumTagRepository.findById(mediumTagNumber)
-                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+        smallTagRepository.save(smallTagEntity);
 
-                // 중분류 태그 삭제
-                mediumTagRepository.delete(mediumTagEntity);
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
 
-                SuccessDTO successDTO = SuccessDTO.builder()
-                                .success(true)
-                                .build();
+        return ResultDTO.of("소분류 태그가 생성되었습니다.", successDTO);
+    }
 
-                return ResultDTO.of("중분류 태그 삭제에 성공했습니다.", successDTO);
+    /**
+     * 대분류 태그 조회
+     *
+     * @return
+     */
+    @Override
+    public ResultDTO<List<LargeTagDTO>> getLargeTags(Long wsId) {
+
+        // 토큰으로 사용자 정보 가져오기
+        String email = AuthUtil.getLoginUserId();
+        MemberEntity member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
+        WorkspaceEntity workspace = workspaceRepository.findById(wsId)
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
+
+        Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository
+                .findByWorkspaceAndMember(workspace, member);
+        if (byWorkspaceAndMember.isEmpty()) {
+            throw new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
         }
 
-        /**
-         * 소분류 태그 삭제
-         * 
-         * @param smallTagNumber
-         * @return
-         */
-        @Override
-        public ResultDTO<SuccessDTO> deleteSmallTag(Long smallTagNumber) {
-
-                // 소분류 태그 조회
-                SmallTagEntity smallTagEntity = smallTagRepository.findById(smallTagNumber)
-                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
-
-                // 소분류 태그 삭제
-                smallTagRepository.delete(smallTagEntity);
-
-                SuccessDTO successDTO = SuccessDTO.builder()
-                                .success(true)
-                                .build();
-
-                return ResultDTO.of("소분류 태그 삭제에 성공했습니다.", successDTO);
+        // 대분류 태그 조회
+        List<LargeTagEntity> largeTagEntityList = largeTagRepository.findAllByWorkspace(workspace);
+        List<LargeTagDTO> largeTagDTOList = new ArrayList<>();
+        for (LargeTagEntity largeTagEntity : largeTagEntityList) {
+            largeTagDTOList.add(LargeTagDTO.toDTO(largeTagEntity));
         }
+
+        // 대분류 태그 조회에 성공했습니다.
+        return ResultDTO.of("대분류 태그 조회에 성공했습니다.", largeTagDTOList);
+    }
+
+    /**
+     * 중분류 태그 조회
+     *
+     * @param largeTagNumber
+     * @return
+     */
+    @Override
+    public ResultDTO<List<MediumTagDTO>> getMediumTags(Long wsId, Long largeTagNumber) {
+
+        // 토큰으로 사용자 정보 가져오기
+        String email = AuthUtil.getLoginUserId();
+        MemberEntity member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
+        WorkspaceEntity workspace = workspaceRepository.findById(wsId)
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
+
+        Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository
+                .findByWorkspaceAndMember(workspace, member);
+        if (byWorkspaceAndMember.isEmpty()) {
+            throw new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
+        }
+
+        // 대분류 식별자로 대분류 태그 찾기
+        LargeTagEntity largeTagEntity = largeTagRepository.findById(largeTagNumber)
+                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+        // 대분류가 해당 스페이스에 속한 대분류인지 확인
+        if (!largeTagEntity.getWorkspace().equals(workspace)) {
+            throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
+        }
+
+        // 중분류 태그 조회
+        List<MediumTagEntity> mediumTagEntityList = mediumTagRepository.findAllByLargeTag(largeTagEntity);
+        List<MediumTagDTO> mediumTagDTOList = new ArrayList<>();
+        for (MediumTagEntity mediumTagEntity : mediumTagEntityList) {
+            mediumTagDTOList.add(MediumTagDTO.toDTO(mediumTagEntity));
+        }
+
+        // 중분류 태그 조회에 성공했습니다.
+        return ResultDTO.of("중분류 태그 조회에 성공했습니다.", mediumTagDTOList);
+    }
+
+    /**
+     * 소분류 태그 조회
+     *
+     * @param wsId
+     * @param largeTagNumber
+     * @param mediumTagNumber
+     * @return
+     */
+    @Override
+    public ResultDTO<List<SmallTagDTO>> getSmallTags(Long wsId, Long largeTagNumber, Long mediumTagNumber) {
+
+        // 토큰으로 사용자 정보 가져오기
+        String email = AuthUtil.getLoginUserId();
+        MemberEntity member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // 워크스페이스 아이디로 사용자가 속한 워크스페이스인지 확인하기
+        WorkspaceEntity workspace = workspaceRepository.findById(wsId)
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
+
+        Optional<WorkspaceMemberEntity> byWorkspaceAndMember = workspaceMemberRepository
+                .findByWorkspaceAndMember(workspace, member);
+        if (byWorkspaceAndMember.isEmpty()) {
+            throw new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
+        }
+
+        // 대분류 식별자로 대분류 태그 찾기
+        LargeTagEntity largeTagEntity = largeTagRepository.findById(largeTagNumber)
+                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+        // 대분류가 해당 스페이스에 속한 대분류인지 확인
+        if (!largeTagEntity.getWorkspace().equals(workspace)) {
+            throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
+        }
+
+        // 중분류 식별자로 중분류 태그 찾기
+        MediumTagEntity mediumTagEntity = mediumTagRepository.findById(mediumTagNumber)
+                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+        // 중분류가 해당 대분류에 속한 중분류인지 확인
+        if (!mediumTagEntity.getLargeTag().equals(largeTagEntity)) {
+            throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
+        }
+
+        // 소분류 태그 조회
+        List<SmallTagEntity> smallTagEntityList = smallTagRepository.findAllByMediumTag(mediumTagEntity);
+        List<SmallTagDTO> smallTagDTOList = new ArrayList<>();
+        for (SmallTagEntity smallTagEntity : smallTagEntityList) {
+            smallTagDTOList.add(SmallTagDTO.toDTO(smallTagEntity));
+        }
+
+        // 소분류 태그 조회에 성공했습니다.
+        return ResultDTO.of("소분류 태그 조회에 성공했습니다.", smallTagDTOList);
+    }
+
+    /**
+     * 대분류 태그 삭제
+     *
+     * @param largeTagNumber
+     * @return
+     */
+    @Override
+    public ResultDTO<SuccessDTO> deleteLargeTag(Long largeTagNumber) {
+
+        // 대분류 태그 조회
+        LargeTagEntity largeTagEntity = largeTagRepository.findById(largeTagNumber)
+                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+        // 대분류 태그 삭제
+        largeTagRepository.delete(largeTagEntity);
+
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+
+        return ResultDTO.of("대분류 태그 삭제에 성공했습니다.", successDTO);
+    }
+
+    /**
+     * 중분류 태그 삭제
+     *
+     * @param mediumTagNumber
+     * @return
+     */
+    @Override
+    public ResultDTO<SuccessDTO> deleteMediumTag(Long mediumTagNumber) {
+
+        // 중분류 태그 조회
+        MediumTagEntity mediumTagEntity = mediumTagRepository.findById(mediumTagNumber)
+                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+        // 중분류 태그 삭제
+        mediumTagRepository.delete(mediumTagEntity);
+
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+
+        return ResultDTO.of("중분류 태그 삭제에 성공했습니다.", successDTO);
+    }
+
+    /**
+     * 소분류 태그 삭제
+     *
+     * @param smallTagNumber
+     * @return
+     */
+    @Override
+    public ResultDTO<SuccessDTO> deleteSmallTag(Long smallTagNumber) {
+
+        // 소분류 태그 조회
+        SmallTagEntity smallTagEntity = smallTagRepository.findById(smallTagNumber)
+                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+
+        // 소분류 태그 삭제
+        smallTagRepository.delete(smallTagEntity);
+
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+
+        return ResultDTO.of("소분류 태그 삭제에 성공했습니다.", successDTO);
+    }
 }

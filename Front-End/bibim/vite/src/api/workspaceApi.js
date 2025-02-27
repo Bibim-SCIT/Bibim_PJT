@@ -4,7 +4,6 @@ import { api } from "./auth"; // ✅ `auth.js`의 api 인스턴스를 가져옴
 
 const API_BASE_URL = "http://localhost:8080/workspace"; // 백엔드 API 기본 URL
 
-
 // ✅ 공통 헤더 생성 함수 (토큰 포함)
 const getAuthHeaders = () => {
     const token = localStorage.getItem("token"); // ✅ `auth.js`에서 저장한 키와 일치시킴
@@ -122,6 +121,13 @@ export const createWorkspace = async (workspaceName, workspaceImage = null) => {
 
 
         return response.data;
+
+        // const response = await axios.get(`${API_BASE_URL}`, 
+        // {
+        //     // headers : {Authorization: `Bearer ${token}`},
+        //     headers : {Authorization: `Bearer eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ0ZXN0QGVtYWlsLmNvbSIsInJvbGVzIjpbIlJPTEVfVVNFUiJdLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiaWF0IjoxNzQwNTQ0NDMzLCJleHAiOjE3NDA1NTE2MzN9.8-x4Gzupg2VqShiVOZmkH7t9aMBm-IPIvRsdX2SP0ZU`},
+        // });
+        // return response.data;
     } catch (error) {
         console.error("🚨 워크스페이스 생성 실패:", error);
         throw error.response?.data || "워크스페이스 생성에 실패했습니다.";
