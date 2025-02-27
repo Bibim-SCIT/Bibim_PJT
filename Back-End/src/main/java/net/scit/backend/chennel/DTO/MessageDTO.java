@@ -39,6 +39,6 @@ public class MessageDTO
      * - 0 : 메세지
      * - 1 : 파일
      */
-    private Boolean massegeOfFile;
+    private Boolean massegeOrFile;
 }
 

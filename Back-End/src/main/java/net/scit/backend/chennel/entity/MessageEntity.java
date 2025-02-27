@@ -40,6 +40,7 @@ public class MessageEntity
     @CurrentTimestamp
     private LocalDateTime sendTime;
 
-    private Boolean massegeOfFile;
+
+    private Boolean massegeOrFile;
 
 }
