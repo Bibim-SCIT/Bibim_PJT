@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.workspace.dto.ChannelUpdateRequest;
 import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
 import net.scit.backend.workspace.service.WorkspaceChannelService;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +43,18 @@ public class WorkspaceChannelController {
         log.info("채널 삭제 요청: channelId={}", channelNumber);
 
         ResultDTO<SuccessDTO> result = workspaceChannelService.deleteChannel(channelNumber);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 3. 채널 수정(역할, 이름만)
+     */
+    @PutMapping("/{channel_number}")
+    public ResponseEntity<ResultDTO<SuccessDTO>> updateChannel( @PathVariable("channel_number") Long channelNumber,
+                                                                @RequestBody ChannelUpdateRequest request) {
+        log.info("채널 수정 요청: channelNumber={}, channelName={}, workspaceRole={}", channelNumber, request.getChannelName(), request.getWorkspaceRole());
+
+        ResultDTO<SuccessDTO> result = workspaceChannelService.updateChannel(channelNumber, request);
         return ResponseEntity.ok(result);
     }
 }

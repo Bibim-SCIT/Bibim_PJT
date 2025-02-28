@@ -7,9 +7,12 @@ import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
+import net.scit.backend.workspace.dto.ChannelUpdateRequest;
 import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
+import net.scit.backend.workspace.entity.WorkspaceChannelRoleEntity;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
+import net.scit.backend.workspace.repository.WorkspaceChannelRoleRepository;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import net.scit.backend.workspace.service.WorkspaceChannelService;
 import org.springframework.stereotype.Service;
@@ -21,6 +24,7 @@ public class WorkspaceChannelServiceImpl implements WorkspaceChannelService {
 
     private final WorkspaceChannelRepository workspaceChannelRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
+    private final WorkspaceChannelRoleRepository workspaceChannelRoleRepository;
 
     /**
      * 1. 채널 생성
@@ -93,4 +97,37 @@ public class WorkspaceChannelServiceImpl implements WorkspaceChannelService {
 
         return ResultDTO.of("채널 삭제 완료", SuccessDTO.builder().success(true).build());
     }
+
+    /**
+     * 3. 채널 수정(채널 역할, 이름만)
+     * @param channelNumber
+     * @param request
+     * @return
+     */
+    @Override
+    public ResultDTO<SuccessDTO> updateChannel(Long channelNumber, ChannelUpdateRequest request) {
+        String userEmail = AuthUtil.getLoginUserId();
+        log.info("채널 수정 요청: channelNumber={}, userEmail={}", channelNumber, userEmail);
+
+        workspaceChannelRepository.findById(channelNumber)
+                .ifPresentOrElse(channel -> workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(
+                                        channel.getWorkspace().getWsId(), userEmail)
+                                .filter(member -> "owner".equals(member.getWsRole()))
+                                .ifPresentOrElse(member -> {
+                                    if (request.getChannelName() != null && !request.getChannelName().isBlank()) {
+                                        channel.setChannelName(request.getChannelName());
+                                    }
+                                    if (request.getWorkspaceRole() != null) {
+                                        workspaceChannelRoleRepository.findById(request.getWorkspaceRole())
+                                                .ifPresentOrElse(channel::setWorkspaceRole,
+                                                        () -> { throw new CustomException(ErrorCode.ROLE_NOT_FOUND); });
+                                    }
+                                    workspaceChannelRepository.save(channel);
+                                    log.info("채널 수정 완료: channelNumber={}", channelNumber);
+                                }, () -> { throw new CustomException(ErrorCode.CHANNEL_UPDATE_FORBIDDEN); })
+                        , () -> { throw new CustomException(ErrorCode.CHANNEL_NOT_FOUND); });
+
+        return ResultDTO.of("채널 수정 완료", SuccessDTO.builder().success(true).build());
+    }
+
 }
