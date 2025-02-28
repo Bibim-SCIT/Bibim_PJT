@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 // import org.springframework.web.bind.annotation.RequestBody;
@@ -30,7 +31,7 @@ public class ChannelController {
     @PostMapping("/chat/sendMessage/{channelId}")
     // @MessageMapping("/chat/sendMessage/{channelId}")
     // @SendTo("/topic/channel/{channelId}")
-    public MessageDTO sendMessage(@RequestParam MessageDTO messageDTO) {
+    public MessageDTO sendMessage(@ModelAttribute MessageDTO messageDTO) {
         return channelService.processMessage(messageDTO);
     }
 

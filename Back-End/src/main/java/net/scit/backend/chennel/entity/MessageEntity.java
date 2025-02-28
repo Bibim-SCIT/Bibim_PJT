@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CurrentTimestamp;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,20 +28,24 @@ public class MessageEntity
 {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long massegeNumber;
+    private Long messageNumber;
 
     @ManyToOne
     @JoinColumn(name = "channel_number", nullable = false)
     private WorkspaceChannelEntity workspaceChannelEntity;
     
+
+    @Column(length = 50) // 최대 길이 100으로 설정
     private String sender;
+    
 
     private String content;
 
     @CurrentTimestamp
     private LocalDateTime sendTime;
 
+    @Builder.Default
+    private Boolean messageOrFile = false;
 
-    private Boolean massegeOrFile;
 
 }

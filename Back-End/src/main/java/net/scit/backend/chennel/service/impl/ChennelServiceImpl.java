@@ -74,7 +74,7 @@ public class ChennelServiceImpl implements ChennelService {
                 .workspaceChannelEntity(workspaceChannelEntity)
                 .sender(email)
                 .content(messageDTO.getContent())
-                .massegeOrFile(false)
+                .messageOrFile(false)
                 .build();
         messageReposittory.save(messageEntity);
         return messageDTO;
@@ -88,12 +88,23 @@ public class ChennelServiceImpl implements ChennelService {
     {
         
         String imageUrl = uploadImage(file,chennelId);// S3에 파일 업로드 후 URL 반환
+        WorkspaceChannelEntity workspaceChannelEntity = workspaceChennelRepository
+                .findById(chennelId).get();
+        MessageEntity messageEntity = MessageEntity.builder()
+        .workspaceChannelEntity(workspaceChannelEntity)
+        .sender(sender)
+        .content(imageUrl)
+        .messageOrFile(true)
+        .build();
+        messageReposittory.save(messageEntity);
+
         MessageDTO messageDTO = new MessageDTO();
-        messageDTO.setMassegeOrFile(true);
+        messageDTO.setMessageOrFile(true);
+        messageDTO.setChannelNumber(chennelId);
         messageDTO.setSender(sender);
         messageDTO.setContent(imageUrl);
-        messageDTO.setChannelNumber(chennelId);
-        return processMessage(messageDTO); // 메시지로 저장
+  
+        return messageDTO;
     }
 
     /**
@@ -109,7 +120,7 @@ public class ChennelServiceImpl implements ChennelService {
                     MessageDTO dto = new MessageDTO();
                     dto.setChannelNumber(msg.getWorkspaceChannelEntity().getChannelNumber());
                     dto.setSender(msg.getSender());
-                    dto.setMassegeOrFile(msg.getMassegeOrFile());
+                    dto.setMessageOrFile(msg.getMessageOrFile());
                     dto.setContent(msg.getContent());
                     return dto;
                 })
