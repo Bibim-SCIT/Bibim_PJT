@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.auth.AuthUtil;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.exception.CustomException;
+import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
@@ -31,36 +33,64 @@ public class WorkspaceChannelServiceImpl implements WorkspaceChannelService {
         String userEmail = AuthUtil.getLoginUserId();
         log.info("채널 생성 요청: workspaceId={}, userEmail={}, channelName={}", workspaceId, userEmail, channelName);
 
-        // 워크스페이스 멤버 검증
+        validateChannelName(channelName);
+
         WorkspaceMemberEntity memberEntity = workspaceMemberRepository
                 .findByWorkspace_wsIdAndMember_Email(workspaceId, userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다."));
+                .filter(member -> "owner".equals(member.getWsRole()))
+                .orElseThrow(() -> new SecurityException("채널 생성 권한이 없습니다."));
 
-        // 권한 확인 (wsRole이 'owner'인지 검사)
-        if (!"owner".equals(memberEntity.getWsRole())) {
-            log.warn("채널 생성 권한 부족: userEmail={}, wsRole={}", userEmail, memberEntity.getWsRole());
-            throw new SecurityException("채널 생성 권한이 없습니다.");
+        if (workspaceChannelRepository.existsByWorkspace_wsIdAndChannelName(workspaceId, channelName)) {
+            throw new IllegalStateException("이미 존재하는 채널입니다.");
         }
 
-        // 채널 생성
-        WorkspaceChannelEntity channelEntity = WorkspaceChannelEntity.builder()
-                .workspace(memberEntity.getWorkspace())
-                .channelName(channelName)
-                .build();
+        workspaceChannelRepository.save(
+                WorkspaceChannelEntity.builder()
+                        .workspace(memberEntity.getWorkspace())
+                        .channelName(channelName)
+                        .build()
+        );
 
-        // 채널 저장
-        workspaceChannelRepository.save(channelEntity);
         log.info("채널 생성 완료: channelName={}, workspaceId={}", channelName, workspaceId);
+        return buildSuccessResponse("채널 생성 완료");
+    }
 
-        // SuccessDTO 생성 (빌더 사용)
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
+    private void validateChannelName(String channelName) {
+        if (channelName == null || channelName.isBlank()) {
+            throw new IllegalArgumentException("채널 이름을 입력해야 합니다.");
+        }
+    }
 
-        // ResultDTO 반환 (빌더 사용)
+    private ResultDTO<SuccessDTO> buildSuccessResponse(String message) {
         return ResultDTO.<SuccessDTO>builder()
-                .message("채널 생성 완료")
-                .data(successDTO)
+                .message(message)
+                .data(SuccessDTO.builder().success(true).build())  // 기존 SuccessDTO 수정 없이 해결
                 .build();
+    }
+
+    /**
+     * 2. 채널 삭제
+     * @param channelNumber
+     * @return
+     */
+    @Override
+    public ResultDTO<SuccessDTO> deleteChannel(Long channelNumber) {
+        String userEmail = AuthUtil.getLoginUserId();
+        log.info("채널 삭제 요청: channelId={}, userEmail={}", channelNumber, userEmail);
+
+        workspaceChannelRepository.findById(channelNumber)
+                .ifPresentOrElse(channel -> {
+                    workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(channel.getWorkspace().getWsId(), userEmail)
+                            .filter(member -> "owner".equals(member.getWsRole()))
+                            .ifPresentOrElse(
+                                    member -> {
+                                        workspaceChannelRepository.delete(channel);
+                                        log.info("채널 삭제 완료: channelNumber={}", channelNumber);
+                                    },
+                                    () -> { throw new CustomException(ErrorCode.CHANNEL_DELETE_FORBIDDEN); }
+                            );
+                }, () -> { throw new CustomException(ErrorCode.CHANNEL_NOT_FOUND); });
+
+        return ResultDTO.of("채널 삭제 완료", SuccessDTO.builder().success(true).build());
     }
 }
