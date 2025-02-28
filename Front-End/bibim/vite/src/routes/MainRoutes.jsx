@@ -26,6 +26,8 @@ const OverallView = Loadable(lazy(() => import('views/schedule/overall')));
 const WsSettingPage = Loadable(lazy(() => import('views/ws-setting')));
 const ProfileUpdatePage = Loadable(lazy(() => import('views/profile_update')));
 const MyPage = Loadable(lazy(() => import('views/mypage')));
+const MyPageUpdatePage = Loadable(lazy(() => import('views/mypage_update')));
+const Chennel = Loadable(lazy(() => import('views/ChatComponent')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -81,6 +83,14 @@ const MainRoutes = {
     {
       path: '/schedule/overall',
       element: <OverallView />
+    },
+    {
+      path: '/chennel',
+      element:<Chennel />
+    },
+    {
+      path: '/ws-select',
+      element: <WsSelectPage />
     },
     {
       path: '/ws-setting',
