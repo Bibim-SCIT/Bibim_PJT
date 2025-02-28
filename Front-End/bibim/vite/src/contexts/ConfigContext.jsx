@@ -145,3 +145,4 @@ function ConfigProvider({ children }) {
 export { ConfigProvider, ConfigContext };
 
 ConfigProvider.propTypes = { children: PropTypes.node };
+ 

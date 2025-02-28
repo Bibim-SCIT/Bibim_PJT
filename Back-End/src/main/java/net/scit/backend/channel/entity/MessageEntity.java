@@ -5,6 +5,14 @@ import java.time.LocalDateTime;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CurrentTimestamp;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,16 +34,19 @@ public class MessageEntity
     @ManyToOne
     @JoinColumn(name = "channel_number", nullable = false)
     private WorkspaceChannelEntity workspaceChannelEntity;
+    
 
-    //db 수정에 따른 외래키 에러로 컬럼 길이 명시
-    @Column(length=50)
+    @Column(length = 50) // 최대 길이 100으로 설정
     private String sender;
+    
 
     private String content;
 
     @CurrentTimestamp
     private LocalDateTime sendTime;
 
-    private Boolean messageOrFile;
+    @Builder.Default
+    private Boolean messageOrFile = false;
+
 
 }

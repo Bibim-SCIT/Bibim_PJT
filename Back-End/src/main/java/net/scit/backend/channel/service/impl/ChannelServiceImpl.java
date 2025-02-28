@@ -88,12 +88,23 @@ public class ChannelServiceImpl implements ChannelService {
     {
         
         String imageUrl = uploadImage(file,chennelId);// S3에 파일 업로드 후 URL 반환
+        WorkspaceChannelEntity workspaceChannelEntity = workspaceChannelRepository
+                .findById(chennelId).get();
+        MessageEntity messageEntity = MessageEntity.builder()
+        .workspaceChannelEntity(workspaceChannelEntity)
+        .sender(sender)
+        .content(imageUrl)
+        .messageOrFile(true)
+        .build();
+        messageReposittory.save(messageEntity);
+
         MessageDTO messageDTO = new MessageDTO();
         messageDTO.setMessageOrFile(true);
+        messageDTO.setChannelNumber(chennelId);
         messageDTO.setSender(sender);
         messageDTO.setContent(imageUrl);
-        messageDTO.setChannelNumber(chennelId);
-        return processMessage(messageDTO); // 메시지로 저장
+  
+        return messageDTO;
     }
 
     /**

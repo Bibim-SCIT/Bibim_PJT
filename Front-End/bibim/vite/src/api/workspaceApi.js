@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import axios from "axios";
 
 import { api } from "./auth"; // ✅ `auth.js`의 api 인스턴스를 가져옴
