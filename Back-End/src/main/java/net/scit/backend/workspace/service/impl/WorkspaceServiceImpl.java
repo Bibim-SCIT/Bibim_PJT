@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -32,8 +33,7 @@ import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
 import net.scit.backend.workspace.entity.WorkspaceChannelRoleEntity;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
-import net.scit.backend.workspace.repository.WorkspaceChennelRepository;
-import net.scit.backend.workspace.repository.WorkspaceChennelRoleRepository;
+import net.scit.backend.workspace.repository.WorkspaceChannelRoleRepository;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import net.scit.backend.workspace.repository.WorkspaceRepository;
 import net.scit.backend.workspace.service.WorkspaceService;
@@ -48,8 +48,8 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final MemberRepository memberRepository;
-    private final WorkspaceChennelRoleRepository workspaceRoleRepository;
-    private final WorkspaceChennelRepository workspaceChennelRepository;
+    private final WorkspaceChannelRoleRepository workspaceRoleRepository;
+    private final WorkspaceChannelRepository workspaceChannelRepository;
 
     private final RedisTemplate<String, String> redisTemplate;
     private final MailComponents mailComponents;
@@ -144,7 +144,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                         .wsRole(OWNER_ROLE)
                         .build());
 
-        workspaceChennelRepository.save(
+        workspaceChannelRepository.save(
                 WorkspaceChannelEntity.builder()
                         .workspace(workspaceEntity)
                         .channelName("새 채널")

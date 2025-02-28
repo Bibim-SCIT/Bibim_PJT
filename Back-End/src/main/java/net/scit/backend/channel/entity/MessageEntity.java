@@ -1,16 +1,10 @@
-package net.scit.backend.chennel.entity;
+package net.scit.backend.channel.entity;
 
 import java.time.LocalDateTime;
 
+import jakarta.persistence.*;
 import org.hibernate.annotations.CurrentTimestamp;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,12 +21,14 @@ public class MessageEntity
 {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long massegeNumber;
+    private Long messageNumber;
 
     @ManyToOne
     @JoinColumn(name = "channel_number", nullable = false)
     private WorkspaceChannelEntity workspaceChannelEntity;
-    
+
+    //db 수정에 따른 외래키 에러로 컬럼 길이 명시
+    @Column(length=50)
     private String sender;
 
     private String content;
@@ -40,7 +36,6 @@ public class MessageEntity
     @CurrentTimestamp
     private LocalDateTime sendTime;
 
-
-    private Boolean massegeOrFile;
+    private Boolean messageOrFile;
 
 }

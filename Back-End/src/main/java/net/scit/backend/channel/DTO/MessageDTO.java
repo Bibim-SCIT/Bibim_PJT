@@ -1,4 +1,4 @@
-package net.scit.backend.chennel.DTO;
+package net.scit.backend.channel.DTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,6 +39,6 @@ public class MessageDTO
      * - 0 : 메세지
      * - 1 : 파일
      */
-    private Boolean massegeOrFile;
+    private Boolean messageOrFile;
 }
 

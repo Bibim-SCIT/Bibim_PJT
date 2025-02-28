@@ -1,9 +1,7 @@
-package net.scit.backend.chennel.controller;
+package net.scit.backend.channel.controller;
 
 import java.util.List;
 
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,14 +12,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import io.jsonwebtoken.io.IOException;
 import lombok.RequiredArgsConstructor;
-import net.scit.backend.chennel.DTO.MessageDTO;
-import net.scit.backend.chennel.service.ChennelService;
+import net.scit.backend.channel.DTO.MessageDTO;
+import net.scit.backend.channel.service.ChannelService;
 
 @RestController
 @RequiredArgsConstructor
 public class ChannelController {
     
-    private final ChennelService channelService;
+    private final ChannelService channelService;
 
     /**
      * 웹소켓을 통해 채널별로 메시지를 전송하는 엔드포인트
@@ -51,4 +49,6 @@ public class ChannelController {
     public List<MessageDTO> getMessages(@PathVariable Long channelId) {
         return channelService.getMessagesByChannel(channelId);
     }
+
+
 }
