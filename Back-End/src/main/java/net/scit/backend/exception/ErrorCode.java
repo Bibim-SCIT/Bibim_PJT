@@ -44,7 +44,14 @@ public enum ErrorCode {
     INVALID_TOKEN("잘못된 토큰 입니다.", HttpStatus.UNAUTHORIZED),
 
     // Redis 관련 예외 추가
-    REDIS_CONNECTION_FAILED("Redis 서버에 연결할 수 없습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
+    REDIS_CONNECTION_FAILED("Redis 서버에 연결할 수 없습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+
+    //Workspace Channel
+    CHANNEL_NOT_FOUND("해당 채널을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    CHANNEL_DELETE_FORBIDDEN("채널 삭제 권한이 없습니다.", HttpStatus.FORBIDDEN),
+    CHANNEL_UPDATE_FORBIDDEN("채널 수정 권한이 없습니다.", HttpStatus.FORBIDDEN ),
+    ROLE_NOT_FOUND("해당 역할을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+
 
     String message;
     HttpStatus status;
