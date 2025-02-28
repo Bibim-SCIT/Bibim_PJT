@@ -31,8 +31,8 @@
 // import net.scit.backend.workspace.entity.WorkspaceChannelRoleEntity;
 // import net.scit.backend.workspace.entity.WorkspaceEntity;
 // import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
-// import net.scit.backend.workspace.repository.WorkspaceChennelRepository;
-// import net.scit.backend.workspace.repository.WorkspaceChennelRoleRepository;
+// import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
+// import net.scit.backend.workspace.repository.WorkspaceChannelRoleRepository;
 // import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 // import net.scit.backend.workspace.repository.WorkspaceRepository;
 // import net.scit.backend.workspace.service.WorkspaceService;

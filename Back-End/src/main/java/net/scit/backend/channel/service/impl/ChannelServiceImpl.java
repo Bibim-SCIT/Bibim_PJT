@@ -1,8 +1,9 @@
-package net.scit.backend.chennel.service.impl;
+package net.scit.backend.channel.service.impl;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,23 +12,22 @@ import io.jsonwebtoken.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.auth.AuthUtil;
-import net.scit.backend.chennel.DTO.MessageDTO;
-import net.scit.backend.chennel.entity.MessageEntity;
-import net.scit.backend.chennel.repository.MessageReposittory;
-import net.scit.backend.chennel.service.ChennelService;
+import net.scit.backend.channel.DTO.MessageDTO;
+import net.scit.backend.channel.entity.MessageEntity;
+import net.scit.backend.channel.repository.MessageReposittory;
+import net.scit.backend.channel.service.ChannelService;
 import net.scit.backend.component.S3Uploader;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
-import net.scit.backend.workspace.repository.WorkspaceChennelRepository;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class ChennelServiceImpl implements ChennelService {
+public class ChannelServiceImpl implements ChannelService {
     // 레포지토리
     private final MessageReposittory messageReposittory;
-    private final WorkspaceChennelRepository workspaceChennelRepository;
+    private final WorkspaceChannelRepository workspaceChannelRepository;
 
     // s3업로더
     private final S3Uploader s3Uploader;
@@ -68,13 +68,13 @@ public class ChennelServiceImpl implements ChennelService {
     public MessageDTO processMessage(MessageDTO messageDTO) 
     {
         String email = AuthUtil.getLoginUserId();
-        WorkspaceChannelEntity workspaceChannelEntity = workspaceChennelRepository
+        WorkspaceChannelEntity workspaceChannelEntity = workspaceChannelRepository
                 .findById(messageDTO.getChannelNumber()).get();
         MessageEntity messageEntity = MessageEntity.builder()
                 .workspaceChannelEntity(workspaceChannelEntity)
                 .sender(email)
                 .content(messageDTO.getContent())
-                .massegeOrFile(false)
+                .messageOrFile(false)
                 .build();
         messageReposittory.save(messageEntity);
         return messageDTO;
@@ -89,7 +89,7 @@ public class ChennelServiceImpl implements ChennelService {
         
         String imageUrl = uploadImage(file,chennelId);// S3에 파일 업로드 후 URL 반환
         MessageDTO messageDTO = new MessageDTO();
-        messageDTO.setMassegeOrFile(true);
+        messageDTO.setMessageOrFile(true);
         messageDTO.setSender(sender);
         messageDTO.setContent(imageUrl);
         messageDTO.setChannelNumber(chennelId);
@@ -109,7 +109,7 @@ public class ChennelServiceImpl implements ChennelService {
                     MessageDTO dto = new MessageDTO();
                     dto.setChannelNumber(msg.getWorkspaceChannelEntity().getChannelNumber());
                     dto.setSender(msg.getSender());
-                    dto.setMassegeOrFile(msg.getMassegeOrFile());
+                    dto.setMessageOrFile(msg.getMessageOrFile());
                     dto.setContent(msg.getContent());
                     return dto;
                 })
