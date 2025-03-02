@@ -434,16 +434,16 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public MemberLoginStatusDTO getLoginStatus(String userEmail) {
         if (userEmail == null || userEmail.isEmpty()) {
-            // 토큰이 없거나 이메일이 없는 경우 false 반환
-            return new MemberLoginStatusDTO("", false);
+            // 토큰이 없거나 이메일이 없는 경우 false 반환 (lastActiveTime은 null로 처리)
+            return new MemberLoginStatusDTO("", false, null);
         }
         Optional<MemberEntity> optionalMember = memberRepository.findByEmail(userEmail);
         if (optionalMember.isPresent()) {
             MemberEntity member = optionalMember.get();
-            return new MemberLoginStatusDTO(member.getEmail(), member.isLoginStatus());
+            return new MemberLoginStatusDTO(member.getEmail(), member.isLoginStatus(), member.getLastActiveTime());
         } else {
-            // 이메일이 존재하지 않는 경우에도 false 반환
-            return new MemberLoginStatusDTO(userEmail, false);
+            // 이메일이 존재하지 않는 경우에도 false 반환 (lastActiveTime은 null로 처리)
+            return new MemberLoginStatusDTO(userEmail, false, null);
         }
     }
 
