@@ -7,6 +7,8 @@ import net.scit.backend.member.entity.MemberEntity;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 /**
@@ -35,4 +37,13 @@ public interface MemberService {
     ResultDTO<SuccessDTO> logout();
 
     ResultDTO<SuccessDTO> withdraw(MemberDTO memberDTO);
+
+    //현재 로그인 상태 업데이트
+    void updateLoginStatus(String userEmail, boolean status, LocalDateTime lastActiveTime);
+
+    //로그인 상태 조회
+    MemberLoginStatusDTO getLoginStatus(String userEmail);
+
+
+
 }
