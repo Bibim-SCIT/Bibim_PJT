@@ -23,6 +23,7 @@ const WsSettingPage = Loadable(lazy(() => import('views/ws-setting')));
 const MyPage = Loadable(lazy(() => import('views/mypage')));
 const MyPageUpdatePage = Loadable(lazy(() => import('views/mypage_update')));
 const Channel = Loadable(lazy(() => import('views/ws-channel/ChatComponent')));
+const WsRoleSetting = Loadable(lazy(() => import('views/ws-role/WsRoleSetting')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -98,6 +99,10 @@ const MainRoutes = {
     {
       path: '/mypage/update',
       element: <MyPageUpdatePage />
+    },
+    {
+      path: '/workspace/role',
+      element: <WsRoleSetting />
     }
   ]
 };
