@@ -10,6 +10,8 @@ import PersonOffIcon from '@mui/icons-material/PersonOff';
 import { getUserInfo } from '../../../api/auth';
 import { useNavigate } from 'react-router-dom';
 import GlowingAvatar from './GlowingAvatar';
+import ChangePasswordModal from './ChangePasswordModal';
+import WithdrawalModal from './WithdrawalModal';
 
 // 현지 시간 표시 위한 매핑
 const timeZoneMap = {
@@ -46,6 +48,8 @@ const MyInfo = () => {
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
 
   const navigate = useNavigate();
 
@@ -174,19 +178,39 @@ const MyInfo = () => {
 
           {/* 계정 관리 영역 */}
           <Stack direction="row" spacing={2} justifyContent="flex-end">
-            <Stack direction="row" spacing={1} alignItems="center"
-              sx={{ cursor: 'pointer', '&:hover': { color: 'primary.main' } }}>
+            <Stack 
+              direction="row" 
+              spacing={1} 
+              alignItems="center"
+              onClick={() => setIsPasswordModalOpen(true)}
+              sx={{ cursor: 'pointer', '&:hover': { color: 'primary.main' } }}
+            >
               <LockResetIcon sx={{ fontSize: 16 }} />
               <Typography>비밀번호 변경</Typography>
             </Stack>
-            <Stack direction="row" spacing={1} alignItems="center"
-              sx={{ cursor: 'pointer', color: 'error.main', '&:hover': { color: 'error.dark' } }}>
+            <Stack 
+              direction="row" 
+              spacing={1} 
+              alignItems="center"
+              onClick={() => setIsWithdrawalModalOpen(true)}
+              sx={{ cursor: 'pointer', color: 'error.main', '&:hover': { color: 'error.dark' } }}
+            >
               <PersonOffIcon sx={{ fontSize: 16 }} />
               <Typography>회원탈퇴</Typography>
             </Stack>
           </Stack>
         </Box>
       )}
+
+      {/* 비밀번호 변경 모달 */}
+      <ChangePasswordModal
+        open={isPasswordModalOpen}
+        handleClose={() => setIsPasswordModalOpen(false)}
+      />
+      <WithdrawalModal
+        open={isWithdrawalModalOpen}
+        handleClose={() => setIsWithdrawalModalOpen(false)}
+      />
     </Box>
   );
 };
