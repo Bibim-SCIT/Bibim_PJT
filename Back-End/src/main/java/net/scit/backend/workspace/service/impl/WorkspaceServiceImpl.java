@@ -8,11 +8,14 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+
+import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.cache.annotation.Cacheable;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -386,6 +389,39 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
         return ResultDTO.of("워크스페이스 회원 정보가 성공적으로 수정되었습니다.", 
                 SuccessDTO.builder().success(true).build());
+    }
+
+
+    /**
+     * 워크스페이스에 소속된 멤버들의 접속현황을 조회합니다.
+     * 캐시를 사용하여 5분마다 갱신합니다.
+     *
+     * @param workspaceId 조회할 워크스페이스의 ID
+     * @param userEmail   요청자의 이메일 (소속 여부 검증용)
+     * @return 워크스페이스 멤버들의 로그인 상태와 마지막 활동 시간 목록
+     */
+    @Override
+    @Cacheable(value = "workspaceMemberStatus", key = "#p0", unless = "(#result != null) && (#result.isEmpty())")
+    public List<MemberLoginStatusDTO> getWorkspaceMembersStatus(Long workspaceId, String userEmail) {
+        // 요청한 사용자가 해당 워크스페이스의 멤버인지 확인
+        Optional<WorkspaceMemberEntity> membershipOpt =
+                workspaceMemberRepository.findByWorkspace_WsIdAndMember_Email(workspaceId, userEmail);
+        if (!membershipOpt.isPresent()) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);  // 접근 권한 없음
+        }
+
+        // 워크스페이스에 소속된 모든 멤버 조회
+        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findByWorkspace_WsId(workspaceId);
+        List<MemberLoginStatusDTO> statusList = new ArrayList<>();
+        workspaceMembers.forEach(wme -> {
+            // MemberEntity에서 로그인 상태와 마지막 활동 시간을 가져옴
+            statusList.add(new MemberLoginStatusDTO(
+                    wme.getMember().getEmail(),
+                    wme.getMember().isLoginStatus(),
+                    wme.getMember().getLastActiveTime()
+            ));
+        });
+        return statusList;
     }
 
 }

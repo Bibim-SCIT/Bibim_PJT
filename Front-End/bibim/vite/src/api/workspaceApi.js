@@ -201,27 +201,6 @@ export const deleteWorkspace = async (workspaceName) => {
 };
 
 // ✅ 현재 워크스페이스 멤버 정보 조회
-// export const getWorkspaceMembers = async (workspaceId) => {
-//     try {
-//         const response = await axios.get(`${API_BASE_URL}/myinfo`, {
-//             headers: getAuthHeaders(),
-//             params: { wsId: workspaceId }
-//         });
-//         return response.data;
-//     } catch (error) {
-//         throw error.response?.data || "워크스페이스 멤버 정보를 불러오는데 실패했습니다.";
-//     }
-// };
-// export const getWorkspaceMembers = async (workspaceId) => {
-//     try {
-//         const response = await axiosInstance.get("/myinfo", {
-//             params: { wsId: workspaceId }
-//         });
-//         return response.data;
-//     } catch (error) {
-//         throw error.response?.data || "워크스페이스 멤버 정보를 불러오는데 실패했습니다.";
-//     }
-// };
 export const getWorkspaceMembers = async (workspaceId) => {
     try {
         const response = await api.get(`${API_BASE_URL}/myinfo`, {

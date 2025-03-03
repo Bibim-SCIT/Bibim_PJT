@@ -2,17 +2,12 @@ package net.scit.backend.workspace.controller;
 
 import java.util.List;
 
+import net.scit.backend.auth.AuthUtil;
+import net.scit.backend.exception.CustomException;
+import net.scit.backend.exception.ErrorCode;
+import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
@@ -215,5 +210,22 @@ public class WorkspaceController
         } catch (Exception e) {
             throw e;
         }
+    }
+
+    /**
+     * 워크스페이스 멤버의 접속현황 조회 엔드포인트
+     *
+     * @param workspaceId 조회할 워크스페이스의 ID (경로 변수)
+     * @return ResultDTO에 담긴 멤버 접속현황 목록
+     */
+    @GetMapping("/{workspaceId}/members/status")
+    public ResponseEntity<ResultDTO<List<MemberLoginStatusDTO>>> getWorkspaceMembersStatus(
+            @PathVariable Long workspaceId) {
+        String email = AuthUtil.getLoginUserId();
+        if (email == null || email.isEmpty()) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+        List<MemberLoginStatusDTO> statusList = workspaceService.getWorkspaceMembersStatus(workspaceId, email);
+        return ResponseEntity.ok(ResultDTO.of("워크스페이스 멤버 접속 현황 조회 성공", statusList));
     }
 }
