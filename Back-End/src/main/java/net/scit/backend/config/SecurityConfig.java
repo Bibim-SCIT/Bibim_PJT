@@ -66,9 +66,12 @@ public class SecurityConfig {
                                 "/members/login",
                                 "/members/signup/send-mail", // ✅ 이메일 인증 요청 허용
                                 "/members/signup/check-mail", // ✅ 인증 코드 확인 요청 허용
-                                // "/auth/login/oauth2/code/google","/favicon.ico", // OAuth2 콜백 URL 허용 추가
+                                // "/auth/login/oauth2/code/google","/favicon.ico", // OAuth2 콜백 URL 허용 /추가
                                 "/workdata/**", // 자료실 관련(추후 삭제)
-                                "/error")
+                                "/workspace/**", // 워크스페이스 관련(추후 삭제)
+                                "/error",
+                                "/ws/**" // 웹소켓 관련
+                                )
                         .permitAll() // 로그인 엔드포인트 허용
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 전용
                         .requestMatchers("/user/**", "/schedule/**", "/members/myinfo", "/members/changeinfo",

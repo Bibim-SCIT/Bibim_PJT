@@ -85,8 +85,8 @@ const MainRoutes = {
       element: <OverallView />
     },
     {
-      path: '/chennel',
-      element:<Chennel />
+      path: '/channel',
+      element: <Channel channelId={11} /> // ✅ 강제로 channelId를 11로 설정
     },
     {
       path: '/ws-select',

@@ -33,7 +33,8 @@ public class ChennelServiceImpl implements ChennelService {
     private final S3Uploader s3Uploader;
 
     // 상수 선언
-    private static final List<String> ALLOWED_IMAGE_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif","zip","md");
+    private static final List<String> ALLOWED_IMAGE_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif", "zip",
+            "md");
 
     // 이미지 업로드 메소드
     private String uploadImage(MultipartFile file, Long chennelId) {
@@ -41,7 +42,7 @@ public class ChennelServiceImpl implements ChennelService {
             String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
             if (fileExtension != null && ALLOWED_IMAGE_EXTENSIONS.contains(fileExtension.toLowerCase())) {
                 try {
-                    return s3Uploader.upload(file, "workspace-channel/"+chennelId);
+                    return s3Uploader.upload(file, "workspace-channel/" + chennelId);
                 } catch (Exception e) {
                     log.error("❌ S3 업로드 실패: {}", e.getMessage(), e);
                     throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
@@ -65,37 +66,47 @@ public class ChennelServiceImpl implements ChennelService {
      * @param MessageDTO 받은 메세지
      */
     @Override
-    public MessageDTO processMessage(MessageDTO messageDTO) 
-    {
-        String email = AuthUtil.getLoginUserId();
+    public MessageDTO processMessage(MessageDTO messageDTO) {
         WorkspaceChannelEntity workspaceChannelEntity = workspaceChennelRepository
-                .findById(messageDTO.getChannelNumber()).get();
+                .findById(messageDTO.getChannelNumber())
+                .orElseThrow(() -> new CustomException(ErrorCode.IMAGE_NOT_FOUND));
+
         MessageEntity messageEntity = MessageEntity.builder()
                 .workspaceChannelEntity(workspaceChannelEntity)
-                .sender(email)
+                .sender(messageDTO.getSender())
                 .content(messageDTO.getContent())
                 .messageOrFile(false)
                 .build();
+
         messageReposittory.save(messageEntity);
+
+        log.info("✅ 메시지 DB 저장 완료: " + messageEntity.getContent());
+
         return messageDTO;
+
+        // return MessageDTO.builder()
+        //         .channelNumber(messageEntity.getWorkspaceChannelEntity().getChannelNumber())
+        //         .sender(messageEntity.getSender())
+        //         .content(messageEntity.getContent())
+        //         .messageOrFile(messageEntity.getMessageOrFile())
+        //         .build();
     }
 
     /**
      * 파일을 업로드하고 해당 URL을 채팅 메시지로 저장하는 메서드
      */
     @Override
-    public MessageDTO uploadFile(MultipartFile file, String sender, Long chennelId) throws IOException 
-    {
-        
-        String imageUrl = uploadImage(file,chennelId);// S3에 파일 업로드 후 URL 반환
+    public MessageDTO uploadFile(MultipartFile file, String sender, Long chennelId) throws IOException {
+
+        String imageUrl = uploadImage(file, chennelId);// S3에 파일 업로드 후 URL 반환
         WorkspaceChannelEntity workspaceChannelEntity = workspaceChennelRepository
                 .findById(chennelId).get();
         MessageEntity messageEntity = MessageEntity.builder()
-        .workspaceChannelEntity(workspaceChannelEntity)
-        .sender(sender)
-        .content(imageUrl)
-        .messageOrFile(true)
-        .build();
+                .workspaceChannelEntity(workspaceChannelEntity)
+                .sender(sender)
+                .content(imageUrl)
+                .messageOrFile(true)
+                .build();
         messageReposittory.save(messageEntity);
 
         MessageDTO messageDTO = new MessageDTO();
@@ -103,7 +114,7 @@ public class ChennelServiceImpl implements ChennelService {
         messageDTO.setChannelNumber(chennelId);
         messageDTO.setSender(sender);
         messageDTO.setContent(imageUrl);
-  
+
         return messageDTO;
     }
 
