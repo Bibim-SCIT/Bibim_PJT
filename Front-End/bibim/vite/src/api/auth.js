@@ -120,8 +120,9 @@ export const logoutUser = async () => {
         console.error("❌ 로그아웃 오류:", error.response?.data || error);
     } finally {
         localStorage.removeItem("token"); // ✅ 로컬 스토리지에서 토큰 삭제
+        localStorage.removeItem("activeWorkspace"); // ✅ activeWorkspace 초기화
         delete api.defaults.headers.common["Authorization"];
-        console.log("🟢 로그아웃 완료: Authorization 헤더 삭제됨");
+        console.log("🟢 로그아웃 완료: Authorization 헤더 및 activeWorkspace 삭제됨");
     }
 };
 

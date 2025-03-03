@@ -101,6 +101,7 @@ function ConfigProvider({ children }) {
   // 로그아웃 함수
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('activeWorkspace'); // ✅ 워크스페이스 정보도 삭제
     setUser(null);
     setToken(null);
   };

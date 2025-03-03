@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
 
 // 로그인 상태 확인용 import
 import { useContext } from "react";
 import { ConfigContext } from "../../../../contexts/ConfigContext";
 import { logoutUser } from "../../../../api/auth"; // ✅ 로그아웃 API 불러오기
+import { logoutWorkspace } from '../../../../store/workSpaceRedux';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -49,6 +51,7 @@ export default function ProfileSection() {
   const [selectedIndex] = useState(-1);
   const [open, setOpen] = useState(false);
   const navigate = useNavigate(); // 추가
+  const dispatch = useDispatch();
 
   // 로그인 상태 관련
   const { user, logout } = useContext(ConfigContext);
@@ -102,6 +105,7 @@ export default function ProfileSection() {
   const handleLogout = async () => {
     await logoutUser(); // API 호출 (토큰 삭제)
     logout(); // ConfigContext에서 로그인 상태 초기화
+    dispatch(logoutWorkspace()); // ✅ Redux 상태 초기화
     navigate("/pages/login"); // 로그인 페이지로 이동
     setOpen(false);
   };

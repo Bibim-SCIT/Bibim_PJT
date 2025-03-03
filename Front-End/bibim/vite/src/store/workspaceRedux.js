@@ -17,6 +17,22 @@ export const loadWorkspace = createAsyncThunk(
     }
 );
 
+// ✅ 로그아웃 시 워크스페이스 상태 초기화 액션 추가
+export const logoutWorkspace = () => ({
+    type: 'workspace/logout'
+});
+
+// ✅ 리듀서에서 logoutWorkspace 처리
+const workspaceReducer = (state = initialState, action) => {
+    switch (action.type) {
+        case 'workspace/setActiveWorkspace':
+            return { ...state, activeWorkspace: action.payload };
+        case 'workspace/logout': // ✅ 로그아웃 시 상태 초기화
+            return { ...state, activeWorkspace: null, list: [] };
+        default:
+            return state;
+    }
+};
 
 
 

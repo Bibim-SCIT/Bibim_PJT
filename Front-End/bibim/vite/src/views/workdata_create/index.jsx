@@ -1,11 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { Box, Typography, TextField, Button, Avatar, Chip, Stack, Grid, Paper, IconButton, List, ListItem, ListItemIcon, ListItemText, Alert } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import CloseIcon from '@mui/icons-material/Close';
 import MainCard from 'ui-component/cards/MainCard';
 // api import
 import { createWorkdata, getCurrentUser } from '../../api/workdata';
+import { ConfigContext } from '../../contexts/ConfigContext';
 
 // 프로필 이미지 임시 데이터
 import CatImg from 'assets/images/cat_profile.jpg';
@@ -21,6 +23,8 @@ import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile'; // defaul
 
 export default function WdCreatePage() {
     const navigate = useNavigate();
+    const { user } = useContext(ConfigContext); // ✅ Context에서 로그인 유저 정보 가져오기
+    const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
 
     // ✅ currentUser를 API에서 가져오기
     const [currentUser, setCurrentUser] = useState(null);
@@ -116,29 +120,13 @@ export default function WdCreatePage() {
         setTagError('');
     };
 
-    // const handleUpload = () => {
-    //     alert(`업로드 제목: ${title}, 설명: ${content}, 태그: ${tags.join(', ')}, 파일 수: ${fileList.length}`);
-    //     navigate('/workdata');
-    // };
-
-    // const handleUpload = async () => {
-    //     if (!title.trim() || !content.trim()) {
-    //         alert('제목과 설명을 입력해주세요.');
-    //         return;
-    //     }
-
-    //     try {
-    //         const response = await createWorkdata(1, title, content, fileList, tags);
-    //         alert(response.message);
-    //         navigate('/workdata'); // 성공 시 목록 페이지로 이동
-    //     } catch (error) {
-    //         alert(`업로드 실패: ${error}`);
-    //     }
-    // };
-
     const handleUpload = async () => {
         if (!title.trim() || !content.trim()) {
             alert('제목과 설명을 입력해주세요.');
+            return;
+        }
+        if (!user) {
+            alert('로그인 후 이용해주세요.');
             return;
         }
 
@@ -146,9 +134,13 @@ export default function WdCreatePage() {
             alert('사용자 정보를 불러오는 중입니다.');
             return;
         }
+        if (!activeWorkspace) {
+            alert('워크스페이스를 선택해주세요.');
+            return;
+        }
 
         // 나중에 해당 아이디가 워크스페이스 있는지 확인 
-        const wsId = 9; // ✅ 이 값이 실제 워크스페이스 ID와 일치하는지 확인 필요
+        const wsId = activeWorkspace.wsId; // ✅ 이 값이 실제 워크스페이스 ID와 일치하는지 확인 필요
 
         try {
             console.log("🟢 업로드 요청 데이터:", { wsId, title, content, tags, fileList });

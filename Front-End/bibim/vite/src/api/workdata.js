@@ -52,8 +52,15 @@ export const createWorkdata = async (wsId, title, content, files, tags) => {
     formData.append('title', title);
     formData.append('content', content);
 
+    // if (files.length > 0) {
+    //     files.forEach(file => formData.append('files', file)); // 다중 파일 처리
+    // }
+
+    // ✅ 파일 데이터 추가 (배열로 올바르게 추가되는지 확인)
     if (files.length > 0) {
-        files.forEach(file => formData.append('files', file)); // 다중 파일 처리
+        files.forEach((file, index) => {
+            formData.append(`files`, file); // 🔥 files[]로 보내지 않도록 단일 키 사용
+        });
     }
 
     if (tags.length > 0) {
