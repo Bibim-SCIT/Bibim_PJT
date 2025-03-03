@@ -22,10 +22,7 @@ const WsSelectPage = Loadable(lazy(() => import('views/ws-select')));
 const WsSettingPage = Loadable(lazy(() => import('views/ws-setting')));
 const MyPage = Loadable(lazy(() => import('views/mypage')));
 const MyPageUpdatePage = Loadable(lazy(() => import('views/mypage_update')));
-<<<<<<< HEAD
-=======
-const Chennel = Loadable(lazy(() => import('views/ChatComponent')));
->>>>>>> feat/websokect-chennel
+const Channel = Loadable(lazy(() => import('views/ws-channel/ChatComponent')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -67,7 +64,7 @@ const MainRoutes = {
       element: <WdCreatePage />
     },
     {
-      path: '/workdata/update',
+      path: '/workdata/update/:wsId/:dataNumber', // ✅ 동적 라우트 적용
       element: <WdUpdatePage />
     },
     {
@@ -83,13 +80,10 @@ const MainRoutes = {
       element: <OverallView />
     },
     {
-<<<<<<< HEAD
-=======
-      path: '/chennel',
-      element:<Chennel />
+      path: '/channel',
+      element: <Channel />
     },
     {
->>>>>>> feat/websokect-chennel
       path: '/ws-select',
       element: <WsSelectPage />
     },

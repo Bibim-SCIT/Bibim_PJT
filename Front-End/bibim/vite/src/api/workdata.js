@@ -29,23 +29,6 @@ api.interceptors.request.use((config) => {
 });
 
 // 자료 등록 API
-// export const createWorkdata = async (wsId, title, content, files, tags) => {
-//     const formData = new FormData();
-//     formData.append('wsId', wsId);
-//     formData.append('title', title);
-//     formData.append('content', content);
-//     files.forEach(file => formData.append('files', file)); // 다중 파일 처리
-//     tags.forEach(tag => formData.append('tags', tag));
-
-//     try {
-//         const response = await api.post('/workdata', formData, {
-//             headers: { 'Content-Type': 'multipart/form-data' }
-//         });
-//         return response.data;
-//     } catch (error) {
-//         throw error.response?.data || error.message;
-//     }
-// };
 export const createWorkdata = async (wsId, title, content, files, tags) => {
     const formData = new FormData();
     formData.append('wsId', wsId.toString());  // ✅ 숫자인 경우 문자열로 변환
@@ -109,15 +92,44 @@ export const deleteTag = async (wsId, dataNumber, tag) => {
 };
 
 // 자료 수정 API
-export const updateWorkdata = async (wsId, dataNumber, title, content, deleteFiles, tagRequests, newFiles) => {
+// export const updateWorkdata = async (wsId, dataNumber, title, content, deleteFiles, tagRequests, newFiles) => {
+//     const formData = new FormData();
+//     formData.append('wsId', wsId);
+//     formData.append('dataNumber', dataNumber);
+//     if (title) formData.append('title', title);
+//     if (content) formData.append('content', content);
+//     formData.append('deleteFiles', JSON.stringify(deleteFiles));
+//     formData.append('tagRequests', JSON.stringify(tagRequests));
+//     newFiles.forEach(file => formData.append('files', file));
+
+//     try {
+//         const response = await api.put('/workdata', formData, {
+//             headers: { 'Content-Type': 'multipart/form-data' }
+//         });
+//         return response.data;
+//     } catch (error) {
+//         throw error.response?.data || error.message;
+//     }
+// };
+export const updateWorkdata = async (wsId, dataNumber, title, content, deleteFiles, deletedTags, newTags, newFiles) => {
     const formData = new FormData();
     formData.append('wsId', wsId);
     formData.append('dataNumber', dataNumber);
     if (title) formData.append('title', title);
     if (content) formData.append('content', content);
     formData.append('deleteFiles', JSON.stringify(deleteFiles));
-    formData.append('tagRequests', JSON.stringify(tagRequests));
+
+    // ✅ `deleteTags`와 `newTags`를 백엔드가 요구하는 형식으로 전달
+    deletedTags.forEach(tag => formData.append('deleteTags', tag));
+    newTags.forEach(tag => formData.append('newTags', tag));
+
     newFiles.forEach(file => formData.append('files', file));
+
+    // 🔵 디버깅: 전송할 FormData 출력
+    console.log("📌 updateWorkdata 전송 데이터:");
+    for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+    }
 
     try {
         const response = await api.put('/workdata', formData, {
@@ -125,9 +137,11 @@ export const updateWorkdata = async (wsId, dataNumber, title, content, deleteFil
         });
         return response.data;
     } catch (error) {
+        console.error("❌ updateWorkdata 오류:", error.response?.data || error);
         throw error.response?.data || error.message;
     }
 };
+
 
 // 자료 목록 조회 API
 // export const getWorkdataList = async (wsId) => {

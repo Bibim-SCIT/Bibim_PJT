@@ -6,6 +6,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { deleteWorkdata } from "../../../api/workdata";
 
 // 파일 아이콘 import
 import pdfIcon from "assets/images/icons/pdf.png";
@@ -68,28 +69,48 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
     };
 
     // 파일 삭제 기능 (일반 상태)
-    const handleDelete = (id) => {
-        const confirmDelete1 = window.confirm(`해당 파일을(를) 정말 삭제하시겠습니까?`);
-        if (confirmDelete1) {
-            setFiles((prevFiles) => prevFiles.filter((file) => file.id !== id));
+    const handleDelete = async (wsId, fileId) => {
+        const confirmDelete = window.confirm(`해당 파일을(를) 정말 삭제하시겠습니까?`);
+        if (!confirmDelete) return;
 
-            // 🛠️ 현재 삭제한 파일이 selectedFile이면 초기화하고 모달 닫기
-            if (selectedFile && selectedFile.id === id) {
+        try {
+            // ✅ 서버에서 삭제 요청
+            await deleteWorkdata(wsId, fileId);
+
+            // ✅ 삭제 성공하면 프론트엔드 상태에서도 제거
+            setFiles((prevFiles) => prevFiles.filter((file) => file.id !== fileId));
+
+            if (selectedFile && selectedFile.id === fileId) {
                 setSelectedFile(null);
                 setOpenModal(false);
             }
+
+            alert("파일이 성공적으로 삭제되었습니다.");
+        } catch (error) {
+            console.error("❌ 파일 삭제 실패:", error);
+            alert("파일 삭제에 실패했습니다. 다시 시도해주세요.");
         }
     };
 
     // 파일 삭제 기능 (모달 상태)
-    const modalhandleDelete = (file) => {
-        const confirmDelete2 = window.confirm(`"${file.name}"을(를) 정말 삭제하시겠습니까?`);
-        if (confirmDelete2) {
+    const modalhandleDelete = async (file) => {
+        const confirmDelete = window.confirm(`"${file.name}"을(를) 정말 삭제하시겠습니까?`);
+        if (!confirmDelete) return;
+
+        try {
+            await deleteWorkdata(file.wsId, file.id);
+
             setFiles((prevFiles) => prevFiles.filter((f) => f.id !== file.id));
-            setOpenModal(false); // 모달이 열려 있을 경우 닫기
-            setSelectedFile(null); // 🛠️ 삭제 후 selectedFile 초기화
+            setOpenModal(false);
+            setSelectedFile(null);
+
+            alert("파일이 성공적으로 삭제되었습니다.");
+        } catch (error) {
+            console.error("❌ 파일 삭제 실패:", error);
+            alert("파일 삭제에 실패했습니다. 다시 시도해주세요.");
         }
     };
+
 
     // 파일 상세 정보 모달 열기
     const handleOpenModal = (file) => {
@@ -107,6 +128,9 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
         setSortField(field);
         setSortOrder((prevOrder) => (prevOrder === "asc" ? "desc" : "asc"));
     };
+
+    console.log("📌 선택된 파일 정보:", selectedFile);
+
 
 
     return (
@@ -216,7 +240,7 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                     >
                                         다운로드
                                     </Button>
-                                    <Button variant="contained" size="small" color="error" onClick={() => handleDelete(file.id)}>
+                                    <Button variant="contained" size="small" color="error" onClick={() => handleDelete(file.wsId, file.id)}>
                                         삭제
                                     </Button>
                                 </TableCell>
@@ -311,7 +335,7 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                         color="warning"
                         onClick={() => {
                             // 수정 버튼 클릭 시 workdata/update 페이지로 이동
-                            navigate('/workdata/update');
+                            navigate(`/workdata/update/${selectedFile.wsId}/${selectedFile.id}`); // ✅ 워크스페이스 ID와 자료 ID 전달
                         }}
                     >
                         ✏️ 수정
