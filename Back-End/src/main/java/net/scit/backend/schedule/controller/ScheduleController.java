@@ -147,6 +147,18 @@ public class ScheduleController {
     }
 
     /**
+     * 전체 태그 조회
+     *
+     * @param wsId 워크스페이스 ID
+     * @return 전체 태그 계층 리스트
+     */
+    @GetMapping("/tag")
+    public ResponseEntity<ResultDTO<List<TagListDTO>>> getAllTags(@RequestParam(name = "wsId") Long wsId) {
+        ResultDTO<List<TagListDTO>> result = scheduleService.getAllTags(wsId);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
      * 대분류 태그 삭제
      * 
      * @param largeTagNumber
