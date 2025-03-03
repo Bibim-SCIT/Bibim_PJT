@@ -22,10 +22,7 @@ const WsSelectPage = Loadable(lazy(() => import('views/ws-select')));
 const WsSettingPage = Loadable(lazy(() => import('views/ws-setting')));
 const MyPage = Loadable(lazy(() => import('views/mypage')));
 const MyPageUpdatePage = Loadable(lazy(() => import('views/mypage_update')));
-<<<<<<< HEAD
-=======
-const Chennel = Loadable(lazy(() => import('views/ChatComponent')));
->>>>>>> feat/websokect-chennel
+const Chennel = Loadable(lazy(() => import('views/ws-chennel/ChatComponent')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -83,13 +80,11 @@ const MainRoutes = {
       element: <OverallView />
     },
     {
-<<<<<<< HEAD
-=======
       path: '/chennel',
       element:<Chennel />
     },
     {
->>>>>>> feat/websokect-chennel
+
       path: '/ws-select',
       element: <WsSelectPage />
     },
