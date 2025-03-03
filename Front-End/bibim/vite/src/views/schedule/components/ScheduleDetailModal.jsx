@@ -66,10 +66,15 @@ const ButtonContainer = styled(Box)({
   borderTop: '1px solid #eee',
 });
 
-const ScheduleDetailModal = ({ open, onClose, scheduleData }) => {
+const ScheduleDetailModal = ({ schedule, onClose, onUpdate, ...props }) => {
   const [editModalOpen, setEditModalOpen] = React.useState(false);
+  const [localSchedule, setLocalSchedule] = React.useState(schedule);
 
-  if (!open || !scheduleData) return null;
+  React.useEffect(() => {
+    setLocalSchedule(schedule);
+  }, [schedule]);
+
+  if (!localSchedule) return null;
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -86,10 +91,16 @@ const ScheduleDetailModal = ({ open, onClose, scheduleData }) => {
     setEditModalOpen(true);
   };
 
+  const handleScheduleUpdate = (updatedSchedule) => {
+    setLocalSchedule(updatedSchedule);
+    onUpdate(updatedSchedule);
+    setEditModalOpen(false);
+  };
+
   return (
     <>
       <StyledDialog
-        open={open}
+        open={Boolean(localSchedule)}
         onClose={onClose}
         maxWidth="sm"
         fullWidth
@@ -105,26 +116,26 @@ const ScheduleDetailModal = ({ open, onClose, scheduleData }) => {
         </HeaderSection>
 
         <Typography color="textSecondary" sx={{ mb: 3 }}>
-          마지막 수정 시간 : {formatDate(scheduleData.updatedAt)}
+          마지막 수정 시간 : {formatDate(localSchedule.scheduleModifytime)}
         </Typography>
 
         <ContentSection>
           <DetailRow>
             <Typography className="label">스케줄 제목</Typography>
             <Typography className="value" fontWeight="500">
-              {scheduleData.scheduleTitle}
+              {localSchedule.scheduleTitle}
             </Typography>
           </DetailRow>
 
           <DetailRow>
             <Typography className="label">담당자</Typography>
-            {scheduleData.nickname ? (
+            {localSchedule.nickname ? (
               <Box display="flex" alignItems="center" gap={1}>
                 <Avatar
-                  src={scheduleData.userProfileImage}
+                  src={localSchedule.userProfileImage}
                   sx={{ width: 24, height: 24 }}
                 />
-                <Typography>{scheduleData.nickname}</Typography>
+                <Typography>{localSchedule.nickname}</Typography>
               </Box>
             ) : (
               <Typography className="value" color="text.secondary">
@@ -136,46 +147,46 @@ const ScheduleDetailModal = ({ open, onClose, scheduleData }) => {
           <DetailRow>
             <Typography className="label">스케줄 시작일</Typography>
             <Typography className="value">
-              {formatDate(scheduleData.scheduleStartDate)}
+              {formatDate(localSchedule.scheduleStartDate)}
             </Typography>
           </DetailRow>
 
           <DetailRow>
             <Typography className="label">스케줄 완료일</Typography>
             <Typography className="value">
-              {formatDate(scheduleData.scheduleFinishDate)}
+              {formatDate(localSchedule.scheduleFinishDate)}
             </Typography>
           </DetailRow>
 
-          {scheduleData.scheduleContent && (
+          {localSchedule.scheduleContent && (
             <DetailRow>
               <Typography className="label">스케줄 내용</Typography>
               <Typography className="value">
-                {scheduleData.scheduleContent}
+                {localSchedule.scheduleContent}
               </Typography>
             </DetailRow>
           )}
 
           <TagsContainer>
-            {(scheduleData.tag1 || scheduleData.tag2 || scheduleData.tag3) ? (
+            {(localSchedule.tag1 || localSchedule.tag2 || localSchedule.tag3) ? (
               <>
-                {scheduleData.tag1 && (
+                {localSchedule.tag1 && (
                   <Chip
-                    label={scheduleData.tag1}
+                    label={localSchedule.tag1}
                     size="small"
                     sx={{ backgroundColor: '#e3f2fd' }}
                   />
                 )}
-                {scheduleData.tag2 && (
+                {localSchedule.tag2 && (
                   <Chip
-                    label={scheduleData.tag2}
+                    label={localSchedule.tag2}
                     size="small"
                     sx={{ backgroundColor: '#e8f5e9' }}
                   />
                 )}
-                {scheduleData.tag3 && (
+                {localSchedule.tag3 && (
                   <Chip
-                    label={scheduleData.tag3}
+                    label={localSchedule.tag3}
                     size="small"
                     sx={{ backgroundColor: '#fce4ec' }}
                   />
@@ -211,7 +222,8 @@ const ScheduleDetailModal = ({ open, onClose, scheduleData }) => {
       <ScheduleEditModal
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
-        scheduleData={scheduleData}
+        scheduleData={localSchedule}
+        onUpdate={handleScheduleUpdate}
       />
     </>
   );

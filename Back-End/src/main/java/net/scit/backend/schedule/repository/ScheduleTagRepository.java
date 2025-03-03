@@ -12,16 +12,15 @@ import java.util.Optional;
 
 @Repository
 public interface ScheduleTagRepository extends JpaRepository<ScheduleTagEntity, Long> {
-    //    Optional<ScheduleTagEntity> findBySchedule(ScheduleEntity scheduleEntity);
-    @Query("SELECT st FROM ScheduleTagEntity st " +
-            "JOIN FETCH st.largeTag lt " +
-            "JOIN FETCH st.mediumTag mt " +
-            "JOIN FETCH st.smallTag stt " +
-            "WHERE st.schedule = :scheduleEntity")
-    Optional<ScheduleTagEntity> findBySchedule(@Param("scheduleEntity") ScheduleEntity scheduleEntity);
+    Optional<ScheduleTagEntity> findBySchedule(ScheduleEntity scheduleEntity);
+
+//    @Query("SELECT st FROM ScheduleTagEntity st " +
+//            "JOIN FETCH st.largeTag lt " +
+//            "JOIN FETCH st.mediumTag mt " +
+//            "JOIN FETCH st.smallTag stt " +
+//            "WHERE st.schedule = :scheduleEntity")
+//    Optional<ScheduleTagEntity> findBySchedule(@Param("scheduleEntity") ScheduleEntity scheduleEntity);
 
     @Query("SELECT st FROM ScheduleTagEntity st WHERE st.schedule IN :schedules")
     List<ScheduleTagEntity> findBySchedules(List<ScheduleEntity> schedules);
-
-
 }
