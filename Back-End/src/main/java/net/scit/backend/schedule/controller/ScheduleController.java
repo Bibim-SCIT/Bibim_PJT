@@ -62,7 +62,7 @@ public class ScheduleController {
         ResultDTO<SuccessDTO> result = scheduleService.deleteSchedule(scheduleNumber);
         return ResponseEntity.ok(result);
     }
-  
+
     /**
      * 대분류 태그 생성
      *
