@@ -1,46 +1,84 @@
-import { useState } from 'react';
-import { Button } from '@mui/material';
-import MainCard from 'ui-component/cards/MainCard';
-import WsSettingModal from './WsSettingModal';
-import { updateWorkspace } from 'api/workspace'; // API 함수 필요
+import { Box, Typography } from '@mui/material';
+import WsBasicSetting from './components/WsBasicSetting';
+import WsRoleSetting from './components/WsRoleSetting';
+import WsUserManagement from './components/WsUserManagement';
 
-// ==============================|| SAMPLE PAGE ||============================== //
-
-export default function WsSettingPage() {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const workspace = {
-        wsId: 1, // 현재 워크스페이스 ID
-        wsName: '현재 워크스페이스 이름',
-        wsImg: '현재 워크스페이스 이미지 URL'
-    };
-
-    const handleUpdate = async (formData) => {
-        try {
-            await updateWorkspace(formData);
-            // 성공 처리 (예: 알림 표시)
-            alert('워크스페이스가 업데이트되었습니다.');
-        } catch (error) {
-            console.error('업데이트 실패:', error);
-            alert('업데이트에 실패했습니다.');
-        }
-    };
-
+const WsSettingPage = () => {
     return (
-        <MainCard title="워크스페이스 세팅">
-            <Button 
-                variant="contained" 
-                color="primary"
-                onClick={() => setIsModalOpen(true)}
-            >
-                워크스페이스 설정
-            </Button>
+        <Box sx={{ 
+            maxWidth: '100%',
+            p: { xs: 1.5, sm: 2 }
+        }}>
+            {/* 1. 워크스페이스 기본 정보 컴포넌트 */}
+            <Box sx={{ 
+                mb: 2,
+                bgcolor: 'white',
+                borderRadius: 1,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.08)'
+            }}>
+                <WsBasicSetting />
+            </Box>
 
-            <WsSettingModal
-                open={isModalOpen}
-                handleClose={() => setIsModalOpen(false)}
-                workspace={workspace}
-                onUpdate={handleUpdate}
-            />
-        </MainCard>
+            {/* 2. 권한 관리 컴포넌트 */}
+            <Box sx={{ 
+                mb: 2,
+                bgcolor: 'white',
+                borderRadius: 1,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.08)'
+            }}>
+                <Box sx={{ 
+                    px: 3,
+                    py: 2.5,
+                }}>
+                    <Typography sx={{ 
+                        fontSize: '18px',
+                        fontWeight: 500
+                    }}>
+                        권한 관리
+                    </Typography>
+                </Box>
+                <WsRoleSetting />
+                <Box sx={{ 
+                    p: 2, 
+                    display: 'flex', 
+                    justifyContent: 'flex-end'
+                }}>
+                    <button 
+                        style={{
+                            padding: '6px 16px',
+                            backgroundColor: '#4a6cc7',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        권한 변경 저장
+                    </button>
+                </Box>
+            </Box>
+
+            {/* 3. 사용자 관리 컴포넌트 */}
+            <Box sx={{ 
+                bgcolor: 'white',
+                borderRadius: 1,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.08)'
+            }}>
+                <Box sx={{ 
+                    px: 3,
+                    py: 2.5,
+                }}>
+                    <Typography sx={{ 
+                        fontSize: '18px',
+                        fontWeight: 500
+                    }}>
+                        사용자 관리
+                    </Typography>
+                </Box>
+                <WsUserManagement />
+            </Box>
+        </Box>
     );
-}
+};
+
+export default WsSettingPage;
