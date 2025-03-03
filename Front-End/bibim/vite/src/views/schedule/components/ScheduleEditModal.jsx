@@ -14,6 +14,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import { styled } from '@mui/material/styles';
 import useTagData from '../../../hooks/useTagData';
+import scheduleApi from '../../../api/scheduleApi';
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
@@ -56,7 +57,7 @@ const ButtonContainer = styled(Box)({
   marginTop: '24px',
 });
 
-const ScheduleEditModal = ({ open, onClose, scheduleData }) => {
+const ScheduleEditModal = ({ open, onClose, scheduleData, onUpdate }) => {
   const { 
     largeTags, 
     mediumTags, 
@@ -102,18 +103,26 @@ const ScheduleEditModal = ({ open, onClose, scheduleData }) => {
               // 대분류 태그의 실제 속성명을 확인하기 위한 로깅
               console.log('대분류 태그 객체의 모든 속성:', Object.keys(largeTag));
               
-              const tagNumber = largeTag.largeTagNumber || largeTag.tagNumber;
+              const tagNumber = largeTag.largeTagNumber;
               if (tagNumber) {
                 console.log('중분류 태그 요청 시작:', {
+                  wsId,
                   largeTagNumber: tagNumber
                 });
-                const mediumTags = await fetchMediumTags(tagNumber);
+                const mediumTags = await fetchMediumTags(wsId, tagNumber);
                 console.log('초기 중분류 태그 로드:', mediumTags);
                 
                 if (scheduleData.tag2 && mediumTags.length > 0) {
                   const mediumTag = mediumTags.find(tag => tag.tagName === scheduleData.tag2);
-                  if (mediumTag?.tagNumber) {
-                    await fetchSmallTags(mediumTag.tagNumber);
+
+                  if (mediumTag) {
+                    console.log('소분류 태그 요청 시작:', {
+                      wsId,
+                      largeTagNumber: tagNumber,
+                      mediumTagNumber: mediumTag.mediumTagNumber
+                    });
+                    await fetchSmallTags(wsId, tagNumber, mediumTag.mediumTagNumber);
+                    console.log('초기 소분류 태그 로드:', smallTags);
                   }
                 }
               } else {
@@ -146,12 +155,47 @@ const ScheduleEditModal = ({ open, onClose, scheduleData }) => {
   useEffect(() => {
     console.log('현재 largeTags:', largeTags);
     console.log('현재 mediumTags:', mediumTags);
-  }, [largeTags, mediumTags]);
+    console.log('현재 smallTags:', smallTags);
+  }, [largeTags, mediumTags, smallTags]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('수정된 데이터:', formData);
-    onClose();
+    try {
+      const changeScheduleDTO = {
+        scheduleTitle: formData.scheduleTitle,
+        scheduleContent: formData.scheduleContent,
+        tag1: formData.tag1,
+        tag2: formData.tag2,
+        tag3: formData.tag3,
+        scheduleStartDate: formData.scheduleStartDate ? `${formData.scheduleStartDate}T00:00:00` : null,
+        scheduleFinishDate: formData.scheduleFinishDate ? `${formData.scheduleFinishDate}T23:59:59` : null
+      };
+
+      console.log('스케줄 수정 요청:', changeScheduleDTO);
+      
+      const result = await scheduleApi.updateSchedule(
+        scheduleData.scheduleNumber,
+        changeScheduleDTO
+      );
+
+      console.log('스케줄 수정 성공:', result);
+      
+      // 수정된 스케줄 데이터로 상태 업데이트
+      const updatedSchedule = {
+        ...scheduleData,
+        ...changeScheduleDTO,
+        scheduleNumber: scheduleData.scheduleNumber,
+        wsId: scheduleData.wsId
+      };
+      
+      if (onUpdate) {
+        onUpdate(updatedSchedule); // 수정된 데이터를 전달하여 상태 업데이트
+      }
+      
+      onClose();
+    } catch (error) {
+      console.error('스케줄 수정 실패:', error);
+    }
   };
 
   // 대분류 태그 변경 핸들러
@@ -159,22 +203,34 @@ const ScheduleEditModal = ({ open, onClose, scheduleData }) => {
     const selectedTagName = e.target.value;
     console.log('선택된 대분류 태그:', selectedTagName);
     
+    if (selectedTagName === '') {
+      // "취소" 선택 시 초기화
+      setFormData({
+        ...formData,
+        tag1: '',
+        tag2: '',
+        tag3: ''
+      });
+      return;
+    }
+
     const selectedTag = largeTags.find(tag => tag.tagName === selectedTagName);
     console.log('찾은 대분류 태그 객체:', selectedTag);
     
     setFormData({
       ...formData,
       tag1: selectedTagName,
-      tag2: '',
-      tag3: ''
+      tag2: '',  // 하위 태그 초기화
+      tag3: ''   // 하위 태그 초기화
     });
 
-    if (selectedTag?.tagNumber) {  // tagNumber 확인
+    if (selectedTag) {
       try {
         console.log('중분류 태그 요청 파라미터:', {
-          largeTagNumber: selectedTag.tagNumber
+          wsId: scheduleData.wsId,
+          largeTagNumber: selectedTag.largeTagNumber
         });
-        await fetchMediumTags(selectedTag.tagNumber);
+        await fetchMediumTags(scheduleData.wsId, selectedTag.largeTagNumber);
       } catch (error) {
         console.error('중분류 태그 로드 실패:', error);
       }
@@ -184,6 +240,17 @@ const ScheduleEditModal = ({ open, onClose, scheduleData }) => {
   // 중분류 태그 변경 핸들러
   const handleTag2Change = async (e) => {
     const selectedTagName = e.target.value;
+    
+    if (selectedTagName === '') {
+      // "취소" 선택 시 초기화
+      setFormData({
+        ...formData,
+        tag2: '',
+        tag3: ''
+      });
+      return;
+    }
+
     const selectedTag = mediumTags.find(tag => tag.tagName === selectedTagName);
     
     setFormData({
@@ -193,7 +260,21 @@ const ScheduleEditModal = ({ open, onClose, scheduleData }) => {
     });
 
     if (selectedTag) {
-      await fetchSmallTags(selectedTag.tagNumber);
+      try {
+        const selectedLargeTag = largeTags.find(tag => tag.tagName === formData.tag1);
+        console.log('소분류 태그 요청 파라미터:', {
+          wsId: scheduleData.wsId,
+          largeTagNumber: selectedLargeTag.largeTagNumber,
+          mediumTagNumber: selectedTag.mediumTagNumber
+        });
+        await fetchSmallTags(
+          scheduleData.wsId,
+          selectedLargeTag.largeTagNumber,
+          selectedTag.mediumTagNumber
+        );
+      } catch (error) {
+        console.error('소분류 태그 로드 실패:', error);
+      }
     }
   };
 
@@ -245,6 +326,7 @@ const ScheduleEditModal = ({ open, onClose, scheduleData }) => {
                 onChange={handleTag1Change}
                 disabled={loading}
               >
+                <MenuItem value="">취소</MenuItem>
                 {largeTags.map((tag) => (
                   <MenuItem 
                     key={`${tag.wsId}-${tag.tagName}`} 
@@ -264,6 +346,7 @@ const ScheduleEditModal = ({ open, onClose, scheduleData }) => {
                 onChange={handleTag2Change}
                 disabled={!formData.tag1 || loading}
               >
+                <MenuItem value="">취소</MenuItem>
                 {mediumTags.map((tag) => (
                   <MenuItem 
                     key={`${tag.tagNumber}-${tag.tagName}`} 
@@ -283,6 +366,7 @@ const ScheduleEditModal = ({ open, onClose, scheduleData }) => {
                 onChange={(e) => setFormData({...formData, tag3: e.target.value})}
                 disabled={!formData.tag2 || loading}
               >
+                <MenuItem value="">취소</MenuItem>
                 {smallTags.map((tag) => (
                   <MenuItem 
                     key={`${tag.tagNumber}-${tag.tagName}`} 

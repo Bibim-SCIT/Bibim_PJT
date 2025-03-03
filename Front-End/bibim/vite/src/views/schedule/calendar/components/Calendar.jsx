@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -6,6 +6,7 @@ import { Box } from '@mui/material';
 import styled from '@emotion/styled';
 import useScheduleData from '../../../../hooks/useScheduleData';
 import ScheduleDetailModal from '../../components/ScheduleDetailModal';
+import ScheduleEditModal from '../../components/ScheduleEditModal';
 
 const CalendarWrapper = styled(Box)({
   padding: '20px',
@@ -153,9 +154,16 @@ const CalendarWrapper = styled(Box)({
 });
 
 const Calendar = () => {
-  const { schedules, loading, error, fetchSchedules } = useScheduleData();
+  const { schedules: initialSchedules, loading, error, fetchSchedules } = useScheduleData();
+  const [schedules, setSchedules] = useState([]);
   const [modalOpen, setModalOpen] = React.useState(false);
   const [selectedSchedule, setSelectedSchedule] = React.useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  React.useEffect(() => {
+    setSchedules(initialSchedules);
+  }, [initialSchedules]);
 
   React.useEffect(() => {
     const wsId = 9; // 임시 값
@@ -178,6 +186,33 @@ const Calendar = () => {
     console.log('Event extendedProps:', clickInfo.event.extendedProps);
     setSelectedSchedule(clickInfo.event.extendedProps);
     setModalOpen(true);
+  };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setSelectedEvent(null);
+  };
+
+  const handleScheduleUpdate = async (updatedSchedule) => {
+    if (updatedSchedule) {
+      // 기존 스케줄 배열에서 업데이트된 스케줄을 찾아 교체
+      setSchedules(prevSchedules => 
+        prevSchedules.map(schedule => 
+          schedule.id === updatedSchedule.scheduleNumber
+            ? {
+                ...schedule,
+                title: updatedSchedule.scheduleTitle,
+                start: updatedSchedule.scheduleStartDate,
+                end: updatedSchedule.scheduleFinishDate,
+                extendedProps: updatedSchedule
+              }
+            : schedule
+        )
+      );
+      
+      // DetailModal에 표시되는 스케줄 정보도 업데이트
+      setSelectedSchedule(updatedSchedule);
+    }
   };
 
   if (loading) {
@@ -253,8 +288,17 @@ const Calendar = () => {
             setModalOpen(false);
             setSelectedSchedule(null);
           }}
-          scheduleData={selectedSchedule}
+          schedule={selectedSchedule}
+          onUpdate={handleScheduleUpdate}
         />
+        {isEditModalOpen && selectedEvent && (
+          <ScheduleEditModal
+            open={isEditModalOpen}
+            onClose={handleEditModalClose}
+            schedule={selectedEvent.extendedProps}
+            onUpdate={handleScheduleUpdate}
+          />
+        )}
       </div>
     </CalendarWrapper>
   );

@@ -327,6 +327,84 @@ public class ScheduleServiceImpl implements ScheduleService {
             }
         }
 
+//        Optional<ScheduleTagEntity> bySchedule = scheduleTagRepository.findBySchedule(scheduleEntity);
+//        if (bySchedule.isPresent()) {
+//            ScheduleTagEntity scheduleTagEntity = bySchedule.get();
+//
+//            // 태그 계층 구조 검사
+//            // 대분류가 있을 때
+//            if (!changeScheduleDTO.getTag1().isEmpty()) {
+//                String largeTagName = changeScheduleDTO.getTag1();
+//                LargeTagEntity largeTagEntity = largeTagRepository.findByTagName(largeTagName)
+//                        .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+//
+//                // 중분류는 없지만 소분류가 있을 때
+//                if (changeScheduleDTO.getTag2().isEmpty() && !changeScheduleDTO.getTag3().isEmpty()) {
+//                    throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
+//                }
+//
+//                // 중분류가 있을 때와 없을 때
+//                MediumTagEntity mediumTagEntity = changeScheduleDTO.getTag2().isEmpty() ? null :
+//                        mediumTagRepository.findByTagName(changeScheduleDTO.getTag2())
+//                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+//
+//                // 소분류가 있을 때와 없을 때
+//                SmallTagEntity smallTagEntity = changeScheduleDTO.getTag3().isEmpty() ? null :
+//                        smallTagRepository.findByTagName(changeScheduleDTO.getTag3())
+//                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+//
+//                ScheduleTagEntity updateTagEntity = scheduleTagEntity.toBuilder()
+//                        .largeTag(largeTagEntity)
+//                        .mediumTag(mediumTagEntity)
+//                        .smallTag(smallTagEntity)
+//                        .build();
+//
+//                scheduleTagRepository.save(updateTagEntity);
+//            } else {
+//                if (!changeScheduleDTO.getTag2().isEmpty() || !changeScheduleDTO.getTag3().isEmpty()) {
+//                    throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
+//                }
+//
+//                scheduleTagRepository.delete(scheduleTagEntity);
+//            }
+//        } else {
+//            // scheduleTagEntity가 존재하지 않을 때 실행
+//            if (!changeScheduleDTO.getTag1().isEmpty()) {
+//                String largeTagName = changeScheduleDTO.getTag1();
+//                LargeTagEntity largeTagEntity = largeTagRepository.findByTagName(largeTagName)
+//                        .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+//
+//                // 중분류는 없지만 소분류가 있을 때
+//                if (changeScheduleDTO.getTag2().isEmpty() && !changeScheduleDTO.getTag3().isEmpty()) {
+//                    throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
+//                }
+//
+//                // 중분류가 있을 때와 없을 때
+//                MediumTagEntity mediumTagEntity = changeScheduleDTO.getTag2().isEmpty() ? null :
+//                        mediumTagRepository.findByTagName(changeScheduleDTO.getTag2())
+//                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+//
+//                // 소분류가 있을 때와 없을 때
+//                SmallTagEntity smallTagEntity = changeScheduleDTO.getTag3().isEmpty() ? null :
+//                        smallTagRepository.findByTagName(changeScheduleDTO.getTag3())
+//                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
+//
+//                ScheduleTagEntity newTagEntity = ScheduleTagEntity.builder()
+//                        .schedule(scheduleEntity)
+//                        .largeTag(largeTagEntity)
+//                        .mediumTag(mediumTagEntity)
+//                        .smallTag(smallTagEntity)
+//                        .build();
+//
+//                scheduleTagRepository.save(newTagEntity);
+//
+//            } else {
+//                if (!changeScheduleDTO.getTag2().isEmpty() || !changeScheduleDTO.getTag3().isEmpty()) {
+//                    throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
+//                }
+//            }
+//        }
+
         scheduleTagRepository.findBySchedule(scheduleEntity).ifPresentOrElse(scheduleTagEntity -> {
                     // 태그 계층 구조 검사
                     // 대분류가 있을 때
@@ -350,14 +428,15 @@ public class ScheduleServiceImpl implements ScheduleService {
                                 smallTagRepository.findByTagName(changeScheduleDTO.getTag3())
                                         .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
 
-                        ScheduleTagEntity tagEntity = scheduleTagEntity.toBuilder()
+                        ScheduleTagEntity updateTagEntity = scheduleTagEntity.toBuilder()
+                                .scheduleTagNumber(scheduleTagEntity.getScheduleTagNumber())
                                 .schedule(scheduleEntity)
                                 .largeTag(largeTagEntity)
                                 .mediumTag(mediumTagEntity)
                                 .smallTag(smallTagEntity)
                                 .build();
 
-                        scheduleTagRepository.save(tagEntity);
+                        scheduleTagRepository.save(updateTagEntity);
                     } else {
                         if (!changeScheduleDTO.getTag2().isEmpty() || !changeScheduleDTO.getTag3().isEmpty()) {
                             throw new CustomException(ErrorCode.INVALID_TAG_HIERARCHY);
@@ -388,14 +467,14 @@ public class ScheduleServiceImpl implements ScheduleService {
                                 smallTagRepository.findByTagName(changeScheduleDTO.getTag3())
                                         .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
 
-                        ScheduleTagEntity scheduleTagEntity = ScheduleTagEntity.builder()
+                        ScheduleTagEntity newTagEntity = ScheduleTagEntity.builder()
                                 .schedule(scheduleEntity)
                                 .largeTag(largeTagEntity)
                                 .mediumTag(mediumTagEntity)
                                 .smallTag(smallTagEntity)
                                 .build();
 
-                        scheduleTagRepository.save(scheduleTagEntity);
+                        scheduleTagRepository.save(newTagEntity);
 
                     } else {
                         if (!changeScheduleDTO.getTag2().isEmpty() || !changeScheduleDTO.getTag3().isEmpty()) {
