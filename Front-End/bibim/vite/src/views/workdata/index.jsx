@@ -7,6 +7,7 @@ import MainCard from "ui-component/cards/MainCard";
 
 // React Router 추가
 import { useNavigate } from "react-router-dom";
+import { useSelector } from 'react-redux';
 
 // components
 import { useState, useEffect, useMemo } from "react";
@@ -120,6 +121,7 @@ import CatImg from "assets/images/cat_profile.jpg";
 
 export default function WorkDataPage() {
     const navigate = useNavigate(); // ✅ useNavigate 훅 사용
+    const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
     // const [files, setFiles] = useState(filesData);
     const [files, setFiles] = useState([]); // ✅ 초기 데이터를 빈 배열로 설정
     const [searchQuery, setSearchQuery] = useState("");
@@ -133,7 +135,9 @@ export default function WorkDataPage() {
         const fetchWorkdata = async () => {
             try {
                 setLoading(true);  // ✅ API 요청 시작 전에 로딩 상태 true
-                const wsId = 9;
+                const wsId = activeWorkspace.wsId;
+                console.log("📌 현재 등록할 워크스페이스 번호:", wsId);
+                console.log("📌 현재 등록할 워크스페이스 이름 등 정보:", activeWorkspace);
                 const data = await getWorkdataList(wsId, "regDate", "desc"); // ✅ 최초 한 번만 가져오기
                 console.log("📌 불러온 자료 목록:", data);
 
