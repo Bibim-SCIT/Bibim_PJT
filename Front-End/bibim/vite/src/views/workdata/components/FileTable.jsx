@@ -311,6 +311,10 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                 <Typography variant="body1" sx={{ fontWeight: "bold" }}>업로드 날짜:</Typography>
                                 <Typography>{selectedFile.date}</Typography>
 
+                                {/* 새로운 content 항목 추가 */}
+                                <Typography variant="body1" sx={{ fontWeight: "bold", alignSelf: "start" }}>내용:</Typography>
+                                <Typography>{selectedFile.content}</Typography>
+
                                 <Typography variant="body1" sx={{ fontWeight: "bold", alignSelf: "start" }}>태그:</Typography>
                                 <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                                     {selectedFile.tags.slice(0, 3).map((tag, idx) => (

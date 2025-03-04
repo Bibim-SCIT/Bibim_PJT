@@ -88,6 +88,14 @@ export const createWorkspace = async (workspaceName, workspaceImage = null) => {
 //         throw error.response?.data || "초대 코드 가입에 실패했습니다.";
 //     }
 // };
+// export const joinWorkspaceByInviteCode = async (inviteCode) => {
+//     try {
+//         const response = await api.post(`${API_BASE_URL}/add`, { inviteCode });
+//         return response.data;
+//     } catch (error) {
+//         throw error.response?.data || "초대 코드 가입에 실패했습니다.";
+//     }
+// };
 export const joinWorkspaceByInviteCode = async (inviteCode) => {
     try {
         const response = await api.post(`${API_BASE_URL}/add`, { inviteCode });

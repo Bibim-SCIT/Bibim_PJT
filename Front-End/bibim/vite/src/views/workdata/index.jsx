@@ -17,7 +17,7 @@ import SearchBar from "./components/SearchBar";
 import Filter from "./components/Filter";
 import TableChartIcon from "@mui/icons-material/TableChart";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
-import { getWorkdataList } from '../../api/workdata'; // ✅ 전체 조회 API import
+import { getWorkdataList, getWorkdataDetail } from '../../api/workdata'; // ✅ 전체 조회 API import
 
 // ==============================|| 자료실 ||============================== //
 
@@ -33,18 +33,68 @@ export default function WorkDataPage() {
 
     // ✅ 전체 조회 API 호출
     // ✅ 처음 API 요청할 때만 실행 (정렬할 때는 새로 요청하지 않음)
+    // useEffect(() => {
+    //     const fetchWorkdata = async () => {
+    //         try {
+    //             setLoading(true);  // ✅ API 요청 시작 전에 로딩 상태 true
+    //             const wsId = activeWorkspace.wsId;
+    //             console.log("📌 현재 등록할 워크스페이스 번호:", wsId);
+    //             console.log("📌 현재 등록할 워크스페이스 이름 등 정보:", activeWorkspace);
+    //             const data = await getWorkdataList(wsId, "regDate", "desc"); // ✅ 최초 한 번만 가져오기
+    //             console.log("📌 불러온 자료 목록:", data);
+
+    //             if (Array.isArray(data)) {
+    //                 const formattedData = data.map((item) => ({
+    //                     id: item.dataNumber,
+    //                     title: item.title,
+    //                     files: item.fileNames || ["파일 없음"],
+    //                     tags: item.tags || [],
+    //                     date: item.regDate.split("T")[0],
+    //                     uploader: item.nickname,
+    //                     avatar: item.profileImage || "/avatars/default.png",
+    //                     wsId: activeWorkspace?.wsId  // ✅ 워크스페이스 ID 추가
+    //                 }));
+    //                 setFiles(formattedData);
+    //             } else {
+    //                 console.error("❌ API에서 받은 데이터가 배열이 아님:", data);
+    //                 setFiles([]);
+    //             }
+    //         } catch (error) {
+    //             console.error("❌ 자료 목록 조회 실패:", error);
+    //             setFiles([]);
+    //         } finally {
+    //             setLoading(false);  // ✅ 데이터 로딩 완료 후 로딩 상태 false
+    //         }
+    //     };
+
+    //     fetchWorkdata();
+    // }, [activeWorkspace]);  // ✅ 최초 한 번만 실행 (정렬할 때는 재요청 안 함)
     useEffect(() => {
         const fetchWorkdata = async () => {
             try {
-                setLoading(true);  // ✅ API 요청 시작 전에 로딩 상태 true
+                setLoading(true);
                 const wsId = activeWorkspace.wsId;
                 console.log("📌 현재 등록할 워크스페이스 번호:", wsId);
                 console.log("📌 현재 등록할 워크스페이스 이름 등 정보:", activeWorkspace);
-                const data = await getWorkdataList(wsId, "regDate", "desc"); // ✅ 최초 한 번만 가져오기
-                console.log("📌 불러온 자료 목록:", data);
+                // 전체 목록 조회
+                const listData = await getWorkdataList(wsId, "regDate", "desc");
+                console.log("📌 불러온 자료 목록:", listData);
 
-                if (Array.isArray(data)) {
-                    const formattedData = data.map((item) => ({
+                if (Array.isArray(listData)) {
+                    // 각 항목마다 상세 조회 API 호출 (content 포함)
+                    const detailedData = await Promise.all(
+                        listData.map(async (item) => {
+                            try {
+                                const detail = await getWorkdataDetail(wsId, item.dataNumber);
+                                return { ...item, content: detail.content };
+                            } catch (error) {
+                                console.error("상세 조회 실패:", item.dataNumber, error);
+                                return { ...item, content: "" }; // 실패 시 빈 문자열
+                            }
+                        })
+                    );
+
+                    const formattedData = detailedData.map((item) => ({
                         id: item.dataNumber,
                         title: item.title,
                         files: item.fileNames || ["파일 없음"],
@@ -52,23 +102,25 @@ export default function WorkDataPage() {
                         date: item.regDate.split("T")[0],
                         uploader: item.nickname,
                         avatar: item.profileImage || "/avatars/default.png",
-                        wsId: activeWorkspace?.wsId  // ✅ 워크스페이스 ID 추가
+                        wsId: activeWorkspace.wsId,
+                        content: item.content,
                     }));
                     setFiles(formattedData);
                 } else {
-                    console.error("❌ API에서 받은 데이터가 배열이 아님:", data);
+                    console.error("❌ API에서 받은 데이터가 배열이 아님:", listData);
                     setFiles([]);
                 }
             } catch (error) {
                 console.error("❌ 자료 목록 조회 실패:", error);
                 setFiles([]);
             } finally {
-                setLoading(false);  // ✅ 데이터 로딩 완료 후 로딩 상태 false
+                setLoading(false);
             }
         };
 
         fetchWorkdata();
-    }, [activeWorkspace]);  // ✅ 최초 한 번만 실행 (정렬할 때는 재요청 안 함)
+    }, [activeWorkspace]);
+
 
     // ✅ 정렬 함수 (프론트에서 정렬)
     const [sortField, setSortField] = useState("regDate");
