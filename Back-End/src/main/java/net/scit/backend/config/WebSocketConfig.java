@@ -20,7 +20,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(new CustomWebSocketHandler(jwtTokenProvider, sessionManager), "/ws/chat")
-                .setAllowedOrigins("*") // 필요하면 허용 도메인 변경
+                .setAllowedOrigins("http://localhost:3000") // 필요하면 허용 도메인 변경
                 .withSockJS();
     }
 }

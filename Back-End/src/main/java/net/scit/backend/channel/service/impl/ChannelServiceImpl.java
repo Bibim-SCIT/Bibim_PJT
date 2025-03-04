@@ -55,12 +55,6 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     /**
-     * 1. 파일인지 구분
-     * 2. 파일이 아니면, 메세지를 디비에 저장
-     * 3. 파일이면 s3에 올린 다음 디비에 저장
-     */
-
-    /**
      * 메세지 받고 채널 전체에 흩뿌리기
      * 
      * @param MessageDTO 받은 메세지

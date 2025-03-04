@@ -34,7 +34,7 @@ const ChatComponent: React.FC<ChatProps> = ({ channelId }) => {
 
             ws.onmessage = (event) => {
                 console.log("📩 받은 메시지:", event.data);
-                setMessages((prev) => [...prev, event.data]);
+                setMessages((prev) => [...prev, event.data]); // ✅ 모든 메시지를 UI에 표시
             };
 
             ws.onerror = (error) => {
