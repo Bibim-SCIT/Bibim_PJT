@@ -9,7 +9,7 @@ import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.workspace.dto.ChannelUpdateRequest;
 import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
-import net.scit.backend.workspace.entity.WorkspaceChannelRoleEntity;
+
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
 import net.scit.backend.workspace.repository.WorkspaceChannelRoleRepository;

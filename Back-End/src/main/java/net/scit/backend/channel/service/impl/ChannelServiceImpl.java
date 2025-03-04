@@ -3,7 +3,6 @@ package net.scit.backend.channel.service.impl;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +19,7 @@ import net.scit.backend.component.S3Uploader;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
+import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -27,21 +27,22 @@ import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
 public class ChannelServiceImpl implements ChannelService {
     // 레포지토리
     private final MessageReposittory messageReposittory;
-    private final WorkspaceChannelRepository workspaceChannelRepository;
+    private final WorkspaceChannelRepository workspacechannelRepository;
 
     // s3업로더
     private final S3Uploader s3Uploader;
 
     // 상수 선언
-    private static final List<String> ALLOWED_IMAGE_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif","zip","md");
+    private static final List<String> ALLOWED_IMAGE_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif", "zip",
+            "md");
 
     // 이미지 업로드 메소드
-    private String uploadImage(MultipartFile file, Long chennelId) {
+    private String uploadImage(MultipartFile file, Long channelId) {
         if (file != null && !file.isEmpty()) {
             String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
             if (fileExtension != null && ALLOWED_IMAGE_EXTENSIONS.contains(fileExtension.toLowerCase())) {
                 try {
-                    return s3Uploader.upload(file, "workspace-channel/"+chennelId);
+                    return s3Uploader.upload(file, "workspace-channel/" + channelId);
                 } catch (Exception e) {
                     log.error("❌ S3 업로드 실패: {}", e.getMessage(), e);
                     throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
@@ -54,25 +55,19 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     /**
-     * 1. 파일인지 구분
-     * 2. 파일이 아니면, 메세지를 디비에 저장
-     * 3. 파일이면 s3에 올린 다음 디비에 저장
-     */
-
-    /**
      * 메세지 받고 채널 전체에 흩뿌리기
      * 
      * @param MessageDTO 받은 메세지
      */
     @Override
-    public MessageDTO processMessage(MessageDTO messageDTO) 
-    {
-        String email = AuthUtil.getLoginUserId();
-        WorkspaceChannelEntity workspaceChannelEntity = workspaceChannelRepository
-                .findById(messageDTO.getChannelNumber()).get();
+    public MessageDTO processMessage(MessageDTO messageDTO) {
+        WorkspaceChannelEntity workspaceChannelEntity = workspacechannelRepository
+                .findById(messageDTO.getChannelNumber())
+                .orElseThrow(() -> new CustomException(ErrorCode.IMAGE_NOT_FOUND));
+        log.info("==================이메일 : {}", messageDTO.getSender());
         MessageEntity messageEntity = MessageEntity.builder()
                 .workspaceChannelEntity(workspaceChannelEntity)
-                .sender(email)
+                .sender(messageDTO.getSender())
                 .content(messageDTO.getContent())
                 .messageOrFile(false)
                 .build();
@@ -84,26 +79,24 @@ public class ChannelServiceImpl implements ChannelService {
      * 파일을 업로드하고 해당 URL을 채팅 메시지로 저장하는 메서드
      */
     @Override
-    public MessageDTO uploadFile(MultipartFile file, String sender, Long chennelId) throws IOException 
-    {
-        
-        String imageUrl = uploadImage(file,chennelId);// S3에 파일 업로드 후 URL 반환
-        WorkspaceChannelEntity workspaceChannelEntity = workspaceChannelRepository
-                .findById(chennelId).get();
+    public MessageDTO uploadFile(MultipartFile file, String sender, Long channelId) throws IOException {
+        String imageUrl = uploadImage(file, channelId);// S3에 파일 업로드 후 URL 반환
+        WorkspaceChannelEntity workspaceChannelEntity = workspacechannelRepository
+                .findById(channelId).get();
         MessageEntity messageEntity = MessageEntity.builder()
-        .workspaceChannelEntity(workspaceChannelEntity)
-        .sender(sender)
-        .content(imageUrl)
-        .messageOrFile(true)
-        .build();
+                .workspaceChannelEntity(workspaceChannelEntity)
+                .sender(sender)
+                .content(imageUrl)
+                .messageOrFile(true)
+                .build();
         messageReposittory.save(messageEntity);
 
         MessageDTO messageDTO = new MessageDTO();
         messageDTO.setMessageOrFile(true);
-        messageDTO.setChannelNumber(chennelId);
+        messageDTO.setChannelNumber(channelId);
         messageDTO.setSender(sender);
         messageDTO.setContent(imageUrl);
-  
+
         return messageDTO;
     }
 
@@ -126,5 +119,4 @@ public class ChannelServiceImpl implements ChannelService {
                 })
                 .collect(Collectors.toList());
     }
-
 }
