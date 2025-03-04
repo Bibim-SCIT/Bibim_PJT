@@ -1,4 +1,4 @@
-package net.scit.backend.config;
+package net.scit.backend.channel.handler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

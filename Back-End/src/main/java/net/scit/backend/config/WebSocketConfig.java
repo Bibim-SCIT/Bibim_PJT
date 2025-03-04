@@ -1,26 +1,37 @@
 package net.scit.backend.config;
 
-import net.scit.backend.auth.JwtTokenProvider;
-import net.scit.backend.channel.session.WebSocketSessionManager;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.web.socket.config.annotation.EnableWebSocket;
-import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
-import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
-
 import lombok.RequiredArgsConstructor;
+import net.scit.backend.channel.handler.StompHandler;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 
 @Configuration
-@EnableWebSocket
+@EnableWebSocketMessageBroker
 @RequiredArgsConstructor
-public class WebSocketConfig implements WebSocketConfigurer {
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    private final JwtTokenProvider jwtTokenProvider;
-    private final WebSocketSessionManager sessionManager;
+    private final StompHandler stompHandler; // ✅ STOMP 메시지 인터셉터
 
     @Override
-    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(new CustomWebSocketHandler(jwtTokenProvider, sessionManager), "/ws/chat")
-                .setAllowedOrigins("http://localhost:3000") // 필요하면 허용 도메인 변경
-                .withSockJS();
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
+        registry.enableSimpleBroker("/exchange/chat-exchange");
+        registry.setApplicationDestinationPrefixes("/app");
+    }
+
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws/chat")
+                .setAllowedOriginPatterns("*")
+                .withSockJS(); // ✅ SockJS 설정 (여기서는 addInterceptors 사용 X)
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(stompHandler); // ✅ STOMP 메시지 인증을 위한 인터셉터 추가
     }
 }

@@ -10,7 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import io.jsonwebtoken.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
+import net.scit.backend.auth.AuthUtil;
 import net.scit.backend.channel.DTO.MessageDTO;
 import net.scit.backend.channel.entity.MessageEntity;
 import net.scit.backend.channel.repository.MessageReposittory;
@@ -64,26 +64,15 @@ public class ChannelServiceImpl implements ChannelService {
         WorkspaceChannelEntity workspaceChannelEntity = workspacechannelRepository
                 .findById(messageDTO.getChannelNumber())
                 .orElseThrow(() -> new CustomException(ErrorCode.IMAGE_NOT_FOUND));
-
+        log.info("==================이메일 : {}", messageDTO.getSender());
         MessageEntity messageEntity = MessageEntity.builder()
                 .workspaceChannelEntity(workspaceChannelEntity)
                 .sender(messageDTO.getSender())
                 .content(messageDTO.getContent())
                 .messageOrFile(false)
                 .build();
-
         messageReposittory.save(messageEntity);
-
-        log.info("✅ 메시지 DB 저장 완료: " + messageEntity.getContent());
-
         return messageDTO;
-
-        // return MessageDTO.builder()
-        //         .channelNumber(messageEntity.getWorkspaceChannelEntity().getChannelNumber())
-        //         .sender(messageEntity.getSender())
-        //         .content(messageEntity.getContent())
-        //         .messageOrFile(messageEntity.getMessageOrFile())
-        //         .build();
     }
 
     /**
@@ -91,7 +80,6 @@ public class ChannelServiceImpl implements ChannelService {
      */
     @Override
     public MessageDTO uploadFile(MultipartFile file, String sender, Long channelId) throws IOException {
-
         String imageUrl = uploadImage(file, channelId);// S3에 파일 업로드 후 URL 반환
         WorkspaceChannelEntity workspaceChannelEntity = workspacechannelRepository
                 .findById(channelId).get();
@@ -131,5 +119,4 @@ public class ChannelServiceImpl implements ChannelService {
                 })
                 .collect(Collectors.toList());
     }
-
 }

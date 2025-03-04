@@ -19,8 +19,13 @@ public class ChatController {
 
     @MessageMapping("/chat.sendMessage.{channelId}")
     @SendTo("/exchange/chat-exchange/msg.{channelId}")
-    public MessageDTO sendMessage(@Payload MessageDTO messageDTO,@DestinationVariable String channelId) {
-        chatService.processMessage(messageDTO); // ✅ 메시지 저장
+    public MessageDTO sendMessage(
+            @Payload MessageDTO messageDTO, 
+            @DestinationVariable("channelId") String channelId // ✅ 변수명을 명시적으로 지정
+    ) 
+    {
+        chatService.processMessage(messageDTO);
         return messageDTO;
     }
+    
 }
