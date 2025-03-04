@@ -910,6 +910,7 @@ public class ScheduleServiceImpl implements ScheduleService {
                 // 중분류 태그 삭제
                 mediumTagRepository.delete(mediumTagEntity);
 
+
                 SuccessDTO successDTO = SuccessDTO.builder()
                                 .success(true)
                                 .build();
@@ -939,4 +940,5 @@ public class ScheduleServiceImpl implements ScheduleService {
 
                 return ResultDTO.of("소분류 태그 삭제에 성공했습니다.", successDTO);
         }
+
 }
