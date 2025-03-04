@@ -57,4 +57,5 @@ public class WorkspaceChannelController {
         ResultDTO<SuccessDTO> result = workspaceChannelService.updateChannel(channelNumber, request);
         return ResponseEntity.ok(result);
     }
+
 }

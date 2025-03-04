@@ -25,13 +25,13 @@ const useTagData = () => {
     }
   };
 
-  const fetchMediumTags = async (largeTagNumber) => {
+  const fetchMediumTags = async (wsId, largeTagNumber) => {
     if (!largeTagNumber) {
       setMediumTags([]);
       return [];
     }
     try {
-      const result = await tagApi.getMediumTags(largeTagNumber);
+      const result = await tagApi.getMediumTags(wsId, largeTagNumber);
       console.log('중분류 태그 응답:', result);
       
       if (result.data) {
@@ -46,13 +46,13 @@ const useTagData = () => {
     }
   };
 
-  const fetchSmallTags = async (mediumTagNumber) => {
+  const fetchSmallTags = async (wsId, largeTagNumber, mediumTagNumber) => {
     if (!mediumTagNumber) {
       setSmallTags([]);
       return [];
     }
     try {
-      const result = await tagApi.getSmallTags(mediumTagNumber);
+      const result = await tagApi.getSmallTags(wsId, largeTagNumber, mediumTagNumber);
       
       if (result.data) {
         setSmallTags(result.data);

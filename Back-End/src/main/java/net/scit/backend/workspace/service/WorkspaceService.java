@@ -2,6 +2,7 @@ package net.scit.backend.workspace.service;
 
 import java.util.List;
 
+import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,4 +43,5 @@ public interface WorkspaceService
 
     ResultDTO<SuccessDTO> updateWorkspaceMemberInfo(Long wsId, UpdateWorkspaceMemberDTO updateInfo, MultipartFile file);
 
+    List<MemberLoginStatusDTO> getWorkspaceMembersStatus(Long workspaceId, String userEmail);
 }

@@ -36,11 +36,17 @@ const scheduleApi = {
     return response.data;
   },
 
-  updateSchedule: async (scheduleNumber, scheduleData) => {
+  updateSchedule: async (scheduleNumber, changeScheduleDTO) => {
+    const token = localStorage.getItem('token');
     const response = await axios.put(
       `http://localhost:8080/schedule/${scheduleNumber}`,
-      scheduleData,
-      getAxiosConfig()
+      changeScheduleDTO,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
     );
     return response.data;
   },

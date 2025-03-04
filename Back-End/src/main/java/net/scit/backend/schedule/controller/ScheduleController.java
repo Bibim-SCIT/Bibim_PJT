@@ -62,7 +62,7 @@ public class ScheduleController {
         ResultDTO<SuccessDTO> result = scheduleService.deleteSchedule(scheduleNumber);
         return ResponseEntity.ok(result);
     }
-  
+
     /**
      * 대분류 태그 생성
      *
@@ -147,13 +147,26 @@ public class ScheduleController {
     }
 
     /**
+     * 전체 태그 조회
+     *
+     * @param wsId 워크스페이스 ID
+     * @return 전체 태그 계층 리스트
+     */
+    @GetMapping("/tag")
+    public ResponseEntity<ResultDTO<List<TagListDTO>>> getAllTags(@RequestParam(name = "wsId") Long wsId) {
+        ResultDTO<List<TagListDTO>> result = scheduleService.getAllTags(wsId);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
      * 대분류 태그 삭제
      * 
      * @param largeTagNumber
      * @return
      */
     @DeleteMapping("/tag/large")
-    public ResponseEntity<ResultDTO<SuccessDTO>> deleteLargeTag(@RequestParam Long largeTagNumber) {
+    public ResponseEntity<ResultDTO<SuccessDTO>> deleteLargeTag(
+            @RequestParam(name = "largeTagNumber") Long largeTagNumber) {
         ResultDTO<SuccessDTO> result = scheduleService.deleteLargeTag(largeTagNumber);
         return ResponseEntity.ok(result);
     }
@@ -165,7 +178,8 @@ public class ScheduleController {
      * @return
      */
     @DeleteMapping("/tag/medium")
-    public ResponseEntity<ResultDTO<SuccessDTO>> deleteMediumTag(@RequestParam Long mediumTagNumber) {
+    public ResponseEntity<ResultDTO<SuccessDTO>> deleteMediumTag(
+            @RequestParam("mediumTagNumber") Long mediumTagNumber) {
         ResultDTO<SuccessDTO> result = scheduleService.deleteMediumTag(mediumTagNumber);
         return ResponseEntity.ok(result);
     }
@@ -177,8 +191,44 @@ public class ScheduleController {
      * @return
      */
     @DeleteMapping("/tag/small")
-    public ResponseEntity<ResultDTO<SuccessDTO>> deleteSmallTag(@RequestParam Long smallTagNumber) {
+    public ResponseEntity<ResultDTO<SuccessDTO>> deleteSmallTag(@RequestParam("smallTagNumber") Long smallTagNumber) {
         ResultDTO<SuccessDTO> result = scheduleService.deleteSmallTag(smallTagNumber);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 대분류 태그 수정
+     *
+     * @param updateLargeTagDTO 요청 데이터
+     * @return 성공 여부
+     */
+    @PutMapping("/tag/large")
+    public ResponseEntity<ResultDTO<SuccessDTO>> updateLargeTag(@RequestBody UpdateLargeTagDTO updateLargeTagDTO) {
+        ResultDTO<SuccessDTO> result = scheduleService.updateLargeTag(updateLargeTagDTO);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 중분류 태그 수정
+     *
+     * @param updateMediumTagDTO 요청 데이터
+     * @return 성공 여부
+     */
+    @PutMapping("/tag/medium")
+    public ResponseEntity<ResultDTO<SuccessDTO>> updateMediumTag(@RequestBody UpdateMediumTagDTO updateMediumTagDTO) {
+        ResultDTO<SuccessDTO> result = scheduleService.updateMediumTag(updateMediumTagDTO);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 소분류 태그 수정
+     *
+     * @param updateSmallTagDTO 요청 데이터
+     * @return 성공 여부
+     */
+    @PutMapping("/tag/small")
+    public ResponseEntity<ResultDTO<SuccessDTO>> updateSmallTag(@RequestBody UpdateSmallTagDTO updateSmallTagDTO) {
+        ResultDTO<SuccessDTO> result = scheduleService.updateSmallTag(updateSmallTagDTO);
         return ResponseEntity.ok(result);
     }
 }

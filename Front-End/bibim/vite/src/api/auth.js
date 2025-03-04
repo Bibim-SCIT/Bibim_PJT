@@ -137,3 +137,42 @@ export const getUserInfo = async () => {
         throw error.response?.data || "회원 정보 조회 실패";
     }
 };
+
+// ✅ 워크스페이스 내 회원 정보 조회 API
+export const getWorkspaceMemberInfo = async (wsId) => {
+    try {
+        const response = await api.get("/workspace/myinfo", {
+            params: { wsId }
+        });
+
+        console.log("📌 getWorkspaceMemberInfo 응답 데이터:", response.data);
+        return response.data.data; // 백엔드 응답 구조에 따라 .data.data 사용
+    } catch (error) {
+        console.error("❌ 워크스페이스 내 회원 정보 조회 오류:", error);
+        throw error.response?.data || "워크스페이스 내 회원 정보 조회 실패";
+    }
+};
+
+
+// ✅ 워크스페이스 내 프로필 수정 API
+export const updateWorkspaceMemberInfo = async (wsId, updateInfo, file) => {
+    try {
+        const formData = new FormData();
+        formData.append("wsId", wsId);
+        formData.append("info", new Blob([JSON.stringify(updateInfo)], { type: "application/json" }));
+
+        if (file) {
+            formData.append("file", file);
+        }
+
+        const response = await api.put("/workspace/myinfo", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        console.log("🟢 워크스페이스 내 프로필 수정 성공:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("❌ 워크스페이스 내 프로필 수정 오류:", error.response?.data || error);
+        throw error.response?.data || "워크스페이스 프로필 수정 실패";
+    }
+};
