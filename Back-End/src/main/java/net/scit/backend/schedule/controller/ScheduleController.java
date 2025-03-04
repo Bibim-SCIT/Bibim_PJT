@@ -153,7 +153,8 @@ public class ScheduleController {
      * @return
      */
     @DeleteMapping("/tag/large")
-    public ResponseEntity<ResultDTO<SuccessDTO>> deleteLargeTag(@RequestParam Long largeTagNumber) {
+    public ResponseEntity<ResultDTO<SuccessDTO>> deleteLargeTag(
+            @RequestParam(name = "largeTagNumber") Long largeTagNumber) {
         ResultDTO<SuccessDTO> result = scheduleService.deleteLargeTag(largeTagNumber);
         return ResponseEntity.ok(result);
     }
@@ -165,7 +166,8 @@ public class ScheduleController {
      * @return
      */
     @DeleteMapping("/tag/medium")
-    public ResponseEntity<ResultDTO<SuccessDTO>> deleteMediumTag(@RequestParam Long mediumTagNumber) {
+    public ResponseEntity<ResultDTO<SuccessDTO>> deleteMediumTag(
+            @RequestParam("mediumTagNumber") Long mediumTagNumber) {
         ResultDTO<SuccessDTO> result = scheduleService.deleteMediumTag(mediumTagNumber);
         return ResponseEntity.ok(result);
     }
@@ -177,7 +179,7 @@ public class ScheduleController {
      * @return
      */
     @DeleteMapping("/tag/small")
-    public ResponseEntity<ResultDTO<SuccessDTO>> deleteSmallTag(@RequestParam Long smallTagNumber) {
+    public ResponseEntity<ResultDTO<SuccessDTO>> deleteSmallTag(@RequestParam("smallTagNumber") Long smallTagNumber) {
         ResultDTO<SuccessDTO> result = scheduleService.deleteSmallTag(smallTagNumber);
         return ResponseEntity.ok(result);
     }
