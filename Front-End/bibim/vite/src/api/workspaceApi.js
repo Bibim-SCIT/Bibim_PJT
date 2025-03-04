@@ -213,25 +213,30 @@ export const getWorkspaceMembers = async (workspaceId) => {
 };
 
 export const updateWorkspace = async (wsName, newName, imageFile) => {
-  try {
-    const formData = new FormData();
-    formData.append('wsName', wsName);
-    formData.append('newName', newName);
-    if (imageFile) {
-      formData.append('file', imageFile);
-    }
-
-    const response = await api.put('/workspace', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
+    try {
+      const formData = new FormData();
+      formData.append('wsName', wsName);
+      formData.append('newName', newName);
+      if (imageFile) {
+        formData.append('file', imageFile);
       }
-    });
 
-    return response.data;
-  } catch (error) {
-    console.error('🚨 워크스페이스 업데이트 실패:', error);
-    throw error;
-  }
+      const response = await api.put('/workspace', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      console.log('📌 서버 응답 데이터:', response.data);
+
+      // ✅ response.data.success로 변경
+      if (!response.data || !response.data.data?.success) {
+        throw new Error(response.data?.message || '업데이트 실패');
+      }
+
+      return response.data; // 🔹 정상적으로 데이터 반환
+    } catch (error) {
+        console.error("🚨 워크스페이스 업데이트 실패:", error);
+        throw error; // 🔹 catch 문에서 처리 가능하도록 에러 그대로 던지기
+    }
 };
 
 

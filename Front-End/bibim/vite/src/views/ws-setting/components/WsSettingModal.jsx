@@ -62,7 +62,7 @@ const WsSettingModal = ({ open, onClose, onUpdate, initialData }) => {
                 imageFile
             );
             
-            if (response.success) {
+            if (response.data.success) {
                 // 업데이트 성공 시 부모 컴포넌트에 변경된 정보 전달
                 onUpdate({
                     wsName: formData.name,
@@ -70,7 +70,7 @@ const WsSettingModal = ({ open, onClose, onUpdate, initialData }) => {
                 });
                 onClose();
             } else {
-                console.error('업데이트 실패:', response.message);
+                console.error('업데이트 실패:', response.data.message);
             }
         } catch (error) {
             console.error('워크스페이스 업데이트 실패:', error);

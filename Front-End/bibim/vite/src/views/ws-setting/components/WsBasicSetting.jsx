@@ -1,16 +1,24 @@
 import { Box, Typography, IconButton } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import WsSettingModal from './WsSettingModal';
+import { getWorkspaces } from '../../../api/workspaceApi'; // 워크스페이스 정보를 가져오는 API
 
 const WsBasicSetting = () => {
     const [openModal, setOpenModal] = useState(false);
+    const [workspaceInfo, setWorkspaceInfo] = useState(null);
     
     // Redux에서 현재 활성화된 워크스페이스 정보 가져오기
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace);
     const loading = useSelector((state) => state.workspace.loading);
+
+    useEffect(() => {
+        if (activeWorkspace) {
+            setWorkspaceInfo(activeWorkspace);
+        }
+    }, [activeWorkspace]);
 
     const handleOpenModal = () => {
         setOpenModal(true);
@@ -20,10 +28,18 @@ const WsBasicSetting = () => {
         setOpenModal(false);
     };
 
-    const handleUpdate = (updatedInfo) => {
-        // API 연동 시 실제 업데이트 로직 구현 필요
+    const handleUpdate = async (updatedInfo) => {
         console.log('워크스페이스 정보 업데이트:', updatedInfo);
         setOpenModal(false);
+
+        // 워크스페이스 정보를 다시 불러오기
+        try {
+            const updatedWorkspaces = await getWorkspaces();
+            const updatedWorkspace = updatedWorkspaces.find(ws => ws.wsName === updatedInfo.wsName);
+            setWorkspaceInfo(updatedWorkspace);
+        } catch (error) {
+            console.error('워크스페이스 정보를 불러오는데 실패했습니다:', error);
+        }
     };
 
     if (loading) {
@@ -34,7 +50,7 @@ const WsBasicSetting = () => {
         );
     }
 
-    if (!activeWorkspace) {
+    if (!workspaceInfo) {
         return (
             <Box sx={{ p: 4, textAlign: 'center' }}>
                 <Typography>워크스페이스를 선택해주세요.</Typography>
@@ -66,10 +82,10 @@ const WsBasicSetting = () => {
                             overflow: 'hidden'
                         }}
                     >
-                        {activeWorkspace?.wsImg ? (
+                        {workspaceInfo.wsImg ? (
                             <img 
-                                src={activeWorkspace.wsImg} 
-                                alt={activeWorkspace.wsName}
+                                src={workspaceInfo.wsImg} 
+                                alt={workspaceInfo.wsName}
                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
                         ) : (
@@ -88,7 +104,7 @@ const WsBasicSetting = () => {
                             fontSize: '16px',
                             color: '#333'
                         }}>
-                            {activeWorkspace?.wsName}
+                            {workspaceInfo.wsName}
                         </Typography>
                     </Box>
                 </Box>
@@ -101,7 +117,7 @@ const WsBasicSetting = () => {
                 open={openModal}
                 onClose={handleCloseModal}
                 onUpdate={handleUpdate}
-                initialData={activeWorkspace}
+                initialData={workspaceInfo}
             />
         </Box>
     );
