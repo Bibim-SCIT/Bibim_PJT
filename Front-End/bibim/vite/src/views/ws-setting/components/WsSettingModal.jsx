@@ -11,6 +11,7 @@ const WsSettingModal = ({ open, onClose, onUpdate, initialData }) => {
     const [imageFile, setImageFile] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // 초기 데이터 설정
     useEffect(() => {
         if (initialData) {
             setFormData({
@@ -20,6 +21,7 @@ const WsSettingModal = ({ open, onClose, onUpdate, initialData }) => {
         }
     }, [initialData]);
 
+    // 워크스페이스 이름 변경 핸들러
     const handleNameChange = (e) => {
         setFormData(prev => ({
             ...prev,
@@ -27,6 +29,7 @@ const WsSettingModal = ({ open, onClose, onUpdate, initialData }) => {
         }));
     };
 
+    // 이미지 변경 핸들러
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -38,6 +41,7 @@ const WsSettingModal = ({ open, onClose, onUpdate, initialData }) => {
         }
     };
 
+    // 이미지 삭제 핸들러
     const handleImageDelete = () => {
         setImageFile(null);
         setFormData(prev => ({
@@ -46,6 +50,7 @@ const WsSettingModal = ({ open, onClose, onUpdate, initialData }) => {
         }));
     };
 
+    // 워크스페이스 업데이트 핸들러
     const handleSubmit = async () => {
         if (!initialData?.wsName || !formData.name) return;
         
