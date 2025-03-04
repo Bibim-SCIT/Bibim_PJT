@@ -52,6 +52,13 @@ public enum ErrorCode {
     // Workspace Channel
     CHANNEL_NOT_FOUND("해당 채널을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     CHANNEL_DELETE_FORBIDDEN("채널 삭제 권한이 없습니다.", HttpStatus.FORBIDDEN),
+    CHANNEL_UPDATE_FORBIDDEN("채널 수정 권한이 없습니다.", HttpStatus.FORBIDDEN ),
+    ROLE_NOT_FOUND("해당 역할을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+
+    // 해당 알림을 찾을 수 없을 때
+    NOTIFICATION_NOT_FOUND("해당 알림을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    NOTIFICATION_DELETE_FORBIDDEN("알림 삭제 권한이 없습니다.", HttpStatus.FORBIDDEN);
+
     CHANNEL_UPDATE_FORBIDDEN("채널 수정 권한이 없습니다.", HttpStatus.FORBIDDEN),
     ROLE_NOT_FOUND("해당 역할을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
 
