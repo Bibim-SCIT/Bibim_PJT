@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -7,6 +7,7 @@ import styled from '@emotion/styled';
 import useScheduleData from '../../../../hooks/useScheduleData';
 import ScheduleDetailModal from '../../components/ScheduleDetailModal';
 import ScheduleEditModal from '../../components/ScheduleEditModal';
+import { useSelector } from 'react-redux';
 
 const CalendarWrapper = styled(Box)({
   padding: '20px',
@@ -154,19 +155,20 @@ const CalendarWrapper = styled(Box)({
 });
 
 const Calendar = () => {
+  const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
   const { schedules: initialSchedules, loading, error, fetchSchedules } = useScheduleData();
   const [schedules, setSchedules] = useState([]);
-  const [modalOpen, setModalOpen] = React.useState(false);
-  const [selectedSchedule, setSelectedSchedule] = React.useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setSchedules(initialSchedules);
   }, [initialSchedules]);
 
-  React.useEffect(() => {
-    const wsId = 9; // 임시 값
+  useEffect(() => {
+    const wsId = activeWorkspace.wsId;
     fetchSchedules(wsId);
   }, [fetchSchedules]);
 
@@ -196,20 +198,20 @@ const Calendar = () => {
   const handleScheduleUpdate = async (updatedSchedule) => {
     if (updatedSchedule) {
       // 기존 스케줄 배열에서 업데이트된 스케줄을 찾아 교체
-      setSchedules(prevSchedules => 
-        prevSchedules.map(schedule => 
+      setSchedules(prevSchedules =>
+        prevSchedules.map(schedule =>
           schedule.id === updatedSchedule.scheduleNumber
             ? {
-                ...schedule,
-                title: updatedSchedule.scheduleTitle,
-                start: updatedSchedule.scheduleStartDate,
-                end: updatedSchedule.scheduleFinishDate,
-                extendedProps: updatedSchedule
-              }
+              ...schedule,
+              title: updatedSchedule.scheduleTitle,
+              start: updatedSchedule.scheduleStartDate,
+              end: updatedSchedule.scheduleFinishDate,
+              extendedProps: updatedSchedule
+            }
             : schedule
         )
       );
-      
+
       // DetailModal에 표시되는 스케줄 정보도 업데이트
       setSelectedSchedule(updatedSchedule);
     }
@@ -261,11 +263,11 @@ const Calendar = () => {
           eventDidMount={(info) => {
             const scheduleId = info.event.id;
             info.el.setAttribute('data-schedule-id', scheduleId);
-            
+
             info.el.addEventListener('mouseenter', () => {
               handleEventHover(scheduleId, true);
             });
-            
+
             info.el.addEventListener('mouseleave', () => {
               handleEventHover(scheduleId, false);
             });
