@@ -44,8 +44,8 @@ public class NotificationController {
     public ResponseEntity<String> markAsRead(@RequestHeader("Authorization") String token, @RequestParam Long notificationNumber) {
         boolean result = notificationService.markAsRead(notificationNumber);
         return result
-                ? ResponseEntity.ok("알림 읽음 처리 완료")
-                : ResponseEntity.badRequest().body("알림 읽음 처리 실패");
+                ? ResponseEntity.ok("해당 알림을 읽는 데 성공하였습니다")
+                : ResponseEntity.badRequest().body("해당 알림을 읽는 데 실패하였습니다");
     }
 
     // ✅ 알림 삭제 (JWT 기반 + 워크스페이스 검증 추가)
