@@ -1,7 +1,6 @@
 /* eslint-disable prettier/prettier */
 import axios from 'axios';
 
-//const API_BASE_URL = "http://your-api-url.com/members"; // 백엔드 API 기본 URL
 const API_BASE_URL = 'http://localhost:8080'; // 백엔드 API 기본 URL
 
 const api = axios.create({

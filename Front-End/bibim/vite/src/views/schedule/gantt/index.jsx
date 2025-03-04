@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import GanttChart from './components/GanttChart';
@@ -16,18 +16,18 @@ const ScheduleWrapper = styled(Box)({
 
 const SchedulePage = () => {
   const dispatch = useDispatch();
-  const activeWorkspace = useSelector((state) => state.workspace?.activeWorkspace);
-  const [view, setView] = React.useState('gantt');
-  const wsId = 9; // 🔥 캘린더와 동일한 방식으로 wsId를 하드코딩
-  
-  React.useEffect(() => {
+  const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
+  const [view, setView] = useState('gantt');
+  const wsId = activeWorkspace.wsId; // 🔥 캘린더와 동일한 방식으로 wsId를 하드코딩
+
+  useEffect(() => {
     dispatch(loadWorkspace());
   }, [dispatch]);
 
   return (
     <ScheduleWrapper>
       <Typography variant="h4" component="h1">
-        {activeWorkspace ? `워크스페이스: ${activeWorkspace.name}` : '워크스페이스 로딩 중...'}
+        {activeWorkspace ? `워크스페이스: ${activeWorkspace.wsName}` : '워크스페이스 로딩 중...'}
       </Typography>
       <Typography variant="h6">워크스페이스 ID: {wsId}</Typography>
 
