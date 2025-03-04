@@ -1,14 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box, Typography, Stack } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box, Stack } from '@mui/material';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import { updateWorkspace } from '../../../api/workspaceApi';
-import { useDispatch } from 'react-redux';
-import { loadWorkspace } from 'store/workspaceRedux';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 
 const WsSettingModal = ({ open, onClose, onUpdate, initialData }) => {
-    const dispatch = useDispatch();
     const [formData, setFormData] = useState({
         name: '',
         image: null

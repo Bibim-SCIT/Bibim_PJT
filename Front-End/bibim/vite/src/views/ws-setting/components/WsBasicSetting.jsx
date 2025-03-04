@@ -4,7 +4,7 @@ import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import WsSettingModal from './WsSettingModal';
-import { getWorkspaces } from '../../../api/workspaceApi'; // 워크스페이스 정보를 가져오는 API
+import { getWorkspaces } from '../../../api/workspaceApi';
 
 const WsBasicSetting = () => {
     const [openModal, setOpenModal] = useState(false);
@@ -14,22 +14,25 @@ const WsBasicSetting = () => {
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace);
     const loading = useSelector((state) => state.workspace.loading);
 
+    // 활성화된 워크스페이스 정보 설정
     useEffect(() => {
         if (activeWorkspace) {
             setWorkspaceInfo(activeWorkspace);
         }
     }, [activeWorkspace]);
 
+    // 모달 열기 핸들러
     const handleOpenModal = () => {
         setOpenModal(true);
     };
 
+    // 모달 닫기 핸들러
     const handleCloseModal = () => {
         setOpenModal(false);
     };
 
+    // 워크스페이스 업데이트 후 정보 갱신
     const handleUpdate = async (updatedInfo) => {
-        console.log('워크스페이스 정보 업데이트:', updatedInfo);
         setOpenModal(false);
 
         // 워크스페이스 정보를 다시 불러오기
