@@ -181,4 +181,40 @@ public class ScheduleController {
         ResultDTO<SuccessDTO> result = scheduleService.deleteSmallTag(smallTagNumber);
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * 대분류 태그 수정
+     *
+     * @param updateLargeTagDTO 요청 데이터
+     * @return 성공 여부
+     */
+    @PutMapping("/tag/large")
+    public ResponseEntity<ResultDTO<SuccessDTO>> updateLargeTag(@RequestBody UpdateLargeTagDTO updateLargeTagDTO) {
+        ResultDTO<SuccessDTO> result = scheduleService.updateLargeTag(updateLargeTagDTO);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 중분류 태그 수정
+     *
+     * @param updateMediumTagDTO 요청 데이터
+     * @return 성공 여부
+     */
+    @PutMapping("/tag/medium")
+    public ResponseEntity<ResultDTO<SuccessDTO>> updateMediumTag(@RequestBody UpdateMediumTagDTO updateMediumTagDTO) {
+        ResultDTO<SuccessDTO> result = scheduleService.updateMediumTag(updateMediumTagDTO);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 소분류 태그 수정
+     *
+     * @param updateSmallTagDTO 요청 데이터
+     * @return 성공 여부
+     */
+    @PutMapping("/tag/small")
+    public ResponseEntity<ResultDTO<SuccessDTO>> updateSmallTag(@RequestBody UpdateSmallTagDTO updateSmallTagDTO) {
+        ResultDTO<SuccessDTO> result = scheduleService.updateSmallTag(updateSmallTagDTO);
+        return ResponseEntity.ok(result);
+    }
 }

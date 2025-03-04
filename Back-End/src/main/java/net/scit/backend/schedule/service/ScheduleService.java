@@ -39,4 +39,10 @@ public interface ScheduleService {
     ResultDTO<SuccessDTO> deleteMediumTag(Long mediumTagNumber);
 
     ResultDTO<SuccessDTO> deleteSmallTag(Long smallTagNumber);
+
+    ResultDTO<SuccessDTO> updateLargeTag(UpdateLargeTagDTO updateLargeTagDTO);
+
+    ResultDTO<SuccessDTO> updateMediumTag(UpdateMediumTagDTO updateMediumTagDTO);
+
+    ResultDTO<SuccessDTO> updateSmallTag(UpdateSmallTagDTO updateSmallTagDTO);
 }
