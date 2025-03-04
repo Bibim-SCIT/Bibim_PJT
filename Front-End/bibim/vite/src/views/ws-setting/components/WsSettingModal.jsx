@@ -1,196 +1,181 @@
 import { useState, useEffect } from 'react';
-import { 
-    Modal, 
-    Box, 
-    Typography, 
-    TextField, 
-    Button, 
-    Avatar,
-    IconButton
-} from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box, Typography, Stack } from '@mui/material';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import { updateWorkspace } from '../../../api/workspaceApi';
+import { useDispatch } from 'react-redux';
+import { loadWorkspace } from 'store/workspaceRedux';
 import DeleteIcon from '@mui/icons-material/Delete';
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 
-const style = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 500,
-    bgcolor: 'background.paper',
-    borderRadius: 1,
-    boxShadow: 24,
-};
+const WsSettingModal = ({ open, onClose, onUpdate, initialData }) => {
+    const dispatch = useDispatch();
+    const [formData, setFormData] = useState({
+        name: '',
+        image: null
+    });
+    const [imageFile, setImageFile] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-const WsSettingModal = ({ open, handleClose, workspace, onUpdate }) => {
-    const [wsName, setWsName] = useState(workspace.name);
-    const [wsImage, setWsImage] = useState(workspace.image);
-    const [previewImage, setPreviewImage] = useState(workspace.image);
+    useEffect(() => {
+        if (initialData) {
+            setFormData({
+                name: initialData.wsName || '',
+                image: initialData.wsImg || null
+            });
+        }
+    }, [initialData]);
 
-    const handleImageChange = (event) => {
-        const file = event.target.files[0];
+    const handleNameChange = (e) => {
+        setFormData(prev => ({
+            ...prev,
+            name: e.target.value
+        }));
+    };
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
         if (file) {
-            setWsImage(file);
-            setPreviewImage(URL.createObjectURL(file));
+            setImageFile(file);
+            setFormData(prev => ({
+                ...prev,
+                image: URL.createObjectURL(file)
+            }));
         }
     };
 
     const handleImageDelete = () => {
-        setWsImage(null);
-        setPreviewImage(null);
+        setImageFile(null);
+        setFormData(prev => ({
+            ...prev,
+            image: null
+        }));
     };
 
-    const handleSubmit = () => {
-        onUpdate({ 
-            name: wsName, 
-            image: wsImage 
-        });
-        handleClose();
+    const handleSubmit = async () => {
+        if (!initialData?.wsName || !formData.name) return;
+        
+        try {
+            setIsSubmitting(true);
+            await updateWorkspace(
+                initialData.wsName,
+                formData.name,
+                imageFile
+            );
+            
+            dispatch(loadWorkspace());
+            
+            onUpdate(formData);
+            onClose();
+        } catch (error) {
+            console.error('워크스페이스 업데이트 실패:', error);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
-
-    useEffect(() => {
-        setWsName(workspace.name);
-        setWsImage(workspace.image);
-        setPreviewImage(workspace.image);
-    }, [workspace, open]);
 
     return (
-        <Modal open={open} onClose={handleClose}>
-            <Box sx={style}>
-                <Box sx={{ p: 3, pb: 2 }}>
-                    <IconButton 
-                        onClick={handleClose}
-                        sx={{ 
-                            position: 'absolute',
-                            right: 8,
-                            top: 8
-                        }}
-                    >
-                        <CloseIcon />
-                    </IconButton>
-                    <Typography variant="h6">워크스페이스 설정</Typography>
-                </Box>
-
-                <Box sx={{ px: 3, pb: 3 }}>
-                    {/* 이미지 업로드 영역 */}
+        <Dialog 
+            open={open} 
+            onClose={onClose}
+            maxWidth="xs"
+            fullWidth
+        >
+            <DialogTitle>워크스페이스 설정</DialogTitle>
+            <DialogContent>
+                <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <Box sx={{ 
-                        display: 'flex', 
+                        display: 'flex',
                         flexDirection: 'column',
-                        alignItems: 'center', 
-                        mb: 3
+                        alignItems: 'center',
+                        mb: 4
                     }}>
-                        <input
-                            type="file"
-                            hidden
-                            id="ws-image-upload"
-                            accept="image/*"
-                            onChange={handleImageChange}
-                        />
                         <Box
                             sx={{
-                                width: 100,
-                                height: 100,
-                                borderRadius: 1,
+                                width: 120,
+                                height: 120,
                                 bgcolor: '#f5f5f5',
+                                borderRadius: 1,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                mb: 2  // 이미지와 버튼 사이 간격 증가
+                                overflow: 'hidden',
+                                border: '1px solid #e0e0e0',
+                                mb: 1,
+                                cursor: 'pointer'
                             }}
+                            onClick={() => document.getElementById('workspace-image-input').click()}
                         >
-                            {previewImage ? (
+                            {formData.image ? (
                                 <img 
-                                    src={previewImage} 
+                                    src={formData.image} 
                                     alt="워크스페이스 이미지"
-                                    style={{
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: 'cover',
-                                        borderRadius: '4px'
-                                    }}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                 />
                             ) : (
-                                <CameraAltIcon sx={{ fontSize: 40, color: '#999' }} />
+                                <CameraAltIcon sx={{ color: '#999', fontSize: 40 }} />
                             )}
                         </Box>
-                        
-                        {/* 버튼 그룹 */}
-                        <Box sx={{ 
-                            display: 'flex', 
-                            gap: 1
+                        <Stack sx={{ 
+                            flexDirection: 'row',
+                            gap: 2,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '100%'
                         }}>
                             <Button
-                                variant="outlined"
+                                variant="text"
+                                onClick={handleImageDelete}
                                 size="small"
-                                component="label"
-                                htmlFor="ws-image-upload"
-                                sx={{ 
-                                    color: '#666', 
-                                    borderColor: '#ccc',
-                                    '&:hover': {
-                                        borderColor: '#999'
-                                    }
-                                }}
                             >
-                                이미지 {previewImage ? '변경' : '업로드'}
+                                이미지 삭제
                             </Button>
-                            
-                            {previewImage && (
-                                <Button
-                                    variant="outlined"
-                                    size="small"
-                                    onClick={handleImageDelete}
-                                    sx={{ 
-                                        color: '#e53935',
-                                        borderColor: '#e53935',
-                                        '&:hover': {
-                                            borderColor: '#d32f2f',
-                                            backgroundColor: 'rgba(229, 57, 53, 0.04)'
-                                        }
-                                    }}
-                                >
-                                    이미지 삭제
-                                </Button>
-                            )}
-                        </Box>
+                            <Button
+                                variant="contained"
+                                component="label"
+                                size="small"
+                            >
+                                이미지 설정
+                                <input
+                                    type="file"
+                                    id="workspace-image-input"
+                                    hidden
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                />
+                            </Button>
+                        </Stack>
                     </Box>
 
-                    {/* 워크스페이스 이름 입력 */}
                     <TextField
                         fullWidth
                         label="워크스페이스 이름"
-                        value={wsName}
-                        onChange={(e) => setWsName(e.target.value)}
-                        size="small"
+                        value={formData.name}
+                        onChange={handleNameChange}
+                        sx={{ mb: 2 }}
                     />
                 </Box>
-
-                {/* 하단 버튼 영역 */}
-                <Box sx={{ 
-                    p: 2, 
-                    bgcolor: '#f8f9fa', 
-                    display: 'flex', 
-                    justifyContent: 'flex-end',
-                    gap: 1,
-                    borderTop: '1px solid #eee'
-                }}>
-                    <Button onClick={handleClose}>
-                        취소
-                    </Button>
-                    <Button 
-                        onClick={handleSubmit}
-                        variant="contained"
-                        sx={{ 
-                            bgcolor: '#4a6cc7',
-                            '&:hover': { bgcolor: '#3f5ba9' }
-                        }}
-                    >
-                        저장
-                    </Button>
-                </Box>
-            </Box>
-        </Modal>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2 }}>
+                <Button 
+                    onClick={onClose}
+                    disabled={isSubmitting}
+                    sx={{ color: '#666' }}
+                >
+                    취소
+                </Button>
+                <Button 
+                    onClick={handleSubmit}
+                    variant="contained"
+                    disabled={isSubmitting}
+                    sx={{
+                        bgcolor: '#4a6cc7',
+                        '&:hover': { bgcolor: '#3f5ba9' }
+                    }}
+                >
+                    {isSubmitting ? '저장 중...' : '저장'}
+                </Button>
+            </DialogActions>
+        </Dialog>
     );
 };
 

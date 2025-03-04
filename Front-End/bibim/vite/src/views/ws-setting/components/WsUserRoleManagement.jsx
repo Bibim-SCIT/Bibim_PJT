@@ -1,0 +1,331 @@
+import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Avatar, Select, MenuItem } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+
+const MOCK_USERS = [
+    { nickname: '서연', email: 'seoyeon.park@example.com', lastLogin: '2024-03-19 14:30', role: '오너', profileImage: null },
+    { nickname: '준호', email: 'junho.choi@example.com', lastLogin: '2024-03-19 11:20', role: '유저', profileImage: null },
+    { nickname: '유진', email: 'yujin.kim@example.com', lastLogin: '2024-03-18 17:45', role: '유저', profileImage: null },
+    { nickname: '태민', email: 'taemin.lee@example.com', lastLogin: '2024-03-18 09:15', role: '유저', profileImage: null },
+    { nickname: '하늘', email: 'haneul.kang@example.com', lastLogin: '2024-03-17 16:30', role: '유저', profileImage: null },
+];
+
+const WsUserRoleManagement = () => {
+    const [openKickDialog, setOpenKickDialog] = useState(false);
+    const [openRoleDialog, setOpenRoleDialog] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [selectedRole, setSelectedRole] = useState('');
+
+    // Redux에서 현재 활성화된 워크스페이스 정보 가져오기
+    const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace);
+    const loading = useSelector((state) => state.workspace.loading);
+
+    // 워크스페이스의 사용자 목록 (실제 API 연동 시 이 부분 수정 필요)
+    const users = activeWorkspace?.users || MOCK_USERS; // 임시로 MOCK_USERS 유지
+
+    const handleKickUser = (user) => {
+        setSelectedUser(user);
+        setOpenKickDialog(true);
+    };
+
+    const handleConfirmKick = () => {
+        // API 연동 시 실제 강퇴 로직 구현 필요
+        console.log('강퇴:', selectedUser, '워크스페이스:', activeWorkspace?.wsId);
+        setOpenKickDialog(false);
+        setSelectedUser(null);
+    };
+
+    const handleCloseKickDialog = () => {
+        setOpenKickDialog(false);
+        setSelectedUser(null);
+    };
+
+    const handleOpenRoleSettings = (user) => {
+        setSelectedUser(user);
+        setSelectedRole(user.role);
+        setOpenRoleDialog(true);
+    };
+
+    const handleCloseRoleDialog = () => {
+        setOpenRoleDialog(false);
+        setSelectedUser(null);
+        setSelectedRole('');
+    };
+
+    const handleRoleChange = (event) => {
+        setSelectedRole(event.target.value);
+    };
+
+    const handleSaveRole = () => {
+        // API 연동 시 실제 권한 변경 로직 구현 필요
+        console.log('권한 변경:', selectedUser.nickname, selectedRole, '워크스페이스:', activeWorkspace?.wsId);
+        setOpenRoleDialog(false);
+        setSelectedUser(null);
+        setSelectedRole('');
+    };
+
+    if (loading) {
+        return (
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Typography>로딩 중...</Typography>
+            </Box>
+        );
+    }
+
+    if (!activeWorkspace) {
+        return (
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Typography>워크스페이스를 선택해주세요.</Typography>
+            </Box>
+        );
+    }
+
+    return (
+        <>
+            <Box sx={{ px: 4, pb: 4 }}>
+                <TableContainer sx={{ maxHeight: 300 }}>
+                    <Table stickyHeader>
+                        <TableHead>
+                            <TableRow sx={{ 
+                                '& th': { 
+                                    borderBottom: '1px solid #e0e0e0',
+                                    fontWeight: 'normal',
+                                    bgcolor: '#f8f9fa'
+                                }
+                            }}>
+                                <TableCell width="20%" sx={{ pl: 2 }}>닉네임</TableCell>
+                                <TableCell width="20%" sx={{ pl: 2 }}>이메일</TableCell>
+                                <TableCell width="20%" sx={{ pl: 2 }}>마지막 로그인</TableCell>
+                                <TableCell width="20%" sx={{ pl: 2 }}>권한</TableCell>
+                                <TableCell width="20%" sx={{ pl: 2 }}>관리</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {users.map((user, index) => (
+                                <TableRow key={index}>
+                                    <TableCell sx={{ pl: 2 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                            <Avatar 
+                                                src={user.profileImage} 
+                                                sx={{ 
+                                                    width: 32, 
+                                                    height: 32,
+                                                    bgcolor: '#e0e0e0'
+                                                }}
+                                            >
+                                                {user.nickname[0]}
+                                            </Avatar>
+                                            <Typography>{user.nickname}</Typography>
+                                        </Box>
+                                    </TableCell>
+                                    <TableCell sx={{ pl: 2 }}>{user.email}</TableCell>
+                                    <TableCell sx={{ pl: 2 }}>{user.lastLogin}</TableCell>
+                                    <TableCell sx={{ pl: 2 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <Typography>{user.role}</Typography>
+                                            <Button
+                                                size="small"
+                                                onClick={() => handleOpenRoleSettings(user)}
+                                                variant="outlined"
+                                                sx={{ 
+                                                    color: '#666',
+                                                    borderColor: '#e0e0e0',
+                                                    '&:hover': { 
+                                                        borderColor: '#bdbdbd',
+                                                        bgcolor: 'rgba(0, 0, 0, 0.04)' 
+                                                    },
+                                                    textTransform: 'none',
+                                                    minWidth: 'auto',
+                                                    px: 1.5,
+                                                    py: 0.5,
+                                                    fontSize: '0.75rem'
+                                                }}
+                                            >
+                                                변경
+                                            </Button>
+                                        </Box>
+                                    </TableCell>
+                                    <TableCell sx={{ pl: 2 }}>
+                                        <Button
+                                            variant="outlined"
+                                            startIcon={<DeleteIcon />}
+                                            onClick={() => handleKickUser(user)}
+                                            sx={{
+                                                color: '#e53935',
+                                                borderColor: '#e53935',
+                                                '&:hover': {
+                                                    borderColor: '#d32f2f',
+                                                    backgroundColor: 'rgba(229, 57, 53, 0.04)'
+                                                },
+                                                textTransform: 'none',
+                                                fontSize: '0.875rem',
+                                                py: 0.5
+                                            }}
+                                        >
+                                            강퇴
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Box>
+
+            {/* 강퇴 확인 다이얼로그 */}
+            <Dialog
+                open={openKickDialog}
+                onClose={handleCloseKickDialog}
+                maxWidth="xs"
+                fullWidth
+            >
+                <DialogTitle sx={{ pb: 1 }}>
+                    강퇴 확인
+                </DialogTitle>
+                <DialogContent sx={{ pb: 2 }}>
+                    {selectedUser && (
+                        <Box>
+                            <Typography sx={{ mb: 2, color: '#666' }}>
+                                다음 유저를 워크스페이스에서 강퇴하시겠습니까?
+                            </Typography>
+                            <Box sx={{ 
+                                bgcolor: '#f8f9fa',
+                                p: 2,
+                                borderRadius: 1
+                            }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                                    <Avatar 
+                                        src={selectedUser.profileImage} 
+                                        sx={{ 
+                                            width: 32, 
+                                            height: 32,
+                                            bgcolor: '#e0e0e0'
+                                        }}
+                                    >
+                                        {selectedUser.nickname[0]}
+                                    </Avatar>
+                                    <Typography>
+                                        닉네임: {selectedUser.nickname}
+                                    </Typography>
+                                </Box>
+                                <Typography sx={{ mb: 0.5 }}>
+                                    이메일: {selectedUser.email}
+                                </Typography>
+                                <Typography>
+                                    마지막 로그인: {selectedUser.lastLogin}
+                                </Typography>
+                            </Box>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button 
+                        onClick={handleCloseKickDialog}
+                        sx={{ color: '#666' }}
+                    >
+                        취소
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleConfirmKick}
+                        sx={{
+                            bgcolor: '#e53935',
+                            '&:hover': { bgcolor: '#d32f2f' }
+                        }}
+                    >
+                        강퇴하기
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* 권한 설정 다이얼로그 수정 */}
+            <Dialog
+                open={openRoleDialog}
+                onClose={handleCloseRoleDialog}
+                maxWidth="xs"
+                fullWidth
+            >
+                <DialogTitle sx={{ pb: 1 }}>
+                    권한 설정
+                </DialogTitle>
+                <DialogContent sx={{ pb: 2 }}>
+                    {selectedUser && (
+                        <Box>
+                            <Typography sx={{ mb: 2, color: '#666' }}>
+                                사용자의 권한을 설정합니다.
+                            </Typography>
+                            <Box sx={{ 
+                                bgcolor: '#f8f9fa',
+                                p: 2,
+                                borderRadius: 1
+                            }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                                    <Avatar 
+                                        src={selectedUser.profileImage} 
+                                        sx={{ 
+                                            width: 32, 
+                                            height: 32,
+                                            bgcolor: '#e0e0e0'
+                                        }}
+                                    >
+                                        {selectedUser.nickname[0]}
+                                    </Avatar>
+                                    <Box>
+                                        <Typography component="span">
+                                            {selectedUser.nickname}
+                                        </Typography>
+                                        <Typography 
+                                            component="span" 
+                                            sx={{ 
+                                                color: '#999',
+                                                ml: 0.5
+                                            }}
+                                        >
+                                            ({selectedUser.email})
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                                <Select
+                                    fullWidth
+                                    size="small"
+                                    value={selectedRole}
+                                    onChange={handleRoleChange}
+                                    sx={{
+                                        bgcolor: 'white',
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#e0e0e0'
+                                        }
+                                    }}
+                                >
+                                    <MenuItem value="오너">오너</MenuItem>
+                                    <MenuItem value="유저">유저</MenuItem>
+                                </Select>
+                            </Box>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button 
+                        onClick={handleCloseRoleDialog}
+                        sx={{ color: '#666' }}
+                    >
+                        취소
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleSaveRole}
+                        sx={{
+                            bgcolor: '#4a6cc7',
+                            '&:hover': { bgcolor: '#3f5ba9' }
+                        }}
+                    >
+                        저장
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </>
+    );
+};
+
+export default WsUserRoleManagement; 

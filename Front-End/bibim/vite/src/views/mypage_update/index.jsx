@@ -21,6 +21,7 @@ import { updateUserInfo } from 'api/members';
 import { useNavigate } from 'react-router-dom';
 import { ConfigContext } from "contexts/ConfigContext";
 import ChangePasswordModal from '../mypage/component/ChangePasswordModal';
+import MyInfoUpdate from './myInfoUpdate';
 
 // ==============================|| 프로필 수정 페이지 ||============================== //
 
