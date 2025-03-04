@@ -19,22 +19,6 @@ const getAuthHeaders = () => {
 
 
 // ✅ 워크스페이스 리스트 가져오기
-// export const getWorkspaces = async () => {
-//     try {
-//         const response = await axios.get(`${API_BASE_URL}`, { headers: getAuthHeaders() });
-//         return response.data;
-//     } catch (error) {
-//         throw error.response?.data || "워크스페이스 목록을 불러오는데 실패했습니다.";
-//     }
-// };
-// export const getWorkspaces = async () => {
-//     try {
-//         const response = await axiosInstance.get("");
-//         return response.data;
-//     } catch (error) {
-//         throw error.response?.data || "워크스페이스 목록을 불러오는데 실패했습니다.";
-//     }
-// };
 export const getWorkspaces = async () => {
     try {
         const response = await api.get(API_BASE_URL);
@@ -45,60 +29,6 @@ export const getWorkspaces = async () => {
 };
 
 // ✅ 워크스페이스 생성 요청
-// export const createWorkspace = async (workspaceName, workspaceImage = null) => {
-//     try {
-//         const formData = new FormData();
-//         formData.append("name", workspaceName);
-//         if (workspaceImage) {
-//             formData.append("file", workspaceImage);
-//         }
-
-//         const response = await axios.post(`${API_BASE_URL}`, formData, {
-//             headers: {
-//                 ...getAuthHeaders(),
-//                 "Content-Type": "multipart/form-data"
-//             }
-//         });
-//         return response.data;
-//     } catch (error) {
-//         console.error("🚨 워크스페이스 생성 실패:", error);
-//         throw error.response?.data || "워크스페이스 생성에 실패했습니다.";
-//     }
-// };
-// export const createWorkspace = async (workspaceName, workspaceImage = null) => {
-//     try {
-//         const formData = new FormData();
-//         formData.append("name", workspaceName);
-//         if (workspaceImage) {
-//             formData.append("file", workspaceImage);
-//         }
-
-//         const response = await axiosInstance.post("", formData, {
-//             headers: { "Content-Type": "multipart/form-data" }
-//         });
-//         return response.data;
-//     } catch (error) {
-//         console.error("🚨 워크스페이스 생성 실패:", error);
-//         throw error.response?.data || "워크스페이스 생성에 실패했습니다.";
-//     }
-// };
-// export const createWorkspace = async (workspaceName, workspaceImage = null) => {
-//     try {
-//         const formData = new FormData();
-//         formData.append("name", workspaceName);
-//         if (workspaceImage) {
-//             formData.append("file", workspaceImage);
-//         }
-
-//         const response = await api.post(API_BASE_URL, formData, {
-//             headers: { "Content-Type": "multipart/form-data" } // ✅ `api`는 이미 Authorization 헤더 포함
-//         });
-//         return response.data;
-//     } catch (error) {
-//         console.error("🚨 워크스페이스 생성 실패:", error);
-//         throw error.response?.data || "워크스페이스 생성에 실패했습니다.";
-//     }
-// };
 export const createWorkspace = async (workspaceName, workspaceImage = null) => {
     try {
         const formData = new FormData();
