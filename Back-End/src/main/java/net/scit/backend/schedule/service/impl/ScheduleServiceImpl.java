@@ -823,47 +823,68 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
 
         /**
+         * 전체 태그 조회
+         * 
+         * @param wsId
+         * @return 전체 태그 리스트트
+         */
+        @Override
+        public ResultDTO<List<TagListDTO>> getAllTags(Long wsId) {
+                // 1. 로그인한 사용자 정보 가져오기
+                String email = AuthUtil.getLoginUserId();
+                MemberEntity member = memberRepository.findByEmail(email)
+                                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+                // 2. 워크스페이스 정보 가져오기
+                WorkspaceEntity workspace = workspaceRepository.findById(wsId)
+                                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
+
+                // 3. 사용자 워크스페이스 멤버 검증
+                workspaceMemberRepository.findByWorkspaceAndMember(workspace, member)
+                                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
+
+                // 4. 전체 태그 조회
+                List<TagListDTO> tagList = new ArrayList<>();
+
+                List<LargeTagEntity> largeTags = largeTagRepository.findAllByWorkspace(workspace);
+                for (LargeTagEntity largeTag : largeTags) {
+                        List<MediumTagEntity> mediumTags = mediumTagRepository.findAllByLargeTag(largeTag);
+
+                        if (mediumTags.isEmpty()) {
+                                tagList.add(TagListDTO.of(wsId, largeTag, null, null));
+                        } else {
+                                for (MediumTagEntity mediumTag : mediumTags) {
+                                        List<SmallTagEntity> smallTags = smallTagRepository
+                                                        .findAllByMediumTag(mediumTag);
+
+                                        if (smallTags.isEmpty()) {
+                                                tagList.add(TagListDTO.of(wsId, largeTag, mediumTag, null));
+                                        } else {
+                                                for (SmallTagEntity smallTag : smallTags) {
+                                                        tagList.add(TagListDTO.of(wsId, largeTag, mediumTag, smallTag));
+                                                }
+                                        }
+                                }
+                        }
+                }
+
+                return ResultDTO.of("전체 태그 조회에 성공했습니다.", tagList);
+        }
+
+        /**
          * 대분류 태그 삭제
          *
          * @param largeTagNumber
          * @return
          */
-        @Transactional
         @Override
         public ResultDTO<SuccessDTO> deleteLargeTag(Long largeTagNumber) {
 
-                // 1. 사용자 검증
-                String email = AuthUtil.getLoginUserId();
-
-                MemberEntity member = memberRepository.findByEmail(email)
-                                .orElseThrow(() -> {
-                                        return new CustomException(ErrorCode.MEMBER_NOT_FOUND);
-                                });
-
-                // 2. 태그 조회
+                // 대분류 태그 조회
                 LargeTagEntity largeTagEntity = largeTagRepository.findById(largeTagNumber)
-                                .orElseThrow(() -> {
-                                        return new CustomException(ErrorCode.TAG_NOT_FOUND);
-                                });
+                                .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
 
-                // 3. 태그가 속한 워크스페이스 조회
-                WorkspaceEntity workspace = largeTagEntity.getWorkspace();
-
-                // 4. 워크스페이스 멤버 검증
-                WorkspaceMemberEntity workspaceMemberEntity = workspaceMemberRepository
-                                .findByWorkspaceAndMember(workspace, member)
-                                .orElseThrow(() -> {
-                                        return new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
-                                });
-
-                // 5. 삭제 권한 확인
-                boolean isOwner = "owner".equals(workspaceMemberEntity.getWsRole());
-
-                if (!isOwner) {
-                        throw new CustomException(ErrorCode.INVALID_SCHEDULE_MEMBER);
-                }
-
-                // 6. 태그 삭제
+                // 대분류 태그 삭제
                 largeTagRepository.delete(largeTagEntity);
 
                 SuccessDTO successDTO = SuccessDTO.builder()
@@ -879,35 +900,16 @@ public class ScheduleServiceImpl implements ScheduleService {
          * @param mediumTagNumber
          * @return
          */
-        @Transactional
         @Override
         public ResultDTO<SuccessDTO> deleteMediumTag(Long mediumTagNumber) {
-                // 1. 사용자 검증
-                String email = AuthUtil.getLoginUserId();
-                MemberEntity member = memberRepository.findByEmail(email)
-                                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-                // 2. 태그 조회
+                // 중분류 태그 조회
                 MediumTagEntity mediumTagEntity = mediumTagRepository.findById(mediumTagNumber)
                                 .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
 
-                // 3. 해당 태그가 속한 대분류 태그 및 워크스페이스 조회
-                LargeTagEntity largeTagEntity = mediumTagEntity.getLargeTag();
-                WorkspaceEntity workspace = largeTagEntity.getWorkspace();
-
-                // 4. 워크스페이스 멤버 검증
-                WorkspaceMemberEntity workspaceMemberEntity = workspaceMemberRepository
-                                .findByWorkspaceAndMember(workspace, member)
-                                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
-
-                // 5. 삭제 권한 확인
-                boolean isOwner = "owner".equals(workspaceMemberEntity.getWsRole());
-                if (!isOwner) {
-                        throw new CustomException(ErrorCode.INVALID_SCHEDULE_MEMBER);
-                }
-
-                // 6. 중분류 태그 삭제
+                // 중분류 태그 삭제
                 mediumTagRepository.delete(mediumTagEntity);
+
 
                 SuccessDTO successDTO = SuccessDTO.builder()
                                 .success(true)
@@ -922,35 +924,14 @@ public class ScheduleServiceImpl implements ScheduleService {
          * @param smallTagNumber
          * @return
          */
-        @Transactional
         @Override
         public ResultDTO<SuccessDTO> deleteSmallTag(Long smallTagNumber) {
-                // 1. 사용자 검증
-                String email = AuthUtil.getLoginUserId();
-                MemberEntity member = memberRepository.findByEmail(email)
-                                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-                // 2. 태그 조회
+                // 소분류 태그 조회
                 SmallTagEntity smallTagEntity = smallTagRepository.findById(smallTagNumber)
                                 .orElseThrow(() -> new CustomException(ErrorCode.TAG_NOT_FOUND));
 
-                // 3. 해당 태그가 속한 중분류 및 워크스페이스 조회
-                MediumTagEntity mediumTagEntity = smallTagEntity.getMediumTag();
-                LargeTagEntity largeTagEntity = mediumTagEntity.getLargeTag();
-                WorkspaceEntity workspace = largeTagEntity.getWorkspace();
-
-                // 4. 워크스페이스 멤버 검증
-                WorkspaceMemberEntity workspaceMemberEntity = workspaceMemberRepository
-                                .findByWorkspaceAndMember(workspace, member)
-                                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
-
-                // 5. 삭제 권한 확인
-                boolean isOwner = "owner".equals(workspaceMemberEntity.getWsRole());
-                if (!isOwner) {
-                        throw new CustomException(ErrorCode.INVALID_SCHEDULE_MEMBER);
-                }
-
-                // 6. 소분류 태그 삭제
+                // 소분류 태그 삭제
                 smallTagRepository.delete(smallTagEntity);
 
                 SuccessDTO successDTO = SuccessDTO.builder()
