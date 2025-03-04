@@ -30,17 +30,18 @@ import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.workspace.dto.InvateWorkspaceDTO;
+import net.scit.backend.workspace.dto.UpdateWorkspaceMemberDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
 import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
 import net.scit.backend.workspace.entity.WorkspaceChannelRoleEntity;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
+import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
 import net.scit.backend.workspace.repository.WorkspaceChannelRoleRepository;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import net.scit.backend.workspace.repository.WorkspaceRepository;
 import net.scit.backend.workspace.service.WorkspaceService;
-import net.scit.backend.workspace.dto.UpdateWorkspaceMemberDTO;
 
 @Service
 @RequiredArgsConstructor
@@ -105,6 +106,9 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     // WorkspaceEntity 조회 메소드
     private WorkspaceEntity getWorkspaceEntity(Long wsId) {
+        if (wsId == null) {
+            throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
+        }
         return workspaceRepository.findById(wsId)
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
     }
@@ -189,9 +193,21 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     public ResultDTO<SuccessDTO> workspaceUpdate(String wsName, String newName, MultipartFile file) {
         String email = AuthUtil.getLoginUserId();
         Long wsId = workspaceRepository.findWsIdByWsNameAndEmail(wsName, email);
-        WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
+        
+        // ID가 null인 경우 예외 처리
+        if (wsId == null) {
+            return ResultDTO.of("해당 워크스페이스를 찾을 수 없습니다.", SuccessDTO.builder().success(false).build());
+        }
 
-        String imageUrl = uploadImage(file);
+        WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
+        
+        // ✅ 기존 이미지 URL 유지 (NULL 값 방지)
+        String imageUrl = workspaceEntity.getWsImg();
+        if (file != null && !file.isEmpty()) {
+            imageUrl = uploadImage(file); // 새 이미지 업로드
+        }
+
+//        String imageUrl = uploadImage(file);
         workspaceEntity.setWsName(newName);
         workspaceEntity.setWsImg(imageUrl);
         workspaceRepository.save(workspaceEntity);
