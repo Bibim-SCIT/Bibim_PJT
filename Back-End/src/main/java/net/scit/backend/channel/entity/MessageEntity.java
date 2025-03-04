@@ -2,7 +2,6 @@ package net.scit.backend.channel.entity;
 
 import java.time.LocalDateTime;
 
-import jakarta.persistence.*;
 import org.hibernate.annotations.CurrentTimestamp;
 
 import jakarta.persistence.Column;

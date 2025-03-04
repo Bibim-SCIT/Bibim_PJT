@@ -21,6 +21,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+
 import net.scit.backend.auth.JwtAuthenticationFilter;
 import net.scit.backend.auth.JwtTokenProvider;
 
@@ -64,6 +65,7 @@ public class SecurityConfig {
                                 // "/auth/login/oauth2/code/google","/favicon.ico", // OAuth2 콜백 URL 허용 추가
                                 "/workdata/**", // 자료실 관련(추후 삭제)
                                 "/workspace/**",
+                                "/ws/**",
                                 "/error")
                         .permitAll() // 로그인 엔드포인트 허용
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 전용
