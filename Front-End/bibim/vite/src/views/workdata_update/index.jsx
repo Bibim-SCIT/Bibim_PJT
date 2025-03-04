@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { getWorkdataDetail, getCurrentUser, updateWorkdata } from "../../api/workdata" // ✅ 기존 자료 불러오는 API 호출
 import {
     Box,
     Typography,
@@ -34,8 +35,22 @@ import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 
 export default function WdUpdatePage() {
     const navigate = useNavigate();
+    const { wsId, dataNumber } = useParams(); // ✅ URL에서 wsId와 dataNumber 가져오기
 
-    const currentUser = { id: 'user123', name: '임성준', avatar: CatImg };
+    // ✅ currentUser를 API에서 가져오기
+    const [currentUser, setCurrentUser] = useState(null);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const userData = await getCurrentUser();
+                setCurrentUser(userData);
+            } catch (error) {
+                console.error("사용자 정보를 불러오는 데 실패했습니다:", error);
+            }
+        };
+        fetchUser();
+    }, []);
 
     // 파일 아이콘 매핑
     const fileTypeIcons = {
@@ -57,26 +72,39 @@ export default function WdUpdatePage() {
     const [tagInput, setTagInput] = useState('');
     const [tagError, setTagError] = useState('');
     const [fileList, setFileList] = useState([]);
+    const [uploader, setUploader] = useState("");         // 작성자 이름
+    const [uploaderAvatar, setUploaderAvatar] = useState(""); // 작성자 프로필 이미지
+    const [uploadDate, setUploadDate] = useState("");     // 작성 날짜
+    const [deletedTags, setDeletedTags] = useState([]); // 삭제된 태그 목록
+
 
     const fileInputRef = useRef(null);
 
-    // 컴포넌트가 마운트되면 더미 데이터로 초기 상태를 설정합니다.
     useEffect(() => {
-        const dummyData = {
-            title: '더미 자료 제목',
-            content: '이것은 더미 데이터로 불러온 자료 내용입니다.',
-            tags: ['더미태그1', '더미태그2'],
-            fileList: [
-                { name: 'example.pdf' },
-                { name: 'image.png' }
-            ]
+        const fetchData = async () => {
+            try {
+                const data = await getWorkdataDetail(wsId, dataNumber); // 백엔드 API 호출
+                console.log("✅ 기존 데이터 불러옴:", data);
+
+                setTitle(data.title);
+                setContent(data.content);
+                setTags(data.tags || []);
+                setFileList(data.fileNames.map(name => ({ name }))); // 파일 리스트 변환
+
+                // ✅ 작성자 정보 추가
+                setUploader(data.nickname);          // 작성자 이름
+                setUploaderAvatar(data.profileImage);      // 작성자 프로필 이미지
+                setUploadDate(data.regDate.split("T")[0]); // 날짜 형식 정리
+
+            } catch (error) {
+                console.error("❌ 자료 상세 조회 실패:", error);
+                alert("자료를 불러오는 데 실패했습니다.");
+                navigate('/workdata'); // 오류 발생 시 목록 페이지로 이동
+            }
         };
 
-        setTitle(dummyData.title);
-        setContent(dummyData.content);
-        setTags(dummyData.tags);
-        setFileList(dummyData.fileList);
-    }, []);
+        fetchData();
+    }, [wsId, dataNumber, navigate]);
 
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files);
@@ -125,15 +153,113 @@ export default function WdUpdatePage() {
         }
     };
 
+    // const handleTagDelete = (tagToDelete) => {
+    //     setTags((prev) => prev.filter((tag) => tag !== tagToDelete));
+    //     setTagError('');
+    // };
+
     const handleTagDelete = (tagToDelete) => {
         setTags((prev) => prev.filter((tag) => tag !== tagToDelete));
+
+        // ✅ 기존에 존재하던 태그라면 삭제 목록에 추가
+        if (prevTags.includes(tagToDelete)) {
+            setDeletedTags((prev) => [...prev, tagToDelete]);
+        }
+
         setTagError('');
     };
 
-    const handleUpdate = () => {
-        alert(`수정 제목: ${title}, 설명: ${content}, 태그: ${tags.join(', ')}, 파일 수: ${fileList.length}`);
-        navigate('/workdata');
+
+    // const handleUpdate = async () => {
+    //     if (!title.trim() || !content.trim()) {
+    //         alert("제목과 내용을 입력해주세요.");
+    //         return;
+    //     }
+
+    //     const deleteFiles = []; // 삭제할 파일 목록 (추가 구현 필요)
+    //     const tagRequests = tags.map(tag => ({ action: "ADD", tag })); // 태그 수정 형식 맞추기
+    //     const newFiles = []; // 새로 추가할 파일 (추가 구현 필요)
+
+    //     const formData = {
+    //         wsId,
+    //         dataNumber,
+    //         title,
+    //         content,
+    //         deleteFiles,
+    //         tagRequests,
+    //         newFiles
+    //     };
+
+    //     try {
+    //         const response = await updateWorkdata(
+    //             wsId,
+    //             dataNumber,
+    //             title,
+    //             content,
+    //             deleteFiles,
+    //             tagRequests,
+    //             newFiles
+    //         );
+
+    //         console.log("✅ 수정 완료:", response);
+    //         alert("자료가 성공적으로 수정되었습니다.");
+    //         navigate(`/workdata`); // ✅ 수정 후 목록 페이지로 이동
+    //     } catch (error) {
+    //         console.error("❌ 자료 수정 실패:", error);
+    //         alert("수정에 실패했습니다.");
+    //     }
+    // };
+
+    const handleUpdate = async () => {
+        if (!title.trim() || !content.trim()) {
+            alert("제목과 내용을 입력해주세요.");
+            return;
+        }
+
+        // 🛠️ 삭제된 파일 추적
+        const initialFileNames = fileList.map(file => file.name); // 기존 파일 목록
+        const deletedFiles = initialFileNames.filter(name => !fileList.some(file => file.name === name));
+
+        // 🛠️ 새로 추가된 파일 추적
+        const newFiles = fileList.filter(file => file instanceof File); // 새로 업로드된 파일만 추가
+
+
+        try {
+            // ✅ 기존 태그 목록을 `useState`에서 직접 가져옴 (불필요한 API 호출 제거)
+            const prevTags = tags;
+
+            // ✅ 태그 추가 및 삭제 목록 구분
+            const newTags = tags.filter(tag => !prevTags.includes(tag));
+            // const deletedTags = prevTags.filter(tag => !tags.includes(tag));
+
+            console.log("🔵 기존 태그:", prevTags);
+            console.log("🟢 추가된 태그:", newTags);
+            console.log("🔴 삭제된 태그:", deletedTags);
+
+            // ✅ API 요청 실행 (백엔드 요구 사항에 맞게 `deleteTags`와 `newTags` 분리)
+            const response = await updateWorkdata(
+                wsId,
+                dataNumber,
+                title,
+                content,
+                deletedFiles,  // 삭제할 파일
+                deletedTags,   // 삭제할 태그 목록
+                newTags,       // 추가할 태그 목록
+                newFiles       // 추가할 파일 
+            );
+
+            console.log("✅ 수정 완료:", response);
+            alert("자료가 성공적으로 수정되었습니다.");
+            navigate(`/workdata`);
+        } catch (error) {
+            console.error("❌ 자료 수정 실패:", error);
+            alert("수정에 실패했습니다.");
+        }
     };
+
+
+
+
 
     return (
         <MainCard title="자료실 글 수정">
@@ -153,11 +279,37 @@ export default function WdUpdatePage() {
                 <Grid item xs={2}>
                     <Typography variant="subtitle1">작성자</Typography>
                 </Grid>
+                {/* <Grid item xs={10}>
+                    {currentUser ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Avatar src={currentUser.
+                                profileImage || '/default-avatar.png'} sx={{ mr: 1 }} />
+                            <Typography>{currentUser.name} ({currentUser.email})</Typography>
+                        </Box>
+                    ) : (
+                        <Typography>로딩 중...</Typography>
+                    )}
+                </Grid> */}
                 <Grid item xs={10}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar src={currentUser.avatar} sx={{ mr: 1 }} />
-                        <Typography>{currentUser.name} ({currentUser.id})</Typography>
+                        {/* ✅ 작성자의 프로필 이미지 */}
+                        <Avatar src={uploaderAvatar || '/default-avatar.png'} sx={{ mr: 1 }} />
+                        <Typography>
+                            {uploader}
+                            {currentUser && (
+                                <span style={{ color: "gray", fontSize: "0.9em" }}>
+                                    {" "}(현재 로그인: {currentUser.name})
+                                </span>
+                            )}
+                        </Typography>
                     </Box>
+                </Grid>
+
+                <Grid item xs={2}>
+                    <Typography variant="subtitle1">작성 날짜</Typography>
+                </Grid>
+                <Grid item xs={10}>
+                    <Typography>{uploadDate}</Typography>
                 </Grid>
 
                 <Grid item xs={2}>

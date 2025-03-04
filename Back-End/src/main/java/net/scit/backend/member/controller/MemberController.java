@@ -1,19 +1,24 @@
 package net.scit.backend.member.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import net.scit.backend.common.ResultDTO;
-import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.auth.AuthUtil;
 import net.scit.backend.member.dto.*;
-import net.scit.backend.member.service.MemberService;
-import net.scit.backend.member.service.MemberDetailsService;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.auth.JwtTokenProvider;
+import net.scit.backend.common.ResultDTO;
+import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.member.service.MemberDetailsService;
+import net.scit.backend.member.service.MemberService;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Member 관련 업무 메소드가 지정된 Controller
@@ -107,9 +112,16 @@ public class MemberController {
      *         - ResultDTO: 성공 메시지와 로그인 응답 정보를 포함
      *         - LoginResponse: 사용자 이메일과 JWT 액세스 토큰 포함
      */
-    @GetMapping("/loginsucess")
+    @GetMapping("/loginsuccess")
     public ResponseEntity<ResultDTO<TokenDTO>> loginSuccess(@AuthenticationPrincipal UserDetails userDetails) {
         log.info("로그인 성공: {}", userDetails.getUsername());
+
+        String email = AuthUtil.getLoginUserId();
+        if (email == null || email.isEmpty()) {
+            log.error("⚠️ 현재 로그인한 사용자의 이메일을 가져올 수 없습니다.");
+            throw new IllegalStateException("로그인한 사용자의 이메일을 가져올 수 없습니다.");
+        }
+        log.info("로그인 email: {}", email);
 
         // UserDetails에서 추출한 username으로 JWT 토큰 생성
         TokenDTO tokenDTO = jwtTokenProvider.generateToken(userDetails.getUsername());
@@ -126,7 +138,7 @@ public class MemberController {
      * @return 회원 정보
      */
     @GetMapping("/myinfo")
-    public ResponseEntity<ResultDTO<MyInfoDTO>> myInfo(HttpServletRequest request) {
+    public ResponseEntity<ResultDTO<MyInfoDTO>> myInfo() {
         return ResponseEntity.ok(memberService.myInfo());
     }
 
@@ -162,6 +174,10 @@ public class MemberController {
         ResultDTO<TokenDTO> response = memberDetailsService.login(
                 loginRequest.getEmail(),
                 loginRequest.getPassword());
+
+        // 로그인 성공 후 DB 업데이트
+        memberService.updateLoginStatus(loginRequest.getEmail(), true, LocalDateTime.now());
+
         return ResponseEntity.ok(response);
     }
 
@@ -211,5 +227,17 @@ public class MemberController {
         ResultDTO<SuccessDTO> result = memberService.withdraw(memberDTO);
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * 현재 사용자의 로그인 상태 조회 API(각 상태 업데이트는 로그인, 로그아웃 메서드에서 구현)
+     *     (AccessToken을 통해 AuthUtil에서 이메일을 추출하여 로그인 상태 true와 lastActiveTime 갱신)
+     */
+    @GetMapping("/login-status")
+    public ResponseEntity<ResultDTO<MemberLoginStatusDTO>> getLoginStatus() {
+        String email = AuthUtil.getLoginUserId();
+        MemberLoginStatusDTO statusDTO = memberService.getLoginStatus(email);
+        return ResponseEntity.ok(ResultDTO.of("로그인 상태 조회 성공", statusDTO));
+    }
+
 
 }

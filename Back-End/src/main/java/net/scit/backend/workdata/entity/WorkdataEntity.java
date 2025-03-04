@@ -3,17 +3,17 @@ package net.scit.backend.workdata.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import net.scit.backend.workdata.dto.WorkdataDTO;
-import net.scit.backend.workspace.entity.WorkspaceEntity;
+import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
 @Builder
 @Entity
 @Table(name="workdata")
@@ -23,30 +23,35 @@ public class WorkdataEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long dataNumber;
 
-    // WorkspaceEntity와의 관계 설정 (ManyToOne)
+    // WorkspaceMemberEntity와의 관계 설정 (ManyToOne)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ws_id")
-    private WorkspaceEntity workspaceEntity;
+    @JoinColumn(name = "m_ws_number", updatable = false)
+    private WorkspaceMemberEntity workspaceMember;
 
     private String writer;
     private String title;
     private String content;
 
     @CreationTimestamp
-    @Column(name="reg_date")
+    @Column(name = "reg_date")
     private LocalDateTime regDate;
 
-    // WorkdataFileEntity와의 관계 설정 (OneToMany, mappedBy 수정)
-    @OneToMany(mappedBy = "workdataEntity", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<WorkdataFileEntity> workdataFile;
+    /**
+     * 자식 1) workdata_file 테이블과의 일대다 관계
+     */
+    @OneToMany(mappedBy = "workdataEntity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<WorkdataFileEntity> workdataFile = new HashSet<>();
 
-//    @Version  // Optimistic Locking을 위한 버전 필드
-//    private Integer version = 0;
+    /**
+     * 자식 2) workdata_file_tag 테이블과의 일대다 관계
+     */
+    @OneToMany(mappedBy = "workdataEntity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<WorkDataFileTagEntity> workdataFileTag = new HashSet<>();
 
-    public static WorkdataEntity toEntity(WorkdataDTO workdataDTO, WorkspaceEntity workspaceEntity) {
+    public static WorkdataEntity toEntity(WorkdataDTO workdataDTO, WorkspaceMemberEntity workspaceMemberEntity) {
         return WorkdataEntity.builder()
                 .dataNumber(workdataDTO.getDataNumber())
-                .workspaceEntity(workspaceEntity)
+                .workspaceMember(workspaceMemberEntity)
                 .writer(workdataDTO.getWriter())
                 .title(workdataDTO.getTitle())
                 .content(workdataDTO.getContent())

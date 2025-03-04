@@ -1,20 +1,26 @@
-// material-ui
-import Typography from '@mui/material/Typography';
+import React from 'react';
+import Calendar from './components/calendar.jsx';
+import { styled } from '@mui/material/styles';
+import { Box, Typography } from '@mui/material';
+import { useSelector } from 'react-redux';
 
-// project imports
-import MainCard from 'ui-component/cards/MainCard';
+const SchedulePageWrapper = styled(Box)({
+  padding: '20px',
+  '& h1': {
+    marginBottom: '20px',
+    color: '#333'
+  }
+});
 
-// ==============================|| SAMPLE PAGE ||============================== //
+const SchedulePage = () => {
+  const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
 
-export default function CalendarView() {
-    return (
-        <MainCard title="여기는 캘린더뷰">
-            <Typography variant="body2">
-                Lorem ipsum dolor sit amen, consenter nipissing eli, sed do elusion tempos incident ut laborers et doolie magna alissa. Ut enif ad
-                minim venice, quin nostrum exercitation illampu laborings nisi ut liquid ex ea commons construal. Duos aube grue dolor in
-                reprehended in voltage veil esse colum doolie eu fujian bulla parian. Exceptive sin ocean cuspidate non president, sunk in culpa qui
-                officiate descent molls anim id est labours. 여기는 캘린더뷰
-            </Typography>
-        </MainCard>
-    );
-}
+  return (
+    <SchedulePageWrapper>
+      <Typography variant="h4" component="h1">{activeWorkspace.wsName}의 일정 관리</Typography>
+      <Calendar />
+    </SchedulePageWrapper>
+  );
+};
+
+export default SchedulePage;

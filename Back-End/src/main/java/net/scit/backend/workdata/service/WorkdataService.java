@@ -3,31 +3,40 @@ package net.scit.backend.workdata.service;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.workdata.dto.WorkdataDTO;
+import net.scit.backend.workdata.dto.WorkdataTotalSearchDTO;
+import net.scit.backend.workdata.entity.WorkdataEntity;
+import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 @Service
 public interface WorkdataService {
 
+
+    // 게시글 등록 (파일 및 태그 포함)
+    WorkdataDTO createWorkdata(WorkdataDTO dto, MultipartFile[] files, List<String> tags, WorkspaceMemberEntity wsMember);
+    // 게시글 등록 후 엔티티 반환
+    WorkdataEntity createWorkdataAndReturnEntity(WorkdataDTO dto, WorkspaceMemberEntity wsMember);
+
+    //1-2) 자료글 삭제(+ 파일, 태그)
+    ResultDTO<SuccessDTO> deleteWorkdata(Long wsId, Long dataNumber);
+
+    //1-3) 자료글 수정(+ 파일, 태그)
+        // 기존 등록 관련 메서드 외에 수정 메서드 선언
+        ResultDTO<SuccessDTO> updateWorkdata(Long wsId, Long dataNumber, String title, String content,
+                                             List<String> deleteFiles, List<String> deleteTags,
+                                             List<String> newTags, MultipartFile[] newFiles);
+
     //자료글 전체 조회
-    ResultDTO<List<WorkdataDTO>> workdata(Long wsId);
+    ResponseEntity<ResultDTO<List<WorkdataTotalSearchDTO>>> workdata(Long wsId, String sort, String order);
 
     //자료글 개별 조회
-    ResultDTO<WorkdataDTO> workdataDetail(Long wsId, Long dataNumber);
-
-    //자료글 생성
-    ResultDTO<SuccessDTO> workdataCreate(Long wsId, WorkdataDTO workdataDTO);
-
-    //자료글 삭제
-    ResultDTO<SuccessDTO> workdataDelete(Long wsId, Long dataNumber, String currentUserEmail);
-
-    //자료글 수정
-    ResultDTO<WorkdataDTO> workdataUpdate(Long wsId, Long dataNumber, WorkdataDTO workdataDTO);
+    ResponseEntity<ResultDTO<WorkdataTotalSearchDTO>> workdataDetail(Long wsId, Long dataNumber);
 
     //자료 검색(workdata의 title, writer 기반)
-    ResultDTO<List<WorkdataDTO>> searchWorkdata(Long wsId, String keyword);
+    ResultDTO<List<WorkdataTotalSearchDTO>> searchWorkdata(Long wsId, String keyword, String sort, String order);
 
-    //자료 동적 정렬(writer, title, reg_date, file_name)
-    ResultDTO<List<WorkdataDTO>> getSortedWorkdata(Long wsId, String sortField, String sortOrder);
 }

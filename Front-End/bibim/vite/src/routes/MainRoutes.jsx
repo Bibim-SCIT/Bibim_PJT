@@ -8,11 +8,6 @@ import Loadable from 'ui-component/Loadable';
 // dashboard routing
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')));
 
-// utilities routing
-// const UtilsTypography = Loadable(lazy(() => import('views/utilities/Typography')));
-// const UtilsColor = Loadable(lazy(() => import('views/utilities/Color')));
-// const UtilsShadow = Loadable(lazy(() => import('views/utilities/Shadow')));
-
 // sample page routing
 const DMPage = Loadable(lazy(() => import('views/dm')));
 const MeetingPage = Loadable(lazy(() => import('views/meeting')));
@@ -23,9 +18,12 @@ const WdUpdatePage = Loadable(lazy(() => import('views/workdata_update')));
 const CalendarView = Loadable(lazy(() => import('views/schedule/calendar')));
 const GanttView = Loadable(lazy(() => import('views/schedule/gantt')));
 const OverallView = Loadable(lazy(() => import('views/schedule/overall')));
+const WsSelectPage = Loadable(lazy(() => import('views/ws-select')));
 const WsSettingPage = Loadable(lazy(() => import('views/ws-setting')));
-const ProfileUpdatePage = Loadable(lazy(() => import('views/profile_update')));
 const MyPage = Loadable(lazy(() => import('views/mypage')));
+const MyPageUpdatePage = Loadable(lazy(() => import('views/mypage_update')));
+const Channel = Loadable(lazy(() => import('views/ws-channel/ChatComponent')));
+const WsRoleSetting = Loadable(lazy(() => import('views/ws-role/WsRoleSetting')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -67,7 +65,7 @@ const MainRoutes = {
       element: <WdCreatePage />
     },
     {
-      path: '/workdata/update',
+      path: '/workdata/update/:wsId/:dataNumber', // ✅ 동적 라우트 적용
       element: <WdUpdatePage />
     },
     {
@@ -83,6 +81,14 @@ const MainRoutes = {
       element: <OverallView />
     },
     {
+      path: '/channel',
+      element: <Channel channelId={11} />
+    },
+    {
+      path: '/ws-select',
+      element: <WsSelectPage />
+    },
+    {
       path: '/ws-setting',
       element: <WsSettingPage />
     },
@@ -91,8 +97,12 @@ const MainRoutes = {
       element: <MyPage />
     },
     {
-      path: '/profile_update',
-      element: <ProfileUpdatePage />
+      path: '/mypage/update',
+      element: <MyPageUpdatePage />
+    },
+    {
+      path: '/workspace/role',
+      element: <WsRoleSetting />
     }
   ]
 };
