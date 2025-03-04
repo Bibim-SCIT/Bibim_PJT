@@ -56,16 +56,22 @@ const WsSettingModal = ({ open, onClose, onUpdate, initialData }) => {
         
         try {
             setIsSubmitting(true);
-            await updateWorkspace(
+            const response = await updateWorkspace(
                 initialData.wsName,
                 formData.name,
                 imageFile
             );
             
-            dispatch(loadWorkspace());
-            
-            onUpdate(formData);
-            onClose();
+            if (response.success) {
+                // 업데이트 성공 시 부모 컴포넌트에 변경된 정보 전달
+                onUpdate({
+                    wsName: formData.name,
+                    wsImg: formData.image
+                });
+                onClose();
+            } else {
+                console.error('업데이트 실패:', response.message);
+            }
         } catch (error) {
             console.error('워크스페이스 업데이트 실패:', error);
         } finally {

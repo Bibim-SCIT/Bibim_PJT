@@ -213,26 +213,27 @@ export const getWorkspaceMembers = async (workspaceId) => {
 };
 
 export const updateWorkspace = async (wsName, newName, imageFile) => {
-    try {
-        const formData = new FormData();
-        formData.append('wsName', wsName);
-        formData.append('newName', newName);
-        if (imageFile) {
-            formData.append('file', imageFile);
-        }
-
-        const response = await axios.put('/api/workspace', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            }
-        });
-
-        return response.data;
-    } catch (error) {
-        console.error('워크스페이스 업데이트 실패:', error);
-        throw error;
+  try {
+    const formData = new FormData();
+    formData.append('wsName', wsName);
+    formData.append('newName', newName);
+    if (imageFile) {
+      formData.append('file', imageFile);
     }
+
+    const response = await api.put('/workspace', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('🚨 워크스페이스 업데이트 실패:', error);
+    throw error;
+  }
 };
+
 
 export default {
     getWorkspaces,
