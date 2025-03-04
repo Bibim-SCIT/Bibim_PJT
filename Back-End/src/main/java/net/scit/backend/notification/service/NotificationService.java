@@ -16,5 +16,7 @@ public interface NotificationService {
 
     boolean markAsRead(Long notificationNumber);
 
+    boolean markAllAsRead(String memberEmail);
+
     boolean deleteNotification(Long notificationNumber);
 }

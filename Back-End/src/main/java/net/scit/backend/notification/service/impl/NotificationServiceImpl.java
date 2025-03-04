@@ -78,7 +78,11 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
 
-    // ✅ 알림 읽음 처리
+    /**
+     * ✅ 알림 개별 읽음 처리
+     * @param notificationNumber
+     * @return
+     */
     @Override
     public boolean markAsRead(Long notificationNumber) {
         return notificationRepository.findById(notificationNumber).map(notification -> {
@@ -87,6 +91,27 @@ public class NotificationServiceImpl implements NotificationService {
             return true;
         }).orElse(false);
     }
+
+
+    /**
+     * ✅ 알림 전체 읽음 처리
+     * @param memberEmail
+     * @return
+     */
+    @Override
+    public boolean markAllAsRead(String memberEmail) {
+        List<NotificationEntity> unreadNotifications = notificationRepository
+                .findByMemberEmailAndNotificationStatusFalseOrderByNotificationDateDesc(memberEmail);
+
+        if (unreadNotifications.isEmpty()) {
+            return false;
+        }
+
+        unreadNotifications.forEach(notification -> notification.setNotificationStatus(true));
+        notificationRepository.saveAll(unreadNotifications);
+        return true;
+    }
+
 
 
     // ✅ 알림 삭제
