@@ -68,7 +68,7 @@ export default function WorkDataPage() {
         };
 
         fetchWorkdata();
-    }, []);  // ✅ 최초 한 번만 실행 (정렬할 때는 재요청 안 함)
+    }, [activeWorkspace]);  // ✅ 최초 한 번만 실행 (정렬할 때는 재요청 안 함)
 
     // ✅ 정렬 함수 (프론트에서 정렬)
     const [sortField, setSortField] = useState("regDate");
