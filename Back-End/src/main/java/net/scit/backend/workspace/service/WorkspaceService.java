@@ -3,7 +3,6 @@ package net.scit.backend.workspace.service;
 import java.util.List;
 
 import net.scit.backend.member.dto.MemberLoginStatusDTO;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,19 +23,19 @@ public interface WorkspaceService
     
     ResultDTO<SuccessDTO> workspaceUpdate(String wsName,String newName,MultipartFile file) ;
 
-    ResultDTO<SuccessDTO> workspaseInvate(Long wsId, String email);
+    ResultDTO<SuccessDTO> workspaceInvate(Long wsId, String email);
 
-    public ResultDTO<SuccessDTO> workspaseAdd(String code);
+    public ResultDTO<SuccessDTO> workspaceAdd(String code);
 
     public ResultDTO<SuccessDTO> workspaceWithDrwal(Long wsId);
 
-    public ResultDTO<SuccessDTO> worksapceForceDrawal(Long wsId, String email);
+    public ResultDTO<SuccessDTO> workspaceForceDrawal(Long wsId, String email);
 
-    ResultDTO<SuccessDTO> worksapceRightCreate(Long wsId, String newRole);
+    ResultDTO<SuccessDTO> workspaceRightCreate(Long wsId, String newRole);
 
-    ResultDTO<SuccessDTO> worksapceRightGrant(Long wsId, String email,Long chRole);
+    ResultDTO<SuccessDTO> workspaceRightGrant(Long wsId, String email,Long chRole);
 
-    ResultDTO<SuccessDTO> worksapceRightDelete(Long wsId, Long chRole);
+    ResultDTO<SuccessDTO> workspaceRightDelete(Long wsId, Long chRole);
 
     ResultDTO<WorkspaceMemberDTO> getWorkspaceMemberInfo(Long wsId);
 
