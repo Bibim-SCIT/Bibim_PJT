@@ -37,35 +37,25 @@
     max-width: 70%;
 }
 
-/* 내가 보낸 메시지 */
 .my-message {
     align-self: flex-end;
     text-align: right;
 }
 
-/* .my-message .message-content {
-    background-color: #007bff;
-    color: white;
-} */
-
-/* 상대방이 보낸 메시지 */
 .other-message {
     align-self: flex-start;
     text-align: left;
 }
 
-/* .other-message .message-content {
-    background-color: #e5e5ea;
-    color: black;
-} */
-
-/* 메시지 박스
+/* 메시지 박스 */
 .message-content {
     padding: 8px 12px;
     border-radius: 15px;
     margin-top: 5px;
     display: inline-block;
-} */
+    background-color: #e5e5ea;
+    color: black;
+}
 
 /* 발신자 이름 */
 .sender {
@@ -73,17 +63,16 @@
     color: gray;
 }
 
-/* ✅ 수정된 입력창 컨테이너 */
+/* 입력창 컨테이너 */
 .chat-input-box {
     display: flex;
     align-items: center;
     background-color: white;
     padding: 8px;
     border-top: 1px solid #ddd;
-    position: fixed;
+    position: sticky; /* ✅ 변경: fixed → sticky */
     bottom: 0;
     width: 100%;
-    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
     max-width: 600px;
     margin: 0 auto;
     left: 50%;
