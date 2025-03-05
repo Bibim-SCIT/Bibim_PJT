@@ -12,12 +12,16 @@ import net.scit.backend.workdata.dto.WorkdataTotalSearchDTO;
 import net.scit.backend.workdata.entity.WorkDataFileTagEntity;
 import net.scit.backend.workdata.entity.WorkdataEntity;
 import net.scit.backend.workdata.entity.WorkdataFileEntity;
+import net.scit.backend.workdata.event.WorkdataCreatedEvent;
+import net.scit.backend.workdata.event.WorkdataDeletedEvent;
+import net.scit.backend.workdata.event.WorkdataUpdatedEvent;
 import net.scit.backend.workdata.repository.WorkdataFileRepository;
 import net.scit.backend.workdata.repository.WorkdataFileTagRepository;
 import net.scit.backend.workdata.repository.WorkdataRepository;
 import net.scit.backend.workdata.service.WorkdataService;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,25 +43,28 @@ public class WorkdataServiceImpl implements WorkdataService {
     private final WorkdataFileTagRepository workdataFileTagRepository;
     private final S3Uploader s3Uploader;
     private final WorkspaceMemberRepository workspaceMemberRepository;
-
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
-     * 1-1) 자료글 등록(+ 파일, 태그)
+     * 1-1) 자료글 등록 (+파일, +태그)
+     */
+    /**
+     * 1-1) 자료글 등록 (+파일, +태그) + 워크스페이스 검증 추가
      */
     @Override
-    @Transactional
-    public WorkdataDTO createWorkdata(WorkdataDTO dto, MultipartFile[] files, List<String> tags, WorkspaceMemberEntity wsMember) {
-        // 게시글 생성 및 저장
-        WorkdataEntity workdataEntity = createWorkdataAndReturnEntity(dto, wsMember);
+    public WorkdataDTO createWorkdata(String email, String title, String content, MultipartFile[] files, List<String> tags) {
+        // ✅ 1) 사용자의 워크스페이스 검증
+        WorkspaceMemberEntity wsMember = (WorkspaceMemberEntity) workspaceMemberRepository
+                .findByMember_Email(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자의 워크스페이스를 찾을 수 없습니다."));
+
+        // ✅ 2) 게시글(Workdata) 엔티티 생성 및 저장
+        WorkdataEntity workdataEntity = createWorkdataAndReturnEntity(email, title, content, wsMember);
         workdataRepository.flush();
 
-        // 파일 저장
+        // ✅ 3) 파일 저장 (S3 업로드 -> DB 저장)
+        List<WorkdataFileEntity> fileEntities = new ArrayList<>();
         if (files != null && files.length > 0) {
-            int existingFileCount = workdataFileRepository.countByWorkdataEntity(workdataEntity);
-            if (existingFileCount + files.length > 10) {
-                throw new IllegalArgumentException("최대 10개의 파일만 업로드할 수 있습니다.");
-            }
-
             for (MultipartFile file : files) {
                 try {
                     String fileUrl = s3Uploader.upload(file, "workdata-files");
@@ -69,11 +76,7 @@ public class WorkdataServiceImpl implements WorkdataService {
                             .build();
 
                     workdataFileRepository.save(fileEntity);
-
-                    if (workdataEntity.getWorkdataFile() == null) {
-                        workdataEntity.setWorkdataFile(new HashSet<>());
-                    }
-                    workdataEntity.getWorkdataFile().add(fileEntity);
+                    fileEntities.add(fileEntity);
 
                 } catch (IOException e) {
                     log.error("파일 업로드 중 오류 발생: {}", file.getOriginalFilename(), e);
@@ -82,54 +85,44 @@ public class WorkdataServiceImpl implements WorkdataService {
             }
         }
 
-        // 태그 저장 (WorkdataEntity와 직접 연결)
+        // ✅ 4) 태그 저장
+        List<WorkDataFileTagEntity> tagEntities = new ArrayList<>();
         if (tags != null && !tags.isEmpty()) {
             for (String tag : tags) {
-                if (tag.matches("^[가-힣]+$") && tag.length() > 3) {
-                    throw new IllegalArgumentException("한글 태그는 3글자 이하로 입력해주세요.");
-                } else if (tag.matches("^[a-zA-Z]+$") && tag.length() > 5) {
-                    throw new IllegalArgumentException("영어 태그는 5글자 이하로 입력해주세요.");
-                } else if (!tag.matches("^[가-힣a-zA-Z]+$")) {
-                    throw new IllegalArgumentException("태그는 한글 또는 영어만 사용 가능합니다.");
-                }
-
                 WorkDataFileTagEntity tagEntity = WorkDataFileTagEntity.builder()
                         .workdataEntity(workdataEntity)
                         .tag(tag)
                         .build();
 
                 workdataFileTagRepository.save(tagEntity);
-
-                if (workdataEntity.getWorkdataFileTag() == null) {
-                    workdataEntity.setWorkdataFileTag(new HashSet<>());
-                }
-                workdataEntity.getWorkdataFileTag().add(tagEntity);
+                tagEntities.add(tagEntity);
             }
         }
 
-        // 최신 상태의 엔티티 재조회
+        // ✅ 5) 최신 데이터 다시 조회
         workdataEntity = workdataRepository.findById(workdataEntity.getDataNumber())
                 .orElseThrow(() -> new IllegalArgumentException("자료글을 찾을 수 없습니다."));
 
-        // DTO 변환 후 반환
-        return WorkdataDTO.toDTO(workdataEntity, wsMember);
+        // ✅ 6) 자료글 생성 이벤트 (알림 전송)
+        eventPublisher.publishEvent(new WorkdataCreatedEvent(workdataEntity, email));
+
+        // ✅ 7) DTO 변환하여 반환
+        return WorkdataDTO.toDTO(workdataEntity, fileEntities, tagEntities, wsMember);
     }
 
     /**
-     * 게시글 등록 후 엔티티 반환
+     * ✅ 게시글 등록 후 엔티티 반환 (내부적으로만 사용됨)
      */
-    @Override
-    @Transactional
-    public WorkdataEntity createWorkdataAndReturnEntity(WorkdataDTO dto, WorkspaceMemberEntity wsMember) {
-        WorkdataEntity workdataEntity = WorkdataEntity.builder()
+    private WorkdataEntity createWorkdataAndReturnEntity(String email, String title, String content, WorkspaceMemberEntity wsMember) {
+        WorkdataEntity entity = WorkdataEntity.builder()
                 .workspaceMember(wsMember)
-                .writer(dto.getWriter())
-                .title(dto.getTitle())
-                .content(dto.getContent())
-                .regDate(LocalDateTime.now())
+                .writer(email)
+                .title(title)
+                .content(content)
+                .regDate(LocalDateTime.now()) // 직접 세팅 (자동 세팅도 가능)
                 .build();
 
-        return workdataRepository.save(workdataEntity);
+        return workdataRepository.save(entity);
     }
 
 
@@ -140,119 +133,135 @@ public class WorkdataServiceImpl implements WorkdataService {
      * @return
      */
     @Override
-    @Transactional
-    public ResultDTO<SuccessDTO> deleteWorkdata(Long wsId, Long dataNumber) {
+    public ResultDTO<SuccessDTO> deleteWorkdata(String token, Long wsId, Long dataNumber) {
+        // ✅ 1) 토큰에서 사용자 이메일 추출
         String email = AuthUtil.getLoginUserId();
 
-        // 1. 해당 워크스페이스에 사용자가 속해 있는지 검증
+        // ✅ 2) 해당 사용자가 wsId에 속해 있는지 검증
         workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다."));
 
-        // 2. 자료글(WorkdataEntity) 조회
+        // ✅ 3) 자료글 조회
         WorkdataEntity workdataEntity = workdataRepository.findById(dataNumber)
                 .orElseThrow(() -> new IllegalArgumentException("자료글을 찾을 수 없습니다."));
 
-        // 3. 작성자와 로그인한 사용자가 일치하는지 확인
+        // ✅ 4) 작성자와 로그인 사용자가 일치하는지 확인
         if (!workdataEntity.getWriter().equals(email)) {
             throw new IllegalArgumentException("본인만 삭제할 수 있습니다.");
         }
 
-        // 4. 자료글 삭제
-        // WorkdataEntity의 Cascade 설정(@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true))에 따라
-        // 관련 파일(WorkdataFileEntity)과 태그(WorkDataFileTagEntity)도 함께 삭제됨
+        // ✅ 5) 자료글 삭제 (Cascade 설정 덕분에 파일, 태그 자동 삭제)
         workdataRepository.delete(workdataEntity);
 
-        // 5. 성공 응답 반환
+        // ✅ 6) 삭제 이벤트 발생 (알림 전송)
+        eventPublisher.publishEvent(new WorkdataDeletedEvent(workdataEntity, email));
+
+        // ✅ 7) 성공 응답
         SuccessDTO successDTO = SuccessDTO.builder().success(true).build();
-        return ResultDTO.of("자료글 및 관련 파일/태그 삭제(컬럼 Cascade)에 성공하였습니다.", successDTO);
+        return ResultDTO.of("자료글 및 관련 파일/태그 삭제에 성공하였습니다.", successDTO);
     }
 
 
     /**
-     * 1-3)자료글 수정(+ 파일, 태그)
-     * @param wsId
-     * @param dataNumber
-     * @param title
-     * @param content
-     * @param deleteFiles
-     * @param newTags
-     * @param newFiles
-     * @return
+     * 1-3) 자료글 수정(+ 파일, 태그)
      */
     @Override
-    @Transactional
     public ResultDTO<SuccessDTO> updateWorkdata(Long wsId,
                                                 Long dataNumber,
-                                                String title, String content,
+                                                String title,
+                                                String content,
                                                 List<String> deleteFiles,
                                                 List<String> deleteTags,
                                                 List<String> newTags,
                                                 MultipartFile[] newFiles) {
 
+        // 1. 현재 로그인한 사용자 이메일 추출
         String userEmail = AuthUtil.getLoginUserId();
 
-        // 1. 워크스페이스 검증
+        // 2. 해당 사용자가 wsId에 속해 있는지 검증
         workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다."));
 
-        // 2. 자료글(WorkdataEntity) 조회
+        // 3. 자료글 조회
         WorkdataEntity existingEntity = workdataRepository.findById(dataNumber)
                 .orElseThrow(() -> new IllegalArgumentException("자료글을 찾을 수 없습니다."));
 
-        // ✅ workspaceMember가 변경되지 않도록 유지
-        WorkspaceMemberEntity existingWorkspaceMember = existingEntity.getWorkspaceMember();
-        log.info("Before update - workspaceMember: {}", existingWorkspaceMember.getMWsNumber());
-
-        // 3. 작성자 검증
+        // 4. 작성자 검증
         if (!existingEntity.getWriter().equals(userEmail)) {
             throw new IllegalArgumentException("본인만 수정할 수 있습니다.");
         }
 
-        // 4. 파일 삭제 처리 (S3 삭제 + DB 삭제)
+        // ✅ workspaceMember가 변경되지 않도록 유지
+        //    - 이미 existingEntity에 등록된 workspaceMember(작성자/워크스페이스) 그대로 유지
+        WorkspaceMemberEntity existingWorkspaceMember = existingEntity.getWorkspaceMember();
+
+        /* ---------------------------
+         *    파일 삭제 처리
+         * --------------------------- */
         if (deleteFiles != null && !deleteFiles.isEmpty()) {
+            // 1) 삭제할 파일들 조회
             List<WorkdataFileEntity> filesToDelete = workdataFileRepository.findByFileNameInAndWorkdataEntity(deleteFiles, existingEntity);
+            // 2) S3 파일 삭제
             filesToDelete.forEach(fileEntity -> {
                 try {
-                    s3Uploader.deleteFile(new URL(fileEntity.getFile()).getPath().substring(1));
+                    String fileUrl = fileEntity.getFile(); // full path
+                    // S3에서는 path.substring(1) 등으로 key를 추출해야 할 수도 있음
+                    s3Uploader.deleteFile(new URL(fileUrl).getPath().substring(1));
                 } catch (MalformedURLException e) {
                     log.error("잘못된 파일 URL: {}", fileEntity.getFile(), e);
                     throw new RuntimeException("파일 삭제 중 오류 발생: 잘못된 URL 형식입니다.");
                 }
             });
+            // 3) DB에서도 삭제
             workdataFileRepository.deleteAll(filesToDelete);
         }
 
-        // 5. 태그 삭제 및 추가 처리 (WorkdataEntity와 직접 연결)
+        /* ---------------------------
+         *    태그 삭제 / 추가 처리
+         * --------------------------- */
+        // 현재 등록된 태그 set
         Set<String> existingTags = workdataFileTagRepository.findByWorkdataEntity(existingEntity)
-                .stream().map(WorkDataFileTagEntity::getTag)
+                .stream()
+                .map(WorkDataFileTagEntity::getTag)
                 .collect(Collectors.toSet());
 
+        // 1) 태그 삭제
         if (deleteTags != null && !deleteTags.isEmpty()) {
             List<WorkDataFileTagEntity> tagsToRemove = workdataFileTagRepository.findByTagInAndWorkdataEntity(deleteTags, existingEntity);
             workdataFileTagRepository.deleteAll(tagsToRemove);
         }
 
+        // 2) 태그 추가
         if (newTags != null && !newTags.isEmpty()) {
-            newTags.removeAll(existingTags); // ✅ 중복 태그 방지
+            // 중복 태그 제거
+            newTags.removeAll(existingTags);
+
             List<WorkDataFileTagEntity> newTagEntities = newTags.stream()
                     .map(tag -> WorkDataFileTagEntity.builder()
                             .workdataEntity(existingEntity)
                             .tag(tag)
                             .build())
                     .collect(Collectors.toList());
-            workdataFileTagRepository.saveAll(newTagEntities);
+
+            if (!newTagEntities.isEmpty()) {
+                workdataFileTagRepository.saveAll(newTagEntities);
+            }
         }
 
-        // 6. 새 파일 업로드 처리 (중복 파일 업로드 방지)
+        /* ---------------------------
+         *    새 파일 업로드 처리
+         * --------------------------- */
         if (newFiles != null && newFiles.length > 0) {
+            // 1) 현재 등록된 파일명 set
             Set<String> existingFileNames = workdataFileRepository.findByWorkdataEntity(existingEntity)
                     .stream()
                     .map(WorkdataFileEntity::getFileName)
                     .collect(Collectors.toSet());
 
+            // 2) 새 파일 업로드 + DB 저장
             List<WorkdataFileEntity> newFileEntities = Arrays.stream(newFiles)
-                    .filter(file -> file != null && file.getSize() > 0) // ✅ null 파일 및 빈 파일 방지
-                    .filter(file -> !existingFileNames.contains(file.getOriginalFilename())) // ✅ 중복 파일 방지
+                    .filter(file -> file != null && file.getSize() > 0)
+                    .filter(file -> !existingFileNames.contains(file.getOriginalFilename()))
                     .map(file -> {
                         try {
                             String fileUrl = s3Uploader.upload(file, "workdata-files");
@@ -265,74 +274,68 @@ public class WorkdataServiceImpl implements WorkdataService {
                             log.error("파일 업로드 실패: {}", file.getOriginalFilename(), e);
                             throw new RuntimeException("파일 업로드 중 오류 발생: " + file.getOriginalFilename(), e);
                         }
-                    }).collect(Collectors.toList());
+                    })
+                    .collect(Collectors.toList());
 
             if (!newFileEntities.isEmpty()) {
                 workdataFileRepository.saveAll(newFileEntities);
-            } else {
-                log.info("유효한 새 파일이 없어 저장하지 않았습니다.");
             }
         }
 
-        // 7. 자료글 제목 및 내용 수정
+        /* ---------------------------
+         *    자료글 제목 / 내용 수정
+         * --------------------------- */
         existingEntity.setTitle(title != null ? title : existingEntity.getTitle());
         existingEntity.setContent(content != null ? content : existingEntity.getContent());
 
-        // ✅ workspaceMember가 변경되지 않도록 유지
+        // ✅ 작성자 / 워크스페이스 변경 방지
         existingEntity.setWorkspaceMember(existingWorkspaceMember);
 
+        // DB에 저장 (flush로 즉시 반영 가능)
         workdataRepository.save(existingEntity);
-        log.info("After update - workspaceMember: {}", existingEntity.getWorkspaceMember().getMWsNumber());
 
+        // 📢 자료글 수정 이벤트 발생 (알림 생성 등)
+        eventPublisher.publishEvent(new WorkdataUpdatedEvent(existingEntity, userEmail));
+
+        // 수정 결과 응답
         return ResultDTO.of("자료글 수정 완료!", SuccessDTO.builder().success(true).build());
     }
 
 
+
+
     /**
-     * 1-4.1) 자료글 전체 조회(+정렬)
-     *
-     * @return
+     * 1-4.1) 자료글 전체 조회 (+정렬)
      */
     @Override
-    @Transactional
     public ResponseEntity<ResultDTO<List<WorkdataTotalSearchDTO>>> workdata(Long wsId, String sort, String order) {
+        // ✅ 1) 로그인한 사용자 이메일 가져오기
         String userEmail = AuthUtil.getLoginUserId();
 
-        // 워크스페이스 멤버 검증
-        WorkspaceMemberEntity wsMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, userEmail)
+        // ✅ 2) 해당 사용자가 wsId에 속해 있는지 검증
+        WorkspaceMemberEntity wsMember = workspaceMemberRepository
+                .findByWorkspace_wsIdAndMember_Email(wsId, userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다."));
 
-        // WorkdataEntity 목록 조회 (files와 태그는 Eager 또는 fetch join으로 미리 로딩)
+        // ✅ 3) 자료글 목록 조회 (+ 파일, 태그 미리 로딩)
         List<WorkdataEntity> workdataEntities = Optional.ofNullable(workdataRepository.findWithFilesAndTags(wsId))
                 .orElse(Collections.emptyList());
 
+        // ✅ 4) DTO 변환
         List<WorkdataTotalSearchDTO> responseDTOs = workdataEntities.stream()
-                .map(entity -> {
-                    WorkdataTotalSearchDTO dto = WorkdataTotalSearchDTO.toWorkdataTotalSearchDTO(entity, wsMember);
-                    // 파일 이름 목록
-                    dto.setFileNames(entity.getWorkdataFile().stream()
-                            .map(WorkdataFileEntity::getFileName)
-                            .distinct()
-                            .collect(Collectors.toList()));
-                    // 파일 URL 목록
-                    dto.setFileUrls(entity.getWorkdataFile().stream()
-                            .map(WorkdataFileEntity::getFile)
-                            .distinct()
-                            .collect(Collectors.toList()));
-                    // 태그 목록 - 변경된 구조에 따라 WorkdataEntity의 직접 자식인 workdataFileTag를 사용
-                    dto.setTags(entity.getWorkdataFileTag().stream()
-                            .map(WorkDataFileTagEntity::getTag)
-                            .distinct()
-                            .collect(Collectors.toList()));
+                .map(entity -> WorkdataTotalSearchDTO.toDTO(
+                        entity,
+                        new ArrayList<>(entity.getWorkdataFiles()),  // 기존 `Set<WorkdataFileEntity>`을 List로 변환
+                        new ArrayList<>(entity.getWorkdataFileTags()),  // 기존 `Set<WorkDataFileTagEntity>`을 List로 변환
+                        wsMember
+                ))
+                .collect(Collectors.toList());
 
-                    return dto;
-                }).collect(Collectors.toList());
-
-        // 정렬 적용
+        // ✅ 5) 정렬 로직 (sort, order)
         Comparator<WorkdataTotalSearchDTO> comparator = switch (sort) {
             case "writer" -> Comparator.comparing(WorkdataTotalSearchDTO::getWriter, String.CASE_INSENSITIVE_ORDER);
-            case "title"  -> Comparator.comparing(WorkdataTotalSearchDTO::getTitle, String.CASE_INSENSITIVE_ORDER);
-            default       -> Comparator.comparing(WorkdataTotalSearchDTO::getRegDate);
+            case "title" -> Comparator.comparing(WorkdataTotalSearchDTO::getTitle, String.CASE_INSENSITIVE_ORDER);
+            default -> Comparator.comparing(WorkdataTotalSearchDTO::getRegDate);
         };
 
         if ("desc".equalsIgnoreCase(order)) {
@@ -341,50 +344,77 @@ public class WorkdataServiceImpl implements WorkdataService {
 
         responseDTOs.sort(comparator);
 
+        // ✅ 6) 응답 반환
         return ResponseEntity.ok(ResultDTO.of("자료글 전체 조회 성공!", responseDTOs));
     }
 
 
     /**
      * 1-4.2) 자료글 개별 조회
-     * @param wsId
-     * @param dataNumber
-     * @return
      */
     @Override
-    @Transactional
     public ResponseEntity<ResultDTO<WorkdataTotalSearchDTO>> workdataDetail(Long wsId, Long dataNumber) {
+        // 1. 로그인 사용자 이메일
         String userEmail = AuthUtil.getLoginUserId();
 
-        // 워크스페이스 멤버 검증
-        WorkspaceMemberEntity wsMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, userEmail)
+        // 2. 워크스페이스 멤버 검증
+        WorkspaceMemberEntity wsMember = workspaceMemberRepository
+                .findByWorkspace_wsIdAndMember_Email(wsId, userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다."));
 
-        // 자료글 조회 (※ 기존 Repository 메서드명이 관계 변경에 맞게 수정되어야 함)
-        WorkdataEntity workdataEntity = workdataRepository.findByDataNumberAndWorkspaceEntity_WsId(dataNumber, wsId)
+        // 3. 자료글 조회
+        // - Repository에서 (dataNumber, wsId)로 조회
+        // - 파일/태그를 미리 로딩하기 위해 필요하다면 Fetch Join 쿼리 or @EntityGraph 사용
+        WorkdataEntity workdataEntity = workdataRepository.findByDataNumberAndWorkspace_WsId(dataNumber, wsId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 자료글을 찾을 수 없습니다."));
 
-        // DTO 변환
-        WorkdataTotalSearchDTO dto = WorkdataTotalSearchDTO.toWorkdataTotalSearchDTO(workdataEntity, wsMember);
+        // 4. DTO 변환
+        // 만약 DTO에 "toDTO(...)" 메서드가 있다면 사용
+        // 여기서는 "toWorkdataTotalSearchDTO" 메서드가 없을 수도 있으므로 아래와 같이 두 가지 방법이 있음:
+        //   A) 직접 DTO 빌더 사용
+        //   B) 기존 "toDTO(...)" 스타일 메서드 사용 (만약 정의돼 있다면)
 
-        // 파일 정보 설정
-        dto.setFileNames(workdataEntity.getWorkdataFile().stream()
-                .map(WorkdataFileEntity::getFileName)
-                .distinct()
-                .collect(Collectors.toList()));
+        // A) 직접 DTO 빌더 사용 (간단 예시)
+        WorkdataTotalSearchDTO dto = WorkdataTotalSearchDTO.builder()
+                .dataNumber(workdataEntity.getDataNumber())
+                .writer(workdataEntity.getWriter())
+                .title(workdataEntity.getTitle())
+                .content(workdataEntity.getContent())
+                .regDate(workdataEntity.getRegDate())
+                // 일단 빈 리스트를 넣고 아래에서 세터로 값 채우기
+                .fileNames(new ArrayList<>())
+                .fileUrls(new ArrayList<>())
+                .tags(new ArrayList<>())
+                // WorkspaceMemberEntity 관련 필드
+                .mWsNumber(wsMember.getMWsNumber())
+                .nickname(wsMember.getNickname())
+                .wsRole(wsMember.getWsRole())
+                .profileImage(wsMember.getProfileImage())
+                .build();
 
-        dto.setFileUrls(workdataEntity.getWorkdataFile().stream()
-                .map(WorkdataFileEntity::getFile)
-                .distinct()
-                .collect(Collectors.toList()));
+        // 5. 파일 목록
+        dto.setFileNames(
+                workdataEntity.getWorkdataFiles().stream()
+                        .map(WorkdataFileEntity::getFileName)
+                        .distinct()
+                        .collect(Collectors.toList())
+        );
+        dto.setFileUrls(
+                workdataEntity.getWorkdataFiles().stream()
+                        .map(WorkdataFileEntity::getFile)
+                        .distinct()
+                        .collect(Collectors.toList())
+        );
 
-        // 기존에는 WorkdataFileEntity의 태그를 조회하던 부분이었으나,
-        // 변경된 관계에서는 WorkdataEntity가 직접 WorkDataFileTagEntity를 자식으로 가지므로 아래와 같이 수정함.
-        dto.setTags(workdataEntity.getWorkdataFileTag().stream()
-                .map(WorkDataFileTagEntity::getTag)
-                .distinct()
-                .collect(Collectors.toList()));
+        // 6. 태그 목록
+        dto.setTags(
+                workdataEntity.getWorkdataFileTags().stream()
+                        .map(WorkDataFileTagEntity::getTag)
+                        .distinct()
+                        .collect(Collectors.toList())
+        );
 
+        // 7. 응답 반환
         return ResponseEntity.ok(ResultDTO.of("자료글 개별 조회 성공!", dto));
     }
 
@@ -395,41 +425,68 @@ public class WorkdataServiceImpl implements WorkdataService {
      * @param keyword
      * @return
      */
+    /**
+     * 2. 검색 기능 (writer, title, fileName, tag 등)
+     */
     @Override
-    @Transactional
-    public ResultDTO<List<WorkdataTotalSearchDTO>> searchWorkdata(Long wsId, String keyword, String sort, String order) {
+    public ResultDTO<List<WorkdataTotalSearchDTO>> searchWorkdata(Long wsId,
+                                                                  String keyword,
+                                                                  String sort,
+                                                                  String order) {
+        // 1) 로그인한 사용자 이메일
         String userEmail = AuthUtil.getLoginUserId();
 
-        // 1. 사용자의 워크스페이스 멤버 정보 조회
-        WorkspaceMemberEntity wsMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, userEmail)
+        // 2) 워크스페이스 멤버 검증
+        WorkspaceMemberEntity wsMember = workspaceMemberRepository
+                .findByWorkspace_wsIdAndMember_Email(wsId, userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다."));
 
-        // 2. 검색 실행: writer, title, fileName, tag에 keyword가 포함된 자료글 조회
-        List<WorkdataEntity> entities = workdataRepository.searchByWorkspaceAndKeyword(wsId, keyword);
+                        // 3) 검색 실행: writer, title, fileName, tag 등에서 keyword 포함된 자료글 조회
+                        List<WorkdataEntity> entities = workdataRepository.searchByWorkspaceAndKeyword(wsId, keyword);
 
-        // 3. 검색 결과 없을 경우 빈 리스트 반환
+        // 4) 검색 결과 없을 경우
         if (entities.isEmpty()) {
-            return ResultDTO.of("검색된 게시물이 없습니다.", List.of());
+            return ResultDTO.of("검색된 게시물이 없습니다.", Collections.emptyList());
         }
 
-        // 4. 검색 결과를 WorkdataTotalSearchDTO로 변환
+        // 5) 검색 결과 -> DTO 변환
         List<WorkdataTotalSearchDTO> dtos = entities.stream()
                 .map(entity -> {
-                    WorkdataTotalSearchDTO dto = WorkdataTotalSearchDTO.toWorkdataTotalSearchDTO(entity, wsMember);
+                    // WorkdataTotalSearchDTO를 빌더 또는 정적 메서드로 생성
+                    // 예: toDTO(entity, List<>, List<>, wsMember) 등이 있을 수 있음
+                    // 여기서는 간단히 직접 빌더 사용
+                    WorkdataTotalSearchDTO dto = WorkdataTotalSearchDTO.builder()
+                            .dataNumber(entity.getDataNumber())
+                            .writer(entity.getWriter())
+                            .title(entity.getTitle())
+                            .content(entity.getContent())
+                            .regDate(entity.getRegDate())
+                            // 일단 빈 리스트로 초기화
+                            .fileNames(new ArrayList<>())
+                            .fileUrls(new ArrayList<>())
+                            .tags(new ArrayList<>())
+                            // WorkspaceMember 정보
+                            .mWsNumber(wsMember.getMWsNumber())
+                            .nickname(wsMember.getNickname())
+                            .wsRole(wsMember.getWsRole())
+                            .profileImage(wsMember.getProfileImage())
+                            .build();
 
-                    // 파일 정보 변환 (파일 이름, URL은 WorkdataFileEntity에서 조회)
-                    dto.setFileNames(entity.getWorkdataFile().stream()
+                    // 파일 정보 변환 (파일 이름, URL)
+                    // 🔸 변경된 엔티티 구조: getWorkdataFiles()
+                    dto.setFileNames(entity.getWorkdataFiles().stream()
                             .map(WorkdataFileEntity::getFileName)
                             .distinct()
                             .collect(Collectors.toList()));
 
-                    dto.setFileUrls(entity.getWorkdataFile().stream()
+                    dto.setFileUrls(entity.getWorkdataFiles().stream()
                             .map(WorkdataFileEntity::getFile)
                             .distinct()
                             .collect(Collectors.toList()));
 
-                    // 태그 변환 - 변경된 구조에서는 WorkdataEntity의 workdataFileTag 컬렉션을 직접 사용
-                    dto.setTags(entity.getWorkdataFileTag().stream()
+                    // 태그 정보 변환
+                    // 🔸 변경된 엔티티 구조: getWorkdataFileTags()
+                    dto.setTags(entity.getWorkdataFileTags().stream()
                             .map(WorkDataFileTagEntity::getTag)
                             .distinct()
                             .collect(Collectors.toList()));
@@ -438,19 +495,21 @@ public class WorkdataServiceImpl implements WorkdataService {
                 })
                 .collect(Collectors.toList());
 
-        // 5. 정렬 적용
+        // 6) 정렬 적용
         Comparator<WorkdataTotalSearchDTO> comparator = switch (sort) {
             case "writer" -> Comparator.comparing(WorkdataTotalSearchDTO::getWriter, String.CASE_INSENSITIVE_ORDER);
             case "title"  -> Comparator.comparing(WorkdataTotalSearchDTO::getTitle, String.CASE_INSENSITIVE_ORDER);
-            default       -> Comparator.comparing(WorkdataTotalSearchDTO::getRegDate);
+                default         -> Comparator.comparing(WorkdataTotalSearchDTO::getRegDate);
         };
 
         if ("desc".equalsIgnoreCase(order)) {
-            comparator = comparator.reversed();
-        }
+        comparator = comparator.reversed();
+    }
 
         dtos.sort(comparator);
 
+    // 7) 결과 반환
         return ResultDTO.of("검색 결과 조회에 성공했습니다.", dtos);
-    }
+}
+
 }

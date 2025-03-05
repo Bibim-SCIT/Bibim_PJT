@@ -2,12 +2,14 @@ package net.scit.backend.workdata.dto;
 
 import lombok.*;
 import net.scit.backend.workdata.entity.WorkdataEntity;
+import net.scit.backend.workdata.entity.WorkdataFileEntity;
+import net.scit.backend.workdata.entity.WorkDataFileTagEntity;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -24,22 +26,30 @@ public class WorkdataTotalSearchDTO {
     private List<String> fileUrls;
     private List<String> tags;
 
-    // 🔹 추가: WorkspaceMemberEntity 관련 필드
     private Long mWsNumber;
     private String nickname;
     private String wsRole;
     private String profileImage;
 
-    public static WorkdataTotalSearchDTO toWorkdataTotalSearchDTO(WorkdataEntity entity, WorkspaceMemberEntity wsMember) {
+    public static WorkdataTotalSearchDTO toDTO(WorkdataEntity entity, List<WorkdataFileEntity> fileEntities, List<WorkDataFileTagEntity> tagEntities, WorkspaceMemberEntity wsMember) {
         return WorkdataTotalSearchDTO.builder()
                 .dataNumber(entity.getDataNumber())
                 .writer(entity.getWriter())
                 .title(entity.getTitle())
                 .content(entity.getContent())
                 .regDate(entity.getRegDate())
-                .fileNames(new ArrayList<>()) // 기본값 설정
-                .fileUrls(new ArrayList<>())  // 기본값 설정
-                .tags(new ArrayList<>()) // 기본값 설정
+                .fileNames(fileEntities.stream()
+                        .map(WorkdataFileEntity::getFileName)
+                        .distinct()
+                        .collect(Collectors.toList()))
+                .fileUrls(fileEntities.stream()
+                        .map(WorkdataFileEntity::getFile)
+                        .distinct()
+                        .collect(Collectors.toList()))
+                .tags(tagEntities.stream()
+                        .map(WorkDataFileTagEntity::getTag)
+                        .distinct()
+                        .collect(Collectors.toList()))
                 .mWsNumber(Optional.ofNullable(wsMember).map(WorkspaceMemberEntity::getMWsNumber).orElse(null))
                 .nickname(Optional.ofNullable(wsMember).map(WorkspaceMemberEntity::getNickname).orElse(null))
                 .wsRole(Optional.ofNullable(wsMember).map(WorkspaceMemberEntity::getWsRole).orElse(null))
@@ -47,4 +57,3 @@ public class WorkdataTotalSearchDTO {
                 .build();
     }
 }
-

@@ -11,6 +11,7 @@ public interface NotificationService {
                             String notificationName, String notificationType, String notificationContent);
 
     SseEmitter subscribe(String memberEmail);
+    void sendNotification(NotificationEntity notification);
 
     List<NotificationEntity> getUnreadNotifications(String memberEmail);
 
