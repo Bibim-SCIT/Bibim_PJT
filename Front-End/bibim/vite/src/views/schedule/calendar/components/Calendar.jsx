@@ -28,7 +28,7 @@ const Calendar = () => {
 
   useEffect(() => {
     if (!wsId) return;
-
+    
     const loadEvents = async () => {
       try {
         const tasks = await fetchScheduleTasks(wsId); // ✅ 간트 차트 API로 데이터 가져오기

@@ -10,6 +10,8 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import WarningIcon from '@mui/icons-material/Warning';
+import { withdrawMember } from '../../../api/members';
+import { useNavigate } from 'react-router-dom';
 
 const style = {
     top: '50%',
@@ -26,11 +28,17 @@ const style = {
 
 const WithdrawalModal = ({ open, handleClose }) => {
     const [password, setPassword] = useState('');
+    const navigate = useNavigate();
 
-    const handleWithdrawal = () => {
-        // API 호출 로직
-        console.log('회원 탈퇴');
-        handleClose();
+    const handleWithdrawal = async () => {
+        try {
+            const response = await withdrawMember(password);
+            console.log(response.message);
+            handleClose();
+            navigate('/pages/login');
+        } catch (error) {
+            console.error('회원 탈퇴 실패:', error.message);
+        }
     };
 
     return (
