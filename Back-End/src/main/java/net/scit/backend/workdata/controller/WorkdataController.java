@@ -61,17 +61,15 @@ public class WorkdataController {
     }
 
 
-
     /**
      * 1-2.1) 자료글 삭제 (+파일, +태그)
      */
     @DeleteMapping("/{wsId}/{dataNumber}")
     public ResponseEntity<ResultDTO<SuccessDTO>> deleteWorkdata(
-            @RequestHeader("Authorization") String token,
             @PathVariable Long wsId,
             @PathVariable Long dataNumber) {
         try {
-            ResultDTO<SuccessDTO> result = workdataService.deleteWorkdata(token, wsId, dataNumber);
+            ResultDTO<SuccessDTO> result = workdataService.deleteWorkdata(wsId, dataNumber);
             return ResponseEntity.ok(result);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
@@ -83,6 +81,8 @@ public class WorkdataController {
                             SuccessDTO.builder().success(false).build()));
         }
     }
+
+
 
 
 

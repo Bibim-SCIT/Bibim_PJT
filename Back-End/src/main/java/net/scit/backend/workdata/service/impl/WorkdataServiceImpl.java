@@ -138,33 +138,35 @@ public class WorkdataServiceImpl implements WorkdataService {
      * @return
      */
     @Override
-    public ResultDTO<SuccessDTO> deleteWorkdata(String token, Long wsId, Long dataNumber) {
-        // ✅ 1) 토큰에서 사용자 이메일 추출
+    public ResultDTO<SuccessDTO> deleteWorkdata(Long wsId, Long dataNumber) {
+        // ✅ 토큰에서 사용자 이메일 추출 (AuthUtil 사용)
         String email = AuthUtil.getLoginUserId();
 
-        // ✅ 2) 해당 사용자가 wsId에 속해 있는지 검증
-        workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email)
+        // ✅ 해당 사용자가 wsId에 속해 있는지 검증
+        workspaceMemberRepository.findByMember_EmailAndWorkspace_WsId(email, wsId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다."));
 
-        // ✅ 3) 자료글 조회
+        // ✅ 자료글 조회
         WorkdataEntity workdataEntity = workdataRepository.findById(dataNumber)
                 .orElseThrow(() -> new IllegalArgumentException("자료글을 찾을 수 없습니다."));
 
-        // ✅ 4) 작성자와 로그인 사용자가 일치하는지 확인
+        // ✅ 작성자와 로그인 사용자가 일치하는지 확인
         if (!workdataEntity.getWriter().equals(email)) {
             throw new IllegalArgumentException("본인만 삭제할 수 있습니다.");
         }
 
-        // ✅ 5) 자료글 삭제 (Cascade 설정 덕분에 파일, 태그 자동 삭제)
+        // ✅ 자료글 삭제 (Cascade 설정 덕분에 파일, 태그 자동 삭제)
         workdataRepository.delete(workdataEntity);
 
-        // ✅ 6) 삭제 이벤트 발생 (알림 전송)
+        // ✅ 삭제 이벤트 발생 (알림 전송)
         eventPublisher.publishEvent(new WorkdataDeletedEvent(workdataEntity, email));
 
-        // ✅ 7) 성공 응답
+        // ✅ 성공 응답
         SuccessDTO successDTO = SuccessDTO.builder().success(true).build();
         return ResultDTO.of("자료글 및 관련 파일/태그 삭제에 성공하였습니다.", successDTO);
     }
+
+
 
 
     /**

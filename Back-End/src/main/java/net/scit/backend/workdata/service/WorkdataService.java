@@ -19,9 +19,8 @@ public interface WorkdataService {
     // 자료글 등록 (파일 및 태그 포함)
     WorkdataDTO createWorkdata(Long wsId, String title, String content, MultipartFile[] files, List<String> tags);
 
-
     //1-2) 자료글 삭제(+ 파일, 태그)
-    ResultDTO<SuccessDTO> deleteWorkdata(String token, Long wsId, Long dataNumber);
+    ResultDTO<SuccessDTO> deleteWorkdata(Long wsId, Long dataNumber);
 
     // 1-3) 자료글 수정(+ 파일, 태그)
     ResultDTO<SuccessDTO> updateWorkdata(Long wsId,
