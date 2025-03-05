@@ -474,4 +474,34 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         return statusList;
     }
 
+    @Override
+    @Cacheable(value = "workspaceMemberList", key = "#workspaceId", unless = "#result == null || #result.isEmpty()")
+    public List<WorkspaceMemberDTO> getWorkspaceMembers(Long workspaceId, String userEmail) {
+        // 요청한 사용자가 해당 워크스페이스의 멤버인지 확인
+        Optional<WorkspaceMemberEntity> membershipOpt =
+                workspaceMemberRepository.findByWorkspace_WsIdAndMember_Email(workspaceId, userEmail);
+        if (!membershipOpt.isPresent()) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);  // 접근 권한 없음
+        }
+
+        // 워크스페이스에 소속된 모든 멤버 조회
+        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findByWorkspace_WsId(workspaceId);
+        List<WorkspaceMemberDTO> memberList = new ArrayList<>();
+
+        workspaceMembers.forEach(wme -> {
+            WorkspaceMemberDTO dto = WorkspaceMemberDTO.builder()
+                    .email(wme.getMember().getEmail())
+                    .name(wme.getMember().getName())
+                    .nickname(wme.getNickname())
+                    .wsRole(wme.getWsRole())
+                    .profileImage(wme.getProfileImage())
+                    .lastActiveTime(wme.getMember().getLastActiveTime())
+                    .build();
+
+            memberList.add(dto);
+        });
+
+        return memberList;
+    }
+
 }

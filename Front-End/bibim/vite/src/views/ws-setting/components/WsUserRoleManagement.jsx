@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Avatar, Select, MenuItem } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { kickUserFromWorkspace } from '../../../api/workspaceApi'; // API 함수 임포트
 
 const MOCK_USERS = [
     { nickname: '서연', email: 'seoyeon.park@example.com', lastLogin: '2024-03-19 14:30', role: '오너', profileImage: null },
@@ -29,11 +30,19 @@ const WsUserRoleManagement = () => {
         setOpenKickDialog(true);
     };
 
-    const handleConfirmKick = () => {
-        // API 연동 시 실제 강퇴 로직 구현 필요
-        console.log('강퇴:', selectedUser, '워크스페이스:', activeWorkspace?.wsId);
-        setOpenKickDialog(false);
-        setSelectedUser(null);
+    const handleConfirmKick = async () => {
+        try {
+            if (selectedUser && activeWorkspace) {
+                await kickUserFromWorkspace(activeWorkspace.wsId, selectedUser.email);
+                console.log('강퇴 성공:', selectedUser, '워크스페이스:', activeWorkspace.wsId);
+                // 강퇴 후 사용자 목록 갱신 로직 추가 필요
+            }
+        } catch (error) {
+            console.error('강퇴 실패:', error);
+        } finally {
+            setOpenKickDialog(false);
+            setSelectedUser(null);
+        }
     };
 
     const handleCloseKickDialog = () => {
@@ -94,7 +103,7 @@ const WsUserRoleManagement = () => {
                                     bgcolor: '#f8f9fa'
                                 }
                             }}>
-                                <TableCell width="20%" sx={{ pl: 2 }}>닉네임</TableCell>
+                                <TableCell width="20%" sx={{ pl: 2 }}>사용자</TableCell>
                                 <TableCell width="20%" sx={{ pl: 2 }}>이메일</TableCell>
                                 <TableCell width="20%" sx={{ pl: 2 }}>마지막 로그인</TableCell>
                                 <TableCell width="20%" sx={{ pl: 2 }}>권한</TableCell>

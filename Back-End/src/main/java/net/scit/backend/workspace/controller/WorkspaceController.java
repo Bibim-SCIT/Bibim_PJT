@@ -177,7 +177,7 @@ public class WorkspaceController {
     }
 
     /**
-     * 워크스페이스 내 회원 정보 조회
+     * 워크스페이스 나의 회원 정보 조회
      * 
      * @param wsId 조회할 워크스페이스 ID
      * @return
@@ -194,7 +194,7 @@ public class WorkspaceController {
     }
 
     /**
-     * 워크스페이스 내 회원 정보 수정
+     * 워크스페이스 나의 회원 정보 수정
      * 
      * @param wsId       워크스페이스 ID
      * @param updateInfo 수정할 정보
@@ -230,4 +230,23 @@ public class WorkspaceController {
         List<MemberLoginStatusDTO> statusList = workspaceService.getWorkspaceMembersStatus(workspaceId, email);
         return ResponseEntity.ok(ResultDTO.of("워크스페이스 멤버 접속 현황 조회 성공", statusList));
     }
+
+    /**
+     * 워크스페이스 내 모든 멤버 조회
+     *
+     * @param workspaceId 조회할 워크스페이스 ID
+     * @return 워크스페이스 멤버 목록
+     */
+    @GetMapping("/{workspaceId}/members")
+    public ResponseEntity<ResultDTO<List<WorkspaceMemberDTO>>> getWorkspaceMembers(
+            @PathVariable Long workspaceId) {
+        String email = AuthUtil.getLoginUserId(); // 현재 로그인한 사용자
+        if (email == null || email.isEmpty()) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+
+        List<WorkspaceMemberDTO> members = workspaceService.getWorkspaceMembers(workspaceId, email);
+        return ResponseEntity.ok(ResultDTO.of("워크스페이스 멤버 조회 성공", members));
+    }
 }
+

@@ -43,4 +43,6 @@ public interface WorkspaceService
     ResultDTO<SuccessDTO> updateWorkspaceMemberInfo(Long wsId, UpdateWorkspaceMemberDTO updateInfo, MultipartFile file);
 
     List<MemberLoginStatusDTO> getWorkspaceMembersStatus(Long workspaceId, String userEmail);
+
+    List<WorkspaceMemberDTO> getWorkspaceMembers(Long workspaceId, String email);
 }

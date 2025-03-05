@@ -175,6 +175,17 @@ export const updateWorkspace = async (wsName, newName, imageFile) => {
     }
 };
 
+export const kickUserFromWorkspace = async (wsId, email) => {
+    try {
+        const response = await axios.delete('/api/workspace/forcedrawal', {
+            params: { wsId, email }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error kicking user from workspace:', error);
+        throw error;
+    }
+};
 
 export default {
     getWorkspaces,
