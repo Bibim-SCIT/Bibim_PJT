@@ -101,6 +101,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     /**
      * Redis에서 초대 코드 검증 메소드
+     * 한번에 여러 초대를 받아도 정상적으로 처리 할 수 있도록 구현
      * 
      * 1. Redis에서 'newWorkspace: *' 패턴으로 모든 초대 코드 검색
      * 2. 저장된 초대 코드와 사용자가 입력한 코드가 일치하는지 확인
