@@ -1,24 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import React, { useEffect } from 'react';
+import { Box, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import GanttChart from './components/GanttChart';
-import KanbanBoard from './components/KanbanBoard';
+import KanbanBoard from '../components/KanbanBoard';
 import { useSelector, useDispatch } from 'react-redux';
 import { loadWorkspace } from '../../../store/workspaceRedux';
 
 const ScheduleWrapper = styled(Box)({
   padding: '20px',
-  '& h1': {
-    marginBottom: '20px',
-    color: '#333'
-  }
+  height: '100vh', // 전체 화면 높이 사용
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '20px' // 간트 차트와 칸반 보드 사이 여백
+});
+
+const GanttContainer = styled(Box)({
+  flex: 1, // 상단 50% 차지
+  minHeight: '50vh',
+  overflow: 'hidden',
+  backgroundColor: '#fff',
+  padding: '20px',
+  borderRadius: '10px',
+  boxShadow: '0 0 10px rgba(0,0,0,0.1)'
+});
+
+const KanbanContainer = styled(Box)({
+  flex: 1, // 하단 50% 차지
+  minHeight: '50vh',
+  overflow: 'hidden',
+  backgroundColor: '#fff',
+  padding: '20px',
+  borderRadius: '10px',
+  boxShadow: '0 0 10px rgba(0,0,0,0.1)'
 });
 
 const SchedulePage = () => {
   const dispatch = useDispatch();
-  const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
-  const [view, setView] = useState('gantt');
-  const wsId = activeWorkspace.wsId; // 🔥 캘린더와 동일한 방식으로 wsId를 하드코딩
+  const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace);
+  const wsId = activeWorkspace?.wsId;
 
   useEffect(() => {
     dispatch(loadWorkspace());
@@ -31,17 +50,17 @@ const SchedulePage = () => {
       </Typography>
       <Typography variant="h6">워크스페이스 ID: {wsId}</Typography>
 
-      <ToggleButtonGroup
-        value={view}
-        exclusive
-        onChange={(event, newView) => newView && setView(newView)}
-        sx={{ marginBottom: '20px' }}
-      >
-        <ToggleButton value="gantt">간트 차트</ToggleButton>
-        <ToggleButton value="kanban">칸반 보드</ToggleButton>
-      </ToggleButtonGroup>
+      {/* 간트 차트 */}
+      <GanttContainer>
+        <Typography variant="h5" gutterBottom>📅 간트 차트</Typography>
+        <GanttChart wsId={wsId} />
+      </GanttContainer>
 
-      {view === 'gantt' ? <GanttChart wsId={wsId} /> : <KanbanBoard wsId={wsId} />}
+      {/* 칸반 보드 */}
+      <KanbanContainer>
+        <Typography variant="h5" gutterBottom>📌 칸반 보드</Typography>
+        <KanbanBoard wsId={wsId} />
+      </KanbanContainer>
     </ScheduleWrapper>
   );
 };
