@@ -7,6 +7,7 @@ import net.scit.backend.auth.AuthUtil;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.component.S3Uploader;
+import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.workdata.dto.WorkdataDTO;
 import net.scit.backend.workdata.dto.WorkdataTotalSearchDTO;
 import net.scit.backend.workdata.entity.WorkDataFileTagEntity;
@@ -45,39 +46,43 @@ public class WorkdataServiceImpl implements WorkdataService {
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final ApplicationEventPublisher eventPublisher;
 
+
     /**
-     * 1-1) 자료글 등록 (+파일, +태그)
-     */
-    /**
-     * 1-1) 자료글 등록 (+파일, +태그) + 워크스페이스 검증 추가
+     * 1. 자료실 등록
+     * @param wsId
+     * @param title
+     * @param content
+     * @param files
+     * @param tags
+     * @return
      */
     @Override
-    public WorkdataDTO createWorkdata(String email, String title, String content, MultipartFile[] files, List<String> tags) {
-        // ✅ 1) 사용자의 워크스페이스 검증
+    public WorkdataDTO createWorkdata(Long wsId, String title, String content, MultipartFile[] files, List<String> tags) {
+        // ✅ 현재 로그인한 사용자의 email 가져오기
+        String email = AuthUtil.getLoginUserId();
+
+        // ✅ 사용자의 워크스페이스 멤버 검증
         WorkspaceMemberEntity wsMember = (WorkspaceMemberEntity) workspaceMemberRepository
-                .findByMember_Email(email)
+                .findByMember_EmailAndWorkspace_WsId(email, wsId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자의 워크스페이스를 찾을 수 없습니다."));
 
-        // ✅ 2) 게시글(Workdata) 엔티티 생성 및 저장
+        // ✅ WorkdataEntity 생성 (wsId는 wsMember의 workspace에서 가져오기)
         WorkdataEntity workdataEntity = createWorkdataAndReturnEntity(email, title, content, wsMember);
         workdataRepository.flush();
 
-        // ✅ 3) 파일 저장 (S3 업로드 -> DB 저장)
+        // ✅ 파일 저장 (기존 코드 유지)
         List<WorkdataFileEntity> fileEntities = new ArrayList<>();
         if (files != null && files.length > 0) {
             for (MultipartFile file : files) {
                 try {
                     String fileUrl = s3Uploader.upload(file, "workdata-files");
-
                     WorkdataFileEntity fileEntity = WorkdataFileEntity.builder()
                             .workdataEntity(workdataEntity)
                             .file(fileUrl)
                             .fileName(file.getOriginalFilename())
                             .build();
-
                     workdataFileRepository.save(fileEntity);
                     fileEntities.add(fileEntity);
-
                 } catch (IOException e) {
                     log.error("파일 업로드 중 오류 발생: {}", file.getOriginalFilename(), e);
                     throw new RuntimeException("파일 업로드 중 오류가 발생했습니다: " + e.getMessage());
@@ -85,7 +90,7 @@ public class WorkdataServiceImpl implements WorkdataService {
             }
         }
 
-        // ✅ 4) 태그 저장
+        // ✅ 태그 저장 (기존 코드 유지)
         List<WorkDataFileTagEntity> tagEntities = new ArrayList<>();
         if (tags != null && !tags.isEmpty()) {
             for (String tag : tags) {
@@ -93,21 +98,20 @@ public class WorkdataServiceImpl implements WorkdataService {
                         .workdataEntity(workdataEntity)
                         .tag(tag)
                         .build();
-
                 workdataFileTagRepository.save(tagEntity);
                 tagEntities.add(tagEntity);
             }
         }
 
-        // ✅ 5) 최신 데이터 다시 조회
+        // ✅ 최신 데이터 다시 조회
         workdataEntity = workdataRepository.findById(workdataEntity.getDataNumber())
                 .orElseThrow(() -> new IllegalArgumentException("자료글을 찾을 수 없습니다."));
 
-        // ✅ 6) 자료글 생성 이벤트 (알림 전송)
+        // ✅ 자료글 생성 이벤트 (알림 전송)
         eventPublisher.publishEvent(new WorkdataCreatedEvent(workdataEntity, email));
 
-        // ✅ 7) DTO 변환하여 반환
-        return WorkdataDTO.toDTO(workdataEntity, fileEntities, tagEntities, wsMember);
+        // ✅ DTO 변환하여 반환
+        return WorkdataDTO.toDTO(workdataEntity, new HashSet<>(fileEntities), new HashSet<>(tagEntities), wsMember);
     }
 
     /**
@@ -116,14 +120,15 @@ public class WorkdataServiceImpl implements WorkdataService {
     private WorkdataEntity createWorkdataAndReturnEntity(String email, String title, String content, WorkspaceMemberEntity wsMember) {
         WorkdataEntity entity = WorkdataEntity.builder()
                 .workspaceMember(wsMember)
+                .workspace(wsMember.getWorkspace()) // ✅ wsId는 wsMember의 workspace에서 가져오기
                 .writer(email)
                 .title(title)
                 .content(content)
-                .regDate(LocalDateTime.now()) // 직접 세팅 (자동 세팅도 가능)
+                .regDate(LocalDateTime.now()) // 자동 세팅 가능
                 .build();
-
         return workdataRepository.save(entity);
     }
+
 
 
     /**

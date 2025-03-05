@@ -9,6 +9,7 @@ import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Getter
@@ -17,49 +18,44 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Builder
 public class WorkdataDTO {
-
     private Long dataNumber;
     private String title;
     private String content;
     private String writer;
     private LocalDateTime regDate;
 
-    private List<String> fileNames;
-    private List<String> fileUrls;
-    private List<String> tags;
+    private Set<String> fileNames;
+    private Set<String> fileUrls;
+    private Set<String> tags;
 
     private Long mWsNumber;
     private String nickname;
     private String wsRole;
     private String profileImage;
 
-    public static WorkdataDTO toDTO(WorkdataEntity workdata,
-                                    List<WorkdataFileEntity> fileEntities,
-                                    List<WorkDataFileTagEntity> tagEntities,
+    public static WorkdataDTO toDTO(WorkdataEntity entity,
+                                    Set<WorkdataFileEntity> fileEntities,
+                                    Set<WorkDataFileTagEntity> tagEntities,
                                     WorkspaceMemberEntity wsMember) {
         return WorkdataDTO.builder()
-                .dataNumber(workdata.getDataNumber())
-                .title(workdata.getTitle())
-                .content(workdata.getContent())
-                .writer(workdata.getWriter())
-                .regDate(workdata.getRegDate())
+                .dataNumber(entity.getDataNumber())
+                .title(entity.getTitle())
+                .content(entity.getContent())
+                .writer(entity.getWriter())
+                .regDate(entity.getRegDate())
                 .fileNames(fileEntities.stream()
                         .map(WorkdataFileEntity::getFileName)
-                        .distinct()
-                        .collect(Collectors.toList()))
+                        .collect(Collectors.toSet())) // ✅ Set 변환
                 .fileUrls(fileEntities.stream()
                         .map(WorkdataFileEntity::getFile)
-                        .distinct()
-                        .collect(Collectors.toList()))
+                        .collect(Collectors.toSet())) // ✅ Set 변환
                 .tags(tagEntities.stream()
                         .map(WorkDataFileTagEntity::getTag)
-                        .distinct()
-                        .collect(Collectors.toList()))
-                .mWsNumber(Optional.ofNullable(wsMember).map(WorkspaceMemberEntity::getMWsNumber).orElse(null))
-                .nickname(Optional.ofNullable(wsMember).map(WorkspaceMemberEntity::getNickname).orElse(null))
-                .wsRole(Optional.ofNullable(wsMember).map(WorkspaceMemberEntity::getWsRole).orElse(null))
-                .profileImage(Optional.ofNullable(wsMember).map(WorkspaceMemberEntity::getProfileImage).orElse(null))
+                        .collect(Collectors.toSet())) // ✅ Set 변환
+                .mWsNumber(wsMember.getMWsNumber())
+                .nickname(wsMember.getNickname())
+                .wsRole(wsMember.getWsRole())
+                .profileImage(wsMember.getProfileImage())
                 .build();
     }
-
 }

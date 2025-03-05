@@ -37,21 +37,19 @@ public class WorkdataController {
 
 
     /**
-     * 1-1) 자료글 등록(+ 파일, 태그)
+     * 1-1) 게시글 생성 (PathVariable로 wsId 전달)
      */
-    @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping("/{wsId}")
     public ResponseEntity<ResultDTO<WorkdataDTO>> workdataCreate(
+            @PathVariable Long wsId,
             @RequestParam("title") String title,
             @RequestParam("content") String content,
             @RequestParam(value = "files", required = false) MultipartFile[] files,
             @RequestParam(value = "tags", required = false) List<String> tags) {
         try {
-            // ✅ 1. 로그인한 사용자 이메일 가져오기 (토큰에서 자동 추출)
-            String email = AuthUtil.getLoginUserId();
-
-            // ✅ 2. Service 호출하여 워크스페이스 검증 & 게시글 생성
-            WorkdataDTO responseDTO = workdataService.createWorkdata(email, title, content, files, tags);
-
+            // 현재 로그인한 사용자의 email을 SecurityContext에서 가져온다고 가정
+            // 예: String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            WorkdataDTO responseDTO = workdataService.createWorkdata(wsId, title, content, files, tags);
             return ResponseEntity.ok(ResultDTO.of("자료글 등록 성공!", responseDTO));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ResultDTO.of(e.getMessage(), null));
@@ -61,7 +59,6 @@ public class WorkdataController {
                     .body(ResultDTO.of("처리 중 오류 발생: " + e.getMessage(), null));
         }
     }
-
 
 
 
