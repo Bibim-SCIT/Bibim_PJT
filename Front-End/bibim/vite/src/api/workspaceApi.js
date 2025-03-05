@@ -96,14 +96,25 @@ export const createWorkspace = async (workspaceName, workspaceImage = null) => {
 //         throw error.response?.data || "초대 코드 가입에 실패했습니다.";
 //     }
 // };
+// export const joinWorkspaceByInviteCode = async (inviteCode) => {
+//     try {
+//         const response = await api.post(`${API_BASE_URL}/add`, { inviteCode });
+//         return response.data;
+//     } catch (error) {
+//         throw error.response?.data || "초대 코드 가입에 실패했습니다.";
+//     }
+// };
 export const joinWorkspaceByInviteCode = async (inviteCode) => {
     try {
-        const response = await api.post(`${API_BASE_URL}/add`, { inviteCode });
+        const response = await api.post(`${API_BASE_URL}/add`, null, {
+            params: { code: inviteCode },
+        });
         return response.data;
     } catch (error) {
         throw error.response?.data || "초대 코드 가입에 실패했습니다.";
     }
 };
+
 
 // ✅ 워크스페이스 삭제
 // export const deleteWorkspace = async (workspaceName) => {
@@ -175,6 +186,18 @@ export const updateWorkspace = async (wsName, newName, imageFile) => {
     }
 };
 
+// 초대 기능 API 호출
+export const inviteWorkspace = async (wsId, email) => {
+    try {
+        const response = await api.post(`${API_BASE_URL}/invite`, null, {
+            params: { wsId, email },
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || "워크스페이스 초대에 실패했습니다.";
+    }
+};
+
 export const kickUserFromWorkspace = async (wsId, email) => {
     try {
         console.log('강퇴 요청 파라미터:', { wsId, email });  // 요청 파라미터 확인
@@ -222,5 +245,6 @@ export default {
     createWorkspace,
     joinWorkspaceByInviteCode,
     deleteWorkspace,
-    getWorkspaceMembers
+    getWorkspaceMembers,
+    inviteWorkspace
 };

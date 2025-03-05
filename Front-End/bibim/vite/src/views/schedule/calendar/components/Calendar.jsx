@@ -1,85 +1,169 @@
-import React, { useState, useEffect } from "react";
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import interactionPlugin from "@fullcalendar/interaction";
-import { Box } from "@mui/material";
-import styled from "@emotion/styled";
-import { fetchScheduleTasks } from "../../../../api/schedule"; // ✅ 간트 차트 API 사용
-import ScheduleDetailModal from "../../components/ScheduleDetailModal";
-import { useSelector } from "react-redux";
-
-const CalendarWrapper = styled(Box)({
-  padding: "20px",
-  "& .calendar-container": {
-    padding: "20px",
-    background: "#fff",
-    borderRadius: "10px",
-    boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-  },
-});
+import React, { useState, useEffect } from 'react';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import { Box } from '@mui/material';
+import useScheduleData from '../../../../hooks/useScheduleData';
+import ScheduleDetailModal from '../../components/ScheduleDetailModal';
+import ScheduleEditModal from '../../components/ScheduleEditModal';
+import { useSelector } from 'react-redux';
 
 const Calendar = () => {
   const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace);
-  const wsId = activeWorkspace?.wsId;
-
-  const [events, setEvents] = useState([]); // ✅ 캘린더에서 사용할 일정 데이터
+  const { schedules: initialSchedules, loading, error, fetchSchedules } = useScheduleData();
+  const [schedules, setSchedules] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [hoveredSchedule, setHoveredSchedule] = useState(null); // Hover 중인 스케줄 ID 저장
 
   useEffect(() => {
-    if (!wsId) return;
-    
-    const loadEvents = async () => {
-      try {
-        const tasks = await fetchScheduleTasks(wsId); // ✅ 간트 차트 API로 데이터 가져오기
-        setEvents(tasks); // ✅ 캘린더의 events 상태에 저장
-        console.log("📅 캘린더에 로드된 데이터:", tasks);
-      } catch (error) {
-        console.error("❌ 캘린더 데이터 로드 실패:", error);
-      }
-    };
+    setSchedules(initialSchedules);
+  }, [initialSchedules]);
 
-    loadEvents();
-  }, [wsId]);
+  useEffect(() => {
+    fetchSchedules(activeWorkspace.wsId);
+  }, [activeWorkspace]);
 
-  // ✅ 이벤트 클릭 시 모달 열기 (기존 기능 유지)
   const handleEventClick = (clickInfo) => {
-    console.log("📌 클릭한 이벤트:", clickInfo.event.extendedProps);
     setSelectedSchedule(clickInfo.event.extendedProps);
     setModalOpen(true);
   };
 
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setSelectedEvent(null);
+  };
+
+  const handleScheduleUpdate = async (updatedSchedule) => {
+    if (updatedSchedule) {
+      setSchedules((prevSchedules) =>
+        prevSchedules.map((schedule) =>
+          schedule.id === updatedSchedule.scheduleNumber
+            ? { ...schedule, ...updatedSchedule, extendedProps: updatedSchedule }
+            : schedule
+        )
+      );
+      setSelectedSchedule(updatedSchedule);
+    }
+  };
+
+  const handleEventMouseEnter = (hoverInfo) => {
+    setHoveredSchedule(hoverInfo.event.extendedProps.scheduleNumber); // 같은 스케줄 ID 저장
+  };
+
+  const handleEventMouseLeave = () => {
+    setHoveredSchedule(null); // 초기화
+  };
+
+  if (loading) {
+    return <Box sx={{ textAlign: 'center', padding: 2 }}>로딩 중...</Box>;
+  }
+
+  if (error) {
+    return <Box sx={{ textAlign: 'center', padding: 2, color: 'red' }}>에러가 발생했습니다: {error.message || '알 수 없는 오류'}</Box>;
+  }
+
   return (
-    <CalendarWrapper>
-      <div className="calendar-container">
+    <Box
+      sx={{
+        padding: 2,
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        '& .calendar-container': {
+          padding: 2,
+          background: '#fff',
+          borderRadius: 2,
+          boxShadow: 1,
+        },
+        '& .fc-toolbar': {
+          display: 'flex !important',
+          justifyContent: 'space-between !important',
+          alignItems: 'center',
+          marginBottom: 3,
+          padding: '0 1em',
+        },
+        '& .fc-today-button': {
+          backgroundColor: '#6B7280',
+          color: '#FFFFFF',
+          borderRadius: 1,
+          '&:hover': {
+            backgroundColor: '#4B5563',
+          },
+        },
+        '& .fc-event': {
+          borderRadius: 1,
+          padding: '2px 4px',
+          transition: 'all 0.2s ease-in-out',
+          cursor: 'pointer',
+        },
+        '& .fc-day-today': {
+          backgroundColor: '#F8F9FA !important',
+          '&:hover': {
+            backgroundColor: '#F1F3F5 !important',
+          },
+        },
+        '& .fc-daygrid-day-number': {
+          padding: '4px 8px',
+          fontSize: '14px',
+        },
+      }}
+    >
+      <Box className="calendar-container">
         <FullCalendar
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
-          events={events} // ✅ 간트 차트 API에서 불러온 데이터를 사용
-          headerToolbar={{
-            left: "",
-            center: "title",
-            right: "prev,today,next",
-          }}
+          events={schedules}
+          headerToolbar={{ left: '', center: 'title', right: 'prev,today,next' }}
           locale="ko"
           height="auto"
           fixedWeekCount={false}
           showNonCurrentDates={false}
-          eventClick={handleEventClick} // ✅ 클릭한 일정의 데이터 가져오기
+          titleFormat={{ year: 'numeric', month: 'long' }}
+          buttonText={{ today: 'Today', prev: '', next: '' }}
+          eventClick={handleEventClick}
+          eventMouseEnter={handleEventMouseEnter} // Hover 시작
+          eventMouseLeave={handleEventMouseLeave} // Hover 종료
+          eventContent={(arg) => {
+            const isHovered = hoveredSchedule === arg.event.extendedProps.scheduleNumber;
+            return (
+              <Box
+                sx={{
+                  cursor: 'pointer',
+                  padding: '2px 4px',
+                  transition: 'all 0.2s ease-in-out',
+                  transform: isHovered ? 'scale(1.01)' : 'scale(1)',
+                  boxShadow: isHovered ? '4px 4px 10px rgba(0, 0, 0, 0.2)' : 'none',
+                  borderRadius: 1,
+                  backgroundColor: schedules.color,
+                }}
+              >
+                {arg.event.title}
+              </Box>
+            );
+          }}
         />
-        
-        {/* ✅ 모달 기능 유지, selectedSchedule 초기화 X */}
         <ScheduleDetailModal
           open={modalOpen}
           onClose={() => {
-            console.log("📌 모달 닫기 실행됨 - Calendar.jsx");
-            setModalOpen(false); // ✅ 모달만 닫고 기존 데이터 유지
+            setModalOpen(false);
+            setSelectedSchedule(null);
           }}
           schedule={selectedSchedule}
+          onUpdate={handleScheduleUpdate}
         />
-      </div>
-    </CalendarWrapper>
+        {isEditModalOpen && selectedEvent && (
+          <ScheduleEditModal
+            open={isEditModalOpen}
+            onClose={handleEditModalClose}
+            schedule={selectedEvent.extendedProps}
+            onUpdate={handleScheduleUpdate}
+          />
+        )}
+      </Box>
+    </Box>
   );
 };
-
 export default Calendar;
