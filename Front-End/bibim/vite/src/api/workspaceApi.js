@@ -177,13 +177,13 @@ export const updateWorkspace = async (wsName, newName, imageFile) => {
 
 export const kickUserFromWorkspace = async (wsId, email) => {
     try {
-        const response = await axios.delete('/api/workspace/forcedrawal', {
+        const response = await api.delete(`${API_BASE_URL}/forcedrawal`, {
             params: { wsId, email }
         });
         return response.data;
     } catch (error) {
-        console.error('Error kicking user from workspace:', error);
-        throw error;
+        console.error('워크스페이스에서 사용자 강퇴 실패:', error);
+        throw error.response?.data || "사용자 강퇴에 실패했습니다.";
     }
 };
 
@@ -196,6 +196,22 @@ export const fetchWorkspaceUsers = async (workspaceId) => {
     } catch (error) {
         console.error('워크스페이스 멤버 조회 실패:', error);
         throw error;
+    }
+};
+
+export const updateUserRole = async (wsId, email, role) => {
+    try {
+        const response = await api.patch(`${API_BASE_URL}/rolesetting`, null, {
+            params: { 
+                wsId,
+                email, 
+                role  // 'owner' 또는 'member'
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('사용자 권한 변경 실패:', error);
+        throw error.response?.data || "권한 변경에 실패했습니다.";
     }
 };
 
