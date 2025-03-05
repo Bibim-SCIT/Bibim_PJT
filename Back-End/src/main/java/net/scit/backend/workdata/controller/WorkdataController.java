@@ -13,7 +13,6 @@ import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.workdata.dto.WorkdataDTO;
 import net.scit.backend.workdata.dto.WorkdataTotalSearchDTO;
 import net.scit.backend.workdata.service.WorkdataService;
-import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -177,15 +176,16 @@ public class WorkdataController {
      * 2. 검색
      * keyword는 workdata의 title, writer, fileName, tag에서 찾을 수 있음
      */
-    @GetMapping("/search")
-    public ResponseEntity<ResultDTO<List<WorkdataTotalSearchDTO>>> searchWorkdata(@RequestParam Long wsId,
-                                                                                  @RequestParam String keyword,
-                                                                                  @RequestParam(required = false, defaultValue = "regDate") String sort,
-                                                                                  @RequestParam(required = false, defaultValue = "desc") String order) {
+    @GetMapping("/search/{wsId}")
+    public ResponseEntity<ResultDTO<List<WorkdataTotalSearchDTO>>> searchWorkdata(
+            @PathVariable Long wsId,
+            @RequestParam String keyword,
+            @RequestParam(required = false, defaultValue = "regDate") String sort,
+            @RequestParam(required = false, defaultValue = "desc") String order) {
         // 1) 로그인 사용자 이메일 조회
         String userEmail = AuthUtil.getLoginUserId();
 
-        // 2) 워크스페이스 검증
+        // 2) 워크스페이스 검증 (일관성을 위해 findByMember_EmailAndWorkspace_WsId 사용)
         workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다."));
 
@@ -195,5 +195,6 @@ public class WorkdataController {
         // 4) 결과 반환
         return ResponseEntity.ok(result);
     }
+
 
 }

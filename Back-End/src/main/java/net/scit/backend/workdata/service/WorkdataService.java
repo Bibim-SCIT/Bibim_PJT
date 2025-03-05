@@ -4,8 +4,6 @@ import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.workdata.dto.WorkdataDTO;
 import net.scit.backend.workdata.dto.WorkdataTotalSearchDTO;
-import net.scit.backend.workdata.entity.WorkdataEntity;
-import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
