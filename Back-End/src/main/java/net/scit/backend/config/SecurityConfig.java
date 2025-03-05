@@ -20,6 +20,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+
 import net.scit.backend.auth.JwtAuthenticationFilter;
 import net.scit.backend.auth.JwtTokenProvider;
 
@@ -55,6 +56,7 @@ public class SecurityConfig {
                                 "/members/signup/check-mail", // ✅ 인증 코드 확인 요청 허용
                                 "/workdata/**", // 자료실 관련(추후 삭제)
                                 "/workspace/**",
+                                "/ws/**",
                                 "/error")
                         .permitAll() // 로그인 엔드포인트 허용
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 전용

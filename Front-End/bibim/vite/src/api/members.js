@@ -52,3 +52,17 @@ export const updateUserInfo = async (formData, file) => {
         throw error.response?.data || "회원 정보 수정 실패";
     }
 };
+
+// 회원 탈퇴 API 호출 함수
+export const withdrawMember = async (password) => {
+    try {
+        const response = await api.delete("/members/withdraw", {
+            data: { password }
+        });
+        console.log("✅ 회원 탈퇴 성공:", response.data.message);
+        return response.data;
+    } catch (error) {
+        console.error("❌ 회원 탈퇴 실패:", error.response?.data?.message || error.message);
+        throw error.response?.data || "회원 탈퇴 실패";
+    }
+};

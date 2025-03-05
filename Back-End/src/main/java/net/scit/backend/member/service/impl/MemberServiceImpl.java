@@ -1,5 +1,20 @@
 package net.scit.backend.member.service.impl;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +27,13 @@ import net.scit.backend.component.MailComponents;
 import net.scit.backend.component.S3Uploader;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
-import net.scit.backend.member.dto.*;
+import net.scit.backend.member.dto.ChangePasswordDTO;
+import net.scit.backend.member.dto.MemberDTO;
+import net.scit.backend.member.dto.MemberLoginStatusDTO;
+import net.scit.backend.member.dto.MyInfoDTO;
+import net.scit.backend.member.dto.SignupDTO;
+import net.scit.backend.member.dto.UpdateInfoDTO;
+import net.scit.backend.member.dto.VerificationDTO;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.event.MemberUpdatedEvent;
 import net.scit.backend.member.repository.MemberRepository;
@@ -387,6 +408,11 @@ public class MemberServiceImpl implements MemberService {
         return ResultDTO.of("비밀번호 변경에 성공했습니다.", successDTO);
     }
 
+    /**
+     * 회원 탈퇴 처리   
+     * @param memberDTO
+     * @return
+     */
     @Override
     @Transactional
     public ResultDTO<SuccessDTO> withdraw(MemberDTO memberDTO) {
@@ -408,7 +434,7 @@ public class MemberServiceImpl implements MemberService {
                 .success(true)
                 .build();
 
-        return ResultDTO.of("회원탈퇴가 완료되었었습니다.", successDTO);
+        return ResultDTO.of("회원탈퇴가 완료되었습니다.", successDTO);
     }
 
     /**

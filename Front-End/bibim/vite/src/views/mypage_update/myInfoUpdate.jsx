@@ -9,11 +9,9 @@ import {
   Stack,
   FormControl,
   Select,
-  InputLabel,
   MenuItem,
   CircularProgress
 } from '@mui/material';
-import SettingsIcon from '@mui/icons-material/Settings';
 import EmailIcon from '@mui/icons-material/Email';
 import Avatar from '@mui/material/Avatar';
 import MainCard from 'ui-component/cards/MainCard';
