@@ -62,7 +62,7 @@ public class WorkdataController {
 
 
     /**
-     * 1-2.1) 자료글 삭제 (+파일, +태그)
+     * 1-2) 자료글 삭제 (+파일, +태그)
      */
     @DeleteMapping("/{wsId}/{dataNumber}")
     public ResponseEntity<ResultDTO<SuccessDTO>> deleteWorkdata(
@@ -81,9 +81,6 @@ public class WorkdataController {
                             SuccessDTO.builder().success(false).build()));
         }
     }
-
-
-
 
 
     /**
@@ -106,16 +103,11 @@ public class WorkdataController {
 
 
     /**
-     * 1-3) 자료글 수정 (파일, 태그 일괄 수정)
-     * JSON 데이터는 @RequestPart로 받습니다.
-     *
-     * Postman에서는 multipart/form-data로 요청하되,
-     * 각 JSON 필드(tagRequests, deleteFiles, deleteTags, newTags)는
-     * \"Content-Type\"을 \"application/json\"으로 설정해서 전송하세요.
+     * 1-3) 자료글 수정(+ 파일, 태그)
      */
-    @PutMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ResultDTO<SuccessDTO>> workdataUpdate(@RequestParam Long wsId,
-                                                                @RequestParam Long dataNumber,
+    @PutMapping(value = "/{wsId}/{dataNumber}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResultDTO<SuccessDTO>> workdataUpdate(@PathVariable Long wsId,
+                                                                @PathVariable Long dataNumber,
                                                                 @RequestParam(value = "title", required = false) String title,
                                                                 @RequestParam(value = "content", required = false) String content,
                                                                 @RequestParam(value = "deleteFiles", required = false) String deleteFilesJson,
@@ -132,7 +124,6 @@ public class WorkdataController {
                     wsId, dataNumber, title, content,
                     deleteFiles, deleteTags, newTags, newFiles
             );
-
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             log.error("자료글 수정 중 오류 발생: {}", e.getMessage(), e);
@@ -141,6 +132,7 @@ public class WorkdataController {
                             SuccessDTO.builder().success(false).build()));
         }
     }
+
 
     /**
      * 1-4-1) 자료글 전체 조회(+태그별 정렬)

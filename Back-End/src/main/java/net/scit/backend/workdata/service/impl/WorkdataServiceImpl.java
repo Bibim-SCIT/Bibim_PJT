@@ -167,11 +167,6 @@ public class WorkdataServiceImpl implements WorkdataService {
     }
 
 
-
-
-    /**
-     * 1-3) 자료글 수정(+ 파일, 태그)
-     */
     @Override
     public ResultDTO<SuccessDTO> updateWorkdata(Long wsId,
                                                 Long dataNumber,
@@ -182,11 +177,11 @@ public class WorkdataServiceImpl implements WorkdataService {
                                                 List<String> newTags,
                                                 MultipartFile[] newFiles) {
 
-        // 1. 현재 로그인한 사용자 이메일 추출
+        // 1. 현재 로그인한 사용자 이메일 추출 (AuthUtil 사용)
         String userEmail = AuthUtil.getLoginUserId();
 
         // 2. 해당 사용자가 wsId에 속해 있는지 검증
-        workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, userEmail)
+        workspaceMemberRepository.findByMember_EmailAndWorkspace_WsId(userEmail, wsId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다."));
 
         // 3. 자료글 조회
@@ -198,8 +193,7 @@ public class WorkdataServiceImpl implements WorkdataService {
             throw new IllegalArgumentException("본인만 수정할 수 있습니다.");
         }
 
-        // ✅ workspaceMember가 변경되지 않도록 유지
-        //    - 이미 existingEntity에 등록된 workspaceMember(작성자/워크스페이스) 그대로 유지
+        // 기존의 workspaceMember(작성자/워크스페이스) 유지
         WorkspaceMemberEntity existingWorkspaceMember = existingEntity.getWorkspaceMember();
 
         /* ---------------------------
@@ -212,7 +206,7 @@ public class WorkdataServiceImpl implements WorkdataService {
             filesToDelete.forEach(fileEntity -> {
                 try {
                     String fileUrl = fileEntity.getFile(); // full path
-                    // S3에서는 path.substring(1) 등으로 key를 추출해야 할 수도 있음
+                    // S3에서 key 추출 시 경로 처리(예: path.substring(1))
                     s3Uploader.deleteFile(new URL(fileUrl).getPath().substring(1));
                 } catch (MalformedURLException e) {
                     log.error("잘못된 파일 URL: {}", fileEntity.getFile(), e);
@@ -238,18 +232,15 @@ public class WorkdataServiceImpl implements WorkdataService {
             workdataFileTagRepository.deleteAll(tagsToRemove);
         }
 
-        // 2) 태그 추가
+        // 2) 태그 추가 (중복 태그 제거 후 추가)
         if (newTags != null && !newTags.isEmpty()) {
-            // 중복 태그 제거
             newTags.removeAll(existingTags);
-
             List<WorkDataFileTagEntity> newTagEntities = newTags.stream()
                     .map(tag -> WorkDataFileTagEntity.builder()
                             .workdataEntity(existingEntity)
                             .tag(tag)
                             .build())
                     .collect(Collectors.toList());
-
             if (!newTagEntities.isEmpty()) {
                 workdataFileTagRepository.saveAll(newTagEntities);
             }
@@ -264,7 +255,6 @@ public class WorkdataServiceImpl implements WorkdataService {
                     .stream()
                     .map(WorkdataFileEntity::getFileName)
                     .collect(Collectors.toSet());
-
             // 2) 새 파일 업로드 + DB 저장
             List<WorkdataFileEntity> newFileEntities = Arrays.stream(newFiles)
                     .filter(file -> file != null && file.getSize() > 0)
@@ -283,7 +273,6 @@ public class WorkdataServiceImpl implements WorkdataService {
                         }
                     })
                     .collect(Collectors.toList());
-
             if (!newFileEntities.isEmpty()) {
                 workdataFileRepository.saveAll(newFileEntities);
             }
@@ -295,18 +284,19 @@ public class WorkdataServiceImpl implements WorkdataService {
         existingEntity.setTitle(title != null ? title : existingEntity.getTitle());
         existingEntity.setContent(content != null ? content : existingEntity.getContent());
 
-        // ✅ 작성자 / 워크스페이스 변경 방지
+        // 작성자/워크스페이스 변경 방지
         existingEntity.setWorkspaceMember(existingWorkspaceMember);
 
-        // DB에 저장 (flush로 즉시 반영 가능)
+        // DB에 저장 (즉시 반영을 위해 save)
         workdataRepository.save(existingEntity);
 
-        // 📢 자료글 수정 이벤트 발생 (알림 생성 등)
+        // 자료글 수정 이벤트 발생 (알림 등)
         eventPublisher.publishEvent(new WorkdataUpdatedEvent(existingEntity, userEmail));
 
         // 수정 결과 응답
         return ResultDTO.of("자료글 수정 완료!", SuccessDTO.builder().success(true).build());
     }
+
 
 
 

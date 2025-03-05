@@ -22,7 +22,8 @@ public interface WorkdataService {
     //1-2) 자료글 삭제(+ 파일, 태그)
     ResultDTO<SuccessDTO> deleteWorkdata(Long wsId, Long dataNumber);
 
-    // 1-3) 자료글 수정(+ 파일, 태그)
+    //1-3) 자료글 수정(+ 파일, 태그)
+
     ResultDTO<SuccessDTO> updateWorkdata(Long wsId,
                                          Long dataNumber,
                                          String title,
@@ -31,6 +32,7 @@ public interface WorkdataService {
                                          List<String> deleteTags,
                                          List<String> newTags,
                                          MultipartFile[] newFiles);
+
 
     //자료글 전체 조회
     ResponseEntity<ResultDTO<List<WorkdataTotalSearchDTO>>> workdata(Long wsId, String sort, String order);
