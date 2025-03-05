@@ -9,13 +9,13 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import net.scit.backend.member.dto.MemberLoginStatusDTO;
-import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.cache.annotation.Cacheable;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +27,7 @@ import net.scit.backend.component.MailComponents;
 import net.scit.backend.component.S3Uploader;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
+import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.workspace.dto.UpdateWorkspaceMemberDTO;
@@ -264,7 +265,9 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     // 워크스페이스 강제 퇴출 메소드
     @Override
     @Transactional
+    @CacheEvict(value = "workspaceMemberList", key = "#wsId")
     public ResultDTO<SuccessDTO> worksapceForceDrawal(Long wsId, String email) {
+
         checkOwnerRole(wsId, AuthUtil.getLoginUserId());
         workspaceMemberRepository.deleteByWorkspace_wsIdAndMember_Email(wsId, email);
 
@@ -273,7 +276,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     // 워크스페이스 권한 생성 메소드
     @Override
-    public ResultDTO<SuccessDTO> worksapceRightCreate(Long wsId, String newRole) {
+    public ResultDTO<SuccessDTO> workspaceRightCreate(Long wsId, String newRole) {
         WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
         workspaceRoleRepository.save(
                 WorkspaceChannelRoleEntity.builder().workspace(workspaceEntity).chRole(newRole).build());
@@ -284,7 +287,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     // 워크스페이스 권한 부여 메소드
     @Override
     @Transactional
-    public ResultDTO<SuccessDTO> worksapceRightGrant(Long wsId, String email, Long chRole) {
+    public ResultDTO<SuccessDTO> workspaceRightGrant(Long wsId, String email, Long chRole) {
         checkOwnerRole(wsId, AuthUtil.getLoginUserId());
         WorkspaceMemberEntity member = workspaceMemberRepository
                 .findByWorkspace_wsIdAndMember_Email(wsId, email)
@@ -300,7 +303,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     // 워크스페이스 권한 삭제 메소드
     @Override
     @Transactional
-    public ResultDTO<SuccessDTO> worksapceRightDelete(Long wsId, Long chRole) {
+    public ResultDTO<SuccessDTO> workspaceRightDelete(Long wsId, Long chRole) {
         checkOwnerRole(wsId, AuthUtil.getLoginUserId());
         workspaceRoleRepository.deleteById(chRole);
 
@@ -310,7 +313,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     // 초대 메소드
     @Override
     @Transactional
-    public ResultDTO<SuccessDTO> workspaseInvate(Long wsId, String email) {
+    public ResultDTO<SuccessDTO> workspaceInvate(Long wsId, String email) {
         WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
         String wsName = workspaceEntity.getWsName();
 
@@ -335,7 +338,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     // 초대 수락 메소드
     @Override
     @Transactional
-    public ResultDTO<SuccessDTO> workspaseAdd(String code) {
+    public ResultDTO<SuccessDTO> workspaceAdd(String code) {
         String email = AuthUtil.getLoginUserId();
 
         // 이메일 인증 코드 검증
@@ -472,6 +475,36 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                     wme.getMember().getLastActiveTime()));
         });
         return statusList;
+    }
+
+    @Override
+    @Cacheable(value = "workspaceMemberList", key = "#workspaceId", unless = "#result == null || #result.isEmpty()")
+    public List<WorkspaceMemberDTO> getWorkspaceMembers(Long workspaceId, String userEmail) {
+        // 요청한 사용자가 해당 워크스페이스의 멤버인지 확인
+        Optional<WorkspaceMemberEntity> membershipOpt =
+                workspaceMemberRepository.findByWorkspace_WsIdAndMember_Email(workspaceId, userEmail);
+        if (!membershipOpt.isPresent()) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);  // 접근 권한 없음
+        }
+
+        // 워크스페이스에 소속된 모든 멤버 조회
+        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findByWorkspace_WsId(workspaceId);
+        List<WorkspaceMemberDTO> memberList = new ArrayList<>();
+
+        workspaceMembers.forEach(wme -> {
+            WorkspaceMemberDTO dto = WorkspaceMemberDTO.builder()
+                    .email(wme.getMember().getEmail())
+                    .name(wme.getMember().getName())
+                    .nickname(wme.getNickname())
+                    .wsRole(wme.getWsRole())
+                    .profileImage(wme.getProfileImage())
+                    .lastActiveTime(wme.getMember().getLastActiveTime())
+                    .build();
+
+            memberList.add(dto);
+        });
+
+        return memberList;
     }
 
 }

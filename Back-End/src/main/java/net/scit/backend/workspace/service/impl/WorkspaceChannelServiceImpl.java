@@ -130,4 +130,9 @@ public class WorkspaceChannelServiceImpl implements WorkspaceChannelService {
         return ResultDTO.of("채널 수정 완료", SuccessDTO.builder().success(true).build());
     }
 
+    public ResultDTO<SuccessDTO> readChannel()
+    {
+        return ResultDTO.of("채널 불러오기 완료", SuccessDTO.builder().success(true).build());
+    }
+
 }
