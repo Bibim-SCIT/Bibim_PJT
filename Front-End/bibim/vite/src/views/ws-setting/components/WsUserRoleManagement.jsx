@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Avatar, Select, MenuItem } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { kickUserFromWorkspace } from '../../../api/workspaceApi'; // API 함수 임포트
+import { kickUserFromWorkspace, fetchWorkspaceUsers } from '../../../api/workspaceApi'; // API 함수 임포트
 
 const MOCK_USERS = [
     { nickname: '서연', email: 'seoyeon.park@example.com', lastLogin: '2024-03-19 14:30', role: '오너', profileImage: null },
@@ -12,18 +12,50 @@ const MOCK_USERS = [
     { nickname: '하늘', email: 'haneul.kang@example.com', lastLogin: '2024-03-17 16:30', role: '유저', profileImage: null },
 ];
 
+// 날짜 포맷팅 함수 수정
+const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+// 권한 매핑 함수 추가
+const mapRole = (role) => {
+    return role.toLowerCase() === 'owner' ? '오너' : '멤버';
+};
+
 const WsUserRoleManagement = () => {
     const [openKickDialog, setOpenKickDialog] = useState(false);
     const [openRoleDialog, setOpenRoleDialog] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [selectedRole, setSelectedRole] = useState('');
+    const [users, setUsers] = useState([]); // 사용자 목록 상태 추가
 
     // Redux에서 현재 활성화된 워크스페이스 정보 가져오기
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace);
     const loading = useSelector((state) => state.workspace.loading);
 
-    // 워크스페이스의 사용자 목록 (실제 API 연동 시 이 부분 수정 필요)
-    const users = activeWorkspace?.users || MOCK_USERS; // 임시로 MOCK_USERS 유지
+    useEffect(() => {
+        const loadUsers = async () => {
+            if (activeWorkspace) {
+                try {
+                    const response = await fetchWorkspaceUsers(activeWorkspace.wsId);
+                    const usersData = response.data || []; // response.data에 실제 사용자 배열이 있음
+                    setUsers(usersData);
+                    console.log('불러온 사용자 데이터:', usersData);
+                } catch (error) {
+                    console.error('사용자 정보 조회 실패:', error);
+                    setUsers([]);
+                }
+            } else {
+                setUsers([]);
+            }
+        };
+
+        loadUsers();
+    }, [activeWorkspace]);
 
     const handleKickUser = (user) => {
         setSelectedUser(user);
@@ -52,7 +84,7 @@ const WsUserRoleManagement = () => {
 
     const handleOpenRoleSettings = (user) => {
         setSelectedUser(user);
-        setSelectedRole(user.role);
+        setSelectedRole(user.wsRole.toLowerCase());
         setOpenRoleDialog(true);
     };
 
@@ -111,72 +143,80 @@ const WsUserRoleManagement = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {users.map((user, index) => (
-                                <TableRow key={index}>
-                                    <TableCell sx={{ pl: 2 }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                            <Avatar 
-                                                src={user.profileImage} 
-                                                sx={{ 
-                                                    width: 32, 
-                                                    height: 32,
-                                                    bgcolor: '#e0e0e0'
-                                                }}
-                                            >
-                                                {user.nickname[0]}
-                                            </Avatar>
-                                            <Typography>{user.nickname}</Typography>
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell sx={{ pl: 2 }}>{user.email}</TableCell>
-                                    <TableCell sx={{ pl: 2 }}>{user.lastLogin}</TableCell>
-                                    <TableCell sx={{ pl: 2 }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <Typography>{user.role}</Typography>
+                            {users.length > 0 ? (
+                                users.map((user, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell sx={{ pl: 2 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                                <Avatar 
+                                                    src={user.profileImage} 
+                                                    sx={{ 
+                                                        width: 32, 
+                                                        height: 32,
+                                                        bgcolor: '#e0e0e0'
+                                                    }}
+                                                >
+                                                    {user.nickname[0]}
+                                                </Avatar>
+                                                <Typography>{user.nickname}</Typography>
+                                            </Box>
+                                        </TableCell>
+                                        <TableCell sx={{ pl: 2 }}>{user.email}</TableCell>
+                                        <TableCell sx={{ pl: 2 }}>{formatDate(user.lastActiveTime)}</TableCell>
+                                        <TableCell sx={{ pl: 2 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <Typography>{mapRole(user.wsRole)}</Typography>
+                                                <Button
+                                                    size="small"
+                                                    onClick={() => handleOpenRoleSettings(user)}
+                                                    variant="outlined"
+                                                    sx={{ 
+                                                        color: '#666',
+                                                        borderColor: '#e0e0e0',
+                                                        '&:hover': { 
+                                                            borderColor: '#bdbdbd',
+                                                            bgcolor: 'rgba(0, 0, 0, 0.04)' 
+                                                        },
+                                                        textTransform: 'none',
+                                                        minWidth: 'auto',
+                                                        px: 1.5,
+                                                        py: 0.5,
+                                                        fontSize: '0.75rem'
+                                                    }}
+                                                >
+                                                    변경
+                                                </Button>
+                                            </Box>
+                                        </TableCell>
+                                        <TableCell sx={{ pl: 2 }}>
                                             <Button
-                                                size="small"
-                                                onClick={() => handleOpenRoleSettings(user)}
                                                 variant="outlined"
-                                                sx={{ 
-                                                    color: '#666',
-                                                    borderColor: '#e0e0e0',
-                                                    '&:hover': { 
-                                                        borderColor: '#bdbdbd',
-                                                        bgcolor: 'rgba(0, 0, 0, 0.04)' 
+                                                startIcon={<DeleteIcon />}
+                                                onClick={() => handleKickUser(user)}
+                                                sx={{
+                                                    color: '#e53935',
+                                                    borderColor: '#e53935',
+                                                    '&:hover': {
+                                                        borderColor: '#d32f2f',
+                                                        backgroundColor: 'rgba(229, 57, 53, 0.04)'
                                                     },
                                                     textTransform: 'none',
-                                                    minWidth: 'auto',
-                                                    px: 1.5,
-                                                    py: 0.5,
-                                                    fontSize: '0.75rem'
+                                                    fontSize: '0.875rem',
+                                                    py: 0.5
                                                 }}
                                             >
-                                                변경
+                                                강퇴
                                             </Button>
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell sx={{ pl: 2 }}>
-                                        <Button
-                                            variant="outlined"
-                                            startIcon={<DeleteIcon />}
-                                            onClick={() => handleKickUser(user)}
-                                            sx={{
-                                                color: '#e53935',
-                                                borderColor: '#e53935',
-                                                '&:hover': {
-                                                    borderColor: '#d32f2f',
-                                                    backgroundColor: 'rgba(229, 57, 53, 0.04)'
-                                                },
-                                                textTransform: 'none',
-                                                fontSize: '0.875rem',
-                                                py: 0.5
-                                            }}
-                                        >
-                                            강퇴
-                                        </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={5} sx={{ textAlign: 'center' }}>
+                                        <Typography>사용자가 없습니다.</Typography>
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            )}
                         </TableBody>
                     </Table>
                 </TableContainer>
@@ -222,7 +262,7 @@ const WsUserRoleManagement = () => {
                                     이메일: {selectedUser.email}
                                 </Typography>
                                 <Typography>
-                                    마지막 로그인: {selectedUser.lastLogin}
+                                    마지막 로그인: {formatDate(selectedUser.lastActiveTime)}
                                 </Typography>
                             </Box>
                         </Box>
@@ -307,8 +347,8 @@ const WsUserRoleManagement = () => {
                                         }
                                     }}
                                 >
-                                    <MenuItem value="오너">오너</MenuItem>
-                                    <MenuItem value="유저">유저</MenuItem>
+                                    <MenuItem value="owner">오너</MenuItem>
+                                    <MenuItem value="member">멤버</MenuItem>
                                 </Select>
                             </Box>
                         </Box>
