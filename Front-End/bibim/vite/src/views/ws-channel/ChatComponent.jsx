@@ -2,6 +2,8 @@ import React, { useEffect, useState, useContext } from "react";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import { ConfigContext } from "../../contexts/ConfigContext";
+import { FaPaperPlane, FaPlus, FaGlobe, FaEllipsisH } from "react-icons/fa"; // 아이콘 추가
+import "./ChatComponent.css"; // ✅ CSS 파일 추가
 
 function ChatComponent({ channelId }) {
     const { user } = useContext(ConfigContext);
@@ -12,99 +14,90 @@ function ChatComponent({ channelId }) {
 
     useEffect(() => {
         const token = localStorage.getItem("token");
-        
-        if (!token) {
-            console.error("❌ JWT 토큰 없음, 로그인 필요");
-            return;
-        }
-
-        if (!channelId) {
-            console.error("❌ 채널 ID 없음");
-            return;
-        }
-
-        if (!user) {
-            console.error("❌ user 정보 없음 (ConfigContext 확인 필요)");
-            return;
-        }
-
-        console.log("🧑‍💻 user 정보:", user); // 디버깅용 로그 추가
+        if (!token || !channelId || !user) return;
 
         const socket = new SockJS("http://localhost:8080/ws/chat");
         const client = new Client({
             webSocketFactory: () => socket,
             connectHeaders: { Authorization: `Bearer ${token}` },
-            onConnect: (frame) => {
-                console.log(`✅ STOMP 연결 성공! 채널 ID: ${channelId}`, frame);
+            onConnect: () => {
                 setIsConnected(true);
-
                 client.subscribe(`/exchange/chat-exchange/msg.${channelId}`, (message) => {
-                    console.log("📩 받은 메시지:", message.body);
-                    setMessages((prev) => [...prev, message.body]);
+                    try {
+                        const parsedMessage = JSON.parse(message.body);
+                        setMessages((prev) => [...prev, parsedMessage]);
+                    } catch (error) {
+                        console.error("❌ 메시지 파싱 오류:", error);
+                    }
                 });
-
                 setStompClient(client);
             },
-            onStompError: (frame) => {
-                console.error("❌ STOMP 오류 발생:", frame);
-                setIsConnected(false);
-            },
-            onWebSocketClose: () => {
-                console.error("❌ WebSocket 연결이 닫혔습니다.");
-                setIsConnected(false);
-            }
+            onStompError: () => setIsConnected(false),
+            onWebSocketClose: () => setIsConnected(false),
         });
 
         client.activate();
-        
-        return () => {
-            if (client) {
-                client.deactivate();
-                setIsConnected(false);
-            }
-        };
+        return () => client.deactivate();
     }, [channelId, user]);
 
     const sendMessage = () => {
-        if (!input.trim() || !stompClient || !isConnected || !channelId) return;
-    
-        try {
-            const senderEmail = user?.email || "unknown"; // user.email이 없으면 "unknown"으로 설정
-            console.log(`📤 메시지 전송: sender=${senderEmail}, content=${input}`);
-            
-            stompClient.publish({
-                destination: `/app/chat.sendMessage.${channelId}`,
-                body: JSON.stringify({
-                    channelNumber: channelId,
-                    content: input,
-                    sender: senderEmail, // user.email이 없을 경우 기본값 사용
-                    messageOrFile: false // 올바른 필드명 적용 (messagesOrFiles → messageOrFile)
-                }),
-            });
-            setInput("");
-        } catch (error) {
-            console.error("❌ 메시지 전송 중 오류 발생:", error);
+        if (!input.trim() || !stompClient || !isConnected) return;
+
+        const messageData = {
+            channelNumber: channelId,
+            content: input,
+            sender: user?.email || "Unknown Sender",
+            messageOrFile: false,
+        };
+
+        stompClient.publish({
+            destination: `/app/chat.sendMessage.${channelId}`,
+            body: JSON.stringify(messageData),
+        });
+
+        setInput(""); // 입력창 초기화
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            sendMessage();
         }
     };
 
     return (
-        <div>
-            <h2>채팅 - 채널 {channelId}</h2>
-            {isConnected ? <p>🟢 연결됨</p> : <p>🔴 연결 안 됨</p>}
-            <div>
-                {messages.map((msg, index) => (
-                    <p key={index}>{msg}</p>
-                ))}
+        <div className="chat-container">
+            {/* 헤더 */}
+            <div className="chat-header">채팅 - 채널 {channelId}</div>
+
+            {/* 채팅 메시지 박스 */}
+            <div className="chat-messages">
+                {messages.length === 0 ? (
+                    <p className="no-messages">No messages yet.</p>
+                ) : (
+                    messages.map((msg, index) => (
+                        <div key={index} className={`message ${msg.sender === user?.email ? "my-message" : "other-message"}`}>
+                            <p className="sender">{msg.sender || "Unknown Sender"}</p>
+                            <div className="message-content">{msg.content}</div>
+                        </div>
+                    ))
+                )}
             </div>
-            <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="메시지를 입력하세요..."
-                disabled={!isConnected}
-            />
-            <button onClick={sendMessage} disabled={!isConnected}>
-                전송
-            </button>
+
+            {/* 입력창 (하단 고정) */}
+            <div className="chat-input-box">
+                <button className="icon-btn"><FaPlus /></button>
+                <input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    placeholder="메시지를 입력하세요..."
+                    className="chat-input"
+                />
+                <button onClick={sendMessage} className="send-btn">
+                    <FaPaperPlane />
+                </button>
+            </div>
         </div>
     );
 }
