@@ -9,14 +9,12 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-
-import net.scit.backend.member.dto.MemberLoginStatusDTO;
-import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.cache.annotation.Cacheable;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +26,7 @@ import net.scit.backend.component.MailComponents;
 import net.scit.backend.component.S3Uploader;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
+import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.workspace.dto.UpdateWorkspaceMemberDTO;
@@ -267,6 +266,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     // 워크스페이스 강제 퇴출 메소드
     @Override
     @Transactional
+    @CacheEvict(value = "workspaceMemberList", key = "#wsId")
     public ResultDTO<SuccessDTO> worksapceForceDrawal(Long wsId, String email) {
         checkOwnerRole(wsId, AuthUtil.getLoginUserId());
         workspaceMemberRepository.deleteByWorkspace_wsIdAndMember_Email(wsId, email);

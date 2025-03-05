@@ -1,18 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Avatar, Select, MenuItem } from '@mui/material';
+import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Typography, Avatar, Select, MenuItem, Snackbar, Alert } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { kickUserFromWorkspace, fetchWorkspaceUsers } from '../../../api/workspaceApi'; // API 함수 임포트
 import KickUserModal from './KickUserModal';
 import RoleSettingModal from './RoleSettingModal';
-
-const MOCK_USERS = [
-    { nickname: '서연', email: 'seoyeon.park@example.com', lastLogin: '2024-03-19 14:30', role: '오너', profileImage: null },
-    { nickname: '준호', email: 'junho.choi@example.com', lastLogin: '2024-03-19 11:20', role: '유저', profileImage: null },
-    { nickname: '유진', email: 'yujin.kim@example.com', lastLogin: '2024-03-18 17:45', role: '유저', profileImage: null },
-    { nickname: '태민', email: 'taemin.lee@example.com', lastLogin: '2024-03-18 09:15', role: '유저', profileImage: null },
-    { nickname: '하늘', email: 'haneul.kang@example.com', lastLogin: '2024-03-17 16:30', role: '유저', profileImage: null },
-];
 
 // 날짜 포맷팅 함수 수정
 const formatDate = (dateString) => {
@@ -29,11 +21,16 @@ const mapRole = (role) => {
 };
 
 const WsUserRoleManagement = () => {
-    const [openKickDialog, setOpenKickDialog] = useState(false);
-    const [openRoleDialog, setOpenRoleDialog] = useState(false);
+    const [openKickModal, setOpenKickModal] = useState(false);
+    const [openRoleModal, setOpenRoleModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [selectedRole, setSelectedRole] = useState('');
     const [users, setUsers] = useState([]); // 사용자 목록 상태 추가
+    const [snackbar, setSnackbar] = useState({
+        open: false,
+        message: '',
+        severity: 'success'
+    });
 
     // Redux에서 현재 활성화된 워크스페이스 정보 가져오기
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace);
@@ -44,9 +41,9 @@ const WsUserRoleManagement = () => {
             if (activeWorkspace) {
                 try {
                     const response = await fetchWorkspaceUsers(activeWorkspace.wsId);
-                    const usersData = response.data || []; // response.data에 실제 사용자 배열이 있음
+                    const usersData = response.data || [];
+                    console.log('초기 로딩된 사용자 목록:', usersData);
                     setUsers(usersData);
-                    console.log('불러온 사용자 데이터:', usersData);
                 } catch (error) {
                     console.error('사용자 정보 조회 실패:', error);
                     setUsers([]);
@@ -57,41 +54,63 @@ const WsUserRoleManagement = () => {
         };
 
         loadUsers();
-    }, [activeWorkspace]);
+    }, [activeWorkspace, fetchWorkspaceUsers]);
 
     const handleKickUser = (user) => {
         setSelectedUser(user);
-        setOpenKickDialog(true);
+        setOpenKickModal(true);
     };
 
     const handleConfirmKick = async () => {
         try {
             if (selectedUser && activeWorkspace) {
+                console.log('강퇴 시도:', { 
+                    wsId: activeWorkspace.wsId, 
+                    email: selectedUser.email 
+                });
+                
                 await kickUserFromWorkspace(activeWorkspace.wsId, selectedUser.email);
-                console.log('강퇴 성공:', selectedUser, '워크스페이스:', activeWorkspace.wsId);
-                // 강퇴 후 사용자 목록 갱신 로직 추가 필요
+                console.log('강퇴 API 호출 성공');
+                
+                // 강퇴 성공 후 즉시 목록 갱신
+                const response = await fetchWorkspaceUsers(activeWorkspace.wsId);
+                console.log('사용자 목록 갱신 응답:', response);
+                
+                const updatedUsers = response.data || [];
+                setUsers(updatedUsers);
+                
+                setOpenKickModal(false);
+                setSelectedUser(null);
+
+                setSnackbar({
+                    open: true,
+                    message: `${selectedUser.nickname}님을 워크스페이스에서 강퇴했습니다.`,
+                    severity: 'success'
+                });
             }
         } catch (error) {
-            console.error('강퇴 실패:', error);
-        } finally {
-            setOpenKickDialog(false);
-            setSelectedUser(null);
+            console.error('강퇴 처리 중 에러:', error);
+            setSnackbar({
+                open: true,
+                message: '강퇴에 실패했습니다.',
+                severity: 'error'
+            });
         }
     };
 
-    const handleCloseKickDialog = () => {
-        setOpenKickDialog(false);
+    const handleCloseKickModal = () => {
+        setOpenKickModal(false);
         setSelectedUser(null);
     };
 
     const handleOpenRoleSettings = (user) => {
         setSelectedUser(user);
         setSelectedRole(user.wsRole.toLowerCase());
-        setOpenRoleDialog(true);
+        setOpenRoleModal(true);
     };
 
-    const handleCloseRoleDialog = () => {
-        setOpenRoleDialog(false);
+    const handleCloseRoleModal = () => {
+        setOpenRoleModal(false);
         setSelectedUser(null);
         setSelectedRole('');
     };
@@ -103,10 +122,19 @@ const WsUserRoleManagement = () => {
     const handleSaveRole = () => {
         // API 연동 시 실제 권한 변경 로직 구현 필요
         console.log('권한 변경:', selectedUser.nickname, selectedRole, '워크스페이스:', activeWorkspace?.wsId);
-        setOpenRoleDialog(false);
+        setOpenRoleModal(false);
         setSelectedUser(null);
         setSelectedRole('');
     };
+
+    const handleCloseSnackbar = () => {
+        setSnackbar(prev => ({ ...prev, open: false }));
+    };
+
+    // users 상태가 변경될 때마다 확인
+    useEffect(() => {
+        console.log('현재 users 상태:', users);
+    }, [users]);
 
     if (loading) {
         return (
@@ -225,8 +253,8 @@ const WsUserRoleManagement = () => {
             </Box>
 
             <KickUserModal 
-                open={openKickDialog}
-                onClose={handleCloseKickDialog}
+                open={openKickModal}
+                onClose={handleCloseKickModal}
                 selectedUser={selectedUser}
                 onConfirm={handleConfirmKick}
                 formatDate={formatDate}
@@ -234,14 +262,29 @@ const WsUserRoleManagement = () => {
             />
 
             <RoleSettingModal 
-                open={openRoleDialog}
-                onClose={handleCloseRoleDialog}
+                open={openRoleModal}
+                onClose={handleCloseRoleModal}
                 selectedUser={selectedUser}
                 selectedRole={selectedRole}
                 onRoleChange={handleRoleChange}
                 onSave={handleSaveRole}
                 workspaceId={activeWorkspace?.wsId}
             />
+
+            <Snackbar 
+                open={snackbar.open} 
+                autoHideDuration={3000} 
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert 
+                    onClose={handleCloseSnackbar} 
+                    severity={snackbar.severity}
+                    sx={{ width: '100%' }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </>
     );
 };

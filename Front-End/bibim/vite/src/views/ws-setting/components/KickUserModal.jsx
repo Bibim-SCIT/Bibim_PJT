@@ -1,16 +1,6 @@
 import { Box, Modal, Typography, Avatar, Button } from '@mui/material';
-import { kickUserFromWorkspace } from '../../../api/workspaceApi';
 
-const KickUserModal = ({ open, onClose, selectedUser, onConfirm, formatDate, workspaceId }) => {
-    const handleKickUser = async () => {
-        try {
-            await kickUserFromWorkspace(workspaceId, selectedUser.email);
-            onConfirm(); // 성공 시 부모 컴포넌트의 콜백 실행
-        } catch (error) {
-            console.error('사용자 강퇴 실패:', error);
-        }
-    };
-
+const KickUserModal = ({ open, onClose, selectedUser, onConfirm, formatDate }) => {
     return (
         <Modal
             open={open}
@@ -80,7 +70,7 @@ const KickUserModal = ({ open, onClose, selectedUser, onConfirm, formatDate, wor
                     </Button>
                     <Button
                         variant="contained"
-                        onClick={handleKickUser}
+                        onClick={onConfirm}
                         sx={{
                             bgcolor: '#e53935',
                             '&:hover': { bgcolor: '#d32f2f' }

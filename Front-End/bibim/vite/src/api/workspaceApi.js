@@ -177,12 +177,14 @@ export const updateWorkspace = async (wsName, newName, imageFile) => {
 
 export const kickUserFromWorkspace = async (wsId, email) => {
     try {
+        console.log('강퇴 요청 파라미터:', { wsId, email });  // 요청 파라미터 확인
         const response = await api.delete(`${API_BASE_URL}/forcedrawal`, {
             params: { wsId, email }
         });
+        console.log('강퇴 API 응답:', response);  // API 응답 확인
         return response.data;
     } catch (error) {
-        console.error('워크스페이스에서 사용자 강퇴 실패:', error);
+        console.error('강퇴 API 에러:', error);  // 에러 상세 확인
         throw error.response?.data || "사용자 강퇴에 실패했습니다.";
     }
 };
