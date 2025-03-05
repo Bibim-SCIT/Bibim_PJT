@@ -2,18 +2,28 @@ package net.scit.backend.workspace.controller;
 
 import java.util.List;
 
-import net.scit.backend.auth.AuthUtil;
-import net.scit.backend.exception.CustomException;
-import net.scit.backend.exception.ErrorCode;
-import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.scit.backend.auth.AuthUtil;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.exception.CustomException;
+import net.scit.backend.exception.ErrorCode;
+import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import net.scit.backend.workspace.dto.UpdateWorkspaceMemberDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
@@ -177,7 +187,7 @@ public class WorkspaceController {
     }
 
     /**
-     * 워크스페이스 내 회원 정보 조회
+     * 워크스페이스 나의 회원 정보 조회
      * 
      * @param wsId 조회할 워크스페이스 ID
      * @return
@@ -194,7 +204,7 @@ public class WorkspaceController {
     }
 
     /**
-     * 워크스페이스 내 회원 정보 수정
+     * 워크스페이스 나의 회원 정보 수정
      * 
      * @param wsId       워크스페이스 ID
      * @param updateInfo 수정할 정보
@@ -230,4 +240,23 @@ public class WorkspaceController {
         List<MemberLoginStatusDTO> statusList = workspaceService.getWorkspaceMembersStatus(workspaceId, email);
         return ResponseEntity.ok(ResultDTO.of("워크스페이스 멤버 접속 현황 조회 성공", statusList));
     }
+
+    /**
+     * 워크스페이스 내 모든 멤버 조회
+     *
+     * @param workspaceId 조회할 워크스페이스 ID
+     * @return 워크스페이스 멤버 목록
+     */
+    @GetMapping("/{workspaceId}/members")
+    public ResponseEntity<ResultDTO<List<WorkspaceMemberDTO>>> getWorkspaceMembers(
+            @PathVariable Long workspaceId) {
+        String email = AuthUtil.getLoginUserId(); // 현재 로그인한 사용자
+        if (email == null || email.isEmpty()) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+
+        List<WorkspaceMemberDTO> members = workspaceService.getWorkspaceMembers(workspaceId, email);
+        return ResponseEntity.ok(ResultDTO.of("워크스페이스 멤버 조회 성공", members));
+    }
 }
+

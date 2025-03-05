@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import net.scit.backend.workspace.dto.UpdateWorkspaceMemberDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
@@ -42,4 +43,6 @@ public interface WorkspaceService
     ResultDTO<SuccessDTO> updateWorkspaceMemberInfo(Long wsId, UpdateWorkspaceMemberDTO updateInfo, MultipartFile file);
 
     List<MemberLoginStatusDTO> getWorkspaceMembersStatus(Long workspaceId, String userEmail);
+
+    List<WorkspaceMemberDTO> getWorkspaceMembers(Long workspaceId, String email);
 }

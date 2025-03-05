@@ -175,6 +175,47 @@ export const updateWorkspace = async (wsName, newName, imageFile) => {
     }
 };
 
+export const kickUserFromWorkspace = async (wsId, email) => {
+    try {
+        console.log('강퇴 요청 파라미터:', { wsId, email });  // 요청 파라미터 확인
+        const response = await api.delete(`${API_BASE_URL}/forcedrawal`, {
+            params: { wsId, email }
+        });
+        console.log('강퇴 API 응답:', response);  // API 응답 확인
+        return response.data;
+    } catch (error) {
+        console.error('강퇴 API 에러:', error);  // 에러 상세 확인
+        throw error.response?.data || "사용자 강퇴에 실패했습니다.";
+    }
+};
+
+// 워크스페이스 내 모든 멤버 조회 API 호출 함수
+export const fetchWorkspaceUsers = async (workspaceId) => {
+    try {
+        const response = await api.get(`${API_BASE_URL}/${workspaceId}/members`);
+        console.log('API 응답:', response); // 응답 확인을 위한 로그
+        return response.data;
+    } catch (error) {
+        console.error('워크스페이스 멤버 조회 실패:', error);
+        throw error;
+    }
+};
+
+export const updateUserRole = async (wsId, email, role) => {
+    try {
+        const response = await api.patch(`${API_BASE_URL}/rolesetting`, null, {
+            params: { 
+                wsId,
+                email, 
+                role  // 'owner' 또는 'member'
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('사용자 권한 변경 실패:', error);
+        throw error.response?.data || "권한 변경에 실패했습니다.";
+    }
+};
 
 export default {
     getWorkspaces,
