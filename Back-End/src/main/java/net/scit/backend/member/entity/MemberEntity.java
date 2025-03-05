@@ -1,5 +1,7 @@
 package net.scit.backend.member.entity;
 
+import com.nimbusds.openid.connect.sdk.assurance.evidences.Name;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -9,6 +11,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.CurrentTimestamp;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Member")
@@ -26,9 +29,15 @@ public class MemberEntity {
     private String nationality;
     private String language;
     private String profileImage;
-    private boolean loginStatus;
     private String socialLoginCheck;
     private String socialLoginId;
+
+    @Column(name = "login_status")
+    private boolean loginStatus;
+
+    @Column(name = "last_active_time")
+    @CreationTimestamp
+    private LocalDateTime lastActiveTime; // 마지막 활동 시간 추가
 
     @CreationTimestamp
     private LocalDate regDate;

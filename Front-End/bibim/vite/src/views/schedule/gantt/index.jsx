@@ -1,20 +1,49 @@
-// material-ui
-import Typography from '@mui/material/Typography';
+import React, { useState, useEffect } from 'react';
+import { Box, Typography, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import GanttChart from './components/GanttChart';
+import KanbanBoard from './components/KanbanBoard';
+import { useSelector, useDispatch } from 'react-redux';
+import { loadWorkspace } from '../../../store/workspaceRedux';
 
-// project imports
-import MainCard from 'ui-component/cards/MainCard';
+const ScheduleWrapper = styled(Box)({
+  padding: '20px',
+  '& h1': {
+    marginBottom: '20px',
+    color: '#333'
+  }
+});
 
-// ==============================|| SAMPLE PAGE ||============================== //
+const SchedulePage = () => {
+  const dispatch = useDispatch();
+  const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
+  const [view, setView] = useState('gantt');
+  const wsId = activeWorkspace.wsId; // 🔥 캘린더와 동일한 방식으로 wsId를 하드코딩
 
-export default function GanttView() {
-    return (
-        <MainCard title="여기는 간트뷰">
-            <Typography variant="body2">
-                Lorem ipsum dolor sit amen, consenter nipissing eli, sed do elusion tempos incident ut laborers et doolie magna alissa. Ut enif ad
-                minim venice, quin nostrum exercitation illampu laborings nisi ut liquid ex ea commons construal. Duos aube grue dolor in
-                reprehended in voltage veil esse colum doolie eu fujian bulla parian. Exceptive sin ocean cuspidate non president, sunk in culpa qui
-                officiate descent molls anim id est labours. 여기는 간트뷰
-            </Typography>
-        </MainCard>
-    );
-}
+  useEffect(() => {
+    dispatch(loadWorkspace());
+  }, [dispatch]);
+
+  return (
+    <ScheduleWrapper>
+      <Typography variant="h4" component="h1">
+        {activeWorkspace ? `워크스페이스: ${activeWorkspace.wsName}` : '워크스페이스 로딩 중...'}
+      </Typography>
+      <Typography variant="h6">워크스페이스 ID: {wsId}</Typography>
+
+      <ToggleButtonGroup
+        value={view}
+        exclusive
+        onChange={(event, newView) => newView && setView(newView)}
+        sx={{ marginBottom: '20px' }}
+      >
+        <ToggleButton value="gantt">간트 차트</ToggleButton>
+        <ToggleButton value="kanban">칸반 보드</ToggleButton>
+      </ToggleButtonGroup>
+
+      {view === 'gantt' ? <GanttChart wsId={wsId} /> : <KanbanBoard wsId={wsId} />}
+    </ScheduleWrapper>
+  );
+};
+
+export default SchedulePage;

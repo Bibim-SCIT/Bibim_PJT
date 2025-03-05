@@ -16,11 +16,14 @@ public class SmallTagDTO {
 
     private Long mediumTagNumber;
     private String tagName;
+    private Long wsId;
+    private Long smallTagNumber;
 
     public static SmallTagDTO toDTO(SmallTagEntity smallTagEntity) {
         return SmallTagDTO.builder()
                 .mediumTagNumber(smallTagEntity.getMediumTag().getMediumTagNumber())
                 .tagName(smallTagEntity.getTagName())
+                .smallTagNumber(smallTagEntity.getSmallTagNumber())
                 .build();
     }
 }

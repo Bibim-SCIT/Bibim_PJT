@@ -6,6 +6,8 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { deleteWorkdata } from "../../../api/workdata";
+import LoadingScreen from './LoadingScreen';
 
 // 파일 아이콘 import
 import pdfIcon from "assets/images/icons/pdf.png";
@@ -35,14 +37,17 @@ const tagColors = {
     "디자인": "secondary"
 };
 
-const FileCardView = ({ files, setFiles }) => {
+const FileCardView = ({ files, setFiles, loading }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
     const [openModal, setOpenModal] = useState(false);
+    const [openDownloadDialog, setOpenDownloadDialog] = useState(false); // 다운로드 목록 모달 state
+    const [openDownloadDialog2, setOpenDownloadDialog2] = useState(false); // 다운로드 선택 버튼시 모달 
     const navigate = useNavigate();
 
     // 점 3개 버튼 클릭 (메뉴 열기)
     const handleMenuOpen = (event, file) => {
+        event.stopPropagation(); // 카드 클릭 이벤트 방지
         setAnchorEl(event.currentTarget);
         setSelectedFile(file);
     };
@@ -68,23 +73,58 @@ const FileCardView = ({ files, setFiles }) => {
     };
 
     // 파일 삭제 기능 (일반 상태)
-    const handleDelete = () => {
-        const confirmDelete1 = window.confirm(`해당 파일을(를) 정말 삭제하시겠습니까?`);
-        if (confirmDelete1) {
+    // const handleDelete = () => {
+    //     const confirmDelete1 = window.confirm(`해당 파일을(를) 정말 삭제하시겠습니까?`);
+    //     if (confirmDelete1) {
+    //         setFiles((prevFiles) => prevFiles.filter((file) => file.id !== selectedFile.id));
+    //         handleMenuClose();
+    //     }
+    // };
+    const handleDelete = async () => {
+        if (!selectedFile) return;
+
+        const confirmDelete = window.confirm(`"${selectedFile.title}"을(를) 정말 삭제하시겠습니까?`);
+        if (!confirmDelete) return;
+
+        try {
+            // ✅ 백엔드 API 호출
+            await deleteWorkdata(selectedFile.wsId, selectedFile.id);
+
+            // ✅ 삭제 성공 시, 상태 업데이트
             setFiles((prevFiles) => prevFiles.filter((file) => file.id !== selectedFile.id));
+
+            alert("파일이 성공적으로 삭제되었습니다.");
             handleMenuClose();
+        } catch (error) {
+            console.error("❌ 파일 삭제 실패:", error);
+            alert("파일 삭제에 실패했습니다. 다시 시도해주세요.");
         }
     };
 
+
     // 파일 삭제 기능 (모달 상태)
-    const modalhandleDelete = (file) => {
-        const confirmDelete2 = window.confirm(`"${file.files[0]}"을(를) 정말 삭제하시겠습니까?`);
-        if (confirmDelete2) {
+    const modalhandleDelete = async (file) => {
+        if (!file) return;
+
+        const confirmDelete = window.confirm(`"${file.title}"을(를) 정말 삭제하시겠습니까?`);
+        if (!confirmDelete) return;
+
+        try {
+            // ✅ 백엔드 API 호출
+            await deleteWorkdata(file.wsId, file.id);
+
+            // ✅ 삭제 성공 시, 상태 업데이트
             setFiles((prevFiles) => prevFiles.filter((f) => f.id !== file.id));
-            setAnchorEl(null); // 메뉴 닫기
-            setOpenModal(false); // 모달이 열려 있을 경우 닫기
+
+            alert("파일이 성공적으로 삭제되었습니다.");
+            setOpenModal(false);
+            setSelectedFile(null);
+        } catch (error) {
+            console.error("❌ 파일 삭제 실패:", error);
+            alert("파일 삭제에 실패했습니다. 다시 시도해주세요.");
         }
     };
+
 
     // 파일 상세 정보 모달 열기
     const handleOpenModal = (file) => {
@@ -96,6 +136,14 @@ const FileCardView = ({ files, setFiles }) => {
     const handleCloseModal = () => {
         setOpenModal(false);
     };
+
+    // 로딩 상태일 때 커스텀 로딩 컴포넌트 렌더링
+    if (loading) return <LoadingScreen />;
+
+    // ✅ 데이터가 없을 때만 "파일이 없습니다" 표시
+    if (!files || files.length === 0) {
+        return <Typography variant="h3" sx={{ p: 2, textAlign: "center" }}>📂 등록된 파일이 없습니다.</Typography>;
+    }
 
     return (
         <>
@@ -198,8 +246,10 @@ const FileCardView = ({ files, setFiles }) => {
 
             {/* 점 3개 버튼 메뉴 */}
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-                <MenuItem onClick={() => alert("다운로드 기능")}>📥 다운로드</MenuItem>
-                <MenuItem onClick={handleDelete}>🗑️ 삭제</MenuItem>
+                <MenuItem onClick={() => { handleMenuClose(); setOpenDownloadDialog(true); }}>
+                    📥 다운로드
+                </MenuItem>
+                <MenuItem onClick={() => handleDelete()}>🗑️ 삭제</MenuItem>
             </Menu>
 
             {/* 파일 정보 모달 */}
@@ -237,13 +287,23 @@ const FileCardView = ({ files, setFiles }) => {
                                 <Typography variant="body1" sx={{ fontWeight: "bold", alignSelf: "start" }}>파일명:</Typography>
                                 <List dense>
                                     {selectedFile.files.map((fileName, idx) => (
-                                        <ListItem key={idx}>
+                                        // 각 파일명을 클릭하면 바로 다운로드 (새 탭)
+                                        <ListItem
+                                            key={idx} button
+                                            sx={{
+                                                cursor: "pointer"
+                                            }}
+                                            onClick={() => {
+                                                // fileUrls 배열이 있을 경우 해당 파일 URL로 이동
+                                                if (selectedFile.fileUrls && selectedFile.fileUrls[idx]) {
+                                                    window.open(selectedFile.fileUrls[idx], '_blank');
+                                                } else {
+                                                    alert("다운로드 URL이 없습니다.");
+                                                }
+                                            }}>
                                             <ListItemIcon>
                                                 <img
-                                                    src={
-                                                        fileTypeIcons[fileName.split(".").pop().toLowerCase()] ||
-                                                        fileTypeIcons.default
-                                                    }
+                                                    src={fileTypeIcons[fileName.split(".").pop().toLowerCase()] || fileTypeIcons.default}
                                                     alt={fileName}
                                                     style={{ width: 25 }}
                                                 />
@@ -261,6 +321,10 @@ const FileCardView = ({ files, setFiles }) => {
 
                                 <Typography variant="body1" sx={{ fontWeight: "bold" }}>업로드 날짜:</Typography>
                                 <Typography>{selectedFile.date}</Typography>
+
+                                {/* 새로운 content 항목 추가 */}
+                                <Typography variant="body1" sx={{ fontWeight: "bold", alignSelf: "start" }}>내용:</Typography>
+                                <Typography>{selectedFile.content}</Typography>
 
                                 <Typography variant="body1" sx={{ fontWeight: "bold", alignSelf: "start" }}>태그:</Typography>
                                 <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
@@ -280,13 +344,13 @@ const FileCardView = ({ files, setFiles }) => {
                 </DialogContent>
 
                 <DialogActions>
-                    <Button variant="contained" color="primary" onClick={() => alert("다운로드 기능")}>📥 파일 다운로드</Button>
+                    <Button variant="contained" color="primary" onClick={() => setOpenDownloadDialog2(true)}>📥 파일 다운로드</Button>
                     <Button
                         variant="contained"
                         color="warning"
                         onClick={() => {
                             // 수정 버튼 클릭 시 workdata/update 페이지로 이동
-                            navigate('/workdata/update');
+                            navigate(`/workdata/update/${selectedFile.wsId}/${selectedFile.id}`); // ✅ 워크스페이스 ID와 자료 ID 전달
                         }}
                     >
                         ✏️ 수정
@@ -294,6 +358,86 @@ const FileCardView = ({ files, setFiles }) => {
                     <Button variant="contained" color="error" onClick={() => modalhandleDelete(selectedFile)}>🗑️ 파일 삭제</Button>
                 </DialogActions>
             </Dialog>
+
+            {/* 다운로드 선택 모달 (점 3개 메뉴에서 호출) */}
+            <Dialog
+                open={openDownloadDialog}
+                onClose={() => setOpenDownloadDialog(false)}
+                fullWidth
+                maxWidth="xs"
+            >
+                <DialogTitle>다운로드할 파일 선택</DialogTitle>
+                <DialogContent>
+                    <List>
+                        {selectedFile && selectedFile.files.map((fileName, idx) => (
+                            <ListItem key={idx} button
+                                sx={{ cursor: "pointer" }}
+                                onClick={() => {
+                                    if (selectedFile.fileUrls && selectedFile.fileUrls[idx]) {
+                                        window.open(selectedFile.fileUrls[idx], '_blank');
+                                    } else {
+                                        alert("다운로드 URL이 없습니다.");
+                                    }
+                                }}>
+                                <ListItemIcon>
+                                    <img
+                                        src={fileTypeIcons[fileName.split(".").pop().toLowerCase()] || fileTypeIcons.default}
+                                        alt={fileName}
+                                        style={{ width: 25 }}
+                                    />
+                                </ListItemIcon>
+                                <ListItemText primary={fileName} />
+                            </ListItem>
+                        ))}
+                    </List>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenDownloadDialog(false)} color="primary">
+                        닫기
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* 다운로드 선택 모달 (옵션 2) */}
+            <Dialog Dialog
+                open={openDownloadDialog2}
+                onClose={() => setOpenDownloadDialog2(false)}
+                fullWidth
+                maxWidth="xs"
+            >
+                <DialogTitle>다운로드할 파일 선택</DialogTitle>
+                <DialogContent>
+                    <List>
+                        {selectedFile && selectedFile.files.map((fileName, idx) => (
+                            <ListItem key={idx} button
+                                sx={{
+                                    cursor: "pointer"
+                                }}
+                                onClick={() => {
+                                    if (selectedFile.fileUrls && selectedFile.fileUrls[idx]) {
+                                        window.open(selectedFile.fileUrls[idx], '_blank');
+                                    } else {
+                                        alert("다운로드 URL이 없습니다.");
+                                    }
+                                }}>
+                                <ListItemIcon>
+                                    <img
+                                        src={fileTypeIcons[fileName.split(".").pop().toLowerCase()] || fileTypeIcons.default}
+                                        alt={fileName}
+                                        style={{ width: 25 }}
+                                    />
+                                </ListItemIcon>
+                                <ListItemText primary={fileName} />
+                            </ListItem>
+                        ))}
+                    </List>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenDownloadDialog(false)} color="primary">
+                        닫기
+                    </Button>
+                </DialogActions>
+            </Dialog >
         </>
     );
 };

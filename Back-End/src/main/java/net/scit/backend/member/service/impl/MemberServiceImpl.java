@@ -1,5 +1,20 @@
 package net.scit.backend.member.service.impl;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -12,19 +27,16 @@ import net.scit.backend.component.MailComponents;
 import net.scit.backend.component.S3Uploader;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
-import net.scit.backend.member.dto.*;
+import net.scit.backend.member.dto.ChangePasswordDTO;
+import net.scit.backend.member.dto.MemberDTO;
+import net.scit.backend.member.dto.MemberLoginStatusDTO;
+import net.scit.backend.member.dto.MyInfoDTO;
+import net.scit.backend.member.dto.SignupDTO;
+import net.scit.backend.member.dto.UpdateInfoDTO;
+import net.scit.backend.member.dto.VerificationDTO;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.member.service.MemberService;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Member관련 업무를 수행하는 Service
@@ -250,8 +262,9 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public ResultDTO<SuccessDTO> logout() {
 
+        //로그아웃 상태 변경 관련 코드 추가
         String email = AuthUtil.getLoginUserId();
-        memberRepository.findByEmail(email).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+        this.updateLoginStatus(email, false, LocalDateTime.now());  // 🔹 로그아웃 시 DB 업데이트
 
         String accessToken = jwtTokenProvider.getJwtFromRequest(httpServletRequest);
 
@@ -382,6 +395,11 @@ public class MemberServiceImpl implements MemberService {
         return ResultDTO.of("비밀번호 변경에 성공했습니다.", successDTO);
     }
 
+    /**
+     * 회원 탈퇴 처리   
+     * @param memberDTO
+     * @return
+     */
     @Override
     @Transactional
     public ResultDTO<SuccessDTO> withdraw(MemberDTO memberDTO) {
@@ -403,7 +421,47 @@ public class MemberServiceImpl implements MemberService {
                 .success(true)
                 .build();
 
-        return ResultDTO.of("회원탈퇴가 완료되었었습니다.", successDTO);
+        return ResultDTO.of("회원탈퇴가 완료되었습니다.", successDTO);
     }
+
+    /**
+     * 로그인 상태 업데이트
+     * @param userEmail
+     */
+    @Override
+    @Transactional
+    public void updateLoginStatus(String userEmail, boolean status, LocalDateTime lastActiveTime) {
+        MemberEntity member = memberRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        member.setLoginStatus(status);
+        member.setLastActiveTime(lastActiveTime);  // 🔹 로그인/로그아웃 시 lastActiveTime 갱신
+        memberRepository.save(member);  // 🔹 DB에 저장
+
+        log.info("🔹 DB 업데이트 완료: userEmail={}, loginStatus={}, lastActiveTime={}",
+                userEmail, status, lastActiveTime);
+    }
+
+    /**
+     * 로그인 상태 조회
+     * @param userEmail
+     * @return
+     */
+    @Override
+    public MemberLoginStatusDTO getLoginStatus(String userEmail) {
+        if (userEmail == null || userEmail.isEmpty()) {
+            // 토큰이 없거나 이메일이 없는 경우 false 반환 (lastActiveTime은 null로 처리)
+            return new MemberLoginStatusDTO("", false, null);
+        }
+        Optional<MemberEntity> optionalMember = memberRepository.findByEmail(userEmail);
+        if (optionalMember.isPresent()) {
+            MemberEntity member = optionalMember.get();
+            return new MemberLoginStatusDTO(member.getEmail(), member.isLoginStatus(), member.getLastActiveTime());
+        } else {
+            // 이메일이 존재하지 않는 경우에도 false 반환 (lastActiveTime은 null로 처리)
+            return new MemberLoginStatusDTO(userEmail, false, null);
+        }
+    }
+
 
 }

@@ -24,20 +24,45 @@ public class ScheduleDTO {
     private ScheduleStatus scheduleStatus;
     private LocalDateTime scheduleStartDate;
     private LocalDateTime scheduleFinishDate;
+    private LocalDateTime scheduleModifytime;
+    private String color;
 
     public static ScheduleDTO toDTO(ScheduleEntity scheduleEntity, String nickname, ScheduleTagEntity scheduleTagEntity) {
+        String tag2 = (scheduleTagEntity.getMediumTag() != null) ? scheduleTagEntity.getMediumTag().getTagName() : null; // null 처리 추가
+        String tag3 = (scheduleTagEntity.getSmallTag() != null) ? scheduleTagEntity.getSmallTag().getTagName() : null; // null 처리 추가
+
         return ScheduleDTO.builder()
                 .wsId(scheduleEntity.getWorkspace().getWsId())
                 .scheduleNumber(scheduleEntity.getScheduleNumber())
                 .nickname(nickname)
                 .tag1(scheduleTagEntity.getLargeTag().getTagName())
-                .tag2(scheduleTagEntity.getMediumTag().getTagName())
-                .tag3(scheduleTagEntity.getSmallTag().getTagName())
+                .tag2(tag2)
+                .tag3(tag3)
                 .scheduleTitle(scheduleEntity.getScheduleTitle())
                 .scheduleContent(scheduleEntity.getScheduleContent())
                 .scheduleStatus(scheduleEntity.getScheduleStatus())
                 .scheduleStartDate(scheduleEntity.getScheduleStartdate())
                 .scheduleFinishDate(scheduleEntity.getScheduleFinishdate())
+                .scheduleModifytime(scheduleEntity.getScheduleModifytime())
+                .color(scheduleTagEntity.getLargeTag().getTagColor())
+                .build();
+    }
+
+    public static ScheduleDTO toDTO(ScheduleEntity scheduleEntity, String nickname) {
+        return ScheduleDTO.builder()
+                .wsId(scheduleEntity.getWorkspace().getWsId())
+                .scheduleNumber(scheduleEntity.getScheduleNumber())
+                .nickname(nickname)
+                .tag1(null)
+                .tag2(null)
+                .tag3(null)
+                .scheduleTitle(scheduleEntity.getScheduleTitle())
+                .scheduleContent(scheduleEntity.getScheduleContent())
+                .scheduleStatus(scheduleEntity.getScheduleStatus())
+                .scheduleStartDate(scheduleEntity.getScheduleStartdate())
+                .scheduleFinishDate(scheduleEntity.getScheduleFinishdate())
+                .scheduleModifytime(scheduleEntity.getScheduleModifytime())
+                .color("#DBE2EF") // 태그가 없을 때 디폴트 색상
                 .build();
     }
 }

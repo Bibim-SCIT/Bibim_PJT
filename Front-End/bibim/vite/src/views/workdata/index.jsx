@@ -7,147 +7,133 @@ import MainCard from "ui-component/cards/MainCard";
 
 // React Router 추가
 import { useNavigate } from "react-router-dom";
+import { useSelector } from 'react-redux';
 
 // components
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import FileTable from "./components/FileTable";
 import FileCardView from "./components/FileCardView";
 import SearchBar from "./components/SearchBar";
 import Filter from "./components/Filter";
 import TableChartIcon from "@mui/icons-material/TableChart";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
-
-// 프로필 이미지 임시 데이터
-import CatImg from "assets/images/cat_profile.jpg";
-
-// // 샘플 파일 데이터
-// const filesData = [
-//     { id: 1, title: "프로젝트 계획서", name: "프로젝트 계획서.pdf", tag: "문서", date: "2025-02-19", uploader: "임성준", avatar: CatImg },
-//     { id: 2, title: "2025년 디자인 시안", name: "디자인 시안.png", tag: "디자인", date: "2025-02-18", uploader: "김철수", avatar: "/avatars/user2.png" },
-//     { id: 3, title: "기술 정리입니다", name: "기술 문서.docx", tag: "문서", date: "2025-02-17", uploader: "박지수", avatar: "/avatars/user3.png" },
-//     { id: 4, title: "여러분들이 봐야할 자료", name: "완전잼따.txt", tag: "문서", date: "2025-02-17", uploader: "협업 전문가", avatar: "/avatars/user3.png" },
-//     { id: 5, title: "노미카이 때의 사진", name: "회식 250220.jpg", tag: "사진", date: "2025-02-20", uploader: "설진환", avatar: CatImg },
-//     { id: 6, title: "DB ERD에 대한 설명 파일", name: "ERD 설명.md", tag: "문서", date: "2025-02-17", uploader: "성경진", avatar: "/avatars/user5.png" },
-//     { id: 7, title: "Github push 방법에 대한 분석", name: "Github 안날려먹기.ppt", tag: "문서", date: "2025-01-08", uploader: "박경남", avatar: "/avatars/user6.png" },
-//     { id: 8, title: "bibim Figma작업 사진", name: "250215 Figma.jpg", tag: "사진", date: "2025-02-15", uploader: "김세빈", avatar: "/avatars/user7.png" },
-//     { id: 9, title: "250220 전체공정도", name: "bibim 공정도 정리.xlsx", tag: "문서", date: "2025-02-28", uploader: "박상준", avatar: CatImg },
-//     { id: 10, title: "겁나긴제목테스트테스트겁나긴제목테스트테스트겁나긴제목테스트테스트", name: "트롤링 방법 정리트롤링트롤링트롤링트롤링.xlsx", tag: "문서", date: "2025-03-01", uploader: "트롤러", avatar: CatImg },
-// ];
-
-const filesData = [
-    {
-        id: 1,
-        title: "프로젝트 계획서",
-        files: ["프로젝트 계획서.pdf", "부록.docx"],
-        tags: ["문서", "기획"],
-        date: "2025-02-19",
-        uploader: "임성준",
-        avatar: CatImg
-    },
-    {
-        id: 2,
-        title: "2025년 디자인 시안",
-        files: ["디자인 시안.png"],
-        tags: ["디자인"],
-        date: "2025-02-18",
-        uploader: "김철수",
-        avatar: "/avatars/user2.png"
-    },
-    {
-        id: 3,
-        title: "기술 정리입니다",
-        files: ["기술 문서.docx", "기술 분석.xlsx", "참고 자료.pdf"],
-        tags: ["문서"],
-        date: "2025-02-17",
-        uploader: "박지수",
-        avatar: "/avatars/user3.png"
-    },
-    {
-        id: 4,
-        title: "여러분들이 봐야할 자료",
-        files: ["완전잼따.txt"],
-        tags: ["문서"],
-        date: "2025-02-17",
-        uploader: "협업 전문가",
-        avatar: "/avatars/user3.png"
-    },
-    {
-        id: 5,
-        title: "노미카이 때의 사진",
-        files: ["회식 250220.jpg", "단체사진.png"],
-        tags: ["사진"],
-        date: "2025-02-20",
-        uploader: "설진환",
-        avatar: CatImg
-    },
-    {
-        id: 6,
-        title: "DB ERD에 대한 설명 파일",
-        files: ["ERD 설명.md"],
-        tags: ["문서", "DB"],
-        date: "2025-02-17",
-        uploader: "성경진",
-        avatar: "/avatars/user5.png"
-    },
-    {
-        id: 7,
-        title: "Github push 방법에 대한 분석",
-        files: ["Github 안날려먹기.ppt", "git_메뉴얼.pdf"],
-        tags: ["문서", "Git", "pdf"],
-        date: "2025-01-08",
-        uploader: "박경남",
-        avatar: "/avatars/user6.png"
-    },
-    {
-        id: 8,
-        title: "bibim Figma작업 사진",
-        files: ["250215 Figma.jpg"],
-        tags: ["사진", "디자인"],
-        date: "2025-02-15",
-        uploader: "김세빈",
-        avatar: "/avatars/user7.png"
-    },
-    {
-        id: 9,
-        title: "250220 전체공정도",
-        files: ["bibim 공정도 정리.xlsx", "공정도 추가자료.docx"],
-        tags: ["문서", "공정"],
-        date: "2025-02-28",
-        uploader: "박상준",
-        avatar: CatImg
-    },
-    {
-        id: 10,
-        title: "겁나긴제목테스트테스트겁나긴제목테스트테스트겁나긴제목테스트테스트",
-        files: ["트롤링 방법 정리트롤링트롤링트롤링트롤링.xlsx"],
-        tags: ["문서", "트롤"],
-        date: "2025-03-01",
-        uploader: "트롤러",
-        avatar: CatImg
-    },
-];
-
+import { getWorkdataList, getWorkdataDetail } from '../../api/workdata'; // ✅ 전체 조회 API import
 
 // ==============================|| 자료실 ||============================== //
 
 export default function WorkDataPage() {
     const navigate = useNavigate(); // ✅ useNavigate 훅 사용
-    const [files, setFiles] = useState(filesData);
+    const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
+    // const [files, setFiles] = useState(filesData);
+    const [files, setFiles] = useState([]); // ✅ 초기 데이터를 빈 배열로 설정
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedTag, setSelectedTag] = useState("전체");
     const [viewMode, setViewMode] = useState("table"); // "table" or "card"
+    const [loading, setLoading] = useState(true);  // ✅ 로딩 상태 추가
+
+    // ✅ 전체 조회 API 호출
+    // ✅ 처음 API 요청할 때만 실행 (정렬할 때는 새로 요청하지 않음)
+    useEffect(() => {
+        const fetchWorkdata = async () => {
+            try {
+                setLoading(true);
+                const wsId = activeWorkspace.wsId;
+                console.log("📌 현재 등록할 워크스페이스 번호:", wsId);
+                console.log("📌 현재 등록할 워크스페이스 이름 등 정보:", activeWorkspace);
+                // 전체 목록 조회
+                const listData = await getWorkdataList(wsId, "regDate", "desc");
+                console.log("📌 불러온 자료 목록:", listData);
+
+                if (Array.isArray(listData)) {
+                    // 각 항목마다 상세 조회 API 호출 (content 포함)
+                    const detailedData = await Promise.all(
+                        listData.map(async (item) => {
+                            try {
+                                const detail = await getWorkdataDetail(wsId, item.dataNumber);
+                                console.log("📌 불러온 자료 상세:", detail);
+                                return {
+                                    ...item, content: detail.content, fileNames2: detail.fileNames, fileUrls: detail.fileUrls
+                                };
+                            } catch (error) {
+                                console.error("상세 조회 실패:", item.dataNumber, error);
+                                return { ...item, content: "" }; // 실패 시 빈 문자열
+                            }
+                        })
+                    );
+
+                    const formattedData = detailedData.map((item) => ({
+                        id: item.dataNumber,
+                        title: item.title,
+                        files: item.fileNames2 || ["파일 없음"],
+                        tags: item.tags || [],
+                        date: item.regDate.split("T")[0],
+                        uploader: item.nickname,
+                        avatar: item.profileImage || "/avatars/default.png",
+                        wsId: activeWorkspace.wsId,
+                        content: item.content,
+                        fileUrls: item.fileUrls
+                    }));
+                    setFiles(formattedData);
+                } else {
+                    console.error("❌ API에서 받은 데이터가 배열이 아님:", listData);
+                    setFiles([]);
+                }
+            } catch (error) {
+                console.error("❌ 자료 목록 조회 실패:", error);
+                setFiles([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchWorkdata();
+    }, [activeWorkspace]);
+
+
+    // ✅ 정렬 함수 (프론트에서 정렬)
+    const [sortField, setSortField] = useState("regDate");
+    const [sortOrder, setSortOrder] = useState("desc");
+
+    const handleSort = (field) => {
+        setSortField(field);
+        setSortOrder(prevOrder => (prevOrder === "asc" ? "desc" : "asc"));
+    };
+
+    // ✅ 클라이언트 측에서 정렬 수행
+    const sortedFiles = useMemo(() => {
+        return [...files].sort((a, b) => {
+            if (sortField === "title" || sortField === "uploader") {
+                return sortOrder === "asc"
+                    ? a[sortField].localeCompare(b[sortField])
+                    : b[sortField].localeCompare(a[sortField]);
+            }
+            if (sortField === "date") {
+                // ✅ "YYYY-MM-DD" -> Date 객체 변환하여 비교
+                const [yearA, monthA, dayA] = a.date.split("-").map(Number);
+                const [yearB, monthB, dayB] = b.date.split("-").map(Number);
+                const dateA = new Date(yearA, monthA - 1, dayA);
+                const dateB = new Date(yearB, monthB - 1, dayB);
+
+                return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+            }
+            return 0;
+        });
+    }, [files, sortField, sortOrder]);  // ✅ files가 변경될 때만 정렬 실행
+
+
 
     // 🔍 파일 검색 및 필터링
     // const filteredFiles = files.filter(
     //     (file) =>
-    //         file.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    //         (selectedTag === "전체" || file.tag === selectedTag)
+    //         file.files.some(f => f.toLowerCase().includes(searchQuery.toLowerCase())) &&
+    //         (selectedTag === "전체" || file.tags.includes(selectedTag))
     // );
     const filteredFiles = files.filter(
         (file) =>
-            file.files.some(f => f.toLowerCase().includes(searchQuery.toLowerCase())) &&
-            (selectedTag === "전체" || file.tags.includes(selectedTag))
+            (file.files || []).some(f => f.toLowerCase().includes(searchQuery.toLowerCase())) &&
+            (selectedTag === "전체" || file.tags?.includes(selectedTag))
     );
+
 
 
     // 📤 파일 업로드 버튼 클릭 시 /workdata/create로 이동
@@ -159,7 +145,7 @@ export default function WorkDataPage() {
         <MainCard title="📂 자료실">
             {/* 🔄 상단: 뷰 전환 토글 & 파일 업로드 버튼 */}
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
-                <Typography variant="h6">파일을 검색하고 필터링하여 조회하세요.</Typography>
+                <Typography variant="h4">파일을 검색하고 필터링하여 조회하세요.</Typography>
                 <Box sx={{ display: "flex", gap: 2 }}>
                     <ToggleButtonGroup
                         value={viewMode}
@@ -194,11 +180,18 @@ export default function WorkDataPage() {
                 </Box>
             </Box>
 
-            {/* 📌 테이블 뷰 vs 카드 뷰 전환 */}
+            {/* 🔄 테이블 뷰 vs 카드 뷰 전환 */}
             {viewMode === "table" ? (
-                <FileTable files={filteredFiles} setFiles={setFiles} />
+                <FileTable
+                    files={sortedFiles}
+                    setFiles={setFiles}
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                    loading={loading}  // ✅ 로딩 상태 전달
+                />
             ) : (
-                <FileCardView files={filteredFiles} setFiles={setFiles} />
+                <FileCardView files={sortedFiles} setFiles={setFiles} loading={loading} />
             )}
 
 

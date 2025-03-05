@@ -2,6 +2,7 @@ package net.scit.backend.schedule.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import net.scit.backend.schedule.dto.SmallTagDTO;
 
 @Entity
 @Table(name = "small_tag")
@@ -21,4 +22,12 @@ public class SmallTagEntity {
     private MediumTagEntity mediumTag;
 
     private String tagName;
+
+    public static SmallTagEntity toEntity(SmallTagDTO smallTagDTO, MediumTagEntity mediumTagEntity) {
+        return SmallTagEntity.builder()
+                .mediumTag(mediumTagEntity)
+                .tagName(smallTagDTO.getTagName())
+                .build();
+    }
+
 }

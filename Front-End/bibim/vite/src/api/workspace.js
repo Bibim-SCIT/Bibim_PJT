@@ -1,16 +1,28 @@
-import axios from "axios";
-
-//const API_BASE_URL = "http://your-api-url.com/members"; // 백엔드 API 기본 URL
-const API_BASE_URL = "http://localhost:8080/workspace"; // 백엔드 API 기본 URL
-
-// 워크스페이스 리스트 가져오기
-export const workspaceList = async (token) => {
+/**
+ * 워크스페이스 업데이트
+ * @param {string} wsName - 현재 워크스페이스 이름
+ * @param {string} newName - 새로운 워크스페이스 이름
+ * @param {File} file - 새로운 워크스페이스 이미지 (선택사항)
+ */
+export const updateWorkspace = async (wsName, newName, file) => {
     try {
-        const response = await axios.get(`${API_BASE_URL}`, {
-            headers : {Authorization: `Bearer ${token}`},
+        const formData = new FormData();
+        formData.append('wsName', wsName);
+        formData.append('newName', newName);
+        
+        if (file) {
+            formData.append('file', file);
+        }
+
+        const response = await axios.put(`${API_BASE_URL}/workspace`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'Authorization': `Bearer ${hardcodedToken}`
+            }
         });
+
         return response.data;
     } catch (error) {
-        throw error.response?.data || "토큰 정보가 제대로 맞지 않음";
+        throw error;
     }
-};
+}; 
