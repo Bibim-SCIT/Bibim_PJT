@@ -9,7 +9,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-
 import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -90,7 +89,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         String inviteKey = "newWorkspace:" + email + ":" + wsId;
         redisTemplate.opsForValue().set(inviteKey, code, MAIL_EXPIRES_IN, TimeUnit.MILLISECONDS);
     }
-    
 
     // 초대 이메일 전송 메소드
     private void sendInvitationEmail(String email, String wsName, String code) {
@@ -121,17 +119,16 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 String storedCode = redisTemplate.opsForValue().get(key);
                 if (storedCode != null && storedCode.equals(code)) {
                     // key에서 이메일과 워크스페이스 ID 추출
-                    String[] parts = key.split(":"); 
+                    String[] parts = key.split(":");
                     String keyEmail = parts[1]; // email
-                    if(!keyEmail.equals(email))
-                    {
+                    if (!keyEmail.equals(email)) {
                         throw new CustomException(ErrorCode.EMAIL_NOT_EQUAL);
                     }
                     Long wsId = Long.parseLong(parts[2]); // 워크스페이스 ID
-                    
+
                     // 사용된 초대 코드 삭제 (보안 및 중복 방지)
                     redisTemplate.delete(key);
-                    
+
                     return wsId; // 검증된 워크스페이스 ID 반환
                 }
             }
@@ -228,21 +225,21 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     public ResultDTO<SuccessDTO> workspaceUpdate(String wsName, String newName, MultipartFile file) {
         String email = AuthUtil.getLoginUserId();
         Long wsId = workspaceRepository.findWsIdByWsNameAndEmail(wsName, email);
-        
+
         // ID가 null인 경우 예외 처리
         if (wsId == null) {
             return ResultDTO.of("해당 워크스페이스를 찾을 수 없습니다.", SuccessDTO.builder().success(false).build());
         }
 
         WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
-        
+
         // ✅ 기존 이미지 URL 유지 (NULL 값 방지)
         String imageUrl = workspaceEntity.getWsImg();
         if (file != null && !file.isEmpty()) {
             imageUrl = uploadImage(file); // 새 이미지 업로드
         }
 
-//        String imageUrl = uploadImage(file);
+        // String imageUrl = uploadImage(file);
         workspaceEntity.setWsName(newName);
         workspaceEntity.setWsImg(imageUrl);
         workspaceRepository.save(workspaceEntity);
@@ -342,7 +339,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         String email = AuthUtil.getLoginUserId();
 
         // 이메일 인증 코드 검증
-        Long wsId = validateInvitationCode(code,email);
+        Long wsId = validateInvitationCode(code, email);
 
         // 유저와 워크스페이스 엔티티 조회
         MemberEntity memberEntity = getMemberEntity(email);
@@ -350,7 +347,8 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
         // 기본 권한 가져오기
         WorkspaceChannelRoleEntity workspaceRoleEntity = workspaceRoleRepository
-                .findByWorkspace_wsIdAndChRole(wsId, DEFAULT_ROLE)
+                // .findByWorkspace_wsIdAndChRole(wsId, DEFAULT_ROLE)
+                .findByWorkspace_wsIdAndChRole(wsId, OWNER_ROLE)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_HAVE_NOT_ROLE));
 
         // 워크스페이스 멤버로 추가
@@ -379,7 +377,8 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         String email = AuthUtil.getLoginUserId();
 
         // WorkSpace_Member 테이블에서 이메일과 wsId로 회원 정보 조회
-        WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email)
+        WorkspaceMemberEntity workspaceMember = workspaceMemberRepository
+                .findByWorkspace_wsIdAndMember_Email(wsId, email)
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
 
         // Member 테이블에서 기본 회원 정보(name) 조회
@@ -388,9 +387,9 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
         // DTO 변환
         WorkspaceMemberDTO workspaceMemberDTO = WorkspaceMemberDTO.builder()
-                .name(member.getName())  // 기본 회원 이름
-                .nickname(workspaceMember.getNickname())  // 워크스페이스 내 닉네임
-                .profileImage(workspaceMember.getProfileImage())  // 워크스페이스 내 프로필 이미지
+                .name(member.getName()) // 기본 회원 이름
+                .nickname(workspaceMember.getNickname()) // 워크스페이스 내 닉네임
+                .profileImage(workspaceMember.getProfileImage()) // 워크스페이스 내 프로필 이미지
                 .build();
 
         return ResultDTO.of("워크스페이스 회원 정보 조회 성공", workspaceMemberDTO);
@@ -398,20 +397,23 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     /**
      * 워크스페이스 내 회원 정보 수정
-     * @param wsId 워크스페이스 ID
+     * 
+     * @param wsId       워크스페이스 ID
      * @param updateInfo 수정할 정보
-     * @param file 프로필 이미지 파일 (선택)
+     * @param file       프로필 이미지 파일 (선택)
      * @return 수정 결과
      * 
      */
     @Override
     @Transactional
-    public ResultDTO<SuccessDTO> updateWorkspaceMemberInfo(Long wsId, UpdateWorkspaceMemberDTO updateInfo, MultipartFile file) {
+    public ResultDTO<SuccessDTO> updateWorkspaceMemberInfo(Long wsId, UpdateWorkspaceMemberDTO updateInfo,
+            MultipartFile file) {
         // JWT에서 로그인한 유저 이메일 가져오기
         String email = AuthUtil.getLoginUserId();
 
         // WorkSpace_Member 테이블에서 이메일과 wsId로 회원 정보 조회
-        WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email)
+        WorkspaceMemberEntity workspaceMember = workspaceMemberRepository
+                .findByWorkspace_wsIdAndMember_Email(wsId, email)
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
 
         // 닉네임 업데이트
@@ -437,10 +439,9 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         // 변경사항 저장
         workspaceMemberRepository.save(workspaceMember);
 
-        return ResultDTO.of("워크스페이스 회원 정보가 성공적으로 수정되었습니다.", 
+        return ResultDTO.of("워크스페이스 회원 정보가 성공적으로 수정되었습니다.",
                 SuccessDTO.builder().success(true).build());
     }
-
 
     /**
      * 워크스페이스에 소속된 멤버들의 접속현황을 조회합니다.
@@ -454,10 +455,10 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     @Cacheable(value = "workspaceMemberStatus", key = "#p0", unless = "(#result != null) && (#result.isEmpty())")
     public List<MemberLoginStatusDTO> getWorkspaceMembersStatus(Long workspaceId, String userEmail) {
         // 요청한 사용자가 해당 워크스페이스의 멤버인지 확인
-        Optional<WorkspaceMemberEntity> membershipOpt =
-                workspaceMemberRepository.findByWorkspace_WsIdAndMember_Email(workspaceId, userEmail);
+        Optional<WorkspaceMemberEntity> membershipOpt = workspaceMemberRepository
+                .findByWorkspace_WsIdAndMember_Email(workspaceId, userEmail);
         if (!membershipOpt.isPresent()) {
-            throw new CustomException(ErrorCode.ACCESS_DENIED);  // 접근 권한 없음
+            throw new CustomException(ErrorCode.ACCESS_DENIED); // 접근 권한 없음
         }
 
         // 워크스페이스에 소속된 모든 멤버 조회
@@ -468,8 +469,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
             statusList.add(new MemberLoginStatusDTO(
                     wme.getMember().getEmail(),
                     wme.getMember().isLoginStatus(),
-                    wme.getMember().getLastActiveTime()
-            ));
+                    wme.getMember().getLastActiveTime()));
         });
         return statusList;
     }
