@@ -137,15 +137,16 @@ public class WorkdataController {
     /**
      * 1-4-1) 자료글 전체 조회(+태그별 정렬)
      */
-    @GetMapping("")
-    public ResponseEntity<ResultDTO<List<WorkdataTotalSearchDTO>>> workdata(@RequestParam Long wsId,
-                                                                            @RequestParam(required = false, defaultValue = "regDate") String sort,
-                                                                            @RequestParam(required = false, defaultValue = "desc") String order) {
+    @GetMapping("/{wsId}")
+    public ResponseEntity<ResultDTO<List<WorkdataTotalSearchDTO>>> workdata(
+            @PathVariable Long wsId,
+            @RequestParam(required = false, defaultValue = "regDate") String sort,
+            @RequestParam(required = false, defaultValue = "desc") String order) {
         // 1. 로그인 사용자 이메일 조회
         String userEmail = AuthUtil.getLoginUserId();
 
-        // 2. 워크스페이스 검증
-        workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, userEmail)
+        // 2. 워크스페이스 검증 (일관성을 위해 findByMember_EmailAndWorkspace_WsId 사용)
+        workspaceMemberRepository.findByMember_EmailAndWorkspace_WsId(userEmail, wsId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다."));
 
         // 3. 서비스 호출 후 응답 반환
@@ -156,9 +157,10 @@ public class WorkdataController {
     /**
      * 1-4-2) 자료실 개별 조회
      */
-    @GetMapping("/detail")
-    public ResponseEntity<ResultDTO<WorkdataTotalSearchDTO>> workdataDetail(@RequestParam Long wsId,
-                                                                            @RequestParam Long dataNumber) {
+    @GetMapping("/detail/{wsId}/{dataNumber}")
+    public ResponseEntity<ResultDTO<WorkdataTotalSearchDTO>> workdataDetail(
+            @PathVariable Long wsId,
+            @PathVariable Long dataNumber) {
         // 1. 로그인 사용자 이메일 조회
         String userEmail = AuthUtil.getLoginUserId();
 
@@ -169,6 +171,7 @@ public class WorkdataController {
         // 3. 서비스 호출 후 응답 반환
         return workdataService.workdataDetail(wsId, dataNumber);
     }
+
 
     /**
      * 2. 검색

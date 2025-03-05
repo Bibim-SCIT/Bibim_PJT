@@ -298,37 +298,34 @@ public class WorkdataServiceImpl implements WorkdataService {
     }
 
 
-
-
-
     /**
      * 1-4.1) 자료글 전체 조회 (+정렬)
      */
     @Override
     public ResponseEntity<ResultDTO<List<WorkdataTotalSearchDTO>>> workdata(Long wsId, String sort, String order) {
-        // ✅ 1) 로그인한 사용자 이메일 가져오기
+        // 1) 로그인한 사용자 이메일 가져오기
         String userEmail = AuthUtil.getLoginUserId();
 
-        // ✅ 2) 해당 사용자가 wsId에 속해 있는지 검증
+        // 2) 해당 사용자가 wsId에 속해 있는지 검증 (findByMember_EmailAndWorkspace_WsId 사용)
         WorkspaceMemberEntity wsMember = workspaceMemberRepository
-                .findByWorkspace_wsIdAndMember_Email(wsId, userEmail)
+                .findByMember_EmailAndWorkspace_WsId(userEmail, wsId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다."));
 
-        // ✅ 3) 자료글 목록 조회 (+ 파일, 태그 미리 로딩)
+        // 3) 자료글 목록 조회 (+ 파일, 태그 미리 로딩)
         List<WorkdataEntity> workdataEntities = Optional.ofNullable(workdataRepository.findWithFilesAndTags(wsId))
                 .orElse(Collections.emptyList());
 
-        // ✅ 4) DTO 변환
+        // 4) DTO 변환 (Set을 List로 변환)
         List<WorkdataTotalSearchDTO> responseDTOs = workdataEntities.stream()
                 .map(entity -> WorkdataTotalSearchDTO.toDTO(
                         entity,
-                        new ArrayList<>(entity.getWorkdataFiles()),  // 기존 `Set<WorkdataFileEntity>`을 List로 변환
-                        new ArrayList<>(entity.getWorkdataFileTags()),  // 기존 `Set<WorkDataFileTagEntity>`을 List로 변환
+                        new ArrayList<>(entity.getWorkdataFiles()),
+                        new ArrayList<>(entity.getWorkdataFileTags()),
                         wsMember
                 ))
                 .collect(Collectors.toList());
 
-        // ✅ 5) 정렬 로직 (sort, order)
+        // 5) 정렬 로직 (sort, order)
         Comparator<WorkdataTotalSearchDTO> comparator = switch (sort) {
             case "writer" -> Comparator.comparing(WorkdataTotalSearchDTO::getWriter, String.CASE_INSENSITIVE_ORDER);
             case "title" -> Comparator.comparing(WorkdataTotalSearchDTO::getTitle, String.CASE_INSENSITIVE_ORDER);
@@ -338,12 +335,12 @@ public class WorkdataServiceImpl implements WorkdataService {
         if ("desc".equalsIgnoreCase(order)) {
             comparator = comparator.reversed();
         }
-
         responseDTOs.sort(comparator);
 
-        // ✅ 6) 응답 반환
+        // 6) 응답 반환
         return ResponseEntity.ok(ResultDTO.of("자료글 전체 조회 성공!", responseDTOs));
     }
+
 
 
     /**
@@ -366,11 +363,6 @@ public class WorkdataServiceImpl implements WorkdataService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 자료글을 찾을 수 없습니다."));
 
         // 4. DTO 변환
-        // 만약 DTO에 "toDTO(...)" 메서드가 있다면 사용
-        // 여기서는 "toWorkdataTotalSearchDTO" 메서드가 없을 수도 있으므로 아래와 같이 두 가지 방법이 있음:
-        //   A) 직접 DTO 빌더 사용
-        //   B) 기존 "toDTO(...)" 스타일 메서드 사용 (만약 정의돼 있다면)
-
         // A) 직접 DTO 빌더 사용 (간단 예시)
         WorkdataTotalSearchDTO dto = WorkdataTotalSearchDTO.builder()
                 .dataNumber(workdataEntity.getDataNumber())
@@ -378,7 +370,7 @@ public class WorkdataServiceImpl implements WorkdataService {
                 .title(workdataEntity.getTitle())
                 .content(workdataEntity.getContent())
                 .regDate(workdataEntity.getRegDate())
-                // 일단 빈 리스트를 넣고 아래에서 세터로 값 채우기
+                // 빈 리스트 초기화 후 아래에서 세터로 값 채우기
                 .fileNames(new ArrayList<>())
                 .fileUrls(new ArrayList<>())
                 .tags(new ArrayList<>())
@@ -414,6 +406,7 @@ public class WorkdataServiceImpl implements WorkdataService {
         // 7. 응답 반환
         return ResponseEntity.ok(ResultDTO.of("자료글 개별 조회 성공!", dto));
     }
+
 
 
     /**
