@@ -57,6 +57,8 @@ export const createWorkdata = async (wsId, title, content, files, tags) => {
     }
 
     try {
+        console.log("🟢 업로드 요청 데이터:", { wsId, title, content, tags, files });
+
         const response = await api.post('/workdata', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
