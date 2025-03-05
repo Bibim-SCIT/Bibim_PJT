@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 
@@ -29,7 +30,6 @@ import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
-import net.scit.backend.workspace.dto.InvateWorkspaceDTO;
 import net.scit.backend.workspace.dto.UpdateWorkspaceMemberDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
@@ -85,9 +85,12 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     }
 
     // Redis에 인증코드 저장 메소드
-    private void saveInvitationCodeToRedis(String email, String code) {
-        redisTemplate.opsForValue().set("newWorkspace: " + email, code, MAIL_EXPIRES_IN, TimeUnit.MILLISECONDS);
+    private void saveInvitationCodeToRedis(String email, String code, Long wsId) {
+        // 워크스페이스 ID를 포함한 키 생성 (각 워크스페이스별로 초대 코드 저장)
+        String inviteKey = "newWorkspace:" + email + ":" + wsId;
+        redisTemplate.opsForValue().set(inviteKey, code, MAIL_EXPIRES_IN, TimeUnit.MILLISECONDS);
     }
+    
 
     // 초대 이메일 전송 메소드
     private void sendInvitationEmail(String email, String wsName, String code) {
@@ -96,12 +99,43 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         mailComponents.sendMail(email, title, message);
     }
 
-    // Redis에서 인증코드 검증 메소드
-    private void validateInvitationCode(String email, String code) {
-        String savedCode = redisTemplate.opsForValue().get("newWorkspace: " + email);
-        if (savedCode == null || !savedCode.equals(code)) {
-            throw new CustomException(ErrorCode.INVALID_EMAIL_CODE);
+    /**
+     * Redis에서 초대 코드 검증 메소드
+     * 
+     * 1. Redis에서 'newWorkspace: *' 패턴으로 모든 초대 코드 검색
+     * 2. 저장된 초대 코드와 사용자가 입력한 코드가 일치하는지 확인
+     * 3. 일치하는 경우, 해당 이메일에 연결된 워크스페이스 ID 조회
+     * 4. Redis에서 사용된 초대 코드와 워크스페이스 ID 정보를 삭제 (한 번만 사용 가능하도록)
+     * 5. 워크스페이스 ID 반환
+     * 6. 초대 코드가 일치하지 않으면 예외 발생
+     *
+     * @param code 사용자가 입력한 초대 코드
+     * @return 가입할 워크스페이스 ID
+     * @throws CustomException 초대 코드가 유효하지 않을 경우 예외 발생
+     */
+    private Long validateInvitationCode(String code, String email) {
+        Set<String> keys = redisTemplate.keys("newWorkspace:*"); // 모든 초대 코드 조회
+        if (keys != null) {
+            for (String key : keys) {
+                String storedCode = redisTemplate.opsForValue().get(key);
+                if (storedCode != null && storedCode.equals(code)) {
+                    // key에서 이메일과 워크스페이스 ID 추출
+                    String[] parts = key.split(":"); 
+                    String keyEmail = parts[1]; // email
+                    if(!keyEmail.equals(email))
+                    {
+                        throw new CustomException(ErrorCode.EMAIL_NOT_EQUAL);
+                    }
+                    Long wsId = Long.parseLong(parts[2]); // 워크스페이스 ID
+                    
+                    // 사용된 초대 코드 삭제 (보안 및 중복 방지)
+                    redisTemplate.delete(key);
+                    
+                    return wsId; // 검증된 워크스페이스 ID 반환
+                }
+            }
         }
+        throw new CustomException(ErrorCode.INVALID_EMAIL_CODE); // 검증 실패 시 예외 발생
     }
 
     // WorkspaceEntity 조회 메소드
@@ -295,7 +329,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         sendInvitationEmail(email, wsName, code);
 
         // Redis에 초대 코드 저장
-        saveInvitationCodeToRedis(email, code);
+        saveInvitationCodeToRedis(email, code, wsId);
 
         return ResultDTO.of("메일을 보내는 것을 성공했습니다.", SuccessDTO.builder().success(true).build());
     }
@@ -303,12 +337,11 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     // 초대 수락 메소드
     @Override
     @Transactional
-    public ResultDTO<SuccessDTO> workspaseAdd(InvateWorkspaceDTO invateWorkspaceDTO) {
+    public ResultDTO<SuccessDTO> workspaseAdd(String code) {
         String email = AuthUtil.getLoginUserId();
-        Long wsId = invateWorkspaceDTO.getWsID();
 
         // 이메일 인증 코드 검증
-        validateInvitationCode(email, invateWorkspaceDTO.getCode());
+        Long wsId = validateInvitationCode(code,email);
 
         // 유저와 워크스페이스 엔티티 조회
         MemberEntity memberEntity = getMemberEntity(email);
