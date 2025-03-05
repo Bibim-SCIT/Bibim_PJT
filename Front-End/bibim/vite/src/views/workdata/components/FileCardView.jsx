@@ -7,6 +7,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { deleteWorkdata } from "../../../api/workdata";
+import LoadingScreen from './LoadingScreen';
 
 // 파일 아이콘 import
 import pdfIcon from "assets/images/icons/pdf.png";
@@ -136,10 +137,8 @@ const FileCardView = ({ files, setFiles, loading }) => {
         setOpenModal(false);
     };
 
-    // ✅ 로딩 중일 때 표시
-    if (loading) {
-        return <Typography variant="h3" sx={{ p: 2, textAlign: "center" }}>⏳ 데이터 로딩 중...</Typography>;
-    }
+    // 로딩 상태일 때 커스텀 로딩 컴포넌트 렌더링
+    if (loading) return <LoadingScreen />;
 
     // ✅ 데이터가 없을 때만 "파일이 없습니다" 표시
     if (!files || files.length === 0) {

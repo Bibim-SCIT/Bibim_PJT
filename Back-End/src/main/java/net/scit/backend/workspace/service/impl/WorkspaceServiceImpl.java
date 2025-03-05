@@ -268,6 +268,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     @Transactional
     @CacheEvict(value = "workspaceMemberList", key = "#wsId")
     public ResultDTO<SuccessDTO> worksapceForceDrawal(Long wsId, String email) {
+
         checkOwnerRole(wsId, AuthUtil.getLoginUserId());
         workspaceMemberRepository.deleteByWorkspace_wsIdAndMember_Email(wsId, email);
 
@@ -276,7 +277,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     // 워크스페이스 권한 생성 메소드
     @Override
-    public ResultDTO<SuccessDTO> worksapceRightCreate(Long wsId, String newRole) {
+    public ResultDTO<SuccessDTO> workspaceRightCreate(Long wsId, String newRole) {
         WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
         workspaceRoleRepository.save(
                 WorkspaceChannelRoleEntity.builder().workspace(workspaceEntity).chRole(newRole).build());
@@ -287,7 +288,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     // 워크스페이스 권한 부여 메소드
     @Override
     @Transactional
-    public ResultDTO<SuccessDTO> worksapceRightGrant(Long wsId, String email, Long chRole) {
+    public ResultDTO<SuccessDTO> workspaceRightGrant(Long wsId, String email, Long chRole) {
         checkOwnerRole(wsId, AuthUtil.getLoginUserId());
         WorkspaceMemberEntity member = workspaceMemberRepository
                 .findByWorkspace_wsIdAndMember_Email(wsId, email)
@@ -303,7 +304,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     // 워크스페이스 권한 삭제 메소드
     @Override
     @Transactional
-    public ResultDTO<SuccessDTO> worksapceRightDelete(Long wsId, Long chRole) {
+    public ResultDTO<SuccessDTO> workspaceRightDelete(Long wsId, Long chRole) {
         checkOwnerRole(wsId, AuthUtil.getLoginUserId());
         workspaceRoleRepository.deleteById(chRole);
 
@@ -313,7 +314,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     // 초대 메소드
     @Override
     @Transactional
-    public ResultDTO<SuccessDTO> workspaseInvate(Long wsId, String email) {
+    public ResultDTO<SuccessDTO> workspaceInvate(Long wsId, String email) {
         WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
         String wsName = workspaceEntity.getWsName();
 
@@ -338,7 +339,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     // 초대 수락 메소드
     @Override
     @Transactional
-    public ResultDTO<SuccessDTO> workspaseAdd(String code) {
+    public ResultDTO<SuccessDTO> workspaceAdd(String code) {
         String email = AuthUtil.getLoginUserId();
 
         // 이메일 인증 코드 검증
