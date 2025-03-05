@@ -11,6 +11,7 @@ import WorkspaceList from './components/WorkspaceList';
 import InviteWorkspace from './components/InviteWorkspace';
 
 import { createWorkspace, joinWorkspaceByInviteCode } from '../../api/workspaceApi';
+import LoadingScreen from './components/LoadingScreen';
 
 // ==============================|| 워크스페이스 선택 화면 ||============================== //
 
@@ -48,6 +49,12 @@ export default function WsSelectPage() {
             dispatch(setActiveWorkspace(parsedWorkspace));
         }
     }, [dispatch]);
+
+    useEffect(() => {
+        if (!loading && Array.isArray(workspaces) && workspaces.length === 1) {
+            handleSelectWorkspace(workspaces[0]);
+        }
+    }, [loading, workspaces]);
 
 
     // 워크스페이스가 없는 경우 확인
@@ -105,7 +112,8 @@ export default function WsSelectPage() {
         }
     }, [loading, workspaces]);
 
-    if (loading) return <p>워크스페이스 로딩 중...</p>;
+    // 로딩 상태일 때 커스텀 로딩 컴포넌트 렌더링
+    if (loading) return <LoadingScreen />;
 
     return (
         <MainCard title="워크스페이스 선택">

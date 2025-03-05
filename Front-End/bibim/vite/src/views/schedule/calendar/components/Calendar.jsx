@@ -170,7 +170,7 @@ const Calendar = () => {
   useEffect(() => {
     const wsId = activeWorkspace.wsId;
     fetchSchedules(wsId);
-  }, [fetchSchedules]);
+  }, [activeWorkspace]);
 
   const handleEventHover = (scheduleId, isHovering) => {
     const events = document.querySelectorAll(`[data-schedule-id="${scheduleId}"]`);
