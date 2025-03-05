@@ -14,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
-import net.scit.backend.workspace.dto.InvateWorkspaceDTO;
 import net.scit.backend.workspace.dto.UpdateWorkspaceMemberDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
@@ -111,9 +110,10 @@ public class WorkspaceController {
      * @return
      */
     @PostMapping("/add")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workspaseAdd(@ModelAttribute InvateWorkspaceDTO invateWorkspaceDTO) {
-
-        ResultDTO<SuccessDTO> result = workspaceService.workspaseAdd(invateWorkspaceDTO);
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaseAdd(@RequestParam("code") String code) 
+    {
+        
+        ResultDTO<SuccessDTO> result = workspaceService.workspaseAdd(code);
         return ResponseEntity.ok(result);
     }
 
