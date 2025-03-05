@@ -3,10 +3,10 @@ import { memo, useState, useEffect, useContext } from 'react';
 import { useSelector } from 'react-redux';
 
 // material-ui
-import { useTheme } from '@mui/material/styles';
+import { useTheme, styled } from '@mui/material/styles';
 import {
   Avatar, Card, Box, List, ListItem, ListItemAvatar, ListItemText, Typography,
-  IconButton, Button, Modal, TextField
+  IconButton, Button, Modal, TextField, Badge
 } from '@mui/material';
 
 import { linearProgressClasses } from '@mui/material/LinearProgress';
@@ -23,8 +23,10 @@ import { ConfigContext } from '../../../../contexts/ConfigContext';
 // api import
 import { getUserInfo, getWorkspaceMemberInfo, updateWorkspaceMemberInfo } from '../../../../api/auth';
 
+import noprofile from '../../../../assets/images/noprofile.png';
+
 // ✅ 기본 프로필 이미지
-const DEFAULT_PROFILE_IMAGE = 'https://cdn.pixabay.com/photo/2020/05/17/20/21/cat-5183427_1280.jpg';
+const DEFAULT_PROFILE_IMAGE = noprofile;
 
 // ✅ 모달 스타일 (참고 코드에서 가져온 스타일 적용)
 const modalStyle = {
@@ -39,6 +41,36 @@ const modalStyle = {
   p: 3,
   textAlign: 'center'
 };
+
+// 로그인 중 표시 (아바타위 초록불)
+const StyledBadge = styled(Badge)(({ theme }) => ({
+  '& .MuiBadge-badge': {
+    backgroundColor: '#44b700',
+    color: '#44b700',
+    boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
+    '&::after': {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      borderRadius: '50%',
+      animation: 'ripple 1.2s infinite ease-in-out',
+      border: '1px solid currentColor',
+      content: '""',
+    },
+  },
+  '@keyframes ripple': {
+    '0%': {
+      transform: 'scale(.8)',
+      opacity: 1,
+    },
+    '100%': {
+      transform: 'scale(2.4)',
+      opacity: 0,
+    },
+  },
+}));
 
 
 // ==============================|| PROGRESS BAR WITH LABEL ||============================== //
@@ -92,17 +124,43 @@ function MenuCard() {
   // ✅ currentUser(현재 워크스페이스 내 이름)를 API에서 가져오기
   // const [currentUser, setCurrentUser] = useState(null);
   const [currentUser, setCurrentUser] = useState({ name: '', profileImage: '' });
+  const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false); // 모달 상태
   const [newName, setNewName] = useState(''); // 새로운 닉네임
   const [newProfileImage, setNewProfileImage] = useState(null); // 새로운 프로필 이미지 (File 객체)
   const [previewImage, setPreviewImage] = useState(null); // 프로필 미리보기 이미지
 
+  // useEffect(() => {
+  //   const fetchWorkspaceUser = async () => {
+  //     if (!activeWorkspace?.wsId) {
+  //       console.error("❌ 현재 워크스페이스 ID 없음");
+  //       return;
+  //     }
+  //     try {
+  //       const workspaceUser = await getWorkspaceMemberInfo(activeWorkspace.wsId);
+  //       setCurrentUser(workspaceUser);
+  //       setNewName(workspaceUser.nickname || '');
+  //       setPreviewImage(workspaceUser.profileImage || DEFAULT_PROFILE_IMAGE);
+  //     } catch (error) {
+  //       console.error("🚨 워크스페이스 내 회원 정보 가져오기 실패:", error);
+  //     }
+  //   };
+
+  //   fetchWorkspaceUser();
+  // }, [activeWorkspace]);
+
   useEffect(() => {
+    if (!activeWorkspace?.wsId) {
+      console.error("❌ 현재 워크스페이스 ID 없음");
+      return;
+    }
+
+    // 워크스페이스 변경 시 초기화 및 로딩 상태 설정
+    setIsLoading(true);
+    setCurrentUser(null);
+    setPreviewImage(DEFAULT_PROFILE_IMAGE);
+
     const fetchWorkspaceUser = async () => {
-      if (!activeWorkspace?.wsId) {
-        console.error("❌ 현재 워크스페이스 ID 없음");
-        return;
-      }
       try {
         const workspaceUser = await getWorkspaceMemberInfo(activeWorkspace.wsId);
         setCurrentUser(workspaceUser);
@@ -110,6 +168,8 @@ function MenuCard() {
         setPreviewImage(workspaceUser.profileImage || DEFAULT_PROFILE_IMAGE);
       } catch (error) {
         console.error("🚨 워크스페이스 내 회원 정보 가져오기 실패:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -193,26 +253,40 @@ function MenuCard() {
           <List disablePadding sx={{ pb: 1 }}>
             <ListItem alignItems="flex-start" disableGutters disablePadding>
               <ListItemAvatar sx={{ mt: 0 }}>
-                <Avatar
-                  variant="rounded"
-                  sx={{
-                    ...theme.typography.commonAvatar,
-                    ...theme.typography.largeAvatar,
-                    color: 'primary.main',
-                    border: 'none',
-                    borderColor: 'primary.main',
-                    bgcolor: 'background.paper'
-                  }}
-                  src={currentUser?.profileImage || 'https://cdn.pixabay.com/photo/2020/05/17/20/21/cat-5183427_1280.jpg'}
+                <StyledBadge
+                  overlap="circular"
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                  variant="dot"
                 >
-                  {!currentUser?.profileImage && <TableChartOutlinedIcon fontSize="inherit" />}
-                </Avatar>
+                  <Avatar
+                    // variant="rounded"
+                    sx={{
+                      ...theme.typography.commonAvatar,
+                      ...theme.typography.largeAvatar,
+                      color: 'primary.main',
+                      border: 'none',
+                      borderColor: 'primary.main',
+                      bgcolor: 'background.paper'
+                    }}
+                    // src={currentUser?.profileImage || DEFAULT_PROFILE_IMAGE}
+                    src={
+                      isLoading
+                        ? DEFAULT_PROFILE_IMAGE
+                        : currentUser?.profileImage || DEFAULT_PROFILE_IMAGE
+                    }
+                  >
+                    {/* {!currentUser?.profileImage && <TableChartOutlinedIcon fontSize="inherit" />} */}
+                    {(isLoading || !currentUser?.profileImage) && (
+                      <TableChartOutlinedIcon fontSize="inherit" />
+                    )}
+                  </Avatar>
+                </StyledBadge>
               </ListItemAvatar>
               <ListItemText
                 sx={{ mt: 0 }}
                 primary={
                   <Typography variant="subtitle1" sx={{ color: 'primary.800' }}>
-                    {currentUser ? currentUser.nickname : '로딩 중...'}
+                    {currentUser ? currentUser.nickname : '불러오는 중...'}
                   </Typography>
                 }
                 secondary={<Typography variant="caption">{user?.name || '알 수 없음'}</Typography>}

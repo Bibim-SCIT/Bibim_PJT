@@ -9,7 +9,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -266,7 +265,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     @Override
     @Transactional
     @CacheEvict(value = "workspaceMemberList", key = "#wsId")
-    public ResultDTO<SuccessDTO> worksapceForceDrawal(Long wsId, String email) {
+    public ResultDTO<SuccessDTO> workspaceForceDrawal(Long wsId, String email) {
 
         checkOwnerRole(wsId, AuthUtil.getLoginUserId());
         workspaceMemberRepository.deleteByWorkspace_wsIdAndMember_Email(wsId, email);
@@ -481,10 +480,10 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     @Cacheable(value = "workspaceMemberList", key = "#workspaceId", unless = "#result == null || #result.isEmpty()")
     public List<WorkspaceMemberDTO> getWorkspaceMembers(Long workspaceId, String userEmail) {
         // 요청한 사용자가 해당 워크스페이스의 멤버인지 확인
-        Optional<WorkspaceMemberEntity> membershipOpt =
-                workspaceMemberRepository.findByWorkspace_WsIdAndMember_Email(workspaceId, userEmail);
+        Optional<WorkspaceMemberEntity> membershipOpt = workspaceMemberRepository
+                .findByWorkspace_WsIdAndMember_Email(workspaceId, userEmail);
         if (!membershipOpt.isPresent()) {
-            throw new CustomException(ErrorCode.ACCESS_DENIED);  // 접근 권한 없음
+            throw new CustomException(ErrorCode.ACCESS_DENIED); // 접근 권한 없음
         }
 
         // 워크스페이스에 소속된 모든 멤버 조회
