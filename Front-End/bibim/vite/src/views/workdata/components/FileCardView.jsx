@@ -165,7 +165,11 @@ const FileCardView = ({ files, setFiles, loading }) => {
                                     boxShadow: 2,
                                     display: "flex",
                                     flexDirection: "column",
-                                    justifyContent: "space-between"
+                                    justifyContent: "space-between",
+                                    transition: "transform 0.3s ease", // 애니메이션 속성 추가
+                                    "&:hover": {
+                                        transform: "translateY(-5px) scale(1.02)", // 마우스 오버 시 위로 5px 이동, 1.02배 확대
+                                    },
                                 }}
                                 onClick={() => handleOpenModal(file)}
                             >

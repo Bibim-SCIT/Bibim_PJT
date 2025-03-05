@@ -20,13 +20,14 @@ export default function WorkspaceList({ workspaces = [], onSelect }) {
                 p: 3,
                 border: '1px solid #ddd',
                 borderRadius: 2,
+                boxShadow: '2px 2px 8px rgba(0,0,0,0.1)',
                 width: '90%', // 좌우 90% 영역 차지
                 maxWidth: 1100, // 최대 너비 지정
                 mx: 'auto', // 가운데 정렬
                 textAlign: 'center'
             }}
         >
-            <Typography variant="h6" sx={{ mb: 2 }}>
+            <Typography variant="h4" sx={{ mb: 2 }}>
                 현재 생성된 워크스페이스
             </Typography>
 
