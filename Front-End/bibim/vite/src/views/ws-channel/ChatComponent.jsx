@@ -1,137 +1,194 @@
 import React, { useEffect, useState, useRef, useContext, useCallback } from "react";
-import SockJS from "sockjs-client"; // WebSocket 연결을 위한 SockJS 클라이언트
-import { Client } from "@stomp/stompjs"; // STOMP 프로토콜을 사용하기 위한 라이브러리
-import { ConfigContext } from "../../contexts/ConfigContext"; // 사용자 정보 가져오기 위한 Context
-import { FaPaperPlane, FaPlus } from "react-icons/fa"; // 아이콘 사용
-import "./ChatComponent.css"; // CSS 스타일링 적용
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
+import { ConfigContext } from "../../contexts/ConfigContext";
+import { FaPaperPlane, FaPlus, FaFileUpload } from "react-icons/fa";
+import "./ChatComponent.css";
 
 function ChatComponent({ channelId }) {
-    // ConfigContext에서 사용자 정보 가져오기
     const { user } = useContext(ConfigContext);
-
-    // 채팅 메시지 상태 (채팅 목록)
     const [messages, setMessages] = useState([]);
-
-    // 입력창 상태 (사용자가 입력한 메시지)
     const [input, setInput] = useState("");
-
-    // WebSocket 연결을 위한 STOMP 클라이언트 (useRef를 사용하여 유지)
+    const [file, setFile] = useState(null); // ✅ 파일 상태 추가
+    const [isUploading, setIsUploading] = useState(false); // ✅ 업로드 중 상태 추가
     const stompClientRef = useRef(null);
 
     useEffect(() => {
-        // 로컬 스토리지에서 JWT 토큰 가져오기
         const token = localStorage.getItem("token");
-
-        // 토큰이 없거나, 채널 ID 또는 사용자 정보가 없으면 연결 중단
         if (!token || !channelId || !user) return;
 
-        // SockJS를 사용하여 WebSocket 연결 생성
         const socket = new SockJS("http://localhost:8080/ws/chat");
-
-        // STOMP 클라이언트 생성 및 설정
         const client = new Client({
-            webSocketFactory: () => socket, // WebSocket 설정
-            connectHeaders: { Authorization: `Bearer ${token}` }, // JWT 토큰을 인증 헤더에 추가
+            webSocketFactory: () => socket,
+            connectHeaders: { Authorization: `Bearer ${token}` },
             onConnect: () => {
-                // WebSocket 연결이 성공하면 해당 채널을 구독
                 client.subscribe(`/exchange/chat-exchange/msg.${channelId}`, (message) => {
                     try {
-                        // 메시지를 JSON으로 변환
                         const parsedMessage = JSON.parse(message.body);
-                        // 기존 메시지 목록에 추가
                         setMessages((prev) => [...prev, parsedMessage]);
                     } catch (error) {
                         console.error("❌ 메시지 파싱 오류:", error);
                     }
                 });
-
-                // STOMP 클라이언트를 Ref에 저장
                 stompClientRef.current = client;
             },
-            onStompError: (error) => console.error("STOMP 에러:", error), // STOMP 오류 발생 시 콘솔 출력
-            onWebSocketClose: () => console.log("WebSocket 연결 종료"), // WebSocket 연결이 종료될 때 로그 출력
+            onStompError: (error) => console.error("STOMP 에러:", error),
+            onWebSocketClose: () => console.log("WebSocket 연결 종료"),
         });
 
-        // STOMP 클라이언트 활성화 (연결 시작)
         client.activate();
-
-        // 컴포넌트 언마운트 시 연결 해제 (클린업 함수)
         return () => client.deactivate();
-    }, [channelId, user]); // channelId 또는 user가 변경될 때마다 실행
+    }, [channelId, user]);
 
     /**
-     * 메시지 전송 함수
-     * 사용자가 입력한 메시지를 STOMP 서버로 전송
+     * 메시지 전송 (텍스트 또는 파일)
      */
-    const sendMessage = useCallback(() => {
-        // 입력이 비어있거나, STOMP 클라이언트가 없으면 실행하지 않음
-        if (!input.trim() || !stompClientRef.current) return;
+    const sendMessage = useCallback(async () => {
+        if ((!input.trim() && !file) || !stompClientRef.current) return;
 
-        // 전송할 메시지 데이터 객체
-        const messageData = {
-            channelNumber: channelId, // 현재 채팅방 ID
-            content: input, // 사용자가 입력한 메시지
-            sender: user?.email || "Unknown Sender", // 발신자 이메일
-            messageOrFile: false, // 메시지인지 파일인지 여부 (false: 메시지)
-        };
+        if (file) {
+            setIsUploading(true);
+            const fileUrl = await uploadFile(file);
+            setIsUploading(false);
 
-        // STOMP 서버로 메시지 전송
-        stompClientRef.current.publish({
-            destination: `/app/chat.sendMessage.${channelId}`, // 메시지를 전송할 STOMP 목적지
-            body: JSON.stringify(messageData), // JSON 문자열로 변환하여 전송
-        });
+            if (fileUrl) {
+                const messageData = {
+                    channelNumber: channelId,
+                    content: fileUrl, // ✅ 파일 URL을 메시지로 전송
+                    sender: user?.email || "Unknown Sender",
+                    messageOrFile: true,
+                    fileUrl: fileUrl,
+                };
+                stompClientRef.current.publish({
+                    destination: `/app/chat.sendMessage.${channelId}`,
+                    body: JSON.stringify(messageData),
+                });
+            }
+            setFile(null);
+        } else {
+            const messageData = {
+                channelNumber: channelId,
+                content: input,
+                sender: user?.email || "Unknown Sender",
+                messageOrFile: false,
+            };
+            stompClientRef.current.publish({
+                destination: `/app/chat.sendMessage.${channelId}`,
+                body: JSON.stringify(messageData),
+            });
+            setInput("");
+        }
+    }, [input, channelId, user, file]);
 
-        // 입력 필드 초기화
-        setInput("");
-    }, [input, channelId, user]); // input, channelId, user 변경 시 함수 갱신
+    /**
+     * 파일 업로드 함수 (JWT 토큰 포함)
+     */
+    const uploadFile = async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("sender", user?.email);
+
+        const token = localStorage.getItem("token"); // ✅ JWT 토큰 가져오기
+        console.log("🔍 업로드 요청 - JWT 토큰:", token);
+
+        const uploadUrl = `http://localhost:8080/api/chat/upload/${channelId}`;
+        console.log("🔍 파일 업로드 요청 URL:", uploadUrl);
+
+        try {
+            const response = await fetch(uploadUrl, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`, // ✅ JWT 토큰 추가
+                },
+                body: formData,
+            });
+
+            if (!response.ok) throw new Error("파일 업로드 실패");
+
+            const data = await response.json();
+            return data.content; // 서버에서 반환한 파일 URL
+        } catch (error) {
+            console.error("❌ 파일 업로드 오류:", error);
+            return null;
+        }
+    };
+
+    /**
+     * 파일인지 확인하는 함수 (확장자로 판별)
+     */
+    const isImageFile = (url) => {
+        const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
+        const extension = url.split(".").pop().toLowerCase();
+        return imageExtensions.includes(extension);
+    };
 
     /**
      * Enter 키 입력 시 메시지 전송
      */
     const handleKeyPress = (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault(); // 기본 Enter 키 동작 방지
-            sendMessage(); // 메시지 전송
+        if (e.key === "Enter" && !file) {
+            e.preventDefault();
+            sendMessage();
+        }
+    };
+
+    /**
+     * 파일 선택 핸들러
+     */
+    const handleFileChange = (e) => {
+        if (e.target.files.length > 0) {
+            setFile(e.target.files[0]);
+            setInput(""); // ✅ 파일이 선택되면 텍스트 입력 비활성화
         }
     };
 
     return (
         <div className="chat-container">
-            {/* 채팅방 헤더 */}
+            {/* 헤더 */}
             <div className="chat-header">채팅 - 채널 {channelId}</div>
 
-            {/* 채팅 메시지 목록 */}
+            {/* 채팅 메시지 박스 */}
             <div className="chat-messages">
-                {messages.length === 0 ? (
-                    <p className="no-messages">No messages yet.</p>
-                ) : (
-                    messages.map((msg, index) => (
-                        <div key={index} className={`message ${msg.sender === user?.email ? "my-message" : "other-message"}`}>
-                            {/* 발신자 정보 */}
-                            <p className="sender">{msg.sender || "Unknown Sender"}</p>
-                            {/* 메시지 내용 */}
+                {messages.map((msg, index) => (
+                    <div key={index} className={`message ${msg.sender === user?.email ? "my-message" : "other-message"}`}>
+                        <p className="sender">{msg.sender}</p>
+                        {msg.messageOrFile && msg.content ? (
+                            isImageFile(msg.content) ? (
+                                // ✅ 이미지 파일이면 <img> 태그로 출력
+                                <img src={msg.content} alt="파일 미리보기" className="chat-image" />
+                            ) : (
+                                // ✅ 일반 파일이면 다운로드 링크 제공
+                                <a href={msg.content} target="_blank" rel="noopener noreferrer" className="file-message">
+                                    📎 파일 다운로드
+                                </a>
+                            )
+                        ) : (
+                            // 일반 메시지 출력
                             <div className="message-content">{msg.content}</div>
-                        </div>
-                    ))
-                )}
+                        )}
+                    </div>
+                ))}
             </div>
 
             {/* 입력창 */}
             <div className="chat-input-box">
-                {/* 파일 추가 버튼 (현재 기능 없음) */}
-                <button className="icon-btn"><FaPlus /></button>
+                <input type="file" id="file-upload" onChange={handleFileChange} hidden />
+                <label htmlFor="file-upload" className="icon-btn">
+                    <FaFileUpload />
+                </label>
 
-                {/* 메시지 입력 필드 */}
+                {file && <span className="selected-file">{file.name}</span>}
+
                 <input
                     value={input}
-                    onChange={(e) => setInput(e.target.value)} // 입력값 업데이트
-                    onKeyDown={handleKeyPress} // Enter 키 입력 감지
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyPress}
                     placeholder="메시지를 입력하세요..."
                     className="chat-input"
+                    disabled={file} // ✅ 파일 선택 시 입력창 비활성화
                 />
 
-                {/* 메시지 전송 버튼 */}
-                <button onClick={sendMessage} className="send-btn">
+                <button onClick={sendMessage} className="send-btn" disabled={isUploading}>
                     <FaPaperPlane />
                 </button>
             </div>
