@@ -3,14 +3,20 @@ package net.scit.backend.schedule.event;
 import lombok.Getter;
 import net.scit.backend.notification.event.BasedUpdatedEvent;
 import net.scit.backend.schedule.entity.ScheduleEntity;
+import net.scit.backend.member.entity.MemberEntity;
 
+/**
+ * 스케줄 담당자 지정 이벤트
+ */
 @Getter
-public class ScheduleUpdatedEvent implements BasedUpdatedEvent {
+public class ScheduleAssigneeUpdatedEvent implements BasedUpdatedEvent {
     private final ScheduleEntity schedule;
-    private final String updatedBy; // 변경을 수행한 사용자 (일정 생성자 또는 관리자)
+    private final MemberEntity assignedMember;
+    private final String updatedBy;
 
-    public ScheduleUpdatedEvent(ScheduleEntity schedule, String updatedBy) {
+    public ScheduleAssigneeUpdatedEvent(ScheduleEntity schedule, MemberEntity assignedMember, String updatedBy) {
         this.schedule = schedule;
+        this.assignedMember = assignedMember;
         this.updatedBy = updatedBy;
     }
 
@@ -26,16 +32,16 @@ public class ScheduleUpdatedEvent implements BasedUpdatedEvent {
 
     @Override
     public String getNotificationName() {
-        return "일정 변경됨";
+        return "스케줄 담당자 변경됨";
     }
 
     @Override
     public String getNotificationType() {
-        return "schedule_update";
+        return "schedule_assignee_update";
     }
 
     @Override
     public String getNotificationContent() {
-        return "일정이 변경되었습니다.";
+        return String.format("스케줄 담당자가 '%s'(으)로 변경되었습니다.", assignedMember.getEmail());
     }
 }
