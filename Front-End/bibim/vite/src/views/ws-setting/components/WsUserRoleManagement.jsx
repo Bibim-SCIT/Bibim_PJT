@@ -11,14 +11,13 @@ const formatDate = (dateString) => {
     const now = new Date();
     const date = new Date(dateString);
     const diffTime = now - date;
-    const diffMinutes = Math.floor(diffTime / (1000 * 60));
     const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     const diffWeeks = Math.floor(diffDays / 7);
     
-    // 1시간 이내
-    if (diffMinutes < 60) {
-        return diffMinutes === 0 ? '방금 전' : `${diffMinutes}분 전`;
+    // 1시간 이내는 모두 '방금 전'으로 표시
+    if (diffHours < 1) {
+        return '방금 전';
     }
     
     // 오늘 안에 (24시간 이내)
