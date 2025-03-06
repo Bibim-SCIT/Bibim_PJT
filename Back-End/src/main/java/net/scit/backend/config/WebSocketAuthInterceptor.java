@@ -2,7 +2,7 @@ package net.scit.backend.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.scit.backend.auth.JwtTokenProvider;
+import net.scit.backend.jwt.JwtTokenProvider;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
