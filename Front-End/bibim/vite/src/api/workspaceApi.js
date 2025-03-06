@@ -19,22 +19,6 @@ const getAuthHeaders = () => {
 
 
 // ✅ 워크스페이스 리스트 가져오기
-// export const getWorkspaces = async () => {
-//     try {
-//         const response = await axios.get(`${API_BASE_URL}`, { headers: getAuthHeaders() });
-//         return response.data;
-//     } catch (error) {
-//         throw error.response?.data || "워크스페이스 목록을 불러오는데 실패했습니다.";
-//     }
-// };
-// export const getWorkspaces = async () => {
-//     try {
-//         const response = await axiosInstance.get("");
-//         return response.data;
-//     } catch (error) {
-//         throw error.response?.data || "워크스페이스 목록을 불러오는데 실패했습니다.";
-//     }
-// };
 export const getWorkspaces = async () => {
     try {
         const response = await api.get(API_BASE_URL);
@@ -45,60 +29,6 @@ export const getWorkspaces = async () => {
 };
 
 // ✅ 워크스페이스 생성 요청
-// export const createWorkspace = async (workspaceName, workspaceImage = null) => {
-//     try {
-//         const formData = new FormData();
-//         formData.append("name", workspaceName);
-//         if (workspaceImage) {
-//             formData.append("file", workspaceImage);
-//         }
-
-//         const response = await axios.post(`${API_BASE_URL}`, formData, {
-//             headers: {
-//                 ...getAuthHeaders(),
-//                 "Content-Type": "multipart/form-data"
-//             }
-//         });
-//         return response.data;
-//     } catch (error) {
-//         console.error("🚨 워크스페이스 생성 실패:", error);
-//         throw error.response?.data || "워크스페이스 생성에 실패했습니다.";
-//     }
-// };
-// export const createWorkspace = async (workspaceName, workspaceImage = null) => {
-//     try {
-//         const formData = new FormData();
-//         formData.append("name", workspaceName);
-//         if (workspaceImage) {
-//             formData.append("file", workspaceImage);
-//         }
-
-//         const response = await axiosInstance.post("", formData, {
-//             headers: { "Content-Type": "multipart/form-data" }
-//         });
-//         return response.data;
-//     } catch (error) {
-//         console.error("🚨 워크스페이스 생성 실패:", error);
-//         throw error.response?.data || "워크스페이스 생성에 실패했습니다.";
-//     }
-// };
-// export const createWorkspace = async (workspaceName, workspaceImage = null) => {
-//     try {
-//         const formData = new FormData();
-//         formData.append("name", workspaceName);
-//         if (workspaceImage) {
-//             formData.append("file", workspaceImage);
-//         }
-
-//         const response = await api.post(API_BASE_URL, formData, {
-//             headers: { "Content-Type": "multipart/form-data" } // ✅ `api`는 이미 Authorization 헤더 포함
-//         });
-//         return response.data;
-//     } catch (error) {
-//         console.error("🚨 워크스페이스 생성 실패:", error);
-//         throw error.response?.data || "워크스페이스 생성에 실패했습니다.";
-//     }
-// };
 export const createWorkspace = async (workspaceName, workspaceImage = null) => {
     try {
         const formData = new FormData();
@@ -138,34 +68,18 @@ export const createWorkspace = async (workspaceName, workspaceImage = null) => {
 
 
 // ✅ 초대 코드로 워크스페이스 가입
-// export const joinWorkspaceByInviteCode = async (inviteCode) => {
-//     try {
-//         const response = await axios.post(
-//             `${API_BASE_URL}/add`,
-//             { inviteCode },
-//             { headers: getAuthHeaders() }
-//         );
-//         return response.data;
-//     } catch (error) {
-//         throw error.response?.data || "초대 코드 가입에 실패했습니다.";
-//     }
-// };
-// export const joinWorkspaceByInviteCode = async (inviteCode) => {
-//     try {
-//         const response = await axiosInstance.post("/add", { inviteCode });
-//         return response.data;
-//     } catch (error) {
-//         throw error.response?.data || "초대 코드 가입에 실패했습니다.";
-//     }
-// };
+// 초대 코드에 의해 가입하기
 export const joinWorkspaceByInviteCode = async (inviteCode) => {
     try {
-        const response = await api.post(`${API_BASE_URL}/add`, { inviteCode });
+        const response = await api.post(`${API_BASE_URL}/add`, null, {
+            params: { code: inviteCode },
+        });
         return response.data;
     } catch (error) {
         throw error.response?.data || "초대 코드 가입에 실패했습니다.";
     }
 };
+
 
 // ✅ 워크스페이스 삭제
 // export const deleteWorkspace = async (workspaceName) => {
@@ -212,10 +126,94 @@ export const getWorkspaceMembers = async (workspaceId) => {
     }
 };
 
+export const updateWorkspace = async (wsName, newName, imageFile) => {
+    try {
+        const formData = new FormData();
+        formData.append('wsName', wsName);
+        formData.append('newName', newName);
+        if (imageFile) {
+            formData.append('file', imageFile);
+        }
+
+        const response = await api.put('/workspace', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        // 응답 데이터 확인
+        if (!response.data || !response.data.success) {
+            throw new Error(response.data?.message || '업데이트 실패');
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error("🚨 워크스페이스 업데이트 실패:", error);
+        throw error;
+    }
+};
+
+// 초대 기능 API 호출
+export const inviteWorkspace = async (wsId, email) => {
+    try {
+        const response = await api.post(`${API_BASE_URL}/invite`, null, {
+            params: { wsId, email },
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || "워크스페이스 초대에 실패했습니다.";
+    }
+};
+
+export const kickUserFromWorkspace = async (wsId, email) => {
+    try {
+        console.log('강퇴 요청 파라미터:', { wsId, email });  // 요청 파라미터 확인
+        const response = await api.delete(`${API_BASE_URL}/forcedrawal`, {
+            params: { wsId, email }
+        });
+        console.log('강퇴 API 응답:', response);  // API 응답 확인
+        return response.data;
+    } catch (error) {
+        console.error('강퇴 API 에러:', error);  // 에러 상세 확인
+        throw error.response?.data || "사용자 강퇴에 실패했습니다.";
+    }
+};
+
+// 워크스페이스 내 모든 멤버 조회 API 호출 함수
+export const fetchWorkspaceUsers = async (workspaceId) => {
+    try {
+        const response = await api.get(`${API_BASE_URL}/${workspaceId}/members`);
+        console.log('API 응답:', response); // 응답 확인을 위한 로그
+        return response.data;
+    } catch (error) {
+        console.error('워크스페이스 멤버 조회 실패:', error);
+        throw error;
+    }
+};
+
+// 워크스페이스 멤버 권한 변경 API
+export const updateUserRole = async (wsId, email, newRole) => {
+    try {
+        const response = await api.patch(`${API_BASE_URL}/rolesetting`, null, {
+            params: { wsId, email, newRole },
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        // 응답 데이터 확인 로깅
+        console.log('권한 변경 응답:', response);
+        
+        return response.data;
+    } catch (error) {
+        console.error('권한 변경 API 에러:', error);
+        throw error.response?.data || "권한 변경에 실패했습니다.";
+    }
+};
+
 export default {
     getWorkspaces,
     createWorkspace,
     joinWorkspaceByInviteCode,
     deleteWorkspace,
-    getWorkspaceMembers
+    getWorkspaceMembers,
+    inviteWorkspace
 };

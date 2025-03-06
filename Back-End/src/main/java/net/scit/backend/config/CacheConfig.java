@@ -15,7 +15,7 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager("workspaceMemberStatus");
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager("workspaceMemberStatus", "workspaceMemberList");
         // 반드시 Caffeine.newBuilder()를 직접 사용
         cacheManager.setCaffeine(Caffeine.newBuilder()
                 .expireAfterWrite(5, TimeUnit.MINUTES)

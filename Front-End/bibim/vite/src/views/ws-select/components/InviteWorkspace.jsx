@@ -17,6 +17,7 @@ export default function InviteWorkspace({ onInvite }) {
                 p: 3,
                 border: '1px solid #ddd',
                 borderRadius: 2,
+                boxShadow: '2px 2px 8px rgba(0,0,0,0.1)',
                 width: '85%',  // 좌우 80~90% 영역 차지
                 maxWidth: 600, // 최대 너비 지정
                 mx: 'auto', // 가운데 정렬

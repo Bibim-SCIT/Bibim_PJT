@@ -45,6 +45,7 @@ public class SecurityConfig {
                           CustomOAuth2UserService customOAuth2UserService,
                           CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler,
                           CustomOAuth2FailureHandler customOAuth2FailureHandler) {
+      
         this.jwtTokenProvider = jwtTokenProvider;
         this.userDetailsService = userDetailsService;
         this.redisTemplate = redisTemplate;
@@ -57,10 +58,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable()) // CSRF 비활성화 (JWT 사용 시 필요 없음)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // ✅ 추가:
-                // JWT 기반
-                // 인증 설정
+                .csrf(csrf -> csrf.disable()) // ✅ SSE 사용을 위해 CSRF 비활성화
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // ✅ JWT 기반 세션 관리
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/members/check-email", "/members/signup/",
                                 "/members/signup/**",
@@ -70,6 +69,7 @@ public class SecurityConfig {
                                 "/members/link",
                                 "/workdata/**", // 자료실 관련(추후 삭제)
                                 "/workspace/**",
+                                "/ws/**",
                                 "/error")
                         .permitAll() // 로그인 엔드포인트 허용
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 전용
@@ -77,6 +77,8 @@ public class SecurityConfig {
                                 "/members/withdraw",
                                 "/workspace/**")
                         .hasRole("USER") // 사용자 전용
+                        .requestMatchers("/notification/subscribe").permitAll() // ✅ SSE 구독 요청 허용
+                        .requestMatchers("/notification/unread", "/notification/read-single", "/notification/read-all", "/notification/delete").authenticated() // ✅ 알림 관련 API는 인증 필요
                         .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
                 )
                 .oauth2Login(oauth2 -> oauth2
@@ -87,26 +89,26 @@ public class SecurityConfig {
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService, redisTemplate),
                         UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000")); // React 허용
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // 허용할 HTTP 메소드
-        config.setAllowedHeaders(List.of("*")); // 모든 헤더 허용
+        config.setAllowedOrigins(List.of("http://localhost:3000")); // ✅ React 허용
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")); // ✅ 허용할 HTTP 메소드
+        config.setAllowedHeaders(List.of("*")); // ✅ 모든 헤더 허용
         config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
-    } // 쿠키 허용
+    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
             throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
-
     }
 
     @Bean

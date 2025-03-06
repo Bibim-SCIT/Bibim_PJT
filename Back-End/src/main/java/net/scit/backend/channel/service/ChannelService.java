@@ -9,7 +9,7 @@ import net.scit.backend.channel.DTO.MessageDTO;
 public interface ChannelService {
     MessageDTO processMessage(MessageDTO messageDTO);
 
-    MessageDTO uploadFile(MultipartFile file, String sender, Long channelId);
-
     List<MessageDTO> getMessagesByChannel( Long channelId);
+
+    MessageDTO uploadFile(MultipartFile file, String sender, Long channelId);
 }

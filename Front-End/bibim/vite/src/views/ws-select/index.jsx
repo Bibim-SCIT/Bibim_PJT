@@ -1,4 +1,4 @@
-import { useContext, useEffect } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { ConfigContext } from '../../contexts/ConfigContext'; // ✅ ConfigContext import
 import { loadWorkspace, setActiveWorkspace } from '../../store/workSpaceRedux';
@@ -9,8 +9,10 @@ import { Grid, Box } from '@mui/material';
 import MainCard from 'ui-component/cards/MainCard';
 import WorkspaceList from './components/WorkspaceList';
 import InviteWorkspace from './components/InviteWorkspace';
+import AcceptInviteModal from './components/AcceptInviteModal'; // 초대 수락 모달 import
 
 import { createWorkspace, joinWorkspaceByInviteCode } from '../../api/workspaceApi';
+import LoadingScreen from './components/LoadingScreen';
 
 // ==============================|| 워크스페이스 선택 화면 ||============================== //
 
@@ -25,15 +27,12 @@ export default function WsSelectPage() {
     const workspaces = useSelector((state) => state.workspace.list || []); // ✅ 기본값 설정
     const loading = useSelector((state) => state.workspace.loading);
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace);
+    const [inviteAcceptModalOpen, setInviteAcceptModalOpen] = useState(false);
 
     useEffect(() => {
         console.log("👤 현재 로그인한 사용자:", user);
         console.log("🏢 현재 선택된 워크스페이스:", activeWorkspace);
     }, [user, activeWorkspace]);
-
-    // useEffect(() => {
-    //     dispatch(loadWorkspace());
-    // }, [dispatch]);
 
     // 새로고침 후에도 선택한 워크스페이스 유지
     useEffect(() => {
@@ -49,6 +48,11 @@ export default function WsSelectPage() {
         }
     }, [dispatch]);
 
+    useEffect(() => {
+        if (!loading && Array.isArray(workspaces) && workspaces.length === 1) {
+            handleSelectWorkspace(workspaces[0]);
+        }
+    }, [loading, workspaces]);
 
     // 워크스페이스가 없는 경우 확인
     //const [workspaces, setWorkspaces] = useState([]);
@@ -68,7 +72,8 @@ export default function WsSelectPage() {
     const handleSelectWorkspace = (workspace) => {
         dispatch(setActiveWorkspace(workspace));
         localStorage.setItem('activeWorkspace', JSON.stringify(workspace)); // ✅ localStorage에 저장
-        navigate('/dashboard/default'); // 워크스페이스 내부 페이지로 이동
+        // navigate('/dashboard/default'); // 워크스페이스 내부 페이지로 이동
+
     };
 
     // 새로운 워크스페이스 생성 (API 연동)
@@ -81,11 +86,12 @@ export default function WsSelectPage() {
         }
     };
 
-    // 초대 코드 입력 후 워크스페이스 가입
+    // 초대 코드 입력 후 워크스페이스 가입 & 모달 띄우기
     const handleInviteWorkspace = async (code) => {
         try {
             await joinWorkspaceByInviteCode(code);
-            dispatch(loadWorkspace()); // 업데이트된 워크스페이스 목록 불러오기
+            dispatch(loadWorkspace());
+            setInviteAcceptModalOpen(true);
         } catch (error) {
             console.error('초대 코드 가입 실패:', error);
         }
@@ -105,7 +111,8 @@ export default function WsSelectPage() {
         }
     }, [loading, workspaces]);
 
-    if (loading) return <p>워크스페이스 로딩 중...</p>;
+    // 로딩 상태일 때 커스텀 로딩 컴포넌트 렌더링
+    if (loading) return <LoadingScreen />;
 
     return (
         <MainCard title="워크스페이스 선택">
@@ -123,6 +130,10 @@ export default function WsSelectPage() {
                 <Box sx={{ height: '200px' }}>
                 </Box>
             </Grid>
+            <AcceptInviteModal
+                open={inviteAcceptModalOpen}
+                onClose={() => setInviteAcceptModalOpen(false)}
+            />
         </MainCard>
     );
 }

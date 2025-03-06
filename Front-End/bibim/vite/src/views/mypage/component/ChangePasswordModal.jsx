@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { 
-    Modal, 
-    Box, 
-    Typography, 
-    TextField, 
+import {
+    Modal,
+    Box,
+    Typography,
+    TextField,
     Button,
     IconButton,
     InputAdornment,
@@ -14,7 +14,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 const style = {
-    position: 'absolute',
+    // position: 'absolute',
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
@@ -41,15 +41,15 @@ const ChangePasswordModal = ({ open, handleClose }) => {
     };
 
     return (
-        <Modal 
-            open={open} 
+        <Modal
+            open={open}
             onClose={handleClose}
         >
             <Box sx={style}>
                 <Box sx={{ p: 3, pb: 2 }}>
-                    <IconButton 
+                    <IconButton
                         onClick={handleClose}
-                        sx={{ 
+                        sx={{
                             position: 'absolute',
                             right: 8,
                             top: 8
@@ -58,9 +58,9 @@ const ChangePasswordModal = ({ open, handleClose }) => {
                         <CloseIcon />
                     </IconButton>
 
-                    <Typography 
+                    <Typography
                         variant="h4"
-                        sx={{ 
+                        sx={{
                             fontWeight: 400,
                             mb: 0
                         }}
@@ -72,10 +72,10 @@ const ChangePasswordModal = ({ open, handleClose }) => {
                 <Divider sx={{ borderColor: '#e0e0e0' }} />
 
                 <Box sx={{ p: 3 }}>
-                    <Box sx={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        gap: 3 
+                    <Box sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 3
                     }}>
                         <TextField
                             fullWidth
@@ -125,29 +125,29 @@ const ChangePasswordModal = ({ open, handleClose }) => {
                     </Box>
                 </Box>
 
-                <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'flex-end', 
+                <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
                     gap: 1,
                     p: 2,
                     bgcolor: '#f8f9fa',
                     borderTop: '1px solid #e0e0e0'
                 }}>
-                    <Button 
-                        variant="outlined" 
+                    <Button
+                        variant="outlined"
                         onClick={handleClose}
-                        sx={{ 
-                            color: '#666', 
+                        sx={{
+                            color: '#666',
                             borderColor: '#666',
                             boxShadow: 'none'
                         }}
                     >
                         취소
                     </Button>
-                    <Button 
-                        variant="contained" 
+                    <Button
+                        variant="contained"
                         onClick={handleSubmit}
-                        sx={{ 
+                        sx={{
                             bgcolor: '#1976d2',
                             boxShadow: 'none',
                             '&:hover': {

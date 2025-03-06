@@ -37,7 +37,6 @@ export default function WdUpdatePage() {
     const navigate = useNavigate();
     const { wsId, dataNumber } = useParams(); // ✅ URL에서 wsId와 dataNumber 가져오기
 
-    // const currentUser = { id: 'user123', name: '임성준', avatar: CatImg };
     // ✅ currentUser를 API에서 가져오기
     const [currentUser, setCurrentUser] = useState(null);
 

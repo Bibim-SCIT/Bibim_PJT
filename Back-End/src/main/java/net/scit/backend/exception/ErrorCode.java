@@ -1,7 +1,8 @@
 package net.scit.backend.exception;
 
-import lombok.Getter;
 import org.springframework.http.HttpStatus;
+
+import lombok.Getter;
 
 @Getter
 public enum ErrorCode {
@@ -11,6 +12,8 @@ public enum ErrorCode {
     INVALID_PASSWORD("비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
     MEMBER_HAVE_NOT_ROLE("해당 권한이 존재하지 않습니다.", HttpStatus.FORBIDDEN),
     OAUTH_ALREADY_LINKED("이미 연동을 진행한 회원입니다.", HttpStatus.CONFLICT),
+    EMAIL_NOT_EQUAL("이메일이 일치하지 않습니다.", HttpStatus.BAD_REQUEST),
+    INVALID_ROLE_VALUE("잘못된 역할 입니다.", HttpStatus.BAD_REQUEST),
 
     // WorkSpace
     WORKSPACE_NOT_FOUND("해당 워크스페이스를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
@@ -51,6 +54,7 @@ public enum ErrorCode {
 
     //Workspace Channel
     CHANNEL_NOT_FOUND("해당 채널을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    CHANNEL_ALREADY_EXISTS("같은 이름 채널이 존재합니다.", HttpStatus.NOT_FOUND),
     CHANNEL_DELETE_FORBIDDEN("채널 삭제 권한이 없습니다.", HttpStatus.FORBIDDEN),
     CHANNEL_UPDATE_FORBIDDEN("채널 수정 권한이 없습니다.", HttpStatus.FORBIDDEN ),
     ROLE_NOT_FOUND("해당 역할을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
