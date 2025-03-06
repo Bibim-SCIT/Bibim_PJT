@@ -53,6 +53,7 @@ public enum ErrorCode {
 
     // Workspace Channel
     CHANNEL_NOT_FOUND("해당 채널을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    CHANNEL_ALREADY_EXISTS("같은 이름 채널이 존재합니다.", HttpStatus.NOT_FOUND),
     CHANNEL_DELETE_FORBIDDEN("채널 삭제 권한이 없습니다.", HttpStatus.FORBIDDEN),
     CHANNEL_UPDATE_FORBIDDEN("채널 수정 권한이 없습니다.", HttpStatus.FORBIDDEN),
     ROLE_NOT_FOUND("해당 역할을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
