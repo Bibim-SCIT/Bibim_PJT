@@ -131,6 +131,18 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
         setSortOrder((prevOrder) => (prevOrder === "asc" ? "desc" : "asc"));
     };
 
+    // 파일 다운로드 위한 함수 설정
+    const handleDownload = (url, fileName) => {
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", fileName);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+
+
     console.log("📌 선택된 파일 정보:", selectedFile);
 
     return (
@@ -297,6 +309,7 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                                 // fileUrls 배열이 있을 경우 해당 파일 URL로 이동
                                                 if (selectedFile.fileUrls && selectedFile.fileUrls[idx]) {
                                                     window.open(selectedFile.fileUrls[idx], '_blank');
+                                                    // handleDownload(selectedFile.fileUrls[idx], fileName);
                                                 } else {
                                                     alert("다운로드 URL이 없습니다.");
                                                 }
@@ -378,6 +391,7 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                 onClick={() => {
                                     if (selectedFile.fileUrls && selectedFile.fileUrls[idx]) {
                                         window.open(selectedFile.fileUrls[idx], '_blank');
+                                        // handleDownload(selectedFile.fileUrls[idx], fileName);
                                     } else {
                                         alert("다운로드 URL이 없습니다.");
                                     }
