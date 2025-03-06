@@ -45,4 +45,6 @@ public interface WorkspaceService
     List<MemberLoginStatusDTO> getWorkspaceMembersStatus(Long workspaceId, String userEmail);
 
     List<WorkspaceMemberDTO> getWorkspaceMembers(Long workspaceId, String email);
+
+    ResultDTO<SuccessDTO> workspaceRoleUpdate(Long wsId, String email, String newRole);
 }

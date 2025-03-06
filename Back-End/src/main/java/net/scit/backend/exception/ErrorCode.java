@@ -12,6 +12,7 @@ public enum ErrorCode {
     INVALID_PASSWORD("비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
     MEMBER_HAVE_NOT_ROLE("해당 권한이 존재하지 않습니다.", HttpStatus.FORBIDDEN),
     EMAIL_NOT_EQUAL("이메일이 일치하지 않습니다.", HttpStatus.BAD_REQUEST),
+    INVALID_ROLE_VALUE("잘못된 역할 입니다.", HttpStatus.BAD_REQUEST),
 
     // WorkSpace
     WORKSPACE_NOT_FOUND("해당 워크스페이스를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
