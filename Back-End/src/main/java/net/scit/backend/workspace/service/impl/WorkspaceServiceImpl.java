@@ -481,23 +481,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         });
         return statusList;
     }
-
-
-    @Transactional
-    public void updateWorkspace(WorkspaceEntity updatedWorkspace, String updatedBy) {
-        WorkspaceEntity existingWorkspace = workspaceRepository.findById(updatedWorkspace.getWsId())
-                .orElseThrow(() -> new IllegalArgumentException("해당 워크스페이스를 찾을 수 없습니다."));
-
-        // 변경 사항 반영
-        existingWorkspace.setWsName(updatedWorkspace.getWsName());
-        existingWorkspace.setWsImg(updatedWorkspace.getWsImg());
-
-        // 변경된 워크스페이스 정보 저장
-        workspaceRepository.save(existingWorkspace);
-
-        // ✅ 워크스페이스 변경 이벤트 발생
-        eventPublisher.publishEvent(new WorkspaceUpdatedEvent(existingWorkspace, updatedBy));
-    }
   
   
     @Override
