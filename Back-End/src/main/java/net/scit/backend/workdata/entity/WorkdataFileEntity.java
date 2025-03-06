@@ -16,12 +16,8 @@ public class WorkdataFileEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long fileNumber;
 
-    /**
-     * 부모인 WorkdataEntity와 다대일 관계
-     * dataNumber 컬럼을 통해 부모 PK를 참조
-     */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "data_number")
+    @JoinColumn(name = "data_number", nullable = false)
     private WorkdataEntity workdataEntity;
 
     private String file;

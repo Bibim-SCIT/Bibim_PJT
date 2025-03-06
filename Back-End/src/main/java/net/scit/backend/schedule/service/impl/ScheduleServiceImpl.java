@@ -11,6 +11,7 @@ import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.schedule.dto.*;
 import net.scit.backend.schedule.entity.*;
+import net.scit.backend.schedule.event.ScheduleUpdatedEvent;
 import net.scit.backend.schedule.repository.*;
 import net.scit.backend.schedule.service.ScheduleService;
 import net.scit.backend.schedule.type.ScheduleStatus;
@@ -18,6 +19,7 @@ import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import net.scit.backend.workspace.repository.WorkspaceRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -715,10 +717,10 @@ public class ScheduleServiceImpl implements ScheduleService {
                 // 소분류 태그 조회에 성공했습니다.
                 return ResultDTO.of("소분류 태그 조회에 성공했습니다.", smallTagDTOList);
         }
-  
+
    /**
          * 전체 태그 조회
-         * 
+         *
          * @param wsId
          * @return 전체 태그 리스트트
          */
@@ -837,7 +839,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         /**
          * 대분류 태그 수정
-         * 
+         *
          * @param updateLargeTagDTO
          * @return
          */
@@ -888,7 +890,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         /**
          * 중분류 태그 수정
-         * 
+         *
          * @param updateMediumTagDTO
          * @return
          */
@@ -935,7 +937,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         /**
          * 소분류 태그 수정
-         * 
+         *
          * @param updateSmallTagDTO
          * @return
          */

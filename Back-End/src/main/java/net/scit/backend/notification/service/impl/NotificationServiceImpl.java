@@ -39,10 +39,10 @@ public class NotificationServiceImpl implements NotificationService {
         sendNotification(notification);
     }
 
-    // ✅ SSE 구독 (사용자별)
+    // ✅ SSE 구독 (사용자별 구독 관리)
     @Override
     public SseEmitter subscribe(String memberEmail) {
-        SseEmitter emitter = new SseEmitter(0L);
+        SseEmitter emitter = new SseEmitter(60 * 1000L); // 60초 후 자동 종료
         emitters.add(emitter);
 
         emitter.onCompletion(() -> emitters.remove(emitter));
@@ -50,16 +50,16 @@ public class NotificationServiceImpl implements NotificationService {
         emitter.onError(e -> emitters.remove(emitter));
 
         try {
-            emitter.send(SseEmitter.event().name("INIT").data("Subscribed successfully"));
+            emitter.send(SseEmitter.event().name("INIT").data("SSE 연결 완료"));
         } catch (IOException e) {
             emitter.completeWithError(e);
         }
         return emitter;
     }
 
-
-    // ✅ 알림을 SSE로 전송
-    private void sendNotification(NotificationEntity notification) {
+    // ✅ SSE 실시간 알림 전송
+    @Override
+    public void sendNotification(NotificationEntity notification) {
         for (SseEmitter emitter : emitters) {
             try {
                 emitter.send(SseEmitter.event().name("notification").data(notification));
@@ -71,14 +71,22 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
 
-    // ✅ 읽지 않은 알림 조회
+    /**
+     * ✅ 읽지 않은 알림 조회
+     * @param memberEmail
+     * @return
+     */
     @Override
     public List<NotificationEntity> getUnreadNotifications(String memberEmail) {
         return notificationRepository.findByMemberEmailAndNotificationStatusFalseOrderByNotificationDateDesc(memberEmail);
     }
 
 
-    // ✅ 알림 읽음 처리
+    /**
+     * ✅ 알림 개별 읽음 처리
+     * @param notificationNumber
+     * @return
+     */
     @Override
     public boolean markAsRead(Long notificationNumber) {
         return notificationRepository.findById(notificationNumber).map(notification -> {
@@ -89,7 +97,31 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
 
-    // ✅ 알림 삭제
+    /**
+     * ✅ 알림 전체 읽음 처리
+     * @param memberEmail
+     * @return
+     */
+    @Override
+    public boolean markAllAsRead(String memberEmail) {
+        List<NotificationEntity> unreadNotifications = notificationRepository
+                .findByMemberEmailAndNotificationStatusFalseOrderByNotificationDateDesc(memberEmail);
+
+        if (unreadNotifications.isEmpty()) {
+            return false;
+        }
+
+        unreadNotifications.forEach(notification -> notification.setNotificationStatus(true));
+        notificationRepository.saveAll(unreadNotifications);
+        return true;
+    }
+
+
+    /**
+     * ✅ 알림 삭제
+     * @param notificationNumber
+     * @return
+     */
     @Override
     public boolean deleteNotification(Long notificationNumber) {
         if (notificationRepository.existsById(notificationNumber)) {

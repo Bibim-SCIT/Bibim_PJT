@@ -9,6 +9,11 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import net.scit.backend.member.dto.MemberLoginStatusDTO;
+import net.scit.backend.workspace.event.WorkspaceUpdatedEvent;
+import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
+import org.springframework.context.ApplicationEventPublisher;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -53,6 +58,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     private final MemberRepository memberRepository;
     private final WorkspaceChannelRoleRepository workspaceRoleRepository;
     private final WorkspaceChannelRepository workspaceChannelRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final RedisTemplate<String, String> redisTemplate;
     private final MailComponents mailComponents;
@@ -476,6 +482,24 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         return statusList;
     }
 
+
+    @Transactional
+    public void updateWorkspace(WorkspaceEntity updatedWorkspace, String updatedBy) {
+        WorkspaceEntity existingWorkspace = workspaceRepository.findById(updatedWorkspace.getWsId())
+                .orElseThrow(() -> new IllegalArgumentException("해당 워크스페이스를 찾을 수 없습니다."));
+
+        // 변경 사항 반영
+        existingWorkspace.setWsName(updatedWorkspace.getWsName());
+        existingWorkspace.setWsImg(updatedWorkspace.getWsImg());
+
+        // 변경된 워크스페이스 정보 저장
+        workspaceRepository.save(existingWorkspace);
+
+        // ✅ 워크스페이스 변경 이벤트 발생
+        eventPublisher.publishEvent(new WorkspaceUpdatedEvent(existingWorkspace, updatedBy));
+    }
+  
+  
     @Override
     @Cacheable(value = "workspaceMemberList", key = "#workspaceId", unless = "#result == null || #result.isEmpty()")
     public List<WorkspaceMemberDTO> getWorkspaceMembers(Long workspaceId, String userEmail) {
