@@ -70,6 +70,7 @@ export default function WorkDataPage() {
                         tags: item.tags || [],
                         date: item.regDate.split("T")[0],
                         uploader: item.nickname,
+                        writer: item.writer,
                         avatar: item.profileImage || "/avatars/default.png",
                         wsId: activeWorkspace.wsId,
                         content: item.content,

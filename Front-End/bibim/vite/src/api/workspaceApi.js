@@ -68,42 +68,7 @@ export const createWorkspace = async (workspaceName, workspaceImage = null) => {
 
 
 // ✅ 초대 코드로 워크스페이스 가입
-// export const joinWorkspaceByInviteCode = async (inviteCode) => {
-//     try {
-//         const response = await axios.post(
-//             `${API_BASE_URL}/add`,
-//             { inviteCode },
-//             { headers: getAuthHeaders() }
-//         );
-//         return response.data;
-//     } catch (error) {
-//         throw error.response?.data || "초대 코드 가입에 실패했습니다.";
-//     }
-// };
-// export const joinWorkspaceByInviteCode = async (inviteCode) => {
-//     try {
-//         const response = await axiosInstance.post("/add", { inviteCode });
-//         return response.data;
-//     } catch (error) {
-//         throw error.response?.data || "초대 코드 가입에 실패했습니다.";
-//     }
-// };
-// export const joinWorkspaceByInviteCode = async (inviteCode) => {
-//     try {
-//         const response = await api.post(`${API_BASE_URL}/add`, { inviteCode });
-//         return response.data;
-//     } catch (error) {
-//         throw error.response?.data || "초대 코드 가입에 실패했습니다.";
-//     }
-// };
-// export const joinWorkspaceByInviteCode = async (inviteCode) => {
-//     try {
-//         const response = await api.post(`${API_BASE_URL}/add`, { inviteCode });
-//         return response.data;
-//     } catch (error) {
-//         throw error.response?.data || "초대 코드 가입에 실패했습니다.";
-//     }
-// };
+// 초대 코드에 의해 가입하기
 export const joinWorkspaceByInviteCode = async (inviteCode) => {
     try {
         const response = await api.post(`${API_BASE_URL}/add`, null, {
@@ -227,9 +192,9 @@ export const fetchWorkspaceUsers = async (workspaceId) => {
 export const updateUserRole = async (wsId, email, role) => {
     try {
         const response = await api.patch(`${API_BASE_URL}/rolesetting`, null, {
-            params: { 
+            params: {
                 wsId,
-                email, 
+                email,
                 role  // 'owner' 또는 'member'
             }
         });
