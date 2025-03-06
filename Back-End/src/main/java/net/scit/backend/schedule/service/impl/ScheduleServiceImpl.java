@@ -11,7 +11,7 @@ import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.schedule.dto.*;
 import net.scit.backend.schedule.entity.*;
-import net.scit.backend.schedule.event.ScheduleUpdatedEvent;
+import net.scit.backend.schedule.event.*;
 import net.scit.backend.schedule.repository.*;
 import net.scit.backend.schedule.service.ScheduleService;
 import net.scit.backend.schedule.type.ScheduleStatus;
@@ -40,8 +40,10 @@ public class ScheduleServiceImpl implements ScheduleService {
         private final MediumTagRepository mediumTagRepository;
         private final SmallTagRepository smallTagRepository;
         private final ScheduleTagRepository scheduleTagRepository;
+        private final ApplicationEventPublisher eventPublisher;
 
-      /**
+
+        /**
      * 새로운 스케줄 생성
      *
      * @param scheduleDTO // 스케줄 DTO
@@ -66,6 +68,10 @@ public class ScheduleServiceImpl implements ScheduleService {
         // 스케쥴 등록
         ScheduleEntity scheduleEntity = ScheduleEntity.toEntity(scheduleDTO, workspace, ScheduleStatus.UNASSIGNED);
         scheduleRepository.save(scheduleEntity);
+
+        //추가: 알림 이벤트 생성
+        eventPublisher.publishEvent(new ScheduleCreatedEvent(scheduleEntity, email));
+
 
         // 태그 등록
         // 대분류가 있을 때만 등록
@@ -236,6 +242,9 @@ public class ScheduleServiceImpl implements ScheduleService {
         scheduleEntity.setMember(member);
         scheduleRepository.save(scheduleEntity);
 
+        //추가: 알림 이벤트 생성
+        eventPublisher.publishEvent(new ScheduleAssigneeUpdatedEvent(scheduleEntity, member, email));
+
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
                 .build();
@@ -280,6 +289,9 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
         scheduleRepository.save(scheduleEntity);
 
+        // 추가: 알림 이벤트 생성
+        eventPublisher.publishEvent(new ScheduleStatusUpdatedEvent(scheduleEntity, email));
+        
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
                 .build();
@@ -417,6 +429,10 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .build();
         scheduleRepository.save(updateSchedule);
 
+        //추가: 알림 이벤트 생성
+        eventPublisher.publishEvent(new ScheduleInfoUpdatedEvent(updateSchedule, email));
+
+
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
                 .build();
@@ -470,6 +486,10 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .ifPresent(scheduleTagRepository::delete);
 
         scheduleRepository.delete(scheduleEntity);
+
+        //추가: 알림 이벤트 생성
+        eventPublisher.publishEvent(new ScheduleDeletedEvent(scheduleEntity, email));
+
 
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
