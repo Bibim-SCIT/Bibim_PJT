@@ -69,7 +69,7 @@ public class MemberServiceImpl implements MemberService {
     private final JwtTokenProvider jwtTokenProvider;
     private final HttpServletRequest httpServletRequest;
     private final ApplicationEventPublisher eventPublisher;
-    
+
     /**
      * 회원가입 처리를 수행하는 메소드
      *
@@ -140,27 +140,27 @@ public class MemberServiceImpl implements MemberService {
         return ResultDTO.of("회원 가입에 성공했습니다.", successDTO);
     }
 
-//    /**
-//     * 이메일 중복 체크 하는 메소드
-//     *
-//     * @param email 회원가입 신청한 email
-//     * @return 중복체크 후 결과 확인
-//     */
-//    @Override
-//    public ResultDTO<SuccessDTO> checkEmail(String email) {
-//        // email 중복 검사
-//        Optional<MemberEntity> byEmail = memberRepository.findByEmail(email);
-//        if (byEmail.isPresent()) {
-//            throw new CustomException(ErrorCode.EMAIL_DUPLICATE);
-//        }
-//
-//        // 성공시 DTO 저장
-//        SuccessDTO successDTO = SuccessDTO.builder()
-//                .success(true)
-//                .build();
-//        // 결과 반환
-//        return ResultDTO.of("이메일 중복 체크에 성공했습니다.", successDTO);
-//    }
+    // /**
+    // * 이메일 중복 체크 하는 메소드
+    // *
+    // * @param email 회원가입 신청한 email
+    // * @return 중복체크 후 결과 확인
+    // */
+    // @Override
+    // public ResultDTO<SuccessDTO> checkEmail(String email) {
+    // // email 중복 검사
+    // Optional<MemberEntity> byEmail = memberRepository.findByEmail(email);
+    // if (byEmail.isPresent()) {
+    // throw new CustomException(ErrorCode.EMAIL_DUPLICATE);
+    // }
+    //
+    // // 성공시 DTO 저장
+    // SuccessDTO successDTO = SuccessDTO.builder()
+    // .success(true)
+    // .build();
+    // // 결과 반환
+    // return ResultDTO.of("이메일 중복 체크에 성공했습니다.", successDTO);
+    // }
 
     /**
      * 회원가입 인증 메일 보내는 메소드
@@ -271,9 +271,9 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public ResultDTO<SuccessDTO> logout() {
 
-        //로그아웃 상태 변경 관련 코드 추가
+        // 로그아웃 상태 변경 관련 코드 추가
         String email = AuthUtil.getLoginUserId();
-        this.updateLoginStatus(email, false, LocalDateTime.now());  // 🔹 로그아웃 시 DB 업데이트
+        this.updateLoginStatus(email, false, LocalDateTime.now()); // 🔹 로그아웃 시 DB 업데이트
 
         String accessToken = jwtTokenProvider.getJwtFromRequest(httpServletRequest);
 
@@ -303,8 +303,7 @@ public class MemberServiceImpl implements MemberService {
      */
     @Override
     @Transactional
-    public ResultDTO<SuccessDTO> updateInfo(UpdateInfoDTO updateInfoDTO, MultipartFile file
-    ) {
+    public ResultDTO<SuccessDTO> updateInfo(UpdateInfoDTO updateInfoDTO, MultipartFile file) {
 
         // 1. JWT에서 이메일 추출
         String email = AuthUtil.getLoginUserId();
@@ -316,7 +315,8 @@ public class MemberServiceImpl implements MemberService {
         // 업데이트할 값이 null이면 기존 값을 유지
 
         member.setName(updateInfoDTO.getName() != null ? updateInfoDTO.getName() : member.getName());
-        member.setNationality(updateInfoDTO.getNationality() != null ? updateInfoDTO.getNationality() : member.getNationality());
+        member.setNationality(
+                updateInfoDTO.getNationality() != null ? updateInfoDTO.getNationality() : member.getNationality());
         member.setLanguage(updateInfoDTO.getLanguage() != null ? updateInfoDTO.getLanguage() : member.getLanguage());
 
         // S3 이미지 업로드
@@ -405,7 +405,8 @@ public class MemberServiceImpl implements MemberService {
     }
 
     /**
-     * 회원 탈퇴 처리   
+     * 회원 탈퇴 처리
+     * 
      * @param memberDTO
      * @return
      */
@@ -445,8 +446,8 @@ public class MemberServiceImpl implements MemberService {
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         member.setLoginStatus(status);
-        member.setLastActiveTime(lastActiveTime);  // 🔹 로그인/로그아웃 시 lastActiveTime 갱신
-        memberRepository.save(member);  // 🔹 DB에 저장
+        member.setLastActiveTime(lastActiveTime); // 🔹 로그인/로그아웃 시 lastActiveTime 갱신
+        memberRepository.save(member); // 🔹 DB에 저장
 
         log.info("🔹 DB 업데이트 완료: userEmail={}, loginStatus={}, lastActiveTime={}",
                 userEmail, status, lastActiveTime);
@@ -484,16 +485,19 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(ErrorCode.OAUTH_ALREADY_LINKED);
         }
 
-        redisTemplate.opsForValue().set("oauth_link_" + email, String.valueOf(linkYn), MAIL_EXPIRES_IN, TimeUnit.MILLISECONDS);
+        redisTemplate.opsForValue().set("oauth_link_" + email, String.valueOf(linkYn), MAIL_EXPIRES_IN,
+                TimeUnit.MILLISECONDS);
 
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
                 .build();
 
         return ResultDTO.of("연동 요청에 성공했습니다.", successDTO);
-      
+    }
+
     /**
      * 멤버 DB 변경 시 알림 전송
+     * 
      * @param updatedMember
      * @param updatedBy
      */
