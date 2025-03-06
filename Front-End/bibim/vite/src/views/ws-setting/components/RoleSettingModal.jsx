@@ -5,7 +5,8 @@ const RoleSettingModal = ({ open, onClose, selectedUser, selectedRole, onRoleCha
     const handleSaveRole = async () => {
         try {
             await updateUserRole(workspaceId, selectedUser.email, selectedRole);
-            onSave(); // 성공 시 부모 컴포넌트의 콜백 실행
+            onSave(); // 부모 컴포넌트의 저장 핸들러 호출
+            onClose(); // 모달 닫기
         } catch (error) {
             console.error('권한 변경 실패:', error);
             // 여기에 에러 처리 로직 추가 가능 (예: 알림 표시)
@@ -82,7 +83,7 @@ const RoleSettingModal = ({ open, onClose, selectedUser, selectedRole, onRoleCha
                                 }}
                             >
                                 <MenuItem value="owner">오너</MenuItem>
-                                <MenuItem value="member">멤버</MenuItem>
+                                <MenuItem value="user">멤버</MenuItem>
                             </Select>
                         </Box>
                     </Box>

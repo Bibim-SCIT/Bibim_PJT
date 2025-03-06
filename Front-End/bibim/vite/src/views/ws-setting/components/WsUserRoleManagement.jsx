@@ -2,30 +2,70 @@ import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Typography, Avatar, Select, MenuItem, Snackbar, Alert } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { kickUserFromWorkspace, fetchWorkspaceUsers } from '../../../api/workspaceApi'; // API 함수 임포트
+import { kickUserFromWorkspace, fetchWorkspaceUsers, updateUserRole } from '../../../api/workspaceApi'; // API 함수 임포트
 import KickUserModal from './KickUserModal';
 import RoleSettingModal from './RoleSettingModal';
 
-// 날짜 포맷팅 함수 수정
+// 상대적인 시간 또는 날짜를 표시하는 함수
 const formatDate = (dateString) => {
+    const now = new Date();
     const date = new Date(dateString);
+    const diffTime = now - date;
+    const diffMinutes = Math.floor(diffTime / (1000 * 60));
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffWeeks = Math.floor(diffDays / 7);
+    
+    // 1시간 이내
+    if (diffMinutes < 60) {
+        return diffMinutes === 0 ? '방금 전' : `${diffMinutes}분 전`;
+    }
+    
+    // 오늘 안에 (24시간 이내)
+    if (diffHours < 24) {
+        return `${diffHours}시간 전`;
+    }
+    
+    // 7일 이내
+    if (diffDays < 7) {
+        if (diffDays === 1) return '어제';
+        return `${diffDays}일 전`;
+    }
+    
+    // 4주 이내
+    if (diffWeeks < 4) {
+        return `${diffWeeks}주 전`;
+    }
+    
+    // 한달 이상이면 YYYY-MM-DD 형식
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 };
 
-// 권한 매핑 함수 추가
+// 권한 이름을 한글로 변환하는 함수 (예: 'owner' -> '오너')
 const mapRole = (role) => {
     return role.toLowerCase() === 'owner' ? '오너' : '멤버';
 };
 
 const WsUserRoleManagement = () => {
+    // 사용자 강퇴 모달 표시 여부 상태
     const [openKickModal, setOpenKickModal] = useState(false);
+    
+    // 권한 설정 모달 표시 여부 상태
     const [openRoleModal, setOpenRoleModal] = useState(false);
+    
+    // 현재 선택된 사용자 정보 상태
     const [selectedUser, setSelectedUser] = useState(null);
+    
+    // 선택된 권한 값 상태
     const [selectedRole, setSelectedRole] = useState('');
-    const [users, setUsers] = useState([]); // 사용자 목록 상태 추가
+    
+    // 워크스페이스 사용자 목록 상태
+    const [users, setUsers] = useState([]);
+    
+    // 알림 메시지 표시를 위한 스낵바 상태
     const [snackbar, setSnackbar] = useState({
         open: false,
         message: '',
@@ -56,27 +96,22 @@ const WsUserRoleManagement = () => {
         loadUsers();
     }, [activeWorkspace, fetchWorkspaceUsers]);
 
+    // 사용자 강퇴 처리 함수
     const handleKickUser = (user) => {
         setSelectedUser(user);
         setOpenKickModal(true);
     };
 
+    // 강퇴 확인 처리 함수
     const handleConfirmKick = async () => {
         try {
             if (selectedUser && activeWorkspace) {
-                console.log('강퇴 시도:', { 
-                    wsId: activeWorkspace.wsId, 
-                    email: selectedUser.email 
-                });
-                
                 await kickUserFromWorkspace(activeWorkspace.wsId, selectedUser.email);
-                console.log('강퇴 API 호출 성공');
                 
                 // 강퇴 성공 후 즉시 목록 갱신
                 const response = await fetchWorkspaceUsers(activeWorkspace.wsId);
-                console.log('사용자 목록 갱신 응답:', response);
-                
                 const updatedUsers = response.data || [];
+                console.log("강퇴 후 불러온 사용자 목록:", response.data);  // 🟢 콘솔 로그 추가
                 setUsers(updatedUsers);
                 
                 setOpenKickModal(false);
@@ -98,35 +133,62 @@ const WsUserRoleManagement = () => {
         }
     };
 
+    // 강퇴 모달 닫기 함수
     const handleCloseKickModal = () => {
         setOpenKickModal(false);
         setSelectedUser(null);
     };
 
+    // 권한 설정 모달 열기 함수
     const handleOpenRoleSettings = (user) => {
         setSelectedUser(user);
         setSelectedRole(user.wsRole.toLowerCase());
         setOpenRoleModal(true);
     };
 
+    // 권한 설정 모달 닫기 함수
     const handleCloseRoleModal = () => {
         setOpenRoleModal(false);
         setSelectedUser(null);
         setSelectedRole('');
     };
 
+    // 권한 변경 처리 함수
     const handleRoleChange = (event) => {
         setSelectedRole(event.target.value);
     };
 
-    const handleSaveRole = () => {
-        // API 연동 시 실제 권한 변경 로직 구현 필요
-        console.log('권한 변경:', selectedUser.nickname, selectedRole, '워크스페이스:', activeWorkspace?.wsId);
-        setOpenRoleModal(false);
-        setSelectedUser(null);
-        setSelectedRole('');
+    // 권한 저장 처리 함수
+    const handleSaveRole = async () => {
+        try {
+            await updateUserRole(activeWorkspace.wsId, selectedUser.email, selectedRole);
+
+            // 변경 성공 후 즉시 목록 갱신
+            const response = await fetchWorkspaceUsers(activeWorkspace.wsId);
+            const updatedUsers = response.data || [];
+            console.log("변경 후 불러온 사용자 목록:", response.data);  // 🟢 콘솔 로그 추가
+            setUsers(updatedUsers);    
+            
+            setOpenRoleModal(false);
+            setSelectedUser(null);
+            setSelectedRole('');
+            
+            setSnackbar({
+                open: true,
+                message: '권한이 성공적으로 변경되었습니다.',
+                severity: 'success'
+            });
+        } catch (error) {
+            console.error('권한 변경 실패:', error);
+            setSnackbar({
+                open: true,
+                message: '권한 변경에 실패했습니다.',
+                severity: 'error'
+            });
+        }
     };
 
+    // 스낵바 닫기 함수
     const handleCloseSnackbar = () => {
         setSnackbar(prev => ({ ...prev, open: false }));
     };
