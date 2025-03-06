@@ -9,13 +9,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import net.scit.backend.member.dto.MemberLoginStatusDTO;
-import net.scit.backend.workspace.event.WorkspaceUpdatedEvent;
-import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
-import org.springframework.context.ApplicationEventPublisher;
-
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -41,6 +37,7 @@ import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
 import net.scit.backend.workspace.entity.WorkspaceChannelRoleEntity;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
+import net.scit.backend.workspace.event.WorkspaceUpdatedEvent;
 import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
 import net.scit.backend.workspace.repository.WorkspaceChannelRoleRepository;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
@@ -374,10 +371,10 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     }
 
     /**
-     * 워크스페이스 내 회원 정보 조회
+     * 워크스페이스 나의 회원 정보 조회
      * 
      * @param wsId 조회할 워크스페이스 ID
-     * @return 워크스페이스 내 회원 정보
+     * @return 워크스페이스 나의 회원 정보
      */
     @Override
     public ResultDTO<WorkspaceMemberDTO> getWorkspaceMemberInfo(Long wsId) {
@@ -482,24 +479,12 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         return statusList;
     }
 
-
-    @Transactional
-    public void updateWorkspace(WorkspaceEntity updatedWorkspace, String updatedBy) {
-        WorkspaceEntity existingWorkspace = workspaceRepository.findById(updatedWorkspace.getWsId())
-                .orElseThrow(() -> new IllegalArgumentException("해당 워크스페이스를 찾을 수 없습니다."));
-
-        // 변경 사항 반영
-        existingWorkspace.setWsName(updatedWorkspace.getWsName());
-        existingWorkspace.setWsImg(updatedWorkspace.getWsImg());
-
-        // 변경된 워크스페이스 정보 저장
-        workspaceRepository.save(existingWorkspace);
-
-        // ✅ 워크스페이스 변경 이벤트 발생
-        eventPublisher.publishEvent(new WorkspaceUpdatedEvent(existingWorkspace, updatedBy));
-    }
-  
-  
+    /**
+     * 워크스페이스에 소속된 멤버 정보 조회.
+     * @param workspaceId
+     * @param userEmail
+     * @return 사용자 프로필 사진, 워크스페이스 닉네임, 이메일, 마지막 로그인, 권한이 포함된 멤버 정보 리스트
+     */
     @Override
     @Cacheable(value = "workspaceMemberList", key = "#workspaceId", unless = "#result == null || #result.isEmpty()")
     public List<WorkspaceMemberDTO> getWorkspaceMembers(Long workspaceId, String userEmail) {
@@ -531,7 +516,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     }
 
     /**
-     * 해당 유저의 워크스페이스의 역할을 변경 하는 메소드드
+     * 해당 유저의 워크스페이스의 역할을 변경 하는 메소드
      * 
      * @param wsId 워크스페이스 ID
      * @param email 이메일

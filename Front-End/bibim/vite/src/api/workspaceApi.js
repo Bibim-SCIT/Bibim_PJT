@@ -189,18 +189,22 @@ export const fetchWorkspaceUsers = async (workspaceId) => {
     }
 };
 
-export const updateUserRole = async (wsId, email, role) => {
+// 워크스페이스 멤버 권한 변경 API
+export const updateUserRole = async (wsId, email, newRole) => {
     try {
         const response = await api.patch(`${API_BASE_URL}/rolesetting`, null, {
-            params: {
-                wsId,
-                email,
-                role  // 'owner' 또는 'member'
+            params: { wsId, email, newRole },
+            headers: {
+                'Content-Type': 'application/json'
             }
         });
+        
+        // 응답 데이터 확인 로깅
+        console.log('권한 변경 응답:', response);
+        
         return response.data;
     } catch (error) {
-        console.error('사용자 권한 변경 실패:', error);
+        console.error('권한 변경 API 에러:', error);
         throw error.response?.data || "권한 변경에 실패했습니다.";
     }
 };

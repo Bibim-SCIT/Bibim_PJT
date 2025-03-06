@@ -72,7 +72,8 @@ export default function WsSelectPage() {
     const handleSelectWorkspace = (workspace) => {
         dispatch(setActiveWorkspace(workspace));
         localStorage.setItem('activeWorkspace', JSON.stringify(workspace)); // ✅ localStorage에 저장
-        navigate('/dashboard/default'); // 워크스페이스 내부 페이지로 이동
+        // navigate('/dashboard/default'); // 워크스페이스 내부 페이지로 이동
+
     };
 
     // 새로운 워크스페이스 생성 (API 연동)
