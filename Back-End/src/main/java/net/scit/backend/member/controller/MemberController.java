@@ -1,24 +1,19 @@
 package net.scit.backend.member.controller;
 
-import net.scit.backend.auth.AuthUtil;
+import net.scit.backend.jwt.AuthUtil;
 import net.scit.backend.member.dto.*;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.scit.backend.auth.JwtTokenProvider;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.member.service.MemberDetailsService;
 import net.scit.backend.member.service.MemberService;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * Member 관련 업무 메소드가 지정된 Controller
@@ -30,7 +25,6 @@ import java.util.List;
 public class MemberController {
     private final MemberService memberService;
     private final MemberDetailsService memberDetailsService;
-    private final JwtTokenProvider jwtTokenProvider;
 
     /**
      * 회원가입 요청 시 동작하는 메소드
@@ -99,42 +93,41 @@ public class MemberController {
         return ResponseEntity.ok(memberService.checkMail(verificationDTO));
     }
 
-    /**
-     * 로그인 성공 시 JWT 토큰을 생성하고 반환하는 메소드
-     *
-     * @param userDetails Spring Security가 제공하는 인증된 사용자 정보
-     *                    - username (이메일)
-     *                    - authorities (권한 정보)
-     *                    - 기타 사용자 관련 정보
-     * 
-     * @return ResponseEntity<ResultDTO<LoginResponse>>
-     *         - HTTP 200 OK
-     *         - ResultDTO: 성공 메시지와 로그인 응답 정보를 포함
-     *         - LoginResponse: 사용자 이메일과 JWT 액세스 토큰 포함
-     */
-    @GetMapping("/loginsuccess")
-    public ResponseEntity<ResultDTO<TokenDTO>> loginSuccess(@AuthenticationPrincipal UserDetails userDetails) {
-        log.info("로그인 성공: {}", userDetails.getUsername());
-
-        String email = AuthUtil.getLoginUserId();
-        if (email == null || email.isEmpty()) {
-            log.error("⚠️ 현재 로그인한 사용자의 이메일을 가져올 수 없습니다.");
-            throw new IllegalStateException("로그인한 사용자의 이메일을 가져올 수 없습니다.");
-        }
-        log.info("로그인 email: {}", email);
-
-        // UserDetails에서 추출한 username으로 JWT 토큰 생성
-        TokenDTO tokenDTO = jwtTokenProvider.generateToken(userDetails.getUsername());
-
-        // 최종 응답 생성 및 반환
-        ResultDTO<TokenDTO> result = ResultDTO.of("로그인에 성공했습니다.", tokenDTO);
-        return ResponseEntity.ok(result);
-    }
+//    /**
+//     * 로그인 성공 시 JWT 토큰을 생성하고 반환하는 메소드
+//     *
+//     * @param userDetails Spring Security가 제공하는 인증된 사용자 정보
+//     *                    - username (이메일)
+//     *                    - authorities (권한 정보)
+//     *                    - 기타 사용자 관련 정보
+//     *
+//     * @return ResponseEntity<ResultDTO<LoginResponse>>
+//     *         - HTTP 200 OK
+//     *         - ResultDTO: 성공 메시지와 로그인 응답 정보를 포함
+//     *         - LoginResponse: 사용자 이메일과 JWT 액세스 토큰 포함
+//     */
+//    @GetMapping("/loginsuccess")
+//    public ResponseEntity<ResultDTO<TokenDTO>> loginSuccess(@AuthenticationPrincipal UserDetails userDetails) {
+//        log.info("로그인 성공: {}", userDetails.getUsername());
+//
+//        String email = AuthUtil.getLoginUserId();
+//        if (email == null || email.isEmpty()) {
+//            log.error("⚠️ 현재 로그인한 사용자의 이메일을 가져올 수 없습니다.");
+//            throw new IllegalStateException("로그인한 사용자의 이메일을 가져올 수 없습니다.");
+//        }
+//        log.info("로그인 email: {}", email);
+//
+//        // UserDetails에서 추출한 username으로 JWT 토큰 생성
+//        TokenDTO tokenDTO = jwtTokenProvider.generateToken(userDetails.getUsername());
+//
+//        // 최종 응답 생성 및 반환
+//        ResultDTO<TokenDTO> result = ResultDTO.of("로그인에 성공했습니다.", tokenDTO);
+//        return ResponseEntity.ok(result);
+//    }
 
     /**
      * 회원 정보 조회
      *
-     * @param request
      * @return 회원 정보
      */
     @GetMapping("/myinfo")
@@ -165,7 +158,7 @@ public class MemberController {
 
     /**
      * 로그인 처리 엔드포인트
-     * 
+     *
      * @param loginRequest 로그인 요청 정보
      * @return 로그인 응답 정보
      */
@@ -239,5 +232,14 @@ public class MemberController {
         return ResponseEntity.ok(ResultDTO.of("로그인 상태 조회 성공", statusDTO));
     }
 
-
+    /**
+     * 연동여부를 저장하는 API
+     * @param linkYn 연동동의 여부
+     * @return
+     */
+    @PostMapping("/link")
+    public ResponseEntity<?> linkAccount(@RequestParam String email, @RequestParam boolean linkYn) {
+        ResultDTO<SuccessDTO> result = memberService.linkAccount(email, linkYn);
+        return ResponseEntity.ok(result);
+    }
 }

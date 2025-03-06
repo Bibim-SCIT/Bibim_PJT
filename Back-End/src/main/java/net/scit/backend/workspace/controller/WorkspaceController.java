@@ -2,7 +2,7 @@ package net.scit.backend.workspace.controller;
 
 import java.util.List;
 
-import net.scit.backend.auth.AuthUtil;
+import net.scit.backend.jwt.AuthUtil;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.member.dto.MemberLoginStatusDTO;

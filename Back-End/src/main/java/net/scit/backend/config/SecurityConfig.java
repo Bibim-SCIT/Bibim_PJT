@@ -1,8 +1,10 @@
 package net.scit.backend.config;
 
-//import net.scit.backend.auth.CustomOAuth2SuccessHandler;
 import java.util.List;
 
+import net.scit.backend.oauth.CustomAuthenticationSuccessHandler;
+import net.scit.backend.oauth.CustomOAuth2FailureHandler;
+import net.scit.backend.oauth.CustomOAuth2UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,47 +23,51 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import net.scit.backend.auth.JwtAuthenticationFilter;
-import net.scit.backend.auth.JwtTokenProvider;
+import net.scit.backend.jwt.JwtAuthenticationFilter;
+import net.scit.backend.jwt.JwtTokenProvider;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
-    // private final CustomOAuth2SuccessHandler customOAuth2SuccessHandler;
     private final UserDetailsService userDetailsService;
     private final RedisTemplate<String, String> redisTemplate;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
+    private final CustomOAuth2FailureHandler customOAuth2FailureHandler;
 
     @Lazy
     @Autowired
     public SecurityConfig(JwtTokenProvider jwtTokenProvider,
-            // CustomOAuth2SuccessHandler customOAuth2SuccessHandler,
-            UserDetailsService userDetailsService,
-            RedisTemplate<String, String> redisTemplate) {
+                          UserDetailsService userDetailsService,
+                          RedisTemplate<String, String> redisTemplate,
+                          CustomOAuth2UserService customOAuth2UserService,
+                          CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler,
+                          CustomOAuth2FailureHandler customOAuth2FailureHandler) {
         this.jwtTokenProvider = jwtTokenProvider;
-        // this.customOAuth2SuccessHandler = customOAuth2SuccessHandler;
         this.userDetailsService = userDetailsService;
         this.redisTemplate = redisTemplate;
+        this.customOAuth2UserService = customOAuth2UserService;
+        this.customAuthenticationSuccessHandler = customAuthenticationSuccessHandler;
+        this.customOAuth2FailureHandler = customOAuth2FailureHandler;
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http
-    // , CustomOAuth2SuccessHandler customOAuth2SuccessHandler
-    ) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable()) // CSRF 비활성화 (JWT 사용 시 필요 없음)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // ✅ 추가:
-                                                                                                              // JWT 기반
-                                                                                                              // 인증 설정
+                // JWT 기반
+                // 인증 설정
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/members/check-email", "/members/signup/",
                                 "/members/signup/**",
                                 "/members/login",
                                 "/members/signup/send-mail", // ✅ 이메일 인증 요청 허용
                                 "/members/signup/check-mail", // ✅ 인증 코드 확인 요청 허용
-                                // "/auth/login/oauth2/code/google","/favicon.ico", // OAuth2 콜백 URL 허용 추가
+                                "/members/link",
                                 "/workdata/**", // 자료실 관련(추후 삭제)
                                 "/workspace/**",
                                 "/error")
@@ -73,9 +79,11 @@ public class SecurityConfig {
                         .hasRole("USER") // 사용자 전용
                         .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
                 )
-                // .oauth2Login(oauth2 -> oauth2
-                // .successHandler(customOAuth2SuccessHandler) // 필드 주입된 것을 직접 사용
-                // )
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .successHandler(customAuthenticationSuccessHandler)
+                        .failureHandler(customOAuth2FailureHandler)
+                )
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService, redisTemplate),
                         UsernamePasswordAuthenticationFilter.class);

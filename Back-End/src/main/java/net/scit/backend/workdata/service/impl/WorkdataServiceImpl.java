@@ -3,7 +3,7 @@ package net.scit.backend.workdata.service.impl;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.scit.backend.auth.AuthUtil;
+import net.scit.backend.jwt.AuthUtil;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.component.S3Uploader;
