@@ -1,8 +1,12 @@
 import { Box, Modal, Typography, Avatar, Button, Select, MenuItem } from '@mui/material';
+import { useState } from 'react';
 import { updateUserRole } from '../../../api/workspaceApi';
 
 const RoleSettingModal = ({ open, onClose, selectedUser, selectedRole, onRoleChange, onSave, workspaceId }) => {
+    const [loading, setLoading] = useState(false);
+
     const handleSaveRole = async () => {
+        setLoading(true);
         try {
             await updateUserRole(workspaceId, selectedUser.email, selectedRole);
             onSave(); // 부모 컴포넌트의 저장 핸들러 호출
@@ -10,6 +14,8 @@ const RoleSettingModal = ({ open, onClose, selectedUser, selectedRole, onRoleCha
         } catch (error) {
             console.error('권한 변경 실패:', error);
             // 여기에 에러 처리 로직 추가 가능 (예: 알림 표시)
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -97,18 +103,20 @@ const RoleSettingModal = ({ open, onClose, selectedUser, selectedRole, onRoleCha
                     <Button 
                         onClick={onClose}
                         sx={{ color: '#666' }}
+                        disabled={loading}
                     >
                         취소
                     </Button>
                     <Button
                         variant="contained"
                         onClick={handleSaveRole}
+                        disabled={loading}
                         sx={{
                             bgcolor: '#4a6cc7',
                             '&:hover': { bgcolor: '#3f5ba9' }
                         }}
                     >
-                        저장
+                        {loading ? '저장 중...' : '저장'}
                     </Button>
                 </Box>
             </Box>

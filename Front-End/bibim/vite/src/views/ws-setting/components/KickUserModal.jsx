@@ -1,6 +1,18 @@
 import { Box, Modal, Typography, Avatar, Button } from '@mui/material';
+import { useState } from 'react';
 
 const KickUserModal = ({ open, onClose, selectedUser, onConfirm, formatDate }) => {
+    const [loading, setLoading] = useState(false);
+
+    const handleConfirm = async () => {
+        setLoading(true);
+        try {
+            await onConfirm();
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <Modal
             open={open}
@@ -65,18 +77,20 @@ const KickUserModal = ({ open, onClose, selectedUser, onConfirm, formatDate }) =
                     <Button 
                         onClick={onClose}
                         sx={{ color: '#666' }}
+                        disabled={loading}
                     >
                         취소
                     </Button>
                     <Button
                         variant="contained"
-                        onClick={onConfirm}
+                        onClick={handleConfirm}
+                        disabled={loading}
                         sx={{
                             bgcolor: '#e53935',
                             '&:hover': { bgcolor: '#d32f2f' }
                         }}
                     >
-                        강퇴하기
+                        {loading ? '강퇴 중...' : '강퇴하기'}
                     </Button>
                 </Box>
             </Box>
