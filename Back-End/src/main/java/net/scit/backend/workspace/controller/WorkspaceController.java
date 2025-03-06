@@ -50,7 +50,7 @@ public class WorkspaceController {
      * 워크스페이스 생성 메소드
      * 
      * @param workspaceDTO 워크스페이스 대한 정보 (이름과 사진)
-     * @return 워크스페이스 생성 동작후 결과 확인인
+     * @return 워크스페이스 생성 동작후 결과 확인
      */
     @PostMapping("")
     public ResponseEntity<ResultDTO<SuccessDTO>> workspaceCreate(
@@ -96,10 +96,19 @@ public class WorkspaceController {
      * @return
      */
     @PatchMapping("/rolesetting")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceRoleSetting() {
-        // ResultDTO<SuccessDTO> result =
-        // workspaceService.workspaceUpdate(wsName,newName,file);
-        return null;
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceRoleSetting(@RequestParam("wsId") Long wsId,
+            @RequestParam("email") String email,
+            @RequestParam("newRole") String newRole) 
+    {
+        if(newRole.equals("owner") || newRole.equals("user"))
+        {
+            ResultDTO<SuccessDTO> result = workspaceService.workspaceRoleUpdate(wsId, email, newRole);
+            return ResponseEntity.ok(result);
+        }
+        else
+        {
+            throw new CustomException(ErrorCode.INVALID_ROLE_VALUE);
+        }
     }
 
     /**

@@ -353,11 +353,11 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         MemberEntity memberEntity = getMemberEntity(email);
         WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
 
-        // 기본 권한 가져오기
-        WorkspaceChannelRoleEntity workspaceRoleEntity = workspaceRoleRepository
-                // .findByWorkspace_wsIdAndChRole(wsId, DEFAULT_ROLE)
-                .findByWorkspace_wsIdAndChRole(wsId, OWNER_ROLE)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_HAVE_NOT_ROLE));
+        // // 기본 권한 가져오기
+        // WorkspaceChannelRoleEntity workspaceRoleEntity = workspaceRoleRepository
+        //         // .findByWorkspace_wsIdAndChRole(wsId, DEFAULT_ROLE)
+        //         .findByWorkspace_wsIdAndChRole(wsId, OWNER_ROLE)
+        //         .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_HAVE_NOT_ROLE));
 
         // 워크스페이스 멤버로 추가
         workspaceMemberRepository.save(
@@ -365,7 +365,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                         .workspace(workspaceEntity)
                         .member(memberEntity)
                         .wsRole(USER_ROLE)
-                        .chRoleNumber(workspaceRoleEntity)
+                        .chRoleNumber(null)
                         .nickname(memberEntity.getName())
                         .profileImage(memberEntity.getProfileImage())
                         .build());
@@ -528,6 +528,22 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         });
 
         return memberList;
+    }
+
+    /**
+     * 해당 유저의 워크스페이스의 역할을 변경 하는 메소드드
+     * 
+     * @param wsId 워크스페이스 ID
+     * @param email 이메일
+     */
+    @Override
+    public ResultDTO<SuccessDTO> workspaceRoleUpdate(Long wsId, String email, String newRole) {
+        checkOwnerRole(wsId, AuthUtil.getLoginUserId());
+        WorkspaceMemberEntity member = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+        member.setWsRole(newRole);
+        workspaceMemberRepository.save(member);
+        return ResultDTO.of("워크스페이스 역할 변경에 성공했습니다.", SuccessDTO.builder().success(true).build());
     }
 
 }
