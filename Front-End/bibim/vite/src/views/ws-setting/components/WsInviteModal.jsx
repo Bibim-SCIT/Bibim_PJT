@@ -65,7 +65,7 @@ export default function WsInviteModal({ open, onClose, workspace }) {
                             </Typography>
                         )}
                         <Button variant="contained" fullWidth onClick={handleSendInvite} disabled={loading}>
-                            {loading ? '전송 중...' : '초대인증 메일 보내기 📧'}
+                            {loading ? '전송 중...' : '초대 인증 메일 보내기 📧'}
                         </Button>
                     </>
                 ) : (
