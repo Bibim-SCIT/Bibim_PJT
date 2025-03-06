@@ -2,6 +2,9 @@ package net.scit.backend.config;
 
 import java.util.List;
 
+import net.scit.backend.oauth.CustomAuthenticationSuccessHandler;
+import net.scit.backend.oauth.CustomOAuth2FailureHandler;
+import net.scit.backend.oauth.CustomOAuth2UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,8 +23,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import net.scit.backend.auth.JwtAuthenticationFilter;
-import net.scit.backend.auth.JwtTokenProvider;
+import net.scit.backend.jwt.JwtAuthenticationFilter;
+import net.scit.backend.jwt.JwtTokenProvider;
 
 @Configuration
 @EnableWebSecurity
@@ -30,15 +33,25 @@ public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserDetailsService userDetailsService;
     private final RedisTemplate<String, String> redisTemplate;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
+    private final CustomOAuth2FailureHandler customOAuth2FailureHandler;
 
     @Lazy
     @Autowired
     public SecurityConfig(JwtTokenProvider jwtTokenProvider,
                           UserDetailsService userDetailsService,
-                          RedisTemplate<String, String> redisTemplate) {
+                          RedisTemplate<String, String> redisTemplate,
+                          CustomOAuth2UserService customOAuth2UserService,
+                          CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler,
+                          CustomOAuth2FailureHandler customOAuth2FailureHandler) {
+      
         this.jwtTokenProvider = jwtTokenProvider;
         this.userDetailsService = userDetailsService;
         this.redisTemplate = redisTemplate;
+        this.customOAuth2UserService = customOAuth2UserService;
+        this.customAuthenticationSuccessHandler = customAuthenticationSuccessHandler;
+        this.customOAuth2FailureHandler = customOAuth2FailureHandler;
     }
 
     @Bean
@@ -53,6 +66,7 @@ public class SecurityConfig {
                                 "/members/login",
                                 "/members/signup/send-mail", // ✅ 이메일 인증 요청 허용
                                 "/members/signup/check-mail", // ✅ 인증 코드 확인 요청 허용
+                                "/members/link",
                                 "/workdata/**", // 자료실 관련(추후 삭제)
                                 "/workspace/**",
                                 "/ws/**",
@@ -66,6 +80,11 @@ public class SecurityConfig {
                         .requestMatchers("/notification/subscribe").permitAll() // ✅ SSE 구독 요청 허용
                         .requestMatchers("/notification/unread", "/notification/read-single", "/notification/read-all", "/notification/delete").authenticated() // ✅ 알림 관련 API는 인증 필요
                         .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .successHandler(customAuthenticationSuccessHandler)
+                        .failureHandler(customOAuth2FailureHandler)
                 )
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService, redisTemplate),

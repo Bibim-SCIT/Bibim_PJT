@@ -19,8 +19,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.scit.backend.auth.AuthUtil;
-import net.scit.backend.auth.JwtTokenProvider;
+import net.scit.backend.jwt.AuthUtil;
+import net.scit.backend.jwt.JwtTokenProvider;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.component.MailComponents;
@@ -40,6 +40,7 @@ import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.member.service.MemberService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -163,7 +164,7 @@ public class MemberServiceImpl implements MemberService {
 
     /**
      * 회원가입 인증 메일 보내는 메소드
-     * 
+     *
      * @param email 회원가입 요청 후 인증 받으려는 email
      * @return 메일 보낸 후 결과 확인
      */
@@ -208,7 +209,7 @@ public class MemberServiceImpl implements MemberService {
 
     /**
      * 인증 코드 확인하는 메소드
-     * 
+     *
      * @param verificationDTO 메일 체크를 위한 클래스
      * @return 메일 체크 후 결과 확인
      * @throws RuntimeException 인증코드 에러
@@ -230,7 +231,7 @@ public class MemberServiceImpl implements MemberService {
 
     /**
      * 랜덤 UUID 생성을 위한 static 메소드
-     * 
+     *
      * @return 생성한 UUID를 문자열로 변경 후 반환
      */
     public static String generateRandomUUID() {
@@ -241,6 +242,7 @@ public class MemberServiceImpl implements MemberService {
 
     /**
      * 회원 정보 조회
+     *
      * @return 수정된 회원 정보를 ResultDTO로 반환.
      */
     @Override
@@ -264,12 +266,6 @@ public class MemberServiceImpl implements MemberService {
                 .build();
 
         return ResultDTO.of("회원 정보 조회에 성공했습니다.", myInfoDTO);
-    }
-
-    // 로그인 시 JWT토큰 관련 순환참조를 막기 위해 DB 내 쿼리문 재정의
-    @Override
-    public Optional<MemberEntity> findByEmail(String email) {
-        return memberRepository.findByEmail(email);
     }
 
     @Override
@@ -439,6 +435,7 @@ public class MemberServiceImpl implements MemberService {
 
     /**
      * 로그인 상태 업데이트
+     *
      * @param userEmail
      */
     @Override
@@ -457,6 +454,7 @@ public class MemberServiceImpl implements MemberService {
 
     /**
      * 로그인 상태 조회
+     *
      * @param userEmail
      * @return
      */
@@ -476,6 +474,24 @@ public class MemberServiceImpl implements MemberService {
         }
     }
 
+    @Override
+    public ResultDTO<SuccessDTO> linkAccount(String email, boolean linkYn) {
+
+        MemberEntity member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        if (!member.getSocialLoginCheck().equals("없음")) {
+            throw new CustomException(ErrorCode.OAUTH_ALREADY_LINKED);
+        }
+
+        redisTemplate.opsForValue().set("oauth_link_" + email, String.valueOf(linkYn), MAIL_EXPIRES_IN, TimeUnit.MILLISECONDS);
+
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+
+        return ResultDTO.of("연동 요청에 성공했습니다.", successDTO);
+      
     /**
      * 멤버 DB 변경 시 알림 전송
      * @param updatedMember

@@ -1,4 +1,4 @@
-package net.scit.backend.auth;
+package net.scit.backend.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
