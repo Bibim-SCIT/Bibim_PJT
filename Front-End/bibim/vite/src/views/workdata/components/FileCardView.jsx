@@ -8,6 +8,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { deleteWorkdata } from "../../../api/workdata";
 import LoadingScreen from './LoadingScreen';
+import { useContext } from 'react';
+import { ConfigContext } from '../../../contexts/ConfigContext';
 
 // 파일 아이콘 import
 import pdfIcon from "assets/images/icons/pdf.png";
@@ -44,6 +46,9 @@ const FileCardView = ({ files, setFiles, loading }) => {
     const [openDownloadDialog, setOpenDownloadDialog] = useState(false); // 다운로드 목록 모달 state
     const [openDownloadDialog2, setOpenDownloadDialog2] = useState(false); // 다운로드 선택 버튼시 모달 
     const navigate = useNavigate();
+
+    const { user } = useContext(ConfigContext); // ✅ Context에서 로그인 유저 정보 가져오기
+    const currentUser = user.email;
 
     // 점 3개 버튼 클릭 (메뉴 열기)
     const handleMenuOpen = (event, file) => {
@@ -253,7 +258,10 @@ const FileCardView = ({ files, setFiles, loading }) => {
                 <MenuItem onClick={() => { handleMenuClose(); setOpenDownloadDialog(true); }}>
                     📥 다운로드
                 </MenuItem>
-                <MenuItem onClick={() => handleDelete()}>🗑️ 삭제</MenuItem>
+                <MenuItem
+                    onClick={() => handleDelete()}
+                    disabled={!selectedFile || selectedFile.writer !== currentUser}
+                >🗑️ 삭제</MenuItem>
             </Menu>
 
             {/* 파일 정보 모달 */}
@@ -359,7 +367,12 @@ const FileCardView = ({ files, setFiles, loading }) => {
                     >
                         ✏️ 수정
                     </Button>
-                    <Button variant="contained" color="error" onClick={() => modalhandleDelete(selectedFile)}>🗑️ 파일 삭제</Button>
+                    <Button
+                        variant="contained"
+                        color="error"
+                        onClick={() => modalhandleDelete(selectedFile)}
+                        disabled={selectedFile && selectedFile.writer !== currentUser} // 모달에서도 동일한 조건 적용
+                    >🗑️ 파일 삭제</Button>
                 </DialogActions>
             </Dialog>
 
