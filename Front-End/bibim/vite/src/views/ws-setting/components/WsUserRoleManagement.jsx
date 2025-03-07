@@ -7,6 +7,7 @@ import KickUserModal from './KickUserModal';
 import RoleSettingModal from './RoleSettingModal';
 import { useContext } from 'react';
 import { ConfigContext } from '../../../contexts/ConfigContext';
+import WSMLoadingScreen from './WSMLoadingScreen.JSX';
 
 // 상대적인 시간 또는 날짜를 표시하는 함수
 const formatDate = (dateString) => {
@@ -315,7 +316,8 @@ const WsUserRoleManagement = () => {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={5} sx={{ textAlign: 'center' }}>
-                                        <Typography>사용자가 없습니다.</Typography>
+                                        {/* <Typography>사용자가 없습니다.</Typography> */}
+                                        <WSMLoadingScreen />
                                     </TableCell>
                                 </TableRow>
                             )}
