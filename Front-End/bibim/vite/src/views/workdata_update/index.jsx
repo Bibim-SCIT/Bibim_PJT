@@ -25,6 +25,9 @@ import MainCard from 'ui-component/cards/MainCard';
 // 프로필 이미지 임시 데이터
 import CatImg from 'assets/images/cat_profile.jpg';
 
+// 상단 import 부분에 추가
+import UpdateStatusModal from './components/UpdateStatusModal';
+
 // 파일 아이콘
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import ImageIcon from '@mui/icons-material/Image';
@@ -39,6 +42,11 @@ export default function WdUpdatePage() {
 
     // ✅ currentUser를 API에서 가져오기
     const [currentUser, setCurrentUser] = useState(null);
+
+    // 컴포넌트 내 state 추가
+    const [modalOpen, setModalOpen] = useState(false);
+    const [uploadStatus, setUploadStatus] = useState('loading'); // 'loading' 또는 'success'
+    const [modalMessage, setModalMessage] = useState('');
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -76,6 +84,8 @@ export default function WdUpdatePage() {
     const [uploaderAvatar, setUploaderAvatar] = useState(""); // 작성자 프로필 이미지
     const [uploadDate, setUploadDate] = useState("");     // 작성 날짜
     const [deletedTags, setDeletedTags] = useState([]); // 삭제된 태그 목록
+    const [originalTags, setOriginalTags] = useState([]); // ✅ 기존 태그 저장용 상태
+
 
 
     const fileInputRef = useRef(null);
@@ -89,6 +99,7 @@ export default function WdUpdatePage() {
                 setTitle(data.title);
                 setContent(data.content);
                 setTags(data.tags || []);
+                setOriginalTags(data.tags || []); // ✅ 기존 태그를 별도 상태에 저장
                 setFileList(data.fileNames.map(name => ({ name }))); // 파일 리스트 변환
 
                 // ✅ 작성자 정보 추가
@@ -159,56 +170,13 @@ export default function WdUpdatePage() {
     // };
 
     const handleTagDelete = (tagToDelete) => {
-        setTags((prev) => prev.filter((tag) => tag !== tagToDelete));
+        setTags((prevTags) => prevTags.filter((tag) => tag !== tagToDelete));
 
-        // ✅ 기존에 존재하던 태그라면 삭제 목록에 추가
-        if (prevTags.includes(tagToDelete)) {
+        // 기존에 존재하던 태그만 삭제 목록에 추가
+        if (tags.includes(tagToDelete)) {
             setDeletedTags((prev) => [...prev, tagToDelete]);
         }
-
-        setTagError('');
     };
-
-
-    // const handleUpdate = async () => {
-    //     if (!title.trim() || !content.trim()) {
-    //         alert("제목과 내용을 입력해주세요.");
-    //         return;
-    //     }
-
-    //     const deleteFiles = []; // 삭제할 파일 목록 (추가 구현 필요)
-    //     const tagRequests = tags.map(tag => ({ action: "ADD", tag })); // 태그 수정 형식 맞추기
-    //     const newFiles = []; // 새로 추가할 파일 (추가 구현 필요)
-
-    //     const formData = {
-    //         wsId,
-    //         dataNumber,
-    //         title,
-    //         content,
-    //         deleteFiles,
-    //         tagRequests,
-    //         newFiles
-    //     };
-
-    //     try {
-    //         const response = await updateWorkdata(
-    //             wsId,
-    //             dataNumber,
-    //             title,
-    //             content,
-    //             deleteFiles,
-    //             tagRequests,
-    //             newFiles
-    //         );
-
-    //         console.log("✅ 수정 완료:", response);
-    //         alert("자료가 성공적으로 수정되었습니다.");
-    //         navigate(`/workdata`); // ✅ 수정 후 목록 페이지로 이동
-    //     } catch (error) {
-    //         console.error("❌ 자료 수정 실패:", error);
-    //         alert("수정에 실패했습니다.");
-    //     }
-    // };
 
     const handleUpdate = async () => {
         if (!title.trim() || !content.trim()) {
@@ -223,19 +191,20 @@ export default function WdUpdatePage() {
         // 🛠️ 새로 추가된 파일 추적
         const newFiles = fileList.filter(file => file instanceof File); // 새로 업로드된 파일만 추가
 
+        // ✅ 기존 태그와 비교하여 추가된 태그 및 삭제된 태그 구분
+        const newTags = tags.filter(tag => !originalTags.includes(tag));  // 기존 태그(originalTags)에 없으면 추가된 태그
+        const deletedTags = originalTags.filter(tag => !tags.includes(tag)); // 기존 태그 중 사라진 태그
+
+        console.log("🔵 기존 태그:", originalTags);
+        console.log("🟢 추가된 태그:", newTags);
+        console.log("🔴 삭제된 태그:", deletedTags);
+
+        // ✅ 모달 띄우기
+        setModalMessage('수정 중입니다...');
+        setUploadStatus('loading');
+        setModalOpen(true);
 
         try {
-            // ✅ 기존 태그 목록을 `useState`에서 직접 가져옴 (불필요한 API 호출 제거)
-            const prevTags = tags;
-
-            // ✅ 태그 추가 및 삭제 목록 구분
-            const newTags = tags.filter(tag => !prevTags.includes(tag));
-            // const deletedTags = prevTags.filter(tag => !tags.includes(tag));
-
-            console.log("🔵 기존 태그:", prevTags);
-            console.log("🟢 추가된 태그:", newTags);
-            console.log("🔴 삭제된 태그:", deletedTags);
-
             // ✅ API 요청 실행 (백엔드 요구 사항에 맞게 `deleteTags`와 `newTags` 분리)
             const response = await updateWorkdata(
                 wsId,
@@ -249,17 +218,22 @@ export default function WdUpdatePage() {
             );
 
             console.log("✅ 수정 완료:", response);
-            alert("자료가 성공적으로 수정되었습니다.");
-            navigate(`/workdata`);
+
+            setUploadStatus('success');
+            setModalMessage("자료가 성공적으로 수정되었습니다.");
+
         } catch (error) {
             console.error("❌ 자료 수정 실패:", error);
+            setModalOpen(false); // 실패 시 모달 닫기
             alert("수정에 실패했습니다.");
         }
     };
 
-
-
-
+    // ✅ 모달 확인 버튼 클릭 시 이동
+    const handleModalConfirm = () => {
+        setModalOpen(false);
+        navigate('/workdata');
+    };
 
     return (
         <MainCard title="자료실 글 수정">
@@ -401,6 +375,14 @@ export default function WdUpdatePage() {
                     취소
                 </Button>
             </Stack>
+
+            {/* ✅ UpdateStatusModal 적용 */}
+            <UpdateStatusModal
+                open={modalOpen}
+                status={uploadStatus}
+                message={modalMessage}
+                onConfirm={handleModalConfirm}
+            />
         </MainCard>
     );
 }

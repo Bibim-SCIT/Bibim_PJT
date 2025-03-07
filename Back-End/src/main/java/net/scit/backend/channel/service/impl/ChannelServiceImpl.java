@@ -7,9 +7,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import io.jsonwebtoken.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.scit.backend.jwt.AuthUtil;
 import net.scit.backend.channel.DTO.MessageDTO;
 import net.scit.backend.channel.entity.MessageEntity;
 import net.scit.backend.channel.repository.MessageReposittory;
@@ -60,10 +60,13 @@ public class ChannelServiceImpl implements ChannelService {
      */
     @Override
     public MessageDTO processMessage(MessageDTO messageDTO) {
+        if (messageDTO.getMessageOrFile()) {
+            log.info("📂 파일 메시지는 processMessage에서 처리하지 않음.");
+            return messageDTO;
+        }    
         WorkspaceChannelEntity workspaceChannelEntity = workspacechannelRepository
                 .findById(messageDTO.getChannelNumber())
                 .orElseThrow(() -> new CustomException(ErrorCode.IMAGE_NOT_FOUND));
-        log.info("==================이메일 : {}", messageDTO.getSender());
         MessageEntity messageEntity = MessageEntity.builder()
                 .workspaceChannelEntity(workspaceChannelEntity)
                 .sender(messageDTO.getSender())
@@ -74,29 +77,32 @@ public class ChannelServiceImpl implements ChannelService {
         return messageDTO;
     }
 
-    /**
-     * 파일을 업로드하고 해당 URL을 채팅 메시지로 저장하는 메서드
-     */
     @Override
-    public MessageDTO uploadFile(MultipartFile file, String sender, Long channelId) throws IOException {
-        String imageUrl = uploadImage(file, channelId);// S3에 파일 업로드 후 URL 반환
+    public MessageDTO uploadFile(MultipartFile file, String sender, Long channelId) {
+        // S3에 파일 업로드 후 URL 반환
+        String imageUrl = uploadImage(file, channelId);
+
+        // 채널 찾기
         WorkspaceChannelEntity workspaceChannelEntity = workspacechannelRepository
-                .findById(channelId).get();
+                .findById(channelId)
+                .orElseThrow(() -> new CustomException(ErrorCode.IMAGE_NOT_FOUND));
+
+        // 파일 메시지 엔티티 생성 및 저장
         MessageEntity messageEntity = MessageEntity.builder()
                 .workspaceChannelEntity(workspaceChannelEntity)
                 .sender(sender)
-                .content(imageUrl)
-                .messageOrFile(true)
+                .content(imageUrl) // 이미지 URL 저장
+                .messageOrFile(true) // 파일 여부 설정
                 .build();
         messageReposittory.save(messageEntity);
 
-        MessageDTO messageDTO = new MessageDTO();
-        messageDTO.setMessageOrFile(true);
-        messageDTO.setChannelNumber(channelId);
-        messageDTO.setSender(sender);
-        messageDTO.setContent(imageUrl);
-
-        return messageDTO;
+        // DTO 반환
+        return MessageDTO.builder()
+                .messageOrFile(true)
+                .channelNumber(channelId)
+                .sender(sender)
+                .content(imageUrl) // URL을 클라이언트에게 반환
+                .build();
     }
 
     /**

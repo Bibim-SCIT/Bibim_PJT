@@ -16,6 +16,7 @@ const columns = {
   inProgress: "진행 중",
   completed: "완료",
   backlog: "보류",
+
 };
 
 const KanbanBoard = ({ wsId }) => {

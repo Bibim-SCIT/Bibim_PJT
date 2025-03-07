@@ -147,3 +147,4 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate }) => {
 };
 
 export default ScheduleDetailModal;
+

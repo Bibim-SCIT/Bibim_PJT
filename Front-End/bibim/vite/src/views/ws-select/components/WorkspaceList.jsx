@@ -6,56 +6,13 @@ import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 import { Navigation, Pagination } from 'swiper/modules';
 import CreateWorkspaceModal from './CreateWorkspaceModal';
+import InviteWorkspaceModal from './InviteWorkspaceModal'; // 초대 모달 import
 
 export default function WorkspaceList({ workspaces = [], onSelect }) {
     const [modalOpen, setModalOpen] = useState(false);
+    const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
     console.log("📌 현재 workspaces 배열:", workspaces);
-
-    // const handleChangeWorkspace = (workspace) => {
-    //     // Redux에 현재 워크스페이스 설정
-    //     dispatch(setActiveWorkspace(workspace));
-
-    //     // localStorage에 현재 워크스페이스 저장 (새로고침해도 유지되도록)
-    //     localStorage.setItem('activeWorkspace', JSON.stringify(workspace));
-
-    //     // 대시보드로 이동
-    //     navigate('/dashboard');
-    // };
-
-    // 로딩속도 측정 (삭제할 코드)
-    // useEffect(() => {
-    //     workspaces.forEach((ws) => {
-    //         console.log(`🖼️ 이미지 URL 확인: ${ws.wsImg}`);
-    //         if (ws.wsImg) {
-    //             const timerLabel = `🖼️ 이미지 로딩 시간 - ${ws.wsName}`;
-
-    //             // 🛑 기존 타이머가 존재하면 종료 후 새 타이머 시작
-    //             try {
-    //                 console.timeEnd(timerLabel);
-    //             } catch (e) {
-    //                 // 타이머가 없으면 무시
-    //             }
-
-    //             console.time(timerLabel);
-
-    //             const img = new Image();
-    //             img.src = ws.wsImg; // S3 이미지 URL 사용
-
-    //             img.onload = () => {
-    //                 console.timeEnd(timerLabel);
-    //                 console.log(`✅ 이미지 로딩 성공: ${ws.wsImg}`);
-    //             };
-
-    //             img.onerror = () => {
-    //                 console.timeEnd(timerLabel);
-    //                 console.error(`❌ 이미지 로딩 실패: ${ws.wsImg}`);
-    //             };
-    //         }
-    //     });
-    // }, [workspaces]);
-
-
 
     return (
         <Box
@@ -63,13 +20,14 @@ export default function WorkspaceList({ workspaces = [], onSelect }) {
                 p: 3,
                 border: '1px solid #ddd',
                 borderRadius: 2,
+                boxShadow: '2px 2px 8px rgba(0,0,0,0.1)',
                 width: '90%', // 좌우 90% 영역 차지
                 maxWidth: 1100, // 최대 너비 지정
                 mx: 'auto', // 가운데 정렬
                 textAlign: 'center'
             }}
         >
-            <Typography variant="h6" sx={{ mb: 2 }}>
+            <Typography variant="h4" sx={{ mb: 2 }}>
                 현재 생성된 워크스페이스
             </Typography>
 
@@ -106,7 +64,11 @@ export default function WorkspaceList({ workspaces = [], onSelect }) {
                                     }
                                 }}
                             >
-                                <Avatar src={ws.wsImg} sx={{ width: 56, height: 56, margin: '0 auto' }} />
+                                <Avatar
+                                    src={ws.wsImg}
+                                    sx={{ width: 56, height: 56, margin: '0 auto' }}
+                                    variant="rounded" // 둥근 네모식으로 만들기 
+                                />
                                 <Typography variant="subtitle1" sx={{ mt: 1 }}>
                                     {ws.wsName}
                                 </Typography>
@@ -133,10 +95,14 @@ export default function WorkspaceList({ workspaces = [], onSelect }) {
                 <Button variant="outlined" sx={{ width: 200 }} onClick={() => setModalOpen(true)}>
                     새 워크스페이스 생성하기
                 </Button>
+                <Button variant="outlined" sx={{ width: 200, ml: 2 }} onClick={() => setInviteModalOpen(true)}>
+                    워크스페이스 초대하기
+                </Button>
             </Box>
 
             {/* 워크스페이스 생성 모달 */}
             <CreateWorkspaceModal open={modalOpen} onClose={() => setModalOpen(false)} />
+            <InviteWorkspaceModal open={inviteModalOpen} onClose={() => setInviteModalOpen(false)} />
         </Box>
     );
 }

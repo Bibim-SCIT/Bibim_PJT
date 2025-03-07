@@ -32,6 +32,7 @@ const Calendar = () => {
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [hoveredSchedule, setHoveredSchedule] = useState(null); // Hover 중인 스케줄 ID 저장
 
   useEffect(() => {
     const loadSchedules = async () => {
@@ -60,7 +61,7 @@ const Calendar = () => {
       event.classList.toggle('schedule-highlight', isHovering);
     });
   };
-
+  
   const handleEventClick = (clickInfo) => {
     setSelectedSchedule(clickInfo.event.extendedProps);
     setModalOpen(true);
@@ -76,19 +77,20 @@ const Calendar = () => {
       setSchedules((prevSchedules) =>
         prevSchedules.map(schedule =>
           schedule.id === updatedSchedule.scheduleNumber
-            ? {
-              ...schedule,
-              title: updatedSchedule.scheduleTitle,
-              start: updatedSchedule.scheduleStartDate,
-              end: updatedSchedule.scheduleFinishDate,
-              extendedProps: updatedSchedule
-            }
+            ? { ...schedule, ...updatedSchedule, extendedProps: updatedSchedule }
             : schedule
         )
       );
-
       setSelectedSchedule(updatedSchedule);
     }
+  };
+
+  const handleEventMouseEnter = (hoverInfo) => {
+    setHoveredSchedule(hoverInfo.event.extendedProps.scheduleNumber); // 같은 스케줄 ID 저장
+  };
+
+  const handleEventMouseLeave = () => {
+    setHoveredSchedule(null); // 초기화
   };
 
   if (loading) {
@@ -112,27 +114,63 @@ const Calendar = () => {
   }
 
   return (
-    <CalendarWrapper>
-      <div className="calendar-container">
+    <Box
+      sx={{
+        padding: 2,
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        '& .calendar-container': {
+          padding: 2,
+          background: '#fff',
+          borderRadius: 2,
+          boxShadow: 1,
+        },
+        '& .fc-toolbar': {
+          display: 'flex !important',
+          justifyContent: 'space-between !important',
+          alignItems: 'center',
+          marginBottom: 3,
+          padding: '0 1em',
+        },
+        '& .fc-today-button': {
+          backgroundColor: '#6B7280',
+          color: '#FFFFFF',
+          borderRadius: 1,
+          '&:hover': {
+            backgroundColor: '#4B5563',
+          },
+        },
+        '& .fc-event': {
+          borderRadius: 1,
+          padding: '2px 4px',
+          transition: 'all 0.2s ease-in-out',
+          cursor: 'pointer',
+        },
+        '& .fc-day-today': {
+          backgroundColor: '#F8F9FA !important',
+          '&:hover': {
+            backgroundColor: '#F1F3F5 !important',
+          },
+        },
+        '& .fc-daygrid-day-number': {
+          padding: '4px 8px',
+          fontSize: '14px',
+        },
+      }}
+    >
+      <Box className="calendar-container">
         <FullCalendar
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
           events={schedules}
-          headerToolbar={{
-            left: '',
-            center: 'title',
-            right: 'prev,today,next'
-          }}
+          headerToolbar={{ left: '', center: 'title', right: 'prev,today,next' }}
           locale="ko"
           height="auto"
           fixedWeekCount={false}
           showNonCurrentDates={false}
           titleFormat={{ year: 'numeric', month: 'long' }}
-          buttonText={{
-            today: 'Today',
-            prev: '',
-            next: ''
-          }}
+          buttonText={{ today: 'Today', prev: '', next: '' }}
           eventClick={handleEventClick}
           eventDidMount={(info) => {
             const scheduleId = info.event.id;
@@ -164,9 +202,9 @@ const Calendar = () => {
             onUpdate={handleScheduleUpdate}
           />
         )}
-      </div>
-    </CalendarWrapper>
+      </Box>
+    </Box>
   );
 };
-
 export default Calendar;
+

@@ -8,8 +8,6 @@ import com.amazonaws.services.s3.model.*;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;

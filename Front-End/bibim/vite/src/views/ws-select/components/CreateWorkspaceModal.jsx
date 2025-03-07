@@ -57,10 +57,7 @@ const CreateWorkspaceModal = ({ open, onClose }) => {
         }
     };
 
-
-    console.log("현재 JWT 토큰:", localStorage.getItem("token")); // ✅ auth.js에서 저장한 토큰 키 사용
-
-
+    // console.log("현재 JWT 토큰:", localStorage.getItem("token")); // ✅ auth.js에서 저장한 토큰 키 사용
 
     return (
         <Modal open={open} onClose={onClose}>

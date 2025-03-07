@@ -5,6 +5,7 @@ import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.member.dto.*;
 import net.scit.backend.member.entity.MemberEntity;
 
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,13 +23,11 @@ public interface MemberService {
 
     ResultDTO<SuccessDTO> signupSendMail(String email);
 
-    ResultDTO<SuccessDTO> checkMail(VerificationDTO verificationDTO);
+    ResultDTO<SuccessDTO> checkMail(VerificationDTO verificationDTO);;
 
     ResultDTO<MyInfoDTO> myInfo();
 
     ResultDTO<SuccessDTO> updateInfo(UpdateInfoDTO updateInfoDTO, MultipartFile file);
-
-    Optional<MemberEntity> findByEmail(String email);
 
     ResultDTO<SuccessDTO> sendChangePasswordMail(String email);
 
@@ -44,6 +43,5 @@ public interface MemberService {
     //로그인 상태 조회
     MemberLoginStatusDTO getLoginStatus(String userEmail);
 
-
-
+    ResultDTO<SuccessDTO>linkAccount(String email, boolean linkYn);
 }

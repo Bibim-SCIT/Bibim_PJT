@@ -17,9 +17,9 @@ export { api };
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem("token");
     if (token) {
-        console.log("🟢 API 요청에 JWT 포함됨:", token); // ✅ 확인용 로그 추가
+        // console.log("🟢 API 요청에 JWT 포함됨:", token); // ✅ 확인용 로그 추가
         config.headers.Authorization = `Bearer ${token}`;
-        console.log("🟢 API 요청에 JWT 포함됨2:", config.headers.Authorization);
+        // console.log("🟢 API 요청에 JWT 포함됨2:", config.headers.Authorization);
     } else {
         console.warn("⚠️ API 요청 시 JWT 없음");
     }
@@ -91,6 +91,7 @@ export const loginUser = async (email, password) => {
         const { data } = response.data; // ✅ 응답에서 data 객체 추출
         const { accessToken } = data; // ✅ accessToken 가져오기
 
+        console.log("data: ", response);
         console.log("🟢 로그인 성공, 발급된 토큰:", accessToken);
 
         // ✅ JWT를 로컬스토리지에 저장
