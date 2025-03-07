@@ -13,12 +13,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.authentication.BadCredentialsException;
-import net.scit.backend.auth.JwtTokenProvider;
+import net.scit.backend.jwt.JwtTokenProvider;
 import net.scit.backend.member.dto.TokenDTO;
 
-import javax.xml.transform.Result;
 import java.util.Date;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 @Service

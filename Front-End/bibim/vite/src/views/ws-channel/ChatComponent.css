@@ -37,53 +37,36 @@
     max-width: 70%;
 }
 
-/* 내가 보낸 메시지 */
 .my-message {
     align-self: flex-end;
     text-align: right;
 }
 
-/* .my-message .message-content {
-    background-color: #007bff;
-    color: white;
-} */
-
-/* 상대방이 보낸 메시지 */
 .other-message {
     align-self: flex-start;
     text-align: left;
 }
 
-/* .other-message .message-content {
-    background-color: #e5e5ea;
-    color: black;
-} */
-
-/* 메시지 박스
+/* 메시지 박스 */
 .message-content {
     padding: 8px 12px;
     border-radius: 15px;
     margin-top: 5px;
     display: inline-block;
-} */
-
-/* 발신자 이름 */
-.sender {
-    font-size: 12px;
-    color: gray;
+    background-color: #e5e5ea;
+    color: black;
 }
 
-/* ✅ 수정된 입력창 컨테이너 */
+/* 입력창 컨테이너 */
 .chat-input-box {
     display: flex;
     align-items: center;
     background-color: white;
     padding: 8px;
     border-top: 1px solid #ddd;
-    position: fixed;
+    position: sticky; /* ✅ 변경: fixed → sticky */
     bottom: 0;
     width: 100%;
-    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
     max-width: 600px;
     margin: 0 auto;
     left: 50%;
@@ -130,4 +113,41 @@
 
 .send-btn:hover {
     background: #b0b0b0;
+}
+
+/* 채팅 메시지 박스 */
+.message {
+    display: flex;
+    flex-direction: column; /* ✅ 세로 정렬 (이름 → 메시지 → 이미지 순) */
+    margin-bottom: 10px;
+    max-width: 70%;
+}
+
+/* 사용자 이름 (항상 위) */
+.sender {
+    font-size: 12px;
+    color: gray;
+    margin-bottom: 5px; /* ✅ 이름과 메시지 간격 */
+}
+
+/* 메시지 내용 래퍼 */
+.message-content-wrapper {
+    display: flex;
+    flex-direction: column; /* ✅ 이미지를 사용자 이름 아래 배치 */
+    gap: 5px; /* ✅ 메시지와 이미지 간격 */
+}
+
+/* 이미지 스타일 */
+.chat-image {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 8px;
+    margin-top: 5px;
+}
+
+/* 파일 다운로드 링크 스타일 */
+.file-message {
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
 }

@@ -2,7 +2,7 @@ package net.scit.backend.schedule.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.scit.backend.auth.AuthUtil;
+import net.scit.backend.jwt.AuthUtil;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.exception.CustomException;
@@ -11,6 +11,7 @@ import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.schedule.dto.*;
 import net.scit.backend.schedule.entity.*;
+import net.scit.backend.schedule.event.*;
 import net.scit.backend.schedule.repository.*;
 import net.scit.backend.schedule.service.ScheduleService;
 import net.scit.backend.schedule.type.ScheduleStatus;
@@ -18,6 +19,7 @@ import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import net.scit.backend.workspace.repository.WorkspaceRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,8 +40,10 @@ public class ScheduleServiceImpl implements ScheduleService {
         private final MediumTagRepository mediumTagRepository;
         private final SmallTagRepository smallTagRepository;
         private final ScheduleTagRepository scheduleTagRepository;
+        private final ApplicationEventPublisher eventPublisher;
 
-      /**
+
+        /**
      * 새로운 스케줄 생성
      *
      * @param scheduleDTO // 스케줄 DTO
@@ -64,6 +68,10 @@ public class ScheduleServiceImpl implements ScheduleService {
         // 스케쥴 등록
         ScheduleEntity scheduleEntity = ScheduleEntity.toEntity(scheduleDTO, workspace, ScheduleStatus.UNASSIGNED);
         scheduleRepository.save(scheduleEntity);
+
+        //추가: 알림 이벤트 생성
+        eventPublisher.publishEvent(new ScheduleCreatedEvent(scheduleEntity, email));
+
 
         // 태그 등록
         // 대분류가 있을 때만 등록
@@ -234,6 +242,9 @@ public class ScheduleServiceImpl implements ScheduleService {
         scheduleEntity.setMember(member);
         scheduleRepository.save(scheduleEntity);
 
+        //추가: 알림 이벤트 생성
+        eventPublisher.publishEvent(new ScheduleAssigneeUpdatedEvent(scheduleEntity, member, email));
+
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
                 .build();
@@ -278,6 +289,9 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
         scheduleRepository.save(scheduleEntity);
 
+        // 추가: 알림 이벤트 생성
+        eventPublisher.publishEvent(new ScheduleStatusUpdatedEvent(scheduleEntity, email));
+        
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
                 .build();
@@ -415,6 +429,10 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .build();
         scheduleRepository.save(updateSchedule);
 
+        //추가: 알림 이벤트 생성
+        eventPublisher.publishEvent(new ScheduleInfoUpdatedEvent(updateSchedule, email));
+
+
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
                 .build();
@@ -468,6 +486,10 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .ifPresent(scheduleTagRepository::delete);
 
         scheduleRepository.delete(scheduleEntity);
+
+        //추가: 알림 이벤트 생성
+        eventPublisher.publishEvent(new ScheduleDeletedEvent(scheduleEntity, email));
+
 
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
@@ -715,10 +737,10 @@ public class ScheduleServiceImpl implements ScheduleService {
                 // 소분류 태그 조회에 성공했습니다.
                 return ResultDTO.of("소분류 태그 조회에 성공했습니다.", smallTagDTOList);
         }
-  
+
    /**
          * 전체 태그 조회
-         * 
+         *
          * @param wsId
          * @return 전체 태그 리스트트
          */
@@ -837,7 +859,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         /**
          * 대분류 태그 수정
-         * 
+         *
          * @param updateLargeTagDTO
          * @return
          */
@@ -888,7 +910,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         /**
          * 중분류 태그 수정
-         * 
+         *
          * @param updateMediumTagDTO
          * @return
          */
@@ -935,7 +957,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         /**
          * 소분류 태그 수정
-         * 
+         *
          * @param updateSmallTagDTO
          * @return
          */
