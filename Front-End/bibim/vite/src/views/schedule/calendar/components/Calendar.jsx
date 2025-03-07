@@ -3,15 +3,31 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Box } from '@mui/material';
-import useScheduleData from '../../../../hooks/useScheduleData';
+import styled from '@emotion/styled';
 import ScheduleDetailModal from '../../components/ScheduleDetailModal';
 import ScheduleEditModal from '../../components/ScheduleEditModal';
 import { useSelector } from 'react-redux';
+import { fetchKanbanTasks } from '../../../../api/schedule'; // ✅ fetchKanbanTasks로 변경
+
+const CalendarWrapper = styled(Box)({
+  padding: '20px',
+  '& .calendar-container': {
+    padding: '20px',
+    background: '#fff',
+    borderRadius: '10px',
+    boxShadow: '0 0 10px rgba(0,0,0,0.1)'
+  },
+  '& .fc': {
+    maxWidth: '1200px',
+    margin: '0 auto'
+  },
+});
 
 const Calendar = () => {
   const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace);
-  const { schedules: initialSchedules, loading, error, fetchSchedules } = useScheduleData();
   const [schedules, setSchedules] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -19,13 +35,33 @@ const Calendar = () => {
   const [hoveredSchedule, setHoveredSchedule] = useState(null); // Hover 중인 스케줄 ID 저장
 
   useEffect(() => {
-    setSchedules(initialSchedules);
-  }, [initialSchedules]);
+    const loadSchedules = async () => {
+      if (!activeWorkspace?.wsId) return;
+      setLoading(true);
+      setError(null);
 
-  useEffect(() => {
-    fetchSchedules(activeWorkspace.wsId);
+      try {
+        const data = await fetchKanbanTasks(activeWorkspace.wsId); // ✅ fetchKanbanTasks 사용
+        console.log("📌 캘린더 데이터 로드 완료:", data);
+        setSchedules(data);
+      } catch (error) {
+        console.error("❌ 캘린더 데이터 로드 실패:", error);
+        setError(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSchedules();
   }, [activeWorkspace]);
 
+  const handleEventHover = (scheduleId, isHovering) => {
+    const events = document.querySelectorAll(`[data-schedule-id="${scheduleId}"]`);
+    events.forEach(event => {
+      event.classList.toggle('schedule-highlight', isHovering);
+    });
+  };
+  
   const handleEventClick = (clickInfo) => {
     setSelectedSchedule(clickInfo.event.extendedProps);
     setModalOpen(true);
@@ -39,7 +75,7 @@ const Calendar = () => {
   const handleScheduleUpdate = async (updatedSchedule) => {
     if (updatedSchedule) {
       setSchedules((prevSchedules) =>
-        prevSchedules.map((schedule) =>
+        prevSchedules.map(schedule =>
           schedule.id === updatedSchedule.scheduleNumber
             ? { ...schedule, ...updatedSchedule, extendedProps: updatedSchedule }
             : schedule
@@ -58,11 +94,23 @@ const Calendar = () => {
   };
 
   if (loading) {
-    return <Box sx={{ textAlign: 'center', padding: 2 }}>로딩 중...</Box>;
+    return (
+      <CalendarWrapper>
+        <div className="calendar-container" style={{ textAlign: 'center', padding: '20px' }}>
+          ⏳ 로딩 중...
+        </div>
+      </CalendarWrapper>
+    );
   }
 
   if (error) {
-    return <Box sx={{ textAlign: 'center', padding: 2, color: 'red' }}>에러가 발생했습니다: {error.message || '알 수 없는 오류'}</Box>;
+    return (
+      <CalendarWrapper>
+        <div className="calendar-container" style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
+          ⚠️ 에러 발생: {error instanceof Error ? error.message : '알 수 없는 오류'}
+        </div>
+      </CalendarWrapper>
+    );
   }
 
   return (
@@ -124,26 +172,18 @@ const Calendar = () => {
           titleFormat={{ year: 'numeric', month: 'long' }}
           buttonText={{ today: 'Today', prev: '', next: '' }}
           eventClick={handleEventClick}
-          eventMouseEnter={handleEventMouseEnter} // Hover 시작
-          eventMouseLeave={handleEventMouseLeave} // Hover 종료
-          eventContent={(arg) => {
-            const isHovered = hoveredSchedule === arg.event.extendedProps.scheduleNumber;
-            return (
-              <Box
-                sx={{
-                  cursor: 'pointer',
-                  padding: '2px 4px',
-                  transition: 'all 0.2s ease-in-out',
-                  transform: isHovered ? 'scale(1.01)' : 'scale(1)',
-                  boxShadow: isHovered ? '4px 4px 10px rgba(0, 0, 0, 0.2)' : 'none',
-                  borderRadius: 1,
-                  backgroundColor: schedules.color,
-                }}
-              >
-                {arg.event.title}
-              </Box>
-            );
+          eventDidMount={(info) => {
+            const scheduleId = info.event.id;
+            info.el.setAttribute('data-schedule-id', scheduleId);
+
+            info.el.addEventListener('mouseenter', () => handleEventHover(scheduleId, true));
+            info.el.addEventListener('mouseleave', () => handleEventHover(scheduleId, false));
           }}
+          eventContent={(arg) => (
+            <Box sx={{ cursor: 'pointer', width: '100%', padding: '2px 4px' }}>
+              {arg.event.title}
+            </Box>
+          )}
         />
         <ScheduleDetailModal
           open={modalOpen}
@@ -167,3 +207,4 @@ const Calendar = () => {
   );
 };
 export default Calendar;
+

@@ -3,47 +3,42 @@ import react from '@vitejs/plugin-react';
 import jsconfigPaths from 'vite-jsconfig-paths';
 
 export default defineConfig(({ mode }) => {
-    // depending on your application, base can also be "/"
+    // 환경 변수 로드
     const env = loadEnv(mode, process.cwd(), '');
     const API_URL = `${env.VITE_APP_BASE_NAME}`;
     const PORT = 3000;
 
     return {
         server: {
-            // this ensures that the browser opens upon server start
-            open: true,
-            // this sets a default port to 3000
-            port: PORT,
-            host: true
+            open: true, // 서버 실행 시 자동으로 브라우저 열기
+            port: PORT, // 기본 포트 3000
+            host: true,
+            proxy: {
+                "/api": {
+                    target: "http://localhost:8080", // 백엔드 서버 주소
+                    changeOrigin: true,
+                    secure: false,
+                    rewrite: (path) => path.replace(/^\/api/, ""), // `/api` 제거
+                },
+            },
         },
         build: {
-            chunkSizeWarningLimit: 1600
+            chunkSizeWarningLimit: 1600,
         },
         preview: {
             open: true,
-            host: true
+            host: true,
         },
         define: {
-            global: 'window'
+            global: 'window',
         },
         resolve: {
             alias: [
-                // { find: '', replacement: path.resolve(__dirname, 'src') },
-                // {
-                //   find: /^~(.+)/,
-                //   replacement: path.join(process.cwd(), 'node_modules/$1')
-                // },
-                // {
-                //   find: /^src(.+)/,
-                //   replacement: path.join(process.cwd(), 'src/$1')
-                // }
-                // {
-                //   find: 'assets',
-                //   replacement: path.join(process.cwd(), 'src/assets')
-                // },
-            ]
+                // 절대 경로 설정
+                // { find: 'assets', replacement: path.join(process.cwd(), 'src/assets') },
+            ],
         },
         base: API_URL,
-        plugins: [react(), jsconfigPaths()]
+        plugins: [react(), jsconfigPaths()],
     };
 });
