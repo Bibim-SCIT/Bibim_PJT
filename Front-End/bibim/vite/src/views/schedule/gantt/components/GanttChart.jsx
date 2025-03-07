@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { Gantt } from "gantt-task-react"; // ✅ Task 제거
 import "gantt-task-react/dist/index.css";
-import { fetchScheduleTasks } from "../../../../api/schedule"; // ✅ API 모듈 사용
+import { fetchKanbanTasks } from "../../../../api/schedule"; // ✅ API 모듈 사용
 
 const GanttWrapper = styled(Box)({
   padding: "20px",
@@ -19,7 +19,7 @@ const GanttChart = ({ wsId }) => {
   useEffect(() => {
     const loadTasks = async () => {
       try {
-        const data = await fetchScheduleTasks(wsId);
+        const data = await fetchKanbanTasks(wsId);
         console.log("📌 변환된 간트 차트 데이터:", data);
         setTasks(data);
       } catch (error) {

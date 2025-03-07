@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Box, Card, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { fetchKanbanTasks, updateKanbanTaskStatus } from "../../../../api/schedule";
+import { fetchKanbanTasks, updateKanbanTaskStatus } from "../../../api/schedule";
 
 const KanbanWrapper = styled(Box)({
   padding: "20px",
@@ -41,8 +41,8 @@ const KanbanBoard = ({ wsId }) => {
 
     const newTasks = [...tasks];
     const [movedTask] = newTasks.splice(result.source.index, 1);
-    
-    const newStatus = Object.keys(columns)[result.destination.droppableId];
+
+    const newStatus = result.destination.droppableId;
     movedTask.status = newStatus;
     newTasks.splice(result.destination.index, 0, movedTask);
 
@@ -61,13 +61,19 @@ const KanbanBoard = ({ wsId }) => {
       <h2>📌 칸반 보드 (wsId: {wsId})</h2>
       <DragDropContext onDragEnd={onDragEnd}>
         <Box display="flex" justifyContent="space-around">
-          {Object.entries(columns).map(([columnId, columnTitle], index) => (
-            <Droppable key={columnId} droppableId={`${index}`}>
+          {Object.entries(columns).map(([columnId, columnTitle]) => (
+            <Droppable key={columnId} droppableId={columnId}>
               {(provided) => (
                 <Box
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  sx={{ width: "250px", minHeight: "400px", padding: "10px", backgroundColor: "#f4f4f4", borderRadius: "8px" }}
+                  sx={{
+                    width: "250px",
+                    minHeight: "400px",
+                    padding: "10px",
+                    backgroundColor: "#f4f4f4",
+                    borderRadius: "8px",
+                  }}
                 >
                   <Typography variant="h6" align="center" gutterBottom>
                     {columnTitle}
