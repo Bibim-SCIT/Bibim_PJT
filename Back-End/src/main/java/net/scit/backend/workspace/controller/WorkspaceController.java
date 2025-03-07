@@ -2,18 +2,28 @@ package net.scit.backend.workspace.controller;
 
 import java.util.List;
 
-import net.scit.backend.auth.AuthUtil;
-import net.scit.backend.exception.CustomException;
-import net.scit.backend.exception.ErrorCode;
-import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.scit.backend.jwt.AuthUtil;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.exception.CustomException;
+import net.scit.backend.exception.ErrorCode;
+import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import net.scit.backend.workspace.dto.UpdateWorkspaceMemberDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
@@ -40,7 +50,7 @@ public class WorkspaceController {
      * 워크스페이스 생성 메소드
      * 
      * @param workspaceDTO 워크스페이스 대한 정보 (이름과 사진)
-     * @return 워크스페이스 생성 동작후 결과 확인인
+     * @return 워크스페이스 생성 동작후 결과 확인
      */
     @PostMapping("")
     public ResponseEntity<ResultDTO<SuccessDTO>> workspaceCreate(
@@ -86,10 +96,19 @@ public class WorkspaceController {
      * @return
      */
     @PatchMapping("/rolesetting")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceRoleSetting() {
-        // ResultDTO<SuccessDTO> result =
-        // workspaceService.workspaceUpdate(wsName,newName,file);
-        return null;
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceRoleSetting(@RequestParam("wsId") Long wsId,
+            @RequestParam("email") String email,
+            @RequestParam("newRole") String newRole) 
+    {
+        if(newRole.equals("owner") || newRole.equals("user"))
+        {
+            ResultDTO<SuccessDTO> result = workspaceService.workspaceRoleUpdate(wsId, email, newRole);
+            return ResponseEntity.ok(result);
+        }
+        else
+        {
+            throw new CustomException(ErrorCode.INVALID_ROLE_VALUE);
+        }
     }
 
     /**
@@ -98,9 +117,9 @@ public class WorkspaceController {
      * @return
      */
     @PostMapping("/invite")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workspaseInvate(@RequestParam("wsId") Long wsId,
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceInvate(@RequestParam("wsId") Long wsId,
             @RequestParam("email") String email) {
-        ResultDTO<SuccessDTO> result = workspaceService.workspaseInvate(wsId, email);
+        ResultDTO<SuccessDTO> result = workspaceService.workspaceInvate(wsId, email);
         return ResponseEntity.ok(result);
     }
 
@@ -110,10 +129,10 @@ public class WorkspaceController {
      * @return
      */
     @PostMapping("/add")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workspaseAdd(@RequestParam("code") String code) 
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceAdd(@RequestParam("code") String code) 
     {
         
-        ResultDTO<SuccessDTO> result = workspaceService.workspaseAdd(code);
+        ResultDTO<SuccessDTO> result = workspaceService.workspaceAdd(code);
         return ResponseEntity.ok(result);
     }
 
@@ -134,9 +153,9 @@ public class WorkspaceController {
      * @return
      */
     @DeleteMapping("/forcedrawal")
-    public ResponseEntity<ResultDTO<SuccessDTO>> worksapceForceDrawal(@RequestParam("wsId") Long wsId,
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceForceDrawal(@RequestParam("wsId") Long wsId,
             @RequestParam("email") String email) {
-        ResultDTO<SuccessDTO> result = workspaceService.worksapceForceDrawal(wsId, email);
+        ResultDTO<SuccessDTO> result = workspaceService.workspaceForceDrawal(wsId, email);
         return ResponseEntity.ok(result);
     }
 
@@ -148,7 +167,7 @@ public class WorkspaceController {
     @PostMapping("/right")
     public ResponseEntity<ResultDTO<SuccessDTO>> wsRightCreate(@RequestParam("wsId") Long wsId,
             @RequestParam("newRole") String newRole) {
-        ResultDTO<SuccessDTO> result = workspaceService.worksapceRightCreate(wsId, newRole);
+        ResultDTO<SuccessDTO> result = workspaceService.workspaceRightCreate(wsId, newRole);
         return ResponseEntity.ok(result);
     }
 
@@ -160,7 +179,7 @@ public class WorkspaceController {
     @PatchMapping("/right")
     public ResponseEntity<ResultDTO<SuccessDTO>> wsRightGrant(@RequestParam("wsId") Long wsId,
             @RequestParam("email") String email, @RequestParam("chRole") Long chRole) {
-        ResultDTO<SuccessDTO> result = workspaceService.worksapceRightGrant(wsId, email, chRole);
+        ResultDTO<SuccessDTO> result = workspaceService.workspaceRightGrant(wsId, email, chRole);
         return ResponseEntity.ok(result);
     }
 
@@ -172,12 +191,12 @@ public class WorkspaceController {
     @DeleteMapping("/right")
     public ResponseEntity<ResultDTO<SuccessDTO>> wsRightDelete(@RequestParam("wsId") Long wsId,
             @RequestParam("wsId") Long chRole) {
-        ResultDTO<SuccessDTO> result = workspaceService.worksapceRightDelete(wsId, chRole);
+        ResultDTO<SuccessDTO> result = workspaceService.workspaceRightDelete(wsId, chRole);
         return ResponseEntity.ok(result);
     }
 
     /**
-     * 워크스페이스 내 회원 정보 조회
+     * 워크스페이스 나의 회원 정보 조회
      * 
      * @param wsId 조회할 워크스페이스 ID
      * @return
@@ -194,7 +213,7 @@ public class WorkspaceController {
     }
 
     /**
-     * 워크스페이스 내 회원 정보 수정
+     * 워크스페이스 나의 회원 정보 수정
      * 
      * @param wsId       워크스페이스 ID
      * @param updateInfo 수정할 정보
@@ -230,4 +249,23 @@ public class WorkspaceController {
         List<MemberLoginStatusDTO> statusList = workspaceService.getWorkspaceMembersStatus(workspaceId, email);
         return ResponseEntity.ok(ResultDTO.of("워크스페이스 멤버 접속 현황 조회 성공", statusList));
     }
+
+    /**
+     * 워크스페이스 내 모든 멤버 조회
+     *
+     * @param workspaceId 조회할 워크스페이스 ID
+     * @return 워크스페이스 멤버 목록
+     */
+    @GetMapping("/{workspaceId}/members")
+    public List<WorkspaceMemberDTO> getWorkspaceMembers(
+            @PathVariable Long workspaceId) {
+        String email = AuthUtil.getLoginUserId(); // 현재 로그인한 사용자
+        if (email == null || email.isEmpty()) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+
+        List<WorkspaceMemberDTO> members = workspaceService.getWorkspaceMembers(workspaceId, email);
+        return members;
+    }
 }
+

@@ -4,8 +4,6 @@ import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.workdata.dto.WorkdataDTO;
 import net.scit.backend.workdata.dto.WorkdataTotalSearchDTO;
-import net.scit.backend.workdata.entity.WorkdataEntity;
-import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,19 +14,23 @@ import java.util.List;
 public interface WorkdataService {
 
 
-    // 게시글 등록 (파일 및 태그 포함)
-    WorkdataDTO createWorkdata(WorkdataDTO dto, MultipartFile[] files, List<String> tags, WorkspaceMemberEntity wsMember);
-    // 게시글 등록 후 엔티티 반환
-    WorkdataEntity createWorkdataAndReturnEntity(WorkdataDTO dto, WorkspaceMemberEntity wsMember);
+    // 자료글 등록 (파일 및 태그 포함)
+    WorkdataDTO createWorkdata(Long wsId, String title, String content, MultipartFile[] files, List<String> tags);
 
     //1-2) 자료글 삭제(+ 파일, 태그)
     ResultDTO<SuccessDTO> deleteWorkdata(Long wsId, Long dataNumber);
 
     //1-3) 자료글 수정(+ 파일, 태그)
-        // 기존 등록 관련 메서드 외에 수정 메서드 선언
-        ResultDTO<SuccessDTO> updateWorkdata(Long wsId, Long dataNumber, String title, String content,
-                                             List<String> deleteFiles, List<String> deleteTags,
-                                             List<String> newTags, MultipartFile[] newFiles);
+
+    ResultDTO<SuccessDTO> updateWorkdata(Long wsId,
+                                         Long dataNumber,
+                                         String title,
+                                         String content,
+                                         List<String> deleteFiles,
+                                         List<String> deleteTags,
+                                         List<String> newTags,
+                                         MultipartFile[] newFiles);
+
 
     //자료글 전체 조회
     ResponseEntity<ResultDTO<List<WorkdataTotalSearchDTO>>> workdata(Long wsId, String sort, String order);
@@ -38,5 +40,4 @@ public interface WorkdataService {
 
     //자료 검색(workdata의 title, writer 기반)
     ResultDTO<List<WorkdataTotalSearchDTO>> searchWorkdata(Long wsId, String keyword, String sort, String order);
-
 }

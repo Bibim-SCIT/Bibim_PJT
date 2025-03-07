@@ -1,4 +1,6 @@
-import { api } from "./auth"; // ✅ Vite 프록시 적용한 공통 API 인스턴스 사용
+import axios from "axios";
+import { api } from "./auth"; // ✅ 기존 API 인스턴스 사용
+
 
 const getAxiosConfig = () => {
   const token = localStorage.getItem("token");
@@ -63,4 +65,49 @@ export const updateSchedule = async (scheduleId, updatedData) => {
     console.error(`❌ ${scheduleId} 스케줄 수정 실패:`, error.response?.data || error.message);
     throw error;
   }
+
+// ✅ [공통] 단일 스케줄 조회
+export const getSchedule = async (scheduleNumber) => {
+  const response = await api.get(`/schedule/${scheduleNumber}`, getAxiosConfig());
+  return response.data;
+};
+
+// ✅ [공통] 스케줄 생성
+export const createSchedule = async (scheduleData) => {
+  const response = await api.post(`/schedule`, scheduleData, getAxiosConfig());
+  return response.data;
+};
+
+// ✅ [공통] 스케줄 수정
+export const updateSchedule = async (scheduleNumber, changeScheduleDTO) => {
+  const response = await api.put(`/schedule/${scheduleNumber}`, changeScheduleDTO, getAxiosConfig());
+  return response.data;
+};
+
+// ✅ [공통] 스케줄 삭제
+export const deleteSchedule = async (scheduleNumber) => {
+  const response = await api.delete(`/schedule/${scheduleNumber}`, getAxiosConfig());
+  return response.data;
+};
+
+// ✅ [공통] 스케줄 담당자 지정
+export const assignSchedule = async (scheduleNumber) => {
+  const response = await api.put(`/schedule/${scheduleNumber}/assignees`, {}, getAxiosConfig());
+  return response.data;
+};
+
+// ✅ [공통] 스케줄 상태 변경
+export const changeStatus = async (scheduleNumber, status) => {
+  const response = await api.put(`/schedule/${scheduleNumber}/status?status=${status}`, {}, getAxiosConfig());
+  return response.data;
+};
+
+export default {
+  fetchScheduleTasks,
+  getSchedule,
+  createSchedule,
+  updateSchedule,
+  deleteSchedule,
+  assignSchedule,
+  changeStatus,
 };

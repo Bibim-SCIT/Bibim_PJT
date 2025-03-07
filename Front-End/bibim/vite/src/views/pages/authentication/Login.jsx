@@ -14,6 +14,9 @@ import AuthLogin from '../auth-forms/AuthLogin';
 import Logo from 'ui-component/Logo';
 import AuthFooter from 'ui-component/cards/AuthFooter';
 
+// ✅ 배경 비디오 파일 import
+import backgroundVideo from '../../../assets/images/background/space.mp4'; // 경로에 맞게 수정
+
 // ================================|| AUTH3 - LOGIN ||================================ //
 
 export default function Login() {
@@ -22,6 +25,22 @@ export default function Login() {
   return (
     // 전체 배경색 
     <AuthWrapper1>
+      {/* ✅ 배경 비디오 추가 */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        style={{
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          zIndex: 0, // 가장 아래 배치
+        }}
+      >
+        <source src={backgroundVideo} type="video/mp4" />
+      </video>
       <Grid container direction="column" sx={{ justifyContent: 'flex-end', minHeight: '100vh' }}>
         <Grid size={12}>
           <Grid container sx={{ justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 68px)' }}>

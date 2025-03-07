@@ -5,8 +5,11 @@ import { Box, Typography, TextField, Button, Avatar, Chip, Stack, Grid, Paper, I
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import CloseIcon from '@mui/icons-material/Close';
 import MainCard from 'ui-component/cards/MainCard';
+// 상단 import 부분에 추가
+import UploadStatusModal from './components/UploadStatusModal';
 // api import
 import { createWorkdata, getCurrentUser } from '../../api/workdata';
+import { getWorkspaceMemberInfo } from '../../api/auth';
 import { ConfigContext } from '../../contexts/ConfigContext';
 
 // 프로필 이미지 임시 데이터
@@ -25,9 +28,16 @@ export default function WdCreatePage() {
     const navigate = useNavigate();
     const { user } = useContext(ConfigContext); // ✅ Context에서 로그인 유저 정보 가져오기
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
+    console.log("지금", activeWorkspace)
 
     // ✅ currentUser를 API에서 가져오기
     const [currentUser, setCurrentUser] = useState(null);
+    const [currentWSUser, setCurrentWSUser] = useState(null);
+
+    // 컴포넌트 내 state 추가
+    const [modalOpen, setModalOpen] = useState(false);
+    const [uploadStatus, setUploadStatus] = useState('loading'); // 'loading' 또는 'success'
+    const [modalMessage, setModalMessage] = useState('');
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -39,6 +49,19 @@ export default function WdCreatePage() {
             }
         };
         fetchUser();
+    }, []);
+
+    useEffect(() => {
+        const fetchWSUser = async () => {
+            try {
+                const userData2 = await getWorkspaceMemberInfo(activeWorkspace.wsId);
+                setCurrentWSUser(userData2);
+                console.log("사용자 웤스 정보", userData2);
+            } catch (error) {
+                console.error("사용자 정보를 불러오는 데 실패했습니다:", error);
+            }
+        };
+        fetchWSUser();
     }, []);
 
     // 파일 아이콘 
@@ -142,15 +165,32 @@ export default function WdCreatePage() {
         // 나중에 해당 아이디가 워크스페이스 있는지 확인 
         const wsId = activeWorkspace.wsId; // ✅ 이 값이 실제 워크스페이스 ID와 일치하는지 확인 필요
 
+        // 모달을 즉시 열고 로딩 상태로 표시
+        setModalMessage('등록중입니다...');
+        setUploadStatus('loading');
+        setModalOpen(true);
+
         try {
+            // console.log("🟢 업로드 요청 데이터:", { wsId, title, content, tags, fileList });
+            // const response = await createWorkdata(wsId, title, content, fileList, tags);
+            // alert(response.message);
+            // navigate('/workdata'); // 성공 시 목록 페이지로 이동
             console.log("🟢 업로드 요청 데이터:", { wsId, title, content, tags, fileList });
             const response = await createWorkdata(wsId, title, content, fileList, tags);
-            alert(response.message);
-            navigate('/workdata'); // 성공 시 목록 페이지로 이동
+            setUploadStatus('success');
+            setModalMessage(response.message);
         } catch (error) {
             alert(`업로드 실패: ${error}`);
+            setModalOpen(false);
         }
     };
+
+    // 모달에서 확인 버튼 클릭 시 동작
+    const handleModalConfirm = () => {
+        setModalOpen(false);
+        navigate('/workdata');
+    };
+
 
 
     return (
@@ -171,11 +211,17 @@ export default function WdCreatePage() {
                     <Typography variant="subtitle1">작성자</Typography>
                 </Grid>
                 <Grid item xs={10}>
-                    {currentUser ? (
+                    {currentWSUser ? (
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Avatar src={currentUser.
-                                profileImage || '/default-avatar.png'} sx={{ mr: 1 }} />
-                            <Typography>{currentUser.name} ({currentUser.email})</Typography>
+                            <Avatar src={currentWSUser.
+                                profileImage
+                                || '/default-avatar.png'} sx={{ mr: 1 }} />
+                            <Typography>
+                                {currentWSUser.nickname}
+                                <span style={{ color: "gray", fontSize: "0.9em" }}>
+                                    {" "}(현재 로그인: {currentUser.name})
+                                </span>
+                            </Typography>
                         </Box>
                     ) : (
                         <Typography>로딩 중...</Typography>
@@ -276,6 +322,14 @@ export default function WdCreatePage() {
                     취소
                 </Button>
             </Stack>
+
+            {/* 성공 모달 추가 */}
+            <UploadStatusModal
+                open={modalOpen}
+                status={uploadStatus}
+                message={modalMessage}
+                onConfirm={handleModalConfirm}
+            />
         </MainCard>
     );
 }
