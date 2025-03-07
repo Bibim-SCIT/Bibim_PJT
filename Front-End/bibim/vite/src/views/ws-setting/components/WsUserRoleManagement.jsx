@@ -54,6 +54,7 @@ const WsUserRoleManagement = () => {
     // ✅ Context에서 로그인 유저 정보 가져오기
     const { user } = useContext(ConfigContext);
     const currentUser = user.email;
+    console.log("현재 유저 이메일:", currentUser);
 
     // 사용자 강퇴 모달 표시 여부 상태
     const [openKickModal, setOpenKickModal] = useState(false);
@@ -82,11 +83,14 @@ const WsUserRoleManagement = () => {
     const loading = useSelector((state) => state.workspace.loading);
 
     useEffect(() => {
+        console.log("불러온다")
         const loadUsers = async () => {
             if (activeWorkspace) {
                 try {
                     const response = await fetchWorkspaceUsers(activeWorkspace.wsId);
-                    const usersData = response.data || [];
+                    console.log("대답", response);
+                    console.log("대답2", response.data)
+                    const usersData = response || [];
                     console.log('초기 로딩된 사용자 목록:', usersData);
                     setUsers(usersData);
                 } catch (error) {
@@ -102,8 +106,8 @@ const WsUserRoleManagement = () => {
     }, [activeWorkspace, fetchWorkspaceUsers]);
 
     // 사용자 강퇴 처리 함수
-    const handleKickUser = (user) => {
-        setSelectedUser(user);
+    const handleKickUser = (usermemeber) => {
+        setSelectedUser(usermemeber);
         setOpenKickModal(true);
     };
 
@@ -145,9 +149,9 @@ const WsUserRoleManagement = () => {
     };
 
     // 권한 설정 모달 열기 함수
-    const handleOpenRoleSettings = (user) => {
-        setSelectedUser(user);
-        setSelectedRole(user.wsRole.toLowerCase());
+    const handleOpenRoleSettings = (usermember) => {
+        setSelectedUser(usermember);
+        setSelectedRole(usermember.wsRole.toLowerCase());
         setOpenRoleModal(true);
     };
 
@@ -241,31 +245,31 @@ const WsUserRoleManagement = () => {
                         </TableHead>
                         <TableBody>
                             {users.length > 0 ? (
-                                users.map((user, index) => (
+                                users.map((usermember, index) => (
                                     <TableRow key={index}>
                                         <TableCell sx={{ pl: 2 }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                                 <Avatar
-                                                    src={user.profileImage}
+                                                    src={usermember.profileImage}
                                                     sx={{
                                                         width: 32,
                                                         height: 32,
                                                         bgcolor: '#e0e0e0'
                                                     }}
                                                 >
-                                                    {user.nickname[0]}
+                                                    {usermember.nickname[0]}
                                                 </Avatar>
-                                                <Typography>{user.nickname}</Typography>
+                                                <Typography>{usermember.nickname}</Typography>
                                             </Box>
                                         </TableCell>
-                                        <TableCell sx={{ pl: 2 }}>{user.email}</TableCell>
-                                        <TableCell sx={{ pl: 2 }}>{formatDate(user.lastActiveTime)}</TableCell>
+                                        <TableCell sx={{ pl: 2 }}>{usermember.email}</TableCell>
+                                        <TableCell sx={{ pl: 2 }}>{formatDate(usermember.lastActiveTime)}</TableCell>
                                         <TableCell sx={{ pl: 2 }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Typography>{mapRole(user.wsRole)}</Typography>
+                                                <Typography>{mapRole(usermember.wsRole)}</Typography>
                                                 <Button
                                                     size="small"
-                                                    onClick={() => handleOpenRoleSettings(user)}
+                                                    onClick={() => handleOpenRoleSettings(usermember)}
                                                     variant="outlined"
                                                     sx={{
                                                         color: '#666',
@@ -289,7 +293,7 @@ const WsUserRoleManagement = () => {
                                             <Button
                                                 variant="outlined"
                                                 startIcon={<DeleteIcon />}
-                                                onClick={() => handleKickUser(user)}
+                                                onClick={() => handleKickUser(usermember)}
                                                 sx={{
                                                     color: '#e53935',
                                                     borderColor: '#e53935',
@@ -301,7 +305,7 @@ const WsUserRoleManagement = () => {
                                                     fontSize: '0.875rem',
                                                     py: 0.5
                                                 }}
-                                                disabled={user.email == currentUser}
+                                                disabled={usermember.email == currentUser}
                                             >
                                                 강퇴
                                             </Button>

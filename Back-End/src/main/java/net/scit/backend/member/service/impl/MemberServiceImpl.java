@@ -39,17 +39,17 @@ import net.scit.backend.member.event.MemberUpdatedEvent;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.member.service.MemberService;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.redis.core.RedisTemplate;
+// import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
+// import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+// import org.springframework.stereotype.Service;
+// import org.springframework.util.StringUtils;
+// import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
+// import java.io.IOException;
+// import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
+// import java.util.concurrent.TimeUnit;
 
 /**
  * Member관련 업무를 수행하는 Service
@@ -342,8 +342,7 @@ public class MemberServiceImpl implements MemberService {
                 member,
                 email,
                 "회원 정보 수정됨",
-                "member_update"
-        ));
+                "member_update"));
 
         // 5. SuccessDTO 생성 후 반환
         SuccessDTO successDTO = SuccessDTO.builder()
@@ -410,8 +409,7 @@ public class MemberServiceImpl implements MemberService {
                 member,
                 changePasswordDTO.getEmail(),
                 "비밀번호 변경됨",
-                "password_update"
-        ));
+                "password_update"));
 
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
@@ -533,6 +531,7 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.save(existingMember);
 
         // ✅ 회원 정보 변경 이벤트 발생
-        eventPublisher.publishEvent(new MemberUpdatedEvent(existingMember, updatedBy));
+        // eventPublisher.publishEvent(new MemberUpdatedEvent(existingMember,
+        // updatedBy));
     }
 }
