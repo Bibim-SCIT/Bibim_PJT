@@ -364,6 +364,7 @@ const FileCardView = ({ files, setFiles, loading }) => {
                             // 수정 버튼 클릭 시 workdata/update 페이지로 이동
                             navigate(`/workdata/update/${selectedFile.wsId}/${selectedFile.id}`); // ✅ 워크스페이스 ID와 자료 ID 전달
                         }}
+                        disabled={selectedFile && selectedFile.writer !== currentUser} // 모달에서도 동일한 조건 적용
                     >
                         ✏️ 수정
                     </Button>

@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { Link, useNavigate } from 'react-router-dom';
-import { loginUser } from "../../../api/auth"; // 로그인 API
+import { loginUser, api } from "../../../api/auth"; // 로그인 API
 import { ConfigContext } from "../../../contexts/ConfigContext"; // 기존 ConfigContext 사용
 
 // material-ui
@@ -23,6 +23,7 @@ import AnimateButton from 'ui-component/extended/AnimateButton';
 // assets
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import GoogleIcon from '@mui/icons-material/Google'; // 구글 아이콘 추가
 
 // Google Login
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
@@ -50,21 +51,6 @@ export default function AuthLogin() {
     event.preventDefault();
   };
 
-  // const handleLogin = async (e) => {
-  //   e.preventDefault();
-  //   try {
-  //     const { accessToken } = await loginUser(email, password);
-
-  //     setToken(accessToken); // ✅ 토큰 설정
-  //     setUser({ email }); // ✅ 로그인한 사용자 정보 설정
-
-  //     navigate("/"); // 메인 페이지 이동
-  //   } catch (err) {
-  //     console.error("로그인 오류:", err);
-  //     setError(err.message || "로그인 실패");
-  //   }
-  // };
-
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -87,6 +73,11 @@ export default function AuthLogin() {
       console.error("❌ 로그인 오류:", err);
       setError(err.message || "로그인 실패");
     }
+  };
+
+  const handleGoogleLogin = () => {
+    // ✅ OAuth2 인증 요청 URL로 이동
+    window.location.href = "http://localhost:8080/login/oauth2";
   };
 
 
@@ -189,8 +180,34 @@ export default function AuthLogin() {
         </AnimateButton>
       </Box>
 
+      {/* 구글 연동 및 구글 로그인 버튼 */}
+      <Box sx={{ mt: 2 }}>
+        <AnimateButton>
+          <Button
+            fullWidth
+            size="large"
+            variant="contained"
+            sx={{
+              backgroundColor: "#ffffff",
+              color: "#757575",
+              boxShadow: "0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12)",
+              border: "1px solid #ddd",
+              fontWeight: "bold",
+              "&:hover": {
+                backgroundColor: "#f5f5f5",
+              },
+            }}
+            startIcon={<GoogleIcon sx={{ color: "#EA4335" }} />} // 구글 로고 아이콘 추가
+            onClick={handleGoogleLogin} // ✅ 버튼 클릭 시 구글 로그인
+          >
+            Google 계정으로 로그인
+          </Button>
+        </AnimateButton>
+      </Box>
+
+
       {/* 구글 로그인 버튼 */}
-      <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
+      {/* <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
           <GoogleLogin
             onSuccess={handleGoogleLoginSuccess}
@@ -198,7 +215,7 @@ export default function AuthLogin() {
             useOneTap
           />
         </Box>
-      </GoogleOAuthProvider>
+      </GoogleOAuthProvider> */}
     </>
   );
 }

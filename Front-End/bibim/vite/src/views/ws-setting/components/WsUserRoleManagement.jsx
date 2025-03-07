@@ -5,6 +5,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { kickUserFromWorkspace, fetchWorkspaceUsers, updateUserRole } from '../../../api/workspaceApi'; // API 함수 임포트
 import KickUserModal from './KickUserModal';
 import RoleSettingModal from './RoleSettingModal';
+import { useContext } from 'react';
+import { ConfigContext } from '../../../contexts/ConfigContext';
 
 // 상대적인 시간 또는 날짜를 표시하는 함수
 const formatDate = (dateString) => {
@@ -14,28 +16,28 @@ const formatDate = (dateString) => {
     const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     const diffWeeks = Math.floor(diffDays / 7);
-    
+
     // 1시간 이내는 모두 '방금 전'으로 표시
     if (diffHours < 1) {
         return '방금 전';
     }
-    
+
     // 오늘 안에 (24시간 이내)
     if (diffHours < 24) {
         return `${diffHours}시간 전`;
     }
-    
+
     // 7일 이내
     if (diffDays < 7) {
         if (diffDays === 1) return '어제';
         return `${diffDays}일 전`;
     }
-    
+
     // 4주 이내
     if (diffWeeks < 4) {
         return `${diffWeeks}주 전`;
     }
-    
+
     // 한달 이상이면 YYYY-MM-DD 형식
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -49,21 +51,25 @@ const mapRole = (role) => {
 };
 
 const WsUserRoleManagement = () => {
+    // ✅ Context에서 로그인 유저 정보 가져오기
+    const { user } = useContext(ConfigContext);
+    const currentUser = user.email;
+
     // 사용자 강퇴 모달 표시 여부 상태
     const [openKickModal, setOpenKickModal] = useState(false);
-    
+
     // 권한 설정 모달 표시 여부 상태
     const [openRoleModal, setOpenRoleModal] = useState(false);
-    
+
     // 현재 선택된 사용자 정보 상태
     const [selectedUser, setSelectedUser] = useState(null);
-    
+
     // 선택된 권한 값 상태
     const [selectedRole, setSelectedRole] = useState('');
-    
+
     // 워크스페이스 사용자 목록 상태
     const [users, setUsers] = useState([]);
-    
+
     // 알림 메시지 표시를 위한 스낵바 상태
     const [snackbar, setSnackbar] = useState({
         open: false,
@@ -106,13 +112,13 @@ const WsUserRoleManagement = () => {
         try {
             if (selectedUser && activeWorkspace) {
                 await kickUserFromWorkspace(activeWorkspace.wsId, selectedUser.email);
-                
+
                 // 강퇴 성공 후 즉시 목록 갱신
                 const response = await fetchWorkspaceUsers(activeWorkspace.wsId);
                 const updatedUsers = response.data || [];
                 console.log("강퇴 후 불러온 사용자 목록:", response.data);  // 🟢 콘솔 로그 추가
                 setUsers(updatedUsers);
-                
+
                 setOpenKickModal(false);
                 setSelectedUser(null);
 
@@ -166,12 +172,12 @@ const WsUserRoleManagement = () => {
             const response = await fetchWorkspaceUsers(activeWorkspace.wsId);
             const updatedUsers = response.data || [];
             console.log("변경 후 불러온 사용자 목록:", response.data);  // 🟢 콘솔 로그 추가
-            setUsers(updatedUsers);    
-            
+            setUsers(updatedUsers);
+
             setOpenRoleModal(false);
             setSelectedUser(null);
             setSelectedRole('');
-            
+
             setSnackbar({
                 open: true,
                 message: '권한이 성공적으로 변경되었습니다.',
@@ -219,8 +225,8 @@ const WsUserRoleManagement = () => {
                 <TableContainer sx={{ maxHeight: 300 }}>
                     <Table stickyHeader>
                         <TableHead>
-                            <TableRow sx={{ 
-                                '& th': { 
+                            <TableRow sx={{
+                                '& th': {
                                     borderBottom: '1px solid #e0e0e0',
                                     fontWeight: 'normal',
                                     bgcolor: '#f8f9fa'
@@ -239,10 +245,10 @@ const WsUserRoleManagement = () => {
                                     <TableRow key={index}>
                                         <TableCell sx={{ pl: 2 }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                                <Avatar 
-                                                    src={user.profileImage} 
-                                                    sx={{ 
-                                                        width: 32, 
+                                                <Avatar
+                                                    src={user.profileImage}
+                                                    sx={{
+                                                        width: 32,
                                                         height: 32,
                                                         bgcolor: '#e0e0e0'
                                                     }}
@@ -261,12 +267,12 @@ const WsUserRoleManagement = () => {
                                                     size="small"
                                                     onClick={() => handleOpenRoleSettings(user)}
                                                     variant="outlined"
-                                                    sx={{ 
+                                                    sx={{
                                                         color: '#666',
                                                         borderColor: '#e0e0e0',
-                                                        '&:hover': { 
+                                                        '&:hover': {
                                                             borderColor: '#bdbdbd',
-                                                            bgcolor: 'rgba(0, 0, 0, 0.04)' 
+                                                            bgcolor: 'rgba(0, 0, 0, 0.04)'
                                                         },
                                                         textTransform: 'none',
                                                         minWidth: 'auto',
@@ -295,6 +301,7 @@ const WsUserRoleManagement = () => {
                                                     fontSize: '0.875rem',
                                                     py: 0.5
                                                 }}
+                                                disabled={user.email == currentUser}
                                             >
                                                 강퇴
                                             </Button>
@@ -313,7 +320,7 @@ const WsUserRoleManagement = () => {
                 </TableContainer>
             </Box>
 
-            <KickUserModal 
+            <KickUserModal
                 open={openKickModal}
                 onClose={handleCloseKickModal}
                 selectedUser={selectedUser}
@@ -322,7 +329,7 @@ const WsUserRoleManagement = () => {
                 workspaceId={activeWorkspace?.wsId}
             />
 
-            <RoleSettingModal 
+            <RoleSettingModal
                 open={openRoleModal}
                 onClose={handleCloseRoleModal}
                 selectedUser={selectedUser}
@@ -332,14 +339,14 @@ const WsUserRoleManagement = () => {
                 workspaceId={activeWorkspace?.wsId}
             />
 
-            <Snackbar 
-                open={snackbar.open} 
-                autoHideDuration={3000} 
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={3000}
                 onClose={handleCloseSnackbar}
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
             >
-                <Alert 
-                    onClose={handleCloseSnackbar} 
+                <Alert
+                    onClose={handleCloseSnackbar}
                     severity={snackbar.severity}
                     sx={{ width: '100%' }}
                 >
