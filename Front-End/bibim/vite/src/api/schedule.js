@@ -1,36 +1,66 @@
-import { api } from "./auth"; // 기존 api 인스턴스 사용
+import { api } from "./auth"; // ✅ Vite 프록시 적용한 공통 API 인스턴스 사용
 
-// 스케줄 목록 조회
-export const fetchScheduleTasks = async (wsId) => {
-    try {
-        const response = await api.get(`/schedule`, {
-            params: { wsId }
-        });
+const getAxiosConfig = () => {
+  const token = localStorage.getItem("token");
+  return {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      "Content-Type": "application/json",
+    },
+  };
+};
 
-        console.log("📌 API 응답 데이터:", response.data);
+// ✅ [공통] 칸반 보드 및 캘린더 작업 목록 조회
+export const fetchKanbanTasks = async (wsId) => {
+  if (!wsId) {
+    console.warn("🚨 fetchKanbanTasks: wsId가 없어서 요청을 중단합니다.");
+    return [];
+  }
 
-        // 응답 구조 확인 후 data가 없으면 오류 처리
-        if (!response.data || !response.data.data) {
-            console.error("올바르지 않은 데이터 구조:", response.data);
-            return [];
-        }
+  try {
+    console.log(`📌 fetchKanbanTasks(${wsId}) API 요청 시작...`);
 
-        // 변환된 간트 차트 데이터 반환
-        return response.data.data
-            .filter(task => task.scheduleStartDate && task.scheduleFinishDate)
-            .map(task => ({
-                id: task.scheduleNumber || Math.random().toString(),
-                name: task.scheduleTitle || "제목 없음",
-                start: new Date(task.scheduleStartDate),
-                end: new Date(task.scheduleFinishDate),
-                type: "task",
-                progress: 0,
-                isDisabled: false,
-                styles: { backgroundColor: task.color || "#DBE2EF" },
-            }));
+    const response = await api.get("/schedule", {
+      params: { wsId },
+      ...getAxiosConfig(),
+    });
 
-    } catch (error) {
-        console.error("❌ 스케줄 데이터 가져오기 오류:", error.response?.data || error);
-        throw error;
+    console.log("📌 API 응답 데이터:", response.data);
+
+    if (!response.data || !response.data.data) {
+      console.error("❌ 올바르지 않은 데이터 구조:", response.data);
+      return [];
     }
+
+    return response.data.data.map((task) => ({
+      id: task.scheduleNumber,
+      title: task.scheduleTitle || "제목 없음",
+      start: task.scheduleStartDate ? new Date(task.scheduleStartDate).toISOString() : null,
+      end: task.scheduleFinishDate ? new Date(task.scheduleFinishDate).toISOString() : null,
+      status: task.scheduleStatus ? task.scheduleStatus.toLowerCase() : "unassigned",
+      extendedProps: task
+    }));
+  } catch (error) {
+    console.error("❌ fetchKanbanTasks API 요청 실패:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// ✅ [공통] 스케줄 수정 (PUT 요청)
+export const updateSchedule = async (scheduleId, updatedData) => {
+  if (!scheduleId || !updatedData) {
+    console.warn("🚨 updateSchedule: 잘못된 입력 값 (scheduleId, updatedData)");
+    return;
+  }
+
+  try {
+    console.log(`📌 updateSchedule(${scheduleId}) 요청 데이터:`, updatedData);
+
+    await api.put(`/schedule/${scheduleId}`, updatedData, getAxiosConfig());
+
+    console.log(`✅ ${scheduleId} 스케줄 수정 완료`);
+  } catch (error) {
+    console.error(`❌ ${scheduleId} 스케줄 수정 실패:`, error.response?.data || error.message);
+    throw error;
+  }
 };
