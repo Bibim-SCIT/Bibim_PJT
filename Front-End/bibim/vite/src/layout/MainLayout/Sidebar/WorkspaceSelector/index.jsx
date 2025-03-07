@@ -5,9 +5,11 @@ import useConfig from 'hooks/useConfig';
 import { useDispatch, useSelector } from 'react-redux';
 import { loadWorkspace, setActiveWorkspace } from 'store/workspaceRedux';
 import CreateWorkspaceModal from '../../../../views/ws-select/components/CreateWorkspaceModal';
+import { useNavigate } from 'react-router-dom'; // 추가
 
 const WorkspaceSelector = () => {
     const dispatch = useDispatch(); // Redux의 dispatch 함수 사용
+    const navigate = useNavigate();
     const { miniDrawer } = useConfig(); // 사이드바가 최소화되었는지 여부 가져오기
 
     // ✅ Redux에서 워크스페이스 목록 및 로딩 상태 가져오기
@@ -33,6 +35,10 @@ const WorkspaceSelector = () => {
     // ✅ 메뉴 버튼 클릭 시 메뉴 열기
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget); // 클릭한 버튼의 요소를 Anchor 요소로 설정하여 메뉴를 해당 위치에 열기
+    };
+
+    const moveWSselect = () => {
+        navigate('/ws-select');
     };
 
     // ✅ 워크스페이스를 선택했을 때 실행되는 함수
@@ -69,7 +75,9 @@ const WorkspaceSelector = () => {
                 <Avatar
                     src={activeWorkspace?.wsImg || 'https://via.placeholder.com/40'}
                     alt={activeWorkspace?.wsName || '워크스페이스 선택'}
-                    sx={{ width: 40, height: 40, cursor: 'pointer', mb: miniDrawer ? 1 : 0 }} // 이미지 크기 및 커서 스타일 설정
+                    sx={{ width: 45, height: 45, cursor: 'pointer', mb: miniDrawer ? 1 : 0 }} // 이미지 크기 및 커서 스타일 설정
+                    variant="rounded"
+                    onClick={moveWSselect}
                 />
             </Tooltip>
 

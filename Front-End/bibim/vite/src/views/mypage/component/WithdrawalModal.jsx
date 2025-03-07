@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { 
-    Modal, 
-    Box, 
-    Typography, 
-    TextField, 
+import {
+    Modal,
+    Box,
+    Typography,
+    TextField,
     Button,
     IconButton,
     Divider
@@ -12,7 +12,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import WarningIcon from '@mui/icons-material/Warning';
 
 const style = {
-    position: 'absolute',
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
@@ -35,15 +34,15 @@ const WithdrawalModal = ({ open, handleClose }) => {
     };
 
     return (
-        <Modal 
-            open={open} 
+        <Modal
+            open={open}
             onClose={handleClose}
         >
             <Box sx={style}>
                 <Box sx={{ p: 3, pb: 2 }}>
-                    <IconButton 
+                    <IconButton
                         onClick={handleClose}
-                        sx={{ 
+                        sx={{
                             position: 'absolute',
                             right: 8,
                             top: 8
@@ -52,9 +51,9 @@ const WithdrawalModal = ({ open, handleClose }) => {
                         <CloseIcon />
                     </IconButton>
 
-                    <Typography 
+                    <Typography
                         variant="h4"
-                        sx={{ 
+                        sx={{
                             fontWeight: 400,
                             mb: 0
                         }}
@@ -66,25 +65,25 @@ const WithdrawalModal = ({ open, handleClose }) => {
                 <Divider sx={{ borderColor: '#e0e0e0' }} />
 
                 <Box sx={{ p: 3 }}>
-                    <Box sx={{ 
+                    <Box sx={{
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         mb: 3
                     }}>
-                        <WarningIcon 
-                            sx={{ 
+                        <WarningIcon
+                            sx={{
                                 fontSize: 40,
                                 color: '#ff4444',
                                 mb: 2
-                            }} 
+                            }}
                         />
                         <Typography sx={{ mb: 1 }}>
                             회원 탈퇴를 진행하시려면 비밀번호를 입력해주세요.
                         </Typography>
-                        <Typography 
-                            color="error" 
-                            sx={{ 
+                        <Typography
+                            color="error"
+                            sx={{
                                 fontSize: '0.875rem',
                                 fontStyle: 'italic'
                             }}
@@ -103,29 +102,29 @@ const WithdrawalModal = ({ open, handleClose }) => {
                     />
                 </Box>
 
-                <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'flex-end', 
+                <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
                     gap: 1,
                     p: 2,
                     bgcolor: '#f8f9fa',
                     borderTop: '1px solid #e0e0e0'
                 }}>
-                    <Button 
-                        variant="outlined" 
+                    <Button
+                        variant="outlined"
                         onClick={handleClose}
-                        sx={{ 
-                            color: '#666', 
+                        sx={{
+                            color: '#666',
                             borderColor: '#666',
                             boxShadow: 'none'
                         }}
                     >
                         취소
                     </Button>
-                    <Button 
-                        variant="contained" 
+                    <Button
+                        variant="contained"
                         onClick={handleWithdrawal}
-                        sx={{ 
+                        sx={{
                             bgcolor: '#ff4444',
                             boxShadow: 'none',
                             '&:hover': {

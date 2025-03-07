@@ -82,7 +82,7 @@ const MainRoutes = {
     },
     {
       path: '/channel',
-      element: <Channel />
+      element: <Channel channelId={11} />
     },
     {
       path: '/ws-select',
