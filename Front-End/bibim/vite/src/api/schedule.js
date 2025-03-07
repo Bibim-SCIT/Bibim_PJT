@@ -48,23 +48,6 @@ export const fetchKanbanTasks = async (wsId) => {
   }
 };
 
-// ✅ [공통] 스케줄 수정 (PUT 요청)
-export const updateSchedule = async (scheduleId, updatedData) => {
-  if (!scheduleId || !updatedData) {
-    console.warn("🚨 updateSchedule: 잘못된 입력 값 (scheduleId, updatedData)");
-    return;
-  }
-
-  try {
-    console.log(`📌 updateSchedule(${scheduleId}) 요청 데이터:`, updatedData);
-
-    await api.put(`/schedule/${scheduleId}`, updatedData, getAxiosConfig());
-
-    console.log(`✅ ${scheduleId} 스케줄 수정 완료`);
-  } catch (error) {
-    console.error(`❌ ${scheduleId} 스케줄 수정 실패:`, error.response?.data || error.message);
-    throw error;
-  }
 
 // ✅ [공통] 단일 스케줄 조회
 export const getSchedule = async (scheduleNumber) => {
@@ -78,11 +61,6 @@ export const createSchedule = async (scheduleData) => {
   return response.data;
 };
 
-// ✅ [공통] 스케줄 수정
-export const updateSchedule = async (scheduleNumber, changeScheduleDTO) => {
-  const response = await api.put(`/schedule/${scheduleNumber}`, changeScheduleDTO, getAxiosConfig());
-  return response.data;
-};
 
 // ✅ [공통] 스케줄 삭제
 export const deleteSchedule = async (scheduleNumber) => {
@@ -101,6 +79,25 @@ export const changeStatus = async (scheduleNumber, status) => {
   const response = await api.put(`/schedule/${scheduleNumber}/status?status=${status}`, {}, getAxiosConfig());
   return response.data;
 };
+
+// ✅ [공통] 스케줄 수정 (PUT 요청)
+export const updateSchedule = async (scheduleId, updatedData) => {
+  if (!scheduleId || !updatedData) {
+    console.warn("🚨 updateSchedule: 잘못된 입력 값 (scheduleId, updatedData)");
+    return;
+  }
+
+  try {
+    console.log(`📌 updateSchedule(${scheduleId}) 요청 데이터:`, updatedData);
+
+    await api.put(`/schedule/${scheduleId}`, updatedData, getAxiosConfig());
+
+    console.log(`✅ ${scheduleId} 스케줄 수정 완료`);
+  } catch (error) {
+    console.error(`❌ ${scheduleId} 스케줄 수정 실패:`, error.response?.data || error.message);
+    throw error;
+  }
+}; 
 
 export default {
   fetchScheduleTasks,
