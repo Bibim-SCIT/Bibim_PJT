@@ -337,7 +337,15 @@ public class MemberServiceImpl implements MemberService {
         // 3. 변경된 정보 저장
         memberRepository.save(member);
 
-        // 4. SuccessDTO 생성 후 반환
+        // 4. 이벤트 발생 (회원 정보 수정 이벤트)
+        eventPublisher.publishEvent(new MemberUpdatedEvent(
+                member,
+                email,
+                "회원 정보 수정됨",
+                "member_update"
+        ));
+
+        // 5. SuccessDTO 생성 후 반환
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
                 .build();
@@ -396,6 +404,14 @@ public class MemberServiceImpl implements MemberService {
         // 변경된 비밀번호로 사용자 비밀번호 번경 저장
         member.setPassword(password);
         memberRepository.save(member);
+
+        // 이벤트 발생 (비밀번호 변경 이벤트)
+        eventPublisher.publishEvent(new MemberUpdatedEvent(
+                member,
+                changePasswordDTO.getEmail(),
+                "비밀번호 변경됨",
+                "password_update"
+        ));
 
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
