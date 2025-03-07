@@ -1,13 +1,15 @@
-import { Box, Typography, IconButton } from '@mui/material';
+import { Box, Typography, IconButton, Button } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import WsSettingModal from './WsSettingModal';
+import WsInviteModal from './WsInviteModal';
 import { getWorkspaces } from '../../../api/workspaceApi';
 
 const WsBasicSetting = () => {
     const [openModal, setOpenModal] = useState(false);
+    const [inviteModalOpen, setInviteModalOpen] = useState(false);
     const [workspaceInfo, setWorkspaceInfo] = useState(null);
     
     // Redux에서 현재 활성화된 워크스페이스 정보 가져오기
@@ -111,9 +113,17 @@ const WsBasicSetting = () => {
                         </Typography>
                     </Box>
                 </Box>
-                <IconButton onClick={handleOpenModal}>
-                    <SettingsIcon />
-                </IconButton>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Button 
+                    variant="outlined" 
+                    sx={{ width: 150 }} 
+                    onClick={() => setInviteModalOpen(true)}>
+                        워크스페이스 초대
+                    </Button>
+                    <IconButton onClick={handleOpenModal}>
+                        <SettingsIcon />
+                    </IconButton>
+                </Box>
             </Box>
 
             <WsSettingModal
@@ -121,6 +131,12 @@ const WsBasicSetting = () => {
                 onClose={handleCloseModal}
                 onUpdate={handleUpdate}
                 initialData={workspaceInfo}
+            />
+            
+            <WsInviteModal 
+                open={inviteModalOpen} 
+                onClose={() => setInviteModalOpen(false)}
+                workspace={workspaceInfo}
             />
         </Box>
     );

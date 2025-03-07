@@ -32,21 +32,24 @@ const utilities = {
           type: 'item',
           icon: icons.IconCalendar,
           url: '/schedule/calendar',
-          target: false
+          target: false,
+          breadcrumbs: false
         },
         {
           id: 'ganttView',
           title: '간트차트로 보기',
           type: 'item',
           url: '/schedule/gantt',
-          target: false
+          target: false,
+          breadcrumbs: false
         },
         {
           id: 'overallView',
           title: '전체로 보기',
           type: 'item',
           url: '/schedule/overall',
-          target: false
+          target: false,
+          breadcrumbs: false
         }
       ]
     },

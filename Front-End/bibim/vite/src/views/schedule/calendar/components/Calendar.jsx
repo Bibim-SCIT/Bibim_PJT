@@ -87,7 +87,7 @@ const Calendar = () => {
         },
         '& .fc-today-button': {
           backgroundColor: '#6B7280',
-          color: '#ffffff',
+          color: '#FFFFFF',
           borderRadius: 1,
           '&:hover': {
             backgroundColor: '#4B5563',
@@ -100,9 +100,9 @@ const Calendar = () => {
           cursor: 'pointer',
         },
         '& .fc-day-today': {
-          backgroundColor: '#f8f9fa !important',
+          backgroundColor: '#F8F9FA !important',
           '&:hover': {
-            backgroundColor: '#f1f3f5 !important',
+            backgroundColor: '#F1F3F5 !important',
           },
         },
         '& .fc-daygrid-day-number': {
@@ -166,5 +166,4 @@ const Calendar = () => {
     </Box>
   );
 };
-
 export default Calendar;

@@ -23,50 +23,7 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
   },
 }));
 
-const HeaderSection = styled(Box)({
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'flex-start',
-  marginBottom: '24px',
-});
-
-const ContentSection = styled(Box)({
-  '& > div': {
-    marginBottom: '16px',
-  },
-});
-
-const DetailRow = styled(Box)({
-  display: 'flex',
-  gap: '8px',
-  alignItems: 'center',
-  marginBottom: '12px',
-  '& .label': {
-    color: '#666',
-    minWidth: '80px',
-  },
-  '& .value': {
-    color: '#333',
-    flex: 1,
-  },
-});
-
-const TagsContainer = styled(Box)({
-  display: 'flex',
-  gap: '8px',
-  flexWrap: 'wrap',
-  marginTop: '16px',
-});
-
-const ButtonContainer = styled(Box)({
-  display: 'flex',
-  justifyContent: 'center',
-  marginTop: '24px',
-  padding: '16px 0',
-  borderTop: '1px solid #eee',
-});
-
-const ScheduleDetailModal = ({ schedule, onClose, onUpdate, ...props }) => {
+const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate }) => {
   const [editModalOpen, setEditModalOpen] = React.useState(false);
   const [localSchedule, setLocalSchedule] = React.useState(schedule);
 
@@ -97,38 +54,39 @@ const ScheduleDetailModal = ({ schedule, onClose, onUpdate, ...props }) => {
     setEditModalOpen(false);
   };
 
+  // ✅ 모달 닫기 시 selectedSchedule을 초기화하지 않고 유지
+  const handleClose = () => {
+    console.log("📌 모달 닫기 실행됨");
+    onClose(); // ✅ 모달만 닫고 기존 데이터 유지
+  };
+
   return (
     <>
       <StyledDialog
-        open={Boolean(localSchedule)}
-        onClose={onClose}
+        open={open} // ✅ props.open을 기반으로 상태 관리
+        onClose={handleClose} // ✅ 수정된 닫기 함수 사용
         maxWidth="sm"
         fullWidth
       >
-        <HeaderSection>
-          <Box display="flex" alignItems="center" gap={2}>
-            <Box component="img" src="/path/to/schedule-icon.png" width={24} height={24} />
-            <Typography variant="h6">스케줄 보기</Typography>
-          </Box>
-          <IconButton onClick={onClose} size="small">
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h6">스케줄 보기</Typography>
+          <IconButton onClick={handleClose} size="small">
             <CloseIcon />
           </IconButton>
-        </HeaderSection>
+        </Box>
 
         <Typography color="textSecondary" sx={{ mb: 3 }}>
           마지막 수정 시간 : {formatDate(localSchedule.scheduleModifytime)}
         </Typography>
 
-        <ContentSection>
-          <DetailRow>
-            <Typography className="label">스케줄 제목</Typography>
-            <Typography className="value" fontWeight="500">
-              {localSchedule.scheduleTitle}
-            </Typography>
-          </DetailRow>
+        <Box>
+          <Box display="flex" gap={2} mb={2}>
+            <Typography fontWeight="500">스케줄 제목:</Typography>
+            <Typography>{localSchedule.scheduleTitle}</Typography>
+          </Box>
 
-          <DetailRow>
-            <Typography className="label">담당자</Typography>
+          <Box display="flex" gap={2} mb={2}>
+            <Typography fontWeight="500">담당자:</Typography>
             {localSchedule.nickname ? (
               <Box display="flex" alignItems="center" gap={1}>
                 <Avatar
@@ -138,87 +96,46 @@ const ScheduleDetailModal = ({ schedule, onClose, onUpdate, ...props }) => {
                 <Typography>{localSchedule.nickname}</Typography>
               </Box>
             ) : (
-              <Typography className="value" color="text.secondary">
-                담당자가 없습니다
-              </Typography>
+              <Typography color="text.secondary">담당자가 없습니다</Typography>
             )}
-          </DetailRow>
+          </Box>
 
-          <DetailRow>
-            <Typography className="label">스케줄 시작일</Typography>
-            <Typography className="value">
-              {formatDate(localSchedule.scheduleStartDate)}
-            </Typography>
-          </DetailRow>
+          <Box display="flex" gap={2} mb={2}>
+            <Typography fontWeight="500">스케줄 시작일:</Typography>
+            <Typography>{formatDate(localSchedule.scheduleStartDate)}</Typography>
+          </Box>
 
-          <DetailRow>
-            <Typography className="label">스케줄 완료일</Typography>
-            <Typography className="value">
-              {formatDate(localSchedule.scheduleFinishDate)}
-            </Typography>
-          </DetailRow>
+          <Box display="flex" gap={2} mb={2}>
+            <Typography fontWeight="500">스케줄 완료일:</Typography>
+            <Typography>{formatDate(localSchedule.scheduleFinishDate)}</Typography>
+          </Box>
 
           {localSchedule.scheduleContent && (
-            <DetailRow>
-              <Typography className="label">스케줄 내용</Typography>
-              <Typography className="value">
-                {localSchedule.scheduleContent}
-              </Typography>
-            </DetailRow>
+            <Box display="flex" gap={2} mb={2}>
+              <Typography fontWeight="500">스케줄 내용:</Typography>
+              <Typography>{localSchedule.scheduleContent}</Typography>
+            </Box>
           )}
 
-          <TagsContainer>
-            {(localSchedule.tag1 || localSchedule.tag2 || localSchedule.tag3) ? (
-              <>
-                {localSchedule.tag1 && (
-                  <Chip
-                    label={localSchedule.tag1}
-                    size="small"
-                    sx={{ backgroundColor: '#e3f2fd' }}
-                  />
-                )}
-                {localSchedule.tag2 && (
-                  <Chip
-                    label={localSchedule.tag2}
-                    size="small"
-                    sx={{ backgroundColor: '#e8f5e9' }}
-                  />
-                )}
-                {localSchedule.tag3 && (
-                  <Chip
-                    label={localSchedule.tag3}
-                    size="small"
-                    sx={{ backgroundColor: '#fce4ec' }}
-                  />
-                )}
-              </>
-            ) : (
-              <Typography color="text.secondary">
-                설정된 태그가 없습니다
-              </Typography>
-            )}
-          </TagsContainer>
+          <Box display="flex" gap={2} flexWrap="wrap" mt={2}>
+            {localSchedule.tag1 && <Chip label={localSchedule.tag1} size="small" />}
+            {localSchedule.tag2 && <Chip label={localSchedule.tag2} size="small" />}
+            {localSchedule.tag3 && <Chip label={localSchedule.tag3} size="small" />}
+          </Box>
 
-          <ButtonContainer>
+          <Box display="flex" justifyContent="center" mt={3}>
             <Button
               variant="contained"
               startIcon={<EditIcon />}
               onClick={handleEditClick}
-              sx={{
-                backgroundColor: '#6366f1',
-                '&:hover': {
-                  backgroundColor: '#4f46e5'
-                },
-                minWidth: '120px',
-                padding: '8px 24px',
-              }}
+              sx={{ minWidth: '120px' }}
             >
               수정하기
             </Button>
-          </ButtonContainer>
-        </ContentSection>
+          </Box>
+        </Box>
       </StyledDialog>
-      
+
       <ScheduleEditModal
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
@@ -229,4 +146,4 @@ const ScheduleDetailModal = ({ schedule, onClose, onUpdate, ...props }) => {
   );
 };
 
-export default ScheduleDetailModal; 
+export default ScheduleDetailModal;

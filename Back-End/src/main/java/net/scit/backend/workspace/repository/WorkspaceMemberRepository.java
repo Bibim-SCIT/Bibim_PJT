@@ -37,4 +37,8 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
     // 특정 워크스페이스에 소속된 모든 멤버 조회
     List<WorkspaceMemberEntity> findByWorkspace_WsId(Long wsId);
 
+    //게시물 등록 시 이메일 가져옴
+
+    Optional<WorkspaceMemberEntity> findByMember_EmailAndWorkspace_WsId(String email, Long wsId); // ✅ 수정
+
 }
