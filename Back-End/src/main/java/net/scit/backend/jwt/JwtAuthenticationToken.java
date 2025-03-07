@@ -1,4 +1,4 @@
-package net.scit.backend.auth;
+package net.scit.backend.jwt;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;

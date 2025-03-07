@@ -11,6 +11,7 @@ public enum ErrorCode {
     MEMBER_NOT_FOUND("해당하는 회원이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
     INVALID_PASSWORD("비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
     MEMBER_HAVE_NOT_ROLE("해당 권한이 존재하지 않습니다.", HttpStatus.FORBIDDEN),
+    OAUTH_ALREADY_LINKED("이미 연동을 진행한 회원입니다.", HttpStatus.CONFLICT),
     EMAIL_NOT_EQUAL("이메일이 일치하지 않습니다.", HttpStatus.BAD_REQUEST),
     INVALID_ROLE_VALUE("잘못된 역할 입니다.", HttpStatus.BAD_REQUEST),
 

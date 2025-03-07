@@ -1,4 +1,4 @@
-package net.scit.backend.auth;
+package net.scit.backend.jwt;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

@@ -8,6 +8,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { deleteWorkdata } from "../../../api/workdata";
 import LoadingScreen from './LoadingScreen';
+import { useContext } from 'react';
+import { ConfigContext } from '../../../contexts/ConfigContext';
 
 // 파일 아이콘 import
 import pdfIcon from "assets/images/icons/pdf.png";
@@ -43,9 +45,13 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
     const [openDownloadDialog, setOpenDownloadDialog] = useState(false); // 다운로드 선택 모달 state
     const [openDownloadDialog2, setOpenDownloadDialog2] = useState(false); // 테이블뷰의 기능 컬럼 다운로드 모달
     const [downloadFile, setDownloadFile] = useState(null); // 테이블뷰에서 다운로드할 파일 정보
+    const { user } = useContext(ConfigContext); // ✅ Context에서 로그인 유저 정보 가져오기
     const navigate = useNavigate();
 
     console.log("📌 FileTable에서 받은 files 데이터:", files); // ✅ 전달된 데이터 확인
+    console.log("현재 유저정보", user)
+
+    const currentUser = user.email;
 
     // 로딩 상태일 때 커스텀 로딩 컴포넌트 렌더링
     if (loading) return <LoadingScreen />;
@@ -130,6 +136,18 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
         setSortField(field);
         setSortOrder((prevOrder) => (prevOrder === "asc" ? "desc" : "asc"));
     };
+
+    // 파일 다운로드 위한 함수 설정
+    const handleDownload = (url, fileName) => {
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", fileName);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+
 
     console.log("📌 선택된 파일 정보:", selectedFile);
 
@@ -241,7 +259,13 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                     >
                                         다운로드
                                     </Button>
-                                    <Button variant="contained" size="small" color="error" onClick={() => handleDelete(file.wsId, file.id)}>
+                                    <Button
+                                        variant="contained"
+                                        size="small"
+                                        color="error"
+                                        onClick={() => handleDelete(file.wsId, file.id)}
+                                        disabled={file.writer !== currentUser} // 현재 유저와 업로더가 다르면 비활성화
+                                    >
                                         삭제
                                     </Button>
                                 </TableCell>
@@ -297,6 +321,7 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                                 // fileUrls 배열이 있을 경우 해당 파일 URL로 이동
                                                 if (selectedFile.fileUrls && selectedFile.fileUrls[idx]) {
                                                     window.open(selectedFile.fileUrls[idx], '_blank');
+                                                    // handleDownload(selectedFile.fileUrls[idx], fileName);
                                                 } else {
                                                     alert("다운로드 URL이 없습니다.");
                                                 }
@@ -356,7 +381,12 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                     >
                         ✏️ 수정
                     </Button>
-                    <Button variant="contained" color="error" onClick={() => modalhandleDelete(selectedFile)}>🗑️ 파일 삭제</Button>
+                    <Button
+                        variant="contained"
+                        color="error"
+                        onClick={() => modalhandleDelete(selectedFile)}
+                        disabled={selectedFile && selectedFile.writer !== currentUser} // 모달에서도 동일한 조건 적용
+                    >🗑️ 파일 삭제</Button>
                 </DialogActions>
             </Dialog >
 
@@ -378,6 +408,7 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                 onClick={() => {
                                     if (selectedFile.fileUrls && selectedFile.fileUrls[idx]) {
                                         window.open(selectedFile.fileUrls[idx], '_blank');
+                                        // handleDownload(selectedFile.fileUrls[idx], fileName);
                                     } else {
                                         alert("다운로드 URL이 없습니다.");
                                     }

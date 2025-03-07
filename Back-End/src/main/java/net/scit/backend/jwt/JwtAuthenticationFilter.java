@@ -1,4 +1,4 @@
-package net.scit.backend.auth;
+package net.scit.backend.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

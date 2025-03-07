@@ -31,6 +31,8 @@ export default function WorkDataPage() {
     const [viewMode, setViewMode] = useState("table"); // "table" or "card"
     const [loading, setLoading] = useState(true);  // ✅ 로딩 상태 추가
 
+    console.log("현재 JWT 토큰:", localStorage.getItem("token")); // ✅ auth.js에서 저장한 토큰 키 사용
+
     // ✅ 전체 조회 API 호출
     // ✅ 처음 API 요청할 때만 실행 (정렬할 때는 새로 요청하지 않음)
     useEffect(() => {
@@ -68,6 +70,7 @@ export default function WorkDataPage() {
                         tags: item.tags || [],
                         date: item.regDate.split("T")[0],
                         uploader: item.nickname,
+                        writer: item.writer,
                         avatar: item.profileImage || "/avatars/default.png",
                         wsId: activeWorkspace.wsId,
                         content: item.content,

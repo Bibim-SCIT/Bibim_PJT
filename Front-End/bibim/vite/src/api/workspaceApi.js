@@ -68,42 +68,7 @@ export const createWorkspace = async (workspaceName, workspaceImage = null) => {
 
 
 // ✅ 초대 코드로 워크스페이스 가입
-// export const joinWorkspaceByInviteCode = async (inviteCode) => {
-//     try {
-//         const response = await axios.post(
-//             `${API_BASE_URL}/add`,
-//             { inviteCode },
-//             { headers: getAuthHeaders() }
-//         );
-//         return response.data;
-//     } catch (error) {
-//         throw error.response?.data || "초대 코드 가입에 실패했습니다.";
-//     }
-// };
-// export const joinWorkspaceByInviteCode = async (inviteCode) => {
-//     try {
-//         const response = await axiosInstance.post("/add", { inviteCode });
-//         return response.data;
-//     } catch (error) {
-//         throw error.response?.data || "초대 코드 가입에 실패했습니다.";
-//     }
-// };
-// export const joinWorkspaceByInviteCode = async (inviteCode) => {
-//     try {
-//         const response = await api.post(`${API_BASE_URL}/add`, { inviteCode });
-//         return response.data;
-//     } catch (error) {
-//         throw error.response?.data || "초대 코드 가입에 실패했습니다.";
-//     }
-// };
-// export const joinWorkspaceByInviteCode = async (inviteCode) => {
-//     try {
-//         const response = await api.post(`${API_BASE_URL}/add`, { inviteCode });
-//         return response.data;
-//     } catch (error) {
-//         throw error.response?.data || "초대 코드 가입에 실패했습니다.";
-//     }
-// };
+// 초대 코드에 의해 가입하기
 export const joinWorkspaceByInviteCode = async (inviteCode) => {
     try {
         const response = await api.post(`${API_BASE_URL}/add`, null, {
@@ -155,6 +120,7 @@ export const getWorkspaceMembers = async (workspaceId) => {
         const response = await api.get(`${API_BASE_URL}/myinfo`, {
             params: { wsId: workspaceId }
         });
+        console.log('API 응답:', response);  // 응답 확인
         return response.data;
     } catch (error) {
         throw error.response?.data || "워크스페이스 멤버 정보를 불러오는데 실패했습니다.";
@@ -224,18 +190,22 @@ export const fetchWorkspaceUsers = async (workspaceId) => {
     }
 };
 
-export const updateUserRole = async (wsId, email, role) => {
+// 워크스페이스 멤버 권한 변경 API
+export const updateUserRole = async (wsId, email, newRole) => {
     try {
         const response = await api.patch(`${API_BASE_URL}/rolesetting`, null, {
-            params: { 
-                wsId,
-                email, 
-                role  // 'owner' 또는 'member'
+            params: { wsId, email, newRole },
+            headers: {
+                'Content-Type': 'application/json'
             }
         });
+        
+        // 응답 데이터 확인 로깅
+        console.log('권한 변경 응답:', response);
+        
         return response.data;
     } catch (error) {
-        console.error('사용자 권한 변경 실패:', error);
+        console.error('권한 변경 API 에러:', error);
         throw error.response?.data || "권한 변경에 실패했습니다.";
     }
 };

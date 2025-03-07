@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.scit.backend.jwt.AuthUtil;
 import net.scit.backend.channel.DTO.MessageDTO;
 import net.scit.backend.channel.entity.MessageEntity;
 import net.scit.backend.channel.repository.MessageReposittory;
