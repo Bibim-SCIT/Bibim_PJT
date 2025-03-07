@@ -112,8 +112,9 @@ export const updateWorkdata = async (wsId, dataNumber, title, content, deleteFil
     if (content) formData.append('content', content);
     formData.append('deleteFiles', JSON.stringify(deleteFiles));
 
-    deletedTags.forEach(tag => formData.append('deleteTags', tag));
-    newTags.forEach(tag => formData.append('newTags', tag));
+    // 🔹 삭제된 태그와 추가된 태그를 JSON 문자열로 변환하여 전달
+    formData.append('deleteTags', JSON.stringify(deletedTags));
+    formData.append('newTags', JSON.stringify(newTags));
     newFiles.forEach(file => formData.append('files', file));
 
     console.log("📌 updateWorkdata 전송 데이터:");
