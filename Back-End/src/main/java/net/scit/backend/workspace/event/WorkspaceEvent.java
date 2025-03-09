@@ -10,7 +10,7 @@ public class WorkspaceEvent implements BasedUpdatedEvent {
     private final String senderEmail;      // 변경을 수행한 사용자 (이벤트 발생자)
     private final String senderNickname;   // 이벤트 발생자의 닉네임
     private final String eventType;        // 이벤트 타입 (create, update 등)
-    private final String receiverEmail;    // 변경이 영향을 미치는 대상의 이메일
+    private final String receiverEmail;        // 변경이 영향을 미치는 대상의 이메일
     private final String receiverNickname; // 변경이 영향을 미치는 대상의 닉네임
 
     public WorkspaceEvent(WorkspaceEntity workspace, String senderEmail, String senderNickname,
