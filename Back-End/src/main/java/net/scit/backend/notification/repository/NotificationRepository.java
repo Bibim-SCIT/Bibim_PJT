@@ -11,4 +11,5 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
 
     // 읽지 않은 알림을 최신순으로 조회
     List<NotificationEntity> findByReceiverEmailAndNotificationStatusFalseOrderByNotificationDateDesc(String receiverEmail);
+
 }

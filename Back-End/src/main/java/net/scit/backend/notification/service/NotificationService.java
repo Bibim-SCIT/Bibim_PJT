@@ -25,4 +25,7 @@ public interface NotificationService {
     boolean markAllAsRead(String receiverEmail);
 
     boolean deleteNotification(Long notificationNumber);
+
+    // 알림 ID로 알림 URL을 조회하는 메서드
+    String getNotificationUrl(Long notificationId);
 }

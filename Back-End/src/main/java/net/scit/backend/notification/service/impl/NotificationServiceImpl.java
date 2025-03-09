@@ -1,6 +1,11 @@
 package net.scit.backend.notification.service.impl;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import net.scit.backend.exception.CustomException;
+import net.scit.backend.exception.ErrorCode;
+import net.scit.backend.jwt.AuthUtil;
 import net.scit.backend.notification.entity.NotificationEntity;
 import net.scit.backend.notification.repository.NotificationRepository;
 import net.scit.backend.notification.service.NotificationService;
@@ -10,10 +15,12 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
@@ -105,4 +112,30 @@ public class NotificationServiceImpl implements NotificationService {
         }
         return false;
     }
+
+
+    @Override
+    public String getNotificationUrl(Long notificationId) {
+        // 현재 로그인한 사용자 이메일 가져오기
+        String currentUserEmail = AuthUtil.getLoginUserId();
+
+        // 알림 조회
+        NotificationEntity notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOTIFICATION_NOT_FOUND));
+
+        // 🛑 알림을 받을 권한이 있는지 확인 (알림 수신자와 현재 로그인한 사용자 비교)
+        if (!notification.getReceiverEmail().equals(currentUserEmail)) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED_ACCESS);
+        }
+
+        // 🛑 URL이 null이거나 빈 문자열인 경우 예외 처리
+        String notificationUrl = notification.getNotificationUrl();
+        if (notificationUrl == null || notificationUrl.isEmpty()) {
+            throw new CustomException(ErrorCode.INVALID_NOTIFICATION_URL);
+        }
+
+        // ✅ 정상적인 경우 알림 URL 반환
+        return notificationUrl;
+    }
+
 }

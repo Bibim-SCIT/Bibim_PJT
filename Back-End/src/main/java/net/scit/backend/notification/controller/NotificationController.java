@@ -8,6 +8,8 @@ import net.scit.backend.notification.entity.NotificationEntity;
 import net.scit.backend.notification.service.NotificationService;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -108,6 +110,19 @@ public class NotificationController {
             log.error("알림 삭제 중 오류 발생", e);
             return ResponseEntity.status(500).body("알림 삭제 중 오류 발생: " + e.getMessage());
         }
+    }
+
+    /**
+     * 알림 클릭 시 해당 알림의 URL로 리다이렉트
+     * @param notificationId
+     * @return
+     */
+    @GetMapping("/{notificationId}")
+    public ResponseEntity<Void> redirectToNotificationUrl(@PathVariable Long notificationId) {
+        String url = notificationService.getNotificationUrl(notificationId);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Location", url);
+        return new ResponseEntity<>(headers, HttpStatus.FOUND);
     }
 
 }
