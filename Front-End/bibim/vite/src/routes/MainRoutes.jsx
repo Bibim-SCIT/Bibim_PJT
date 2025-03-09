@@ -15,8 +15,7 @@ const SamplePage = Loadable(lazy(() => import('views/sample-page')));
 const WorkDataPage = Loadable(lazy(() => import('views/workdata')));
 const WdCreatePage = Loadable(lazy(() => import('views/workdata_create')));
 const WdUpdatePage = Loadable(lazy(() => import('views/workdata_update')));
-const CalendarView = Loadable(lazy(() => import('views/schedule/calendar')));
-const GanttView = Loadable(lazy(() => import('views/schedule/gantt')));
+const SchedulePage = Loadable(lazy(() => import('views/schedule')));
 const OverallView = Loadable(lazy(() => import('views/schedule/overall')));
 const WsSelectPage = Loadable(lazy(() => import('views/ws-select')));
 const WsSettingPage = Loadable(lazy(() => import('views/ws-setting')));
@@ -69,12 +68,8 @@ const MainRoutes = {
       element: <WdUpdatePage />
     },
     {
-      path: '/schedule/calendar',
-      element: <CalendarView />
-    },
-    {
-      path: '/schedule/gantt',
-      element: <GanttView />
+      path: '/schedule',
+      element: <SchedulePage />
     },
     {
       path: '/schedule/overall',

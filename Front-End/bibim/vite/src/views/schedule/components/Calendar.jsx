@@ -4,11 +4,11 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Box } from '@mui/material';
 import styled from '@emotion/styled';
-import ScheduleDetailModal from '../../components/ScheduleDetailModal';
-import ScheduleEditModal from '../../components/ScheduleEditModal';
-import { useSelector } from 'react-redux';
-import { fetchKanbanTasks } from '../../../../api/schedule'; // ✅ fetchKanbanTasks로 변경
-import ScheduleLoading from './ScheduleLoading';
+import ScheduleDetailModal from './ScheduleDetailModal';
+import ScheduleEditModal from './ScheduleEditModal';
+// import { useSelector } from 'react-redux';
+// import { fetchKanbanTasks } from '../../../api/schedule'; // ✅ fetchKanbanTasks로 변경
+// import ScheduleLoading from '../calendar/components/ScheduleLoading';
 
 const CalendarWrapper = styled(Box)({
   padding: '20px',
@@ -24,39 +24,13 @@ const CalendarWrapper = styled(Box)({
   },
 });
 
-const Calendar = ({ wsId }) => {
-  const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace);
-  const [schedules, setSchedules] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+const Calendar = ({ tasks }) => {
+  const [schedules, setSchedules] = useState(tasks);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [hoveredSchedule, setHoveredSchedule] = useState(null); // Hover 중인 스케줄 ID 저장
-
-  // ✅ 일정 데이터 불러오기
-  const loadSchedules = async () => {
-    if (!activeWorkspace?.wsId) return;
-    setLoading(true);
-    setError(null);
-
-    try {
-      const data = await fetchKanbanTasks(activeWorkspace.wsId);
-      console.log("📌 캘린더 데이터 로드 완료:", data);
-      setSchedules(data);
-    } catch (error) {
-      console.error("❌ 캘린더 데이터 로드 실패:", error);
-      setError(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✅ useEffect를 활용한 일정 자동 업데이트
-  useEffect(() => {
-    loadSchedules();
-  }, [activeWorkspace]); // 워크스페이스 변경될 때마다 일정 불러오기
 
   // ✅ 새로운 일정이 추가될 때 스케줄 상태 업데이트
   const handleScheduleAdded = (newSchedule) => {
@@ -101,24 +75,6 @@ const Calendar = ({ wsId }) => {
   const handleEventMouseLeave = () => {
     setHoveredSchedule(null); // 초기화
   };
-
-  if (loading) {
-    return (
-      <CalendarWrapper>
-        <ScheduleLoading />
-      </CalendarWrapper>
-    );
-  }
-
-  if (error) {
-    return (
-      <CalendarWrapper>
-        <div className="calendar-container" style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
-          ⚠️ 에러 발생: {error instanceof Error ? error.message : '알 수 없는 오류'}
-        </div>
-      </CalendarWrapper>
-    );
-  }
 
   return (
     <Box

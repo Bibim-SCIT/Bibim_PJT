@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { styled } from "@mui/material/styles";
-import { createSchedule } from "../../../../api/schedule"; // ✅ 일정 생성 API 추가
+import { createSchedule } from "../../../api/schedule"; // ✅ 일정 생성 API 추가
 import { useSelector } from "react-redux"; // ✅ Redux에서 현재 워크스페이스 가져오기
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
