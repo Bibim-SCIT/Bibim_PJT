@@ -41,4 +41,6 @@ public class NotificationEntity {
 
     @Column(nullable = false)
     private LocalDateTime notificationDate; // 알림 생성일 (기본값: CURRENT_TIMESTAMP)
+
+    private String notificationUrl;  // ✅ 알림 클릭 시 이동할 URL 추가
 }

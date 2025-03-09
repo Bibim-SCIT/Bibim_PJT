@@ -81,10 +81,9 @@ public class ScheduleServiceImpl implements ScheduleService {
         ScheduleEntity scheduleEntity = ScheduleEntity.toEntity(scheduleDTO, workspace, ScheduleStatus.UNASSIGNED);
         scheduleRepository.save(scheduleEntity);
 
-        //추가: 알림 이벤트 생성
+        // 추가: 알림 이벤트 생성 (워크스페이스 이름은 ScheduleEntity 내에서 사용)
         String senderNickname = getSenderNickname(scheduleDTO.getWsId(), email);
         eventPublisher.publishEvent(new ScheduleEvent(scheduleEntity, email, senderNickname, "create"));
-
 
         // 태그 등록
         // 대분류가 있을 때만 등록
@@ -255,7 +254,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         scheduleEntity.setMember(member);
         scheduleRepository.save(scheduleEntity);
 
-        //추가: 알림 이벤트 생성
+        // 추가: 알림 이벤트 생성 (워크스페이스 이름은 ScheduleEntity 내에서 사용)
         String senderNickname = getSenderNickname(scheduleEntity.getWorkspace().getWsId(), email);
         eventPublisher.publishEvent(new ScheduleEvent(scheduleEntity, email, senderNickname, "assignee_update"));
 
@@ -303,10 +302,10 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
         scheduleRepository.save(scheduleEntity);
 
-        // 추가: 알림 이벤트 생성
+        // 추가: 알림 이벤트 생성 (워크스페이스 이름은 ScheduleEntity 내에서 사용)
         String senderNickname = getSenderNickname(scheduleEntity.getWorkspace().getWsId(), email);
         eventPublisher.publishEvent(new ScheduleEvent(scheduleEntity, email, senderNickname, "status_update"));
-        
+
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
                 .build();
@@ -444,7 +443,7 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .build();
         scheduleRepository.save(updateSchedule);
 
-        //추가: 알림 이벤트 생성
+        // 추가: 알림 이벤트 생성 (워크스페이스 이름은 ScheduleEntity 내에서 사용)
         String senderNickname = getSenderNickname(updateSchedule.getWorkspace().getWsId(), email);
         eventPublisher.publishEvent(new ScheduleEvent(updateSchedule, email, senderNickname, "info_update"));
 
@@ -502,10 +501,9 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         scheduleRepository.delete(scheduleEntity);
 
-        //추가: 알림 이벤트 생성
+        // 추가: 알림 이벤트 생성 (워크스페이스 이름은 ScheduleEntity 내에서 사용)
         String senderNickname = getSenderNickname(scheduleEntity.getWorkspace().getWsId(), email);
         eventPublisher.publishEvent(new ScheduleEvent(scheduleEntity, email, senderNickname, "delete"));
-
 
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
