@@ -10,6 +10,5 @@ import java.util.List;
 public interface NotificationRepository extends JpaRepository<NotificationEntity, Long> {
 
     // 읽지 않은 알림을 최신순으로 조회
-    List<NotificationEntity> findByMemberEmailAndNotificationStatusFalseOrderByNotificationDateDesc(String memberEmail);
-
+    List<NotificationEntity> findByReceiverEmailAndNotificationStatusFalseOrderByNotificationDateDesc(String receiverEmail);
 }

@@ -23,7 +23,7 @@ public class NotificationEventListener {
     private final NotificationRepository notificationRepository;
     private final NotificationService notificationService;
 
-    // 1) ConcurrentHashMap 대신 List를 사용
+    // 이벤트 버퍼 (동시성 고려)
     private final List<BasedUpdatedEvent> eventBuffer = new CopyOnWriteArrayList<>();
 
     @EventListener
@@ -32,7 +32,7 @@ public class NotificationEventListener {
         log.info("이벤트 감지 (버퍼 저장): {} - {}", event.getNotificationType(), event.getEntityId());
     }
 
-    // SSE 가동 시간: 1분 * ?
+    // 30초마다 버퍼 처리 (예시)
     @Scheduled(fixedRate = 1000 * 30)
     public void processBufferedEvents() {
         if (eventBuffer.isEmpty()) return;
@@ -40,26 +40,40 @@ public class NotificationEventListener {
         log.info("버퍼에 저장된 이벤트 처리 시작...");
         List<NotificationEntity> notifications = new ArrayList<>();
 
-        // 2) 버퍼에 들어있는 모든 이벤트를 순회하며 알림 생성
+        // 예시: 여기서는 단일 이벤트당 단일 알림을 생성합니다.
+        // 실제 구현에서는 이벤트에 따른 대상(수신자)을 모두 조회하여 알림을 생성해야 할 수 있습니다.
         for (BasedUpdatedEvent event : eventBuffer) {
             NotificationEntity notification = new NotificationEntity();
-            notification.setMemberEmail(event.getUpdatedBy());
+
+            // 아래 값들은 실제 이벤트에서 추출하거나 관련 서비스를 통해 조회해야 합니다.
+            // sender 정보: 여기서는 event.getUpdatedBy()를 보낸 사람의 이메일로 가정
+            notification.setSenderEmail(event.getUpdatedBy());
+            notification.setSenderNickname("보낸사람닉네임"); // 예: 조회 또는 이벤트에 포함된 값
+
+            // workspaceId: 이벤트에서 워크스페이스 정보를 제공하지 않는다면, 추가 처리가 필요합니다.
+            // 예시로 1L로 설정 (실제 환경에 맞게 수정)
+            notification.setWsId(1L);
+
+            // receiver 정보: 실제 알림 대상은 워크스페이스 내 멤버 목록 등에서 가져와야 함.
+            // 여기서는 예시로 단일 수신자를 설정합니다.
+            notification.setReceiverEmail("receiver@example.com");
+            notification.setReceiverNickname("받는사람닉네임");
+
+            // 알림 기본 정보
             notification.setNotificationName(event.getNotificationName());
             notification.setNotificationType(event.getNotificationType());
             notification.setNotificationContent(event.getNotificationContent());
             notification.setNotificationStatus(false);
             notification.setNotificationDate(LocalDateTime.now());
-
             notifications.add(notification);
         }
 
-        // 3) 알림을 DB에 저장 및 SSE 실시간 전송
+        // DB 저장 및 SSE 전송
         notificationRepository.saveAll(notifications);
         notifications.forEach(notificationService::sendNotification);
 
-        // 4) 버퍼 초기화
+        // 버퍼 초기화
         eventBuffer.clear();
         log.info("버퍼 초기화 완료.");
     }
-
 }

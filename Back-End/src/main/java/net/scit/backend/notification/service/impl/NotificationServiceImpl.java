@@ -19,16 +19,17 @@ public class NotificationServiceImpl implements NotificationService {
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
 
-    // ✅ 알림 생성
+    // 알림 생성
     @Override
-    public void createNotification(String memberEmail, Long workspaceId, Long scheduleNumber, Long recordNumber, Long workdataNumber,
+    public void createNotification(String senderEmail, String senderNickname,
+                                   String receiverEmail, String receiverNickname,
+                                   Long workspaceId, Long scheduleNumber, Long recordNumber, Long workdataNumber,
                                    String notificationName, String notificationType, String notificationContent) {
         NotificationEntity notification = new NotificationEntity();
-        notification.setMemberEmail(memberEmail);
-        notification.setWorkspaceId(workspaceId);
-        notification.setScheduleNumber(scheduleNumber);
-        notification.setRecordNumber(recordNumber);
-        notification.setWorkdataNumber(workdataNumber);
+        notification.setSenderEmail(senderEmail);
+        notification.setSenderNickname(senderNickname);
+        notification.setReceiverEmail(receiverEmail);
+        notification.setReceiverNickname(receiverNickname);
         notification.setNotificationName(notificationName);
         notification.setNotificationType(notificationType);
         notification.setNotificationStatus(false);
@@ -39,9 +40,10 @@ public class NotificationServiceImpl implements NotificationService {
         sendNotification(notification);
     }
 
-    // ✅ SSE 구독 (사용자별 구독 관리)
+    // SSE 구독 (사용자별 구독 관리)
+// (변경 없음: 구독 시 receiver의 이메일을 기준으로 구독)
     @Override
-    public SseEmitter subscribe(String memberEmail) {
+    public SseEmitter subscribe(String receiverEmail) {
         SseEmitter emitter = new SseEmitter(60 * 1000L); // 60초 후 자동 종료
         emitters.add(emitter);
 
@@ -57,7 +59,7 @@ public class NotificationServiceImpl implements NotificationService {
         return emitter;
     }
 
-    // ✅ SSE 실시간 알림 전송
+    // SSE 실시간 알림 전송 (변경 없음)
     @Override
     public void sendNotification(NotificationEntity notification) {
         for (SseEmitter emitter : emitters) {
@@ -70,22 +72,16 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
-
     /**
-     * ✅ 읽지 않은 알림 조회
-     * @param memberEmail
-     * @return
+     * 읽지 않은 알림 조회 (receiver_email 기준)
      */
     @Override
-    public List<NotificationEntity> getUnreadNotifications(String memberEmail) {
-        return notificationRepository.findByMemberEmailAndNotificationStatusFalseOrderByNotificationDateDesc(memberEmail);
+    public List<NotificationEntity> getUnreadNotifications(String receiverEmail) {
+        return notificationRepository.findByReceiverEmailAndNotificationStatusFalseOrderByNotificationDateDesc(receiverEmail);
     }
 
-
     /**
-     * ✅ 알림 개별 읽음 처리
-     * @param notificationNumber
-     * @return
+     * 알림 개별 읽음 처리
      */
     @Override
     public boolean markAsRead(Long notificationNumber) {
@@ -96,16 +92,13 @@ public class NotificationServiceImpl implements NotificationService {
         }).orElse(false);
     }
 
-
     /**
-     * ✅ 알림 전체 읽음 처리
-     * @param memberEmail
-     * @return
+     * 알림 전체 읽음 처리 (receiver_email 기준)
      */
     @Override
-    public boolean markAllAsRead(String memberEmail) {
+    public boolean markAllAsRead(String receiverEmail) {
         List<NotificationEntity> unreadNotifications = notificationRepository
-                .findByMemberEmailAndNotificationStatusFalseOrderByNotificationDateDesc(memberEmail);
+                .findByReceiverEmailAndNotificationStatusFalseOrderByNotificationDateDesc(receiverEmail);
 
         if (unreadNotifications.isEmpty()) {
             return false;
@@ -116,11 +109,8 @@ public class NotificationServiceImpl implements NotificationService {
         return true;
     }
 
-
     /**
-     * ✅ 알림 삭제
-     * @param notificationNumber
-     * @return
+     * 알림 삭제
      */
     @Override
     public boolean deleteNotification(Long notificationNumber) {
@@ -131,3 +121,4 @@ public class NotificationServiceImpl implements NotificationService {
         return false;
     }
 }
+
