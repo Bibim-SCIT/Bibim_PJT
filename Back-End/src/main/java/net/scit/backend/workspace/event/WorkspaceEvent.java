@@ -23,7 +23,7 @@ public class WorkspaceEvent implements BasedUpdatedEvent {
         this.receiverNickname = receiverNickname;
     }
 
-    // ✅ `BasedUpdatedEvent` 인터페이스 메서드 구현 (에러 해결)
+    // `BasedUpdatedEvent` 인터페이스 메서드 구현 (에러 해결)
     @Override
     public String getUpdatedBy() {
         return senderEmail;  // 변경을 수행한 사용자의 이메일 반환
