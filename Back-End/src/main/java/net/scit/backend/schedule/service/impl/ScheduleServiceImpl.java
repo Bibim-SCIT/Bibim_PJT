@@ -43,6 +43,18 @@ public class ScheduleServiceImpl implements ScheduleService {
         private final ApplicationEventPublisher eventPublisher;
 
 
+    /**
+     * (알림 관련) 해당 사용자의 워크스페이스 내 닉네임을 가져오는 헬퍼 메서드
+     * @param wsId 워크스페이스 ID
+     * @param email 사용자 이메일
+     * @return 워크스페이스 내 닉네임
+     */
+    private String getSenderNickname(Long wsId, String email) {
+        return workspaceMemberRepository.findByWorkspace_WsIdAndMember_Email(wsId, email)
+                .map(WorkspaceMemberEntity::getNickname)
+                .orElseThrow(() -> new IllegalArgumentException("닉네임을 찾을 수 없습니다."));
+    }
+
         /**
      * 새로운 스케줄 생성
      *
@@ -70,7 +82,8 @@ public class ScheduleServiceImpl implements ScheduleService {
         scheduleRepository.save(scheduleEntity);
 
         //추가: 알림 이벤트 생성
-        eventPublisher.publishEvent(new ScheduleCreatedEvent(scheduleEntity, email));
+        String senderNickname = getSenderNickname(scheduleDTO.getWsId(), email);
+        eventPublisher.publishEvent(new ScheduleEvent(scheduleEntity, email, senderNickname, "create"));
 
 
         // 태그 등록
@@ -243,7 +256,8 @@ public class ScheduleServiceImpl implements ScheduleService {
         scheduleRepository.save(scheduleEntity);
 
         //추가: 알림 이벤트 생성
-        eventPublisher.publishEvent(new ScheduleAssigneeUpdatedEvent(scheduleEntity, member, email));
+        String senderNickname = getSenderNickname(scheduleEntity.getWorkspace().getWsId(), email);
+        eventPublisher.publishEvent(new ScheduleEvent(scheduleEntity, email, senderNickname, "assignee_update"));
 
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
@@ -290,7 +304,8 @@ public class ScheduleServiceImpl implements ScheduleService {
         scheduleRepository.save(scheduleEntity);
 
         // 추가: 알림 이벤트 생성
-        eventPublisher.publishEvent(new ScheduleStatusUpdatedEvent(scheduleEntity, email));
+        String senderNickname = getSenderNickname(scheduleEntity.getWorkspace().getWsId(), email);
+        eventPublisher.publishEvent(new ScheduleEvent(scheduleEntity, email, senderNickname, "status_update"));
         
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
@@ -430,8 +445,8 @@ public class ScheduleServiceImpl implements ScheduleService {
         scheduleRepository.save(updateSchedule);
 
         //추가: 알림 이벤트 생성
-        eventPublisher.publishEvent(new ScheduleInfoUpdatedEvent(updateSchedule, email));
-
+        String senderNickname = getSenderNickname(updateSchedule.getWorkspace().getWsId(), email);
+        eventPublisher.publishEvent(new ScheduleEvent(updateSchedule, email, senderNickname, "info_update"));
 
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
@@ -488,7 +503,8 @@ public class ScheduleServiceImpl implements ScheduleService {
         scheduleRepository.delete(scheduleEntity);
 
         //추가: 알림 이벤트 생성
-        eventPublisher.publishEvent(new ScheduleDeletedEvent(scheduleEntity, email));
+        String senderNickname = getSenderNickname(scheduleEntity.getWorkspace().getWsId(), email);
+        eventPublisher.publishEvent(new ScheduleEvent(scheduleEntity, email, senderNickname, "delete"));
 
 
         SuccessDTO successDTO = SuccessDTO.builder()
