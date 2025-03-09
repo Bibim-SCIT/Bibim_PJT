@@ -6,20 +6,19 @@ import net.scit.backend.notification.repository.NotificationRepository;
 import net.scit.backend.notification.service.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
-@RequiredArgsConstructor // Lombok을 이용한 생성자 자동 생성
+@RequiredArgsConstructor
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
-
-    // 알림 생성
     @Override
     public void createNotification(String senderEmail, String senderNickname,
                                    String receiverEmail, String receiverNickname,
@@ -30,21 +29,20 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setSenderNickname(senderNickname);
         notification.setReceiverEmail(receiverEmail);
         notification.setReceiverNickname(receiverNickname);
+        notification.setWsId(workspaceId);  // ✅ 수정됨: workspaceId를 설정
         notification.setNotificationName(notificationName);
         notification.setNotificationType(notificationType);
-        notification.setNotificationStatus(false);
         notification.setNotificationContent(notificationContent);
+        notification.setNotificationStatus(false);
         notification.setNotificationDate(LocalDateTime.now());
 
         notificationRepository.save(notification);
         sendNotification(notification);
     }
 
-    // SSE 구독 (사용자별 구독 관리)
-// (변경 없음: 구독 시 receiver의 이메일을 기준으로 구독)
     @Override
     public SseEmitter subscribe(String receiverEmail) {
-        SseEmitter emitter = new SseEmitter(60 * 1000L); // 60초 후 자동 종료
+        SseEmitter emitter = new SseEmitter(60 * 1000L);
         emitters.add(emitter);
 
         emitter.onCompletion(() -> emitters.remove(emitter));
@@ -59,7 +57,6 @@ public class NotificationServiceImpl implements NotificationService {
         return emitter;
     }
 
-    // SSE 실시간 알림 전송 (변경 없음)
     @Override
     public void sendNotification(NotificationEntity notification) {
         for (SseEmitter emitter : emitters) {
@@ -72,17 +69,11 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
-    /**
-     * 읽지 않은 알림 조회 (receiver_email 기준)
-     */
     @Override
     public List<NotificationEntity> getUnreadNotifications(String receiverEmail) {
         return notificationRepository.findByReceiverEmailAndNotificationStatusFalseOrderByNotificationDateDesc(receiverEmail);
     }
 
-    /**
-     * 알림 개별 읽음 처리
-     */
     @Override
     public boolean markAsRead(Long notificationNumber) {
         return notificationRepository.findById(notificationNumber).map(notification -> {
@@ -92,9 +83,6 @@ public class NotificationServiceImpl implements NotificationService {
         }).orElse(false);
     }
 
-    /**
-     * 알림 전체 읽음 처리 (receiver_email 기준)
-     */
     @Override
     public boolean markAllAsRead(String receiverEmail) {
         List<NotificationEntity> unreadNotifications = notificationRepository
@@ -109,9 +97,6 @@ public class NotificationServiceImpl implements NotificationService {
         return true;
     }
 
-    /**
-     * 알림 삭제
-     */
     @Override
     public boolean deleteNotification(Long notificationNumber) {
         if (notificationRepository.existsById(notificationNumber)) {
@@ -121,4 +106,3 @@ public class NotificationServiceImpl implements NotificationService {
         return false;
     }
 }
-

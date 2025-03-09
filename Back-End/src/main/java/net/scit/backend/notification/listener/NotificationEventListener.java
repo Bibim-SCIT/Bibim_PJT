@@ -6,6 +6,7 @@ import net.scit.backend.notification.entity.NotificationEntity;
 import net.scit.backend.notification.repository.NotificationRepository;
 import net.scit.backend.notification.service.NotificationService;
 import net.scit.backend.notification.event.BasedUpdatedEvent;
+import net.scit.backend.workspace.event.WorkspaceEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -40,39 +41,31 @@ public class NotificationEventListener {
         log.info("버퍼에 저장된 이벤트 처리 시작...");
         List<NotificationEntity> notifications = new ArrayList<>();
 
-        // 예시: 여기서는 단일 이벤트당 단일 알림을 생성합니다.
-        // 실제 구현에서는 이벤트에 따른 대상(수신자)을 모두 조회하여 알림을 생성해야 할 수 있습니다.
+        // 이벤트 버퍼의 모든 이벤트에 대해 개별 알림 생성 (WorkspaceEvent 기준)
         for (BasedUpdatedEvent event : eventBuffer) {
+            if (!(event instanceof WorkspaceEvent)) continue; // WorkspaceEvent가 아닌 경우 스킵
+            WorkspaceEvent we = (WorkspaceEvent) event;
             NotificationEntity notification = new NotificationEntity();
 
-            // 아래 값들은 실제 이벤트에서 추출하거나 관련 서비스를 통해 조회해야 합니다.
-            // sender 정보: 여기서는 event.getUpdatedBy()를 보낸 사람의 이메일로 가정
-            notification.setSenderEmail(event.getUpdatedBy());
-            notification.setSenderNickname("보낸사람닉네임"); // 예: 조회 또는 이벤트에 포함된 값
+            // ✅ 수정됨: WorkspaceEvent에서 워크스페이스 ID, sender/receiver 이메일, 닉네임 등을 추출하여 저장
+            notification.setWsId(we.getWorkspace().getWsId());
+            notification.setSenderEmail(we.getSenderEmail());           // sender 이메일
+            notification.setSenderNickname(we.getSenderNickname());       // sender 닉네임
+            notification.setReceiverEmail(we.getReceiverEmail());         // receiver 이메일
+            notification.setReceiverNickname(we.getReceiverNickname());   // receiver 닉네임
 
-            // workspaceId: 이벤트에서 워크스페이스 정보를 제공하지 않는다면, 추가 처리가 필요합니다.
-            // 예시로 1L로 설정 (실제 환경에 맞게 수정)
-            notification.setWsId(1L);
-
-            // receiver 정보: 실제 알림 대상은 워크스페이스 내 멤버 목록 등에서 가져와야 함.
-            // 여기서는 예시로 단일 수신자를 설정합니다.
-            notification.setReceiverEmail("receiver@example.com");
-            notification.setReceiverNickname("받는사람닉네임");
-
-            // 알림 기본 정보
-            notification.setNotificationName(event.getNotificationName());
-            notification.setNotificationType(event.getNotificationType());
-            notification.setNotificationContent(event.getNotificationContent());
+            notification.setNotificationName(we.getNotificationName());
+            notification.setNotificationType(we.getNotificationType());
+            notification.setNotificationContent(we.getNotificationContent());
             notification.setNotificationStatus(false);
             notification.setNotificationDate(LocalDateTime.now());
+
             notifications.add(notification);
         }
 
-        // DB 저장 및 SSE 전송
         notificationRepository.saveAll(notifications);
         notifications.forEach(notificationService::sendNotification);
 
-        // 버퍼 초기화
         eventBuffer.clear();
         log.info("버퍼 초기화 완료.");
     }

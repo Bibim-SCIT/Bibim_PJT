@@ -7,24 +7,26 @@ import net.scit.backend.workspace.entity.WorkspaceEntity;
 @Getter
 public class WorkspaceEvent implements BasedUpdatedEvent {
     private final WorkspaceEntity workspace;
-    private final String updatedBy;
-    private final String eventType;
-    // 행동 주체(이벤트 발생자)와 대상(행동의 객체)의 닉네임을 구분
-    private final String actorNickname;   // 예: 수정자, 초대자, 권한 부여자 등
-    private final String targetNickname;  // 예: 수정 대상, 초대받는 사람, 권한 부여 대상 등
+    private final String senderEmail;      // 변경을 수행한 사용자 (이벤트 발생자)
+    private final String senderNickname;   // 이벤트 발생자의 닉네임
+    private final String eventType;        // 이벤트 타입 (create, update 등)
+    private final String receiverEmail;    // 변경이 영향을 미치는 대상의 이메일
+    private final String receiverNickname; // 변경이 영향을 미치는 대상의 닉네임
 
-    public WorkspaceEvent(WorkspaceEntity workspace, String updatedBy, String eventType,
-                          String actorNickname, String targetNickname) {
+    public WorkspaceEvent(WorkspaceEntity workspace, String senderEmail, String senderNickname,
+                          String eventType, String receiverEmail, String receiverNickname) {
         this.workspace = workspace;
-        this.updatedBy = updatedBy;
+        this.senderEmail = senderEmail;
+        this.senderNickname = senderNickname;
         this.eventType = eventType;
-        this.actorNickname = actorNickname;
-        this.targetNickname = targetNickname;
+        this.receiverEmail = receiverEmail;
+        this.receiverNickname = receiverNickname;
     }
 
+    // ✅ `BasedUpdatedEvent` 인터페이스 메서드 구현 (에러 해결)
     @Override
     public String getUpdatedBy() {
-        return updatedBy;
+        return senderEmail;  // 변경을 수행한 사용자의 이메일 반환
     }
 
     @Override
@@ -37,36 +39,27 @@ public class WorkspaceEvent implements BasedUpdatedEvent {
         String workspaceName = workspace.getWsName();
         switch (eventType) {
             case "create":
-                // 생성 이벤트: 워크스페이스 생성은 구성원이 본인이므로, actor만 사용
-                return String.format("%s님이 %s를 생성하였습니다", actorNickname, workspaceName);
+                return String.format("%s님이 %s 워크스페이스를 생성하였습니다", senderNickname, workspaceName);
             case "delete":
-                return String.format("%s님이 %s를 삭제하였습니다", actorNickname, workspaceName);
+                return String.format("%s님이 %s 워크스페이스를 삭제하였습니다", senderNickname, workspaceName);
             case "update":
-                return String.format("%s님이 %s를 수정하였습니다", actorNickname, workspaceName);
+                return String.format("%s님이 %s 워크스페이스를 수정하였습니다", senderNickname, workspaceName);
             case "grant":
-                // 권한 부여: 행동 주체와 대상 모두 필요
                 return String.format("%s님이 %s님에게 %s의 권한을 부여하였습니다",
-                        actorNickname, targetNickname, workspaceName);
+                        senderNickname, receiverNickname, workspaceName);
             case "invite":
-                // 초대: 행동 주체와 대상 모두 필요
-                return String.format("%s님이 %s님을 %s에 초대하였습니다",
-                        actorNickname, targetNickname, workspaceName);
+                return String.format("%s님이 %s님을 %s 워크스페이스에 초대하였습니다",
+                        senderNickname, receiverNickname, workspaceName);
             case "join":
-                // 가입: 초대받은 사람(대상)과 행동 주체(초대자)가 모두 필요한 경우
-                return String.format("%s님이 %s님의 워크스페이스의 새로운 멤버가 되었습니다",
-                        actorNickname, targetNickname);
+                return String.format("%s님이 %s 워크스페이스에 가입하였습니다", receiverNickname, workspaceName);
             case "member_update":
-                // 회원 정보 수정: 나만 볼 수 있으므로 actor만 사용
                 return String.format("%s님의 %s 워크스페이스 내 회원 정보가 수정되었습니다",
-                        actorNickname, workspaceName);
+                        senderNickname, workspaceName);
             case "role_update":
-                // 역할 변경: 역할을 변경한 사람 + 역할이 변경된 사람 모두 포함
                 return String.format("%s님이 %s님의 %s 워크스페이스 역할을 변경하였습니다",
-                        actorNickname, targetNickname, workspaceName);
+                        senderNickname, receiverNickname, workspaceName);
             case "withdraw":
-                // 탈퇴: 탈퇴한 사람이 대상이므로 targetNickname 사용
-                return String.format("%s님이 %s 워크스페이스를 탈퇴하였습니다",
-                        targetNickname, workspaceName);
+                return String.format("%s님이 %s 워크스페이스를 탈퇴하였습니다", receiverNickname, workspaceName);
             default:
                 return "워크스페이스 이벤트";
         }
@@ -82,3 +75,5 @@ public class WorkspaceEvent implements BasedUpdatedEvent {
         return "워크스페이스 관련 작업이 수행되었습니다: " + eventType;
     }
 }
+
+
