@@ -257,7 +257,7 @@ public class WorkspaceController {
      * @return 워크스페이스 멤버 목록
      */
     @GetMapping("/{workspaceId}/members")
-    public ResponseEntity<ResultDTO<List<WorkspaceMemberDTO>>> getWorkspaceMembers(
+    public List<WorkspaceMemberDTO> getWorkspaceMembers(
             @PathVariable Long workspaceId) {
         String email = AuthUtil.getLoginUserId(); // 현재 로그인한 사용자
         if (email == null || email.isEmpty()) {
@@ -265,7 +265,7 @@ public class WorkspaceController {
         }
 
         List<WorkspaceMemberDTO> members = workspaceService.getWorkspaceMembers(workspaceId, email);
-        return ResponseEntity.ok(ResultDTO.of("워크스페이스 멤버 조회 성공", members));
+        return members;
     }
 }
 

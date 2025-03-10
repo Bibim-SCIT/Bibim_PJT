@@ -35,21 +35,20 @@ import net.scit.backend.member.dto.SignupDTO;
 import net.scit.backend.member.dto.UpdateInfoDTO;
 import net.scit.backend.member.dto.VerificationDTO;
 import net.scit.backend.member.entity.MemberEntity;
-import net.scit.backend.member.event.MemberUpdatedEvent;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.member.service.MemberService;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.redis.core.RedisTemplate;
+// import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
+// import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+// import org.springframework.stereotype.Service;
+// import org.springframework.util.StringUtils;
+// import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
+// import java.io.IOException;
+// import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
+// import java.util.concurrent.TimeUnit;
 
 /**
  * Member관련 업무를 수행하는 Service
@@ -337,7 +336,15 @@ public class MemberServiceImpl implements MemberService {
         // 3. 변경된 정보 저장
         memberRepository.save(member);
 
-        // 4. SuccessDTO 생성 후 반환
+//        // 4. 이벤트 발생 (회원 정보 수정 이벤트)
+//        eventPublisher.publishEvent(new MemberUpdatedEvent(
+//                member,
+//                email,
+//                "회원 정보 수정됨",
+//                "member_update"
+//        ));
+
+        // 5. SuccessDTO 생성 후 반환
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
                 .build();
@@ -396,6 +403,15 @@ public class MemberServiceImpl implements MemberService {
         // 변경된 비밀번호로 사용자 비밀번호 번경 저장
         member.setPassword(password);
         memberRepository.save(member);
+
+//        // 이벤트 발생 (비밀번호 변경 이벤트)
+//        eventPublisher.publishEvent(new MemberUpdatedEvent(
+//                member,
+//                changePasswordDTO.getEmail(),
+//                "비밀번호 변경됨",
+//                "password_update"
+//        ));
+//
 
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
@@ -517,6 +533,6 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.save(existingMember);
 
         // ✅ 회원 정보 변경 이벤트 발생
-        eventPublisher.publishEvent(new MemberUpdatedEvent(existingMember, updatedBy));
+//        eventPublisher.publishEvent(new MemberUpdatedEvent(existingMember, updatedBy));
     }
 }
