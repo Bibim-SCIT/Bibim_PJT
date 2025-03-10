@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { useTheme, styled } from '@mui/material/styles';
 import {
   Avatar, Card, Box, List, ListItem, ListItemAvatar, ListItemText, Typography,
-  IconButton, Button, Modal, TextField, Badge, Divider
+  IconButton, Button, Modal, TextField, Badge, Divider, CircularProgress, Snackbar, Alert
 } from '@mui/material';
 
 import { linearProgressClasses } from '@mui/material/LinearProgress';
@@ -129,6 +129,12 @@ function MenuCard() {
   const [newName, setNewName] = useState(''); // 새로운 닉네임
   const [newProfileImage, setNewProfileImage] = useState(null); // 새로운 프로필 이미지 (File 객체)
   const [previewImage, setPreviewImage] = useState(null); // 프로필 미리보기 이미지
+  const [isSaving, setIsSaving] = useState(false); // 저장 중 상태
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  }); // 스낵바 상태
 
   // useEffect(() => {
   //   const fetchWorkspaceUser = async () => {
@@ -209,6 +215,8 @@ function MenuCard() {
       return;
     }
 
+    setIsSaving(true); // 저장 시작
+
     try {
       const updateInfo = { nickname: newName };
 
@@ -224,11 +232,36 @@ function MenuCard() {
         profileImage: updatedUser.data.profileImage || DEFAULT_PROFILE_IMAGE,
       }));
 
+      // 성공 스낵바 표시
+      setSnackbar({
+        open: true,
+        message: '프로필이 성공적으로 업데이트되었습니다.',
+        severity: 'success'
+      });
+
       setOpen(false);
     } catch (error) {
       console.error('❌ 프로필 업데이트 실패:', error);
+      
+      // 실패 스낵바 표시
+      setSnackbar({
+        open: true,
+        message: '프로필 업데이트에 실패했습니다.',
+        severity: 'error'
+      });
+    } finally {
+      setIsSaving(false); // 저장 완료
     }
   };
+
+  // 스낵바 닫기 핸들러
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
   return (
     <>
       <Card
@@ -250,7 +283,7 @@ function MenuCard() {
         }}
       >
         <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <List disablePadding sx={{ pb: 1 }}>
+          <List disablePadding sx={{ pb: 1, flexGrow: 1, overflow: 'hidden', maxWidth: 'calc(100% - 40px)' }}>
             <ListItem alignItems="flex-start" disableGutters disablePadding>
               <ListItemAvatar sx={{ mt: 0 }}>
                 <StyledBadge
@@ -285,15 +318,31 @@ function MenuCard() {
               <ListItemText
                 sx={{ mt: 0 }}
                 primary={
-                  <Typography variant="subtitle1" sx={{ color: 'primary.800' }}>
+                  <Typography variant="subtitle1" sx={{ 
+                    color: 'primary.800',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: 150 // 최대 너비 설정
+                  }}>
                     {currentUser ? currentUser.nickname : '불러오는 중...'}
                   </Typography>
                 }
-                secondary={<Typography variant="caption">{user?.name || '알 수 없음'}</Typography>}
+                secondary={
+                  <Typography variant="caption" sx={{
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: 'block',
+                    maxWidth: 150 // 최대 너비 설정
+                  }}>
+                    {user?.name || '알 수 없음'}
+                  </Typography>
+                }
               />
             </ListItem>
           </List>
-          <IconButton onClick={handleOpen} sx={{ ml: 2 }}>
+          <IconButton onClick={handleOpen} sx={{ ml: 1, flexShrink: 0 }}>
             <SettingsIcon />
           </IconButton>
         </Box>
@@ -439,6 +488,7 @@ function MenuCard() {
             <Button
               variant="outlined"
               onClick={handleClose}
+              disabled={isSaving}
               sx={{
                 color: '#666',
                 borderColor: '#d0d0d0',
@@ -455,7 +505,7 @@ function MenuCard() {
             <Button
               variant="contained"
               onClick={handleUpdateProfile}
-              disabled={!newName.trim()}
+              disabled={!newName.trim() || isSaving}
               sx={{
                 bgcolor: '#2196f3',
                 boxShadow: 'none',
@@ -466,11 +516,33 @@ function MenuCard() {
                 }
               }}
             >
-              저장
+              {isSaving ? (
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <CircularProgress size={16} color="inherit" sx={{ mr: 1 }} />
+                  저장 중...
+                </Box>
+              ) : '저장'}
             </Button>
           </Box>
         </Box>
       </Modal>
+
+      {/* 스낵바 */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleSnackbarClose} 
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 }
@@ -478,3 +550,4 @@ function MenuCard() {
 export default memo(MenuCard);
 
 LinearProgressWithLabel.propTypes = { value: PropTypes.number, others: PropTypes.any };
+
