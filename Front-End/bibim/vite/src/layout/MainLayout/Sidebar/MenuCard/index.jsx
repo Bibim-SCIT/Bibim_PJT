@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { useTheme, styled } from '@mui/material/styles';
 import {
   Avatar, Card, Box, List, ListItem, ListItemAvatar, ListItemText, Typography,
-  IconButton, Button, Modal, TextField, Badge
+  IconButton, Button, Modal, TextField, Badge, Divider
 } from '@mui/material';
 
 import { linearProgressClasses } from '@mui/material/LinearProgress';
@@ -15,7 +15,7 @@ import { linearProgressClasses } from '@mui/material/LinearProgress';
 import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 import SettingsIcon from '@mui/icons-material/Settings';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
-import DeleteIcon from '@mui/icons-material/Delete';;
+import CloseIcon from '@mui/icons-material/Close';
 
 // Context
 import { ConfigContext } from '../../../../contexts/ConfigContext';
@@ -28,18 +28,18 @@ import noprofile from '../../../../assets/images/noprofile.png';
 // ✅ 기본 프로필 이미지
 const DEFAULT_PROFILE_IMAGE = noprofile;
 
-// ✅ 모달 스타일 (참고 코드에서 가져온 스타일 적용)
+// ✅ 모달 스타일
 const modalStyle = {
   position: 'absolute',
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: 400,
+  width: 380,
   bgcolor: 'background.paper',
+  borderRadius: 1,
   boxShadow: 24,
-  borderRadius: 2,
-  p: 3,
-  textAlign: 'center'
+  p: 0,
+  outline: 'none'
 };
 
 // 로그인 중 표시 (아바타위 초록불)
@@ -302,57 +302,173 @@ function MenuCard() {
       {/* ✅ 모달창 (워크스페이스 프로필 수정) */}
       <Modal open={open} onClose={handleClose}>
         <Box sx={modalStyle}>
-          <Typography variant="h3" mb={1}>
-            워크스페이스 내 프로필 수정
-          </Typography>
-          <Typography variant="body2" color="text.secondary" mb={2}>
-            현재 워크스페이스 : {activeWorkspace?.wsName || '워크스페이스 이름 없음'}
-          </Typography>
-
-          {/* 닉네임 입력 필드 */}
-          <TextField
-            fullWidth
-            label="닉네임"
-            variant="outlined"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-
-          {/* ✅ 아바타 + 사진 업로드 & 제거 버튼 */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', mb: 2 }}>
-            <Avatar
-              src={previewImage || ''}
-              sx={{ width: 80, height: 80, mb: 1, bgcolor: '#ccc' }}
+          {/* 헤더 영역 */}
+          <Box sx={{ p: 2.5, pb: 2 }}>
+            <IconButton
+              onClick={handleClose}
+              sx={{
+                position: 'absolute',
+                right: 8,
+                top: 8,
+                color: 'grey.500'
+              }}
             >
-              {!previewImage && <PhotoCameraIcon />}
-            </Avatar>
+              <CloseIcon fontSize="small" />
+            </IconButton>
 
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              {/* 파일 업로드 버튼 */}
-              <Button variant="outlined" component="label">
-                사진 업로드
-                <input type="file" accept="image/*" hidden onChange={handleImageChange} />
-              </Button>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 500,
+                mb: 0,
+                ml: 0.5
+              }}
+            >
+              프로필 수정
+            </Typography>
+          </Box>
 
-              {/* 사진 제거 버튼 (이미지가 있을 때만 보이도록) */}
-              {previewImage && (
-                <IconButton onClick={handleRemoveImage} color="error">
-                  <DeleteIcon />
-                </IconButton>
-              )}
+          <Divider sx={{ borderColor: '#e0e0e0' }} />
+
+          {/* 내용 영역 */}
+          <Box sx={{ p: 3, pt: 2.5 }}>
+            {/* 프로필 이미지 */}
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', mb: 3 }}>
+              <Avatar
+                src={previewImage || ''}
+                sx={{ 
+                  width: 110, 
+                  height: 110, 
+                  mb: 2.5, 
+                  bgcolor: '#f0f0f0',
+                  border: '1px solid #e0e0e0'
+                }}
+              >
+                {!previewImage && <PhotoCameraIcon sx={{ fontSize: 40 }} />}
+              </Avatar>
+
+              {/* 이미지 관련 버튼 */}
+              <Box sx={{ display: 'flex', gap: 1.5 }}>
+                <Button 
+                  variant="outlined"
+                  size="small" 
+                  sx={{ 
+                    color: '#2196f3',
+                    borderColor: '#2196f3',
+                    bgcolor: 'white',
+                    boxShadow: 'none',
+                    px: 2,
+                    py: 0.7,
+                    fontSize: '0.85rem',
+                    '&:hover': {
+                      borderColor: '#1976d2',
+                      color: '#1976d2',
+                      bgcolor: 'white'
+                    }
+                  }}
+                  onClick={handleRemoveImage}
+                >
+                  이미지 삭제
+                </Button>
+                
+                <Button 
+                  variant="contained"
+                  size="small"
+                  sx={{ 
+                    color: 'white',
+                    bgcolor: '#2196f3',
+                    boxShadow: 'none',
+                    px: 2,
+                    py: 0.7,
+                    fontSize: '0.85rem',
+                    '&:hover': {
+                      bgcolor: '#1976d2'
+                    }
+                  }}
+                  component="label"
+                >
+                  이미지 설정
+                  <input type="file" accept="image/*" hidden onChange={handleImageChange} />
+                </Button>
+              </Box>
+            </Box>
+
+            {/* 이름 입력 필드 */}
+            <Box sx={{ mb: 2 }}>
+              <Typography 
+                variant="subtitle1" 
+                sx={{ 
+                  mb: 1, 
+                  textAlign: 'left',
+                  fontWeight: 500,
+                  fontSize: '0.95rem',
+                  color: 'text.primary',
+                  ml: 0.5
+                }}
+              >
+                이름
+              </Typography>
+              <TextField
+                fullWidth
+                variant="outlined"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="김세빈"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '4px',
+                    fontSize: '0.95rem'
+                  },
+                  '& .MuiOutlinedInput-input': {
+                    padding: '12px 14px'
+                  }
+                }}
+              />
             </Box>
           </Box>
 
-          {/* ✅ 저장 버튼 */}
-          <Button
-            variant="contained"
-            fullWidth
-            onClick={handleUpdateProfile}
-            disabled={!newName.trim()}
-          >
-            저장
-          </Button>
+          {/* 하단 버튼 영역 */}
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 1.5,
+            p: 2,
+            bgcolor: '#f8f9fa',
+            borderTop: '1px solid #e0e0e0'
+          }}>
+            <Button
+              variant="outlined"
+              onClick={handleClose}
+              sx={{
+                color: '#666',
+                borderColor: '#d0d0d0',
+                boxShadow: 'none',
+                px: 2,
+                '&:hover': {
+                  borderColor: '#bdbdbd',
+                  bgcolor: '#f5f5f5'
+                }
+              }}
+            >
+              취소
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleUpdateProfile}
+              disabled={!newName.trim()}
+              sx={{
+                bgcolor: '#2196f3',
+                boxShadow: 'none',
+                px: 2,
+                '&:hover': {
+                  bgcolor: '#1976d2',
+                  boxShadow: 'none'
+                }
+              }}
+            >
+              저장
+            </Button>
+          </Box>
         </Box>
       </Modal>
     </>
