@@ -1,6 +1,8 @@
+/* eslint-disable prettier/prettier */
 import React, { useEffect, useState, useRef, useContext } from "react";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
+import axios from "axios";
 import {
     TextField,
     Button,
@@ -18,30 +20,38 @@ import MainCard from "ui-component/cards/MainCard";
 import { ConfigContext } from "contexts/ConfigContext";
 import { fetchWorkspaceUsers } from "../../api/workspaceApi";
 
-const generateRoomId = (senderEmail, receiverEmail) => {
-    if (!senderEmail || !receiverEmail) {
-        console.error("❌ roomId 생성 실패: 이메일이 null 값임!", senderEmail, receiverEmail);
-        return null;
-    }
+const generateRoomId = (wsId, senderEmail, receiverEmail) => {
     const cleanEmail = (email) => email.toLowerCase().split("@")[0];
-    return `dm-${[cleanEmail(senderEmail), cleanEmail(receiverEmail)].sort().join("-")}`;
+    const emails = [cleanEmail(senderEmail), cleanEmail(receiverEmail)].sort();
+    return `dm-${wsId}-${emails[0]}-${emails[1]}`;
 };
 
 const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient }) => {
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState("");
-    const stompClientRef = useRef(null);
+    const token = localStorage.getItem("token");
+
+    useEffect(() => {
+        axios.get(`http://localhost:8080/api/chat/messages`, {
+            params: { wsId, roomId },
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            withCredentials: true,
+        })
+        .then((res) => {
+            console.log("📩 기존 메시지:", res.data);
+            setMessages(res.data);
+        })
+        .catch(console.error);
+    }, [wsId, roomId, token]);
 
     useEffect(() => {
         if (!stompClient || !roomId) return;
 
-        console.log("✅ STOMP 구독 설정, roomId:", roomId);
-
         const subscription = stompClient.subscribe(`/exchange/dm-exchange/msg.${roomId}`, (message) => {
             try {
                 const parsedMessage = JSON.parse(message.body);
-                console.log("📩 새 메시지 수신:", parsedMessage);
-
                 if (parsedMessage.sender !== senderId) {
                     setMessages((prev) => [...prev, parsedMessage]);
                 }
@@ -50,10 +60,7 @@ const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient }) => {
             }
         });
 
-        stompClientRef.current = stompClient;
-
         return () => {
-            console.log("❌ 구독 해제:", roomId);
             subscription.unsubscribe();
         };
     }, [stompClient, roomId]);
@@ -66,14 +73,10 @@ const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient }) => {
             sender: senderId,
             receiver: receiverId,
             dmContent: message,
-            fileName: null,
             isFile: false,
             isRead: false,
+            sendTime: new Date().toISOString(),
         };
-
-        const token = localStorage.getItem("token");
-
-        console.log("📤 메시지 전송:", messageDTO);
 
         stompClient.publish({
             destination: "/app/dm.sendMessage",
@@ -94,6 +97,7 @@ const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient }) => {
                         <ListItem key={i}>
                             <ListItemText
                                 primary={msg.sender === senderId ? `나: ${msg.dmContent}` : `${msg.sender}: ${msg.dmContent}`}
+                                secondary={msg.sendTime}
                             />
                         </ListItem>
                     ))}
@@ -122,21 +126,11 @@ export default function DmPage() {
     const [stompClient, setStompClient] = useState(null);
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        console.log("✅ WebSocket 연결 시작...");
         const socket = new SockJS("http://localhost:8080/ws/chat");
         const client = new Client({
             webSocketFactory: () => socket,
-            connectHeaders: { Authorization: `Bearer ${token}` },
-            debug: (str) => console.log("STOMP DEBUG:", str),
-            onConnect: () => {
-                console.log("✅ WebSocket 연결 성공!");
-                setStompClient(client);
-            },
-            onStompError: (error) => console.error("❌ STOMP 에러:", error),
-            onWebSocketClose: () => console.log("⚠️ WebSocket 연결 종료"),
+            connectHeaders: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+            onConnect: () => setStompClient(client),
         });
 
         client.activate();
@@ -144,29 +138,9 @@ export default function DmPage() {
     }, []);
 
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                if (!wsId) {
-                    console.warn("⚠️ wsId 값이 없음. API 호출을 건너뜀.");
-                    return;
-                }
-
-                const response = await fetchWorkspaceUsers(wsId);
-                console.log("📌 가져온 사용자 목록:", response);
-
-                if (Array.isArray(response)) {
-                    setUsers(response);
-                } else {
-                    console.error("🚨 오류: API 응답이 배열이 아님!", response);
-                    setUsers([]);
-                }
-            } catch (error) {
-                console.error("🚨 사용자 목록 가져오기 실패:", error);
-                setUsers([]);
-            }
-        };
-
-        fetchUsers();
+        fetchWorkspaceUsers(wsId)
+            .then(setUsers)
+            .catch(console.error);
     }, [wsId]);
 
     return (
@@ -178,22 +152,18 @@ export default function DmPage() {
                             <Typography variant="h6">대화 목록</Typography>
                             <Divider />
                             <List>
-                                {users.length === 0 ? (
-                                    <Typography variant="body2">대화할 수 있는 사람이 없습니다.</Typography>
-                                ) : (
-                                    users
-                                        .filter((u) => u.email !== user.email)
-                                        .map((u, i) => (
-                                            <ListItem
-                                                key={i}
-                                                button
-                                                onClick={() => setSelectedUser(u)}
-                                                sx={{ backgroundColor: selectedUser?.email === u.email ? "#f0f0f0" : "inherit" }}
-                                            >
-                                                <ListItemText primary={u.nickname} secondary={u.email} />
-                                            </ListItem>
-                                        ))
-                                )}
+                                {users
+                                    .filter((u) => u.email !== user.email)
+                                    .map((u, i) => (
+                                        <ListItem
+                                            key={i}
+                                            button
+                                            onClick={() => setSelectedUser(u)}
+                                            sx={{ backgroundColor: selectedUser?.email === u.email ? "#f0f0f0" : "inherit" }}
+                                        >
+                                            <ListItemText primary={u.nickname} secondary={u.email} />
+                                        </ListItem>
+                                    ))}
                             </List>
                         </CardContent>
                     </Card>
@@ -202,7 +172,7 @@ export default function DmPage() {
                     {selectedUser ? (
                         <ChatComponent
                             wsId={wsId}
-                            roomId={generateRoomId(user.email, selectedUser.email)}
+                            roomId={generateRoomId(wsId, user.email, selectedUser.email)}
                             senderId={user.email}
                             receiverId={selectedUser.email}
                             stompClient={stompClient}
