@@ -74,13 +74,7 @@ export default function AuthLogin() {
       setError(err.message || "로그인 실패");
     }
   };
-
-  const handleGoogleLogin = () => {
-    // ✅ OAuth2 인증 요청 URL로 이동
-    window.location.href = "http://localhost:8080/login/oauth2";
-  };
-
-
+  
   // Google 로그인 성공 시 실행되는 함수
   const handleGoogleLoginSuccess = (response) => {
     const decodedToken = jwtDecode(response.credential);
@@ -90,7 +84,7 @@ export default function AuthLogin() {
     fetch('http://localhost:8080/oauth2/google', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(decodedToken) // ✅ `token` 키 없이 JSON만 전송
+      body: JSON.stringify({ jwtDecode })
     })
       .then((res) => res.json())
       .then((data) => console.log('서버 응답:', data))
@@ -162,28 +156,11 @@ export default function AuthLogin() {
             </Typography>
           </Grid> */}
         </Grid>
-       {/* 버튼 박스 */}
-        {/* <Box sx={{ mt: 2 }}>
+        {/* 버튼 박스 */}
+        <Box sx={{ mt: 2 }}>
           <AnimateButton>
             <Button color="secondary" fullWidth size="large" type="submit" variant="contained">
               로그인
-            </Button>
-          </AnimateButton>
-        </Box> */}
-
-        {/* ✅ 로그인 버튼 - 로딩 중일 때 비활성화 및 스피너 추가 */}
-        <Box sx={{ mt: 2 }}>
-          <AnimateButton>
-            <Button
-              color="secondary"
-              fullWidth
-              size="large"
-              type="submit"
-              variant="contained"
-              disabled={loading} // ✅ 로그인 중 버튼 비활성화
-              startIcon={loading ? <CircularProgress size={24} sx={{ color: "white" }} /> : null} // ✅ 로딩 아이콘 표시
-            >
-              {loading ? "로그인 중..." : "로그인"}
             </Button>
           </AnimateButton>
         </Box>
@@ -197,34 +174,8 @@ export default function AuthLogin() {
         </AnimateButton>
       </Box>
 
-      {/* 구글 연동 및 구글 로그인 버튼 */}
-      <Box sx={{ mt: 2 }}>
-        <AnimateButton>
-          <Button
-            fullWidth
-            size="large"
-            variant="contained"
-            sx={{
-              backgroundColor: "#ffffff",
-              color: "#757575",
-              boxShadow: "0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12)",
-              border: "1px solid #ddd",
-              fontWeight: "bold",
-              "&:hover": {
-                backgroundColor: "#f5f5f5",
-              },
-            }}
-            startIcon={<GoogleIcon sx={{ color: "#EA4335" }} />} // 구글 로고 아이콘 추가
-            onClick={handleGoogleLogin} // ✅ 버튼 클릭 시 구글 로그인
-          >
-            Google 계정으로 로그인
-          </Button>
-        </AnimateButton>
-      </Box>
-
-
       {/* 구글 로그인 버튼 */}
-      {<GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
+      <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
           <GoogleLogin
             onSuccess={handleGoogleLoginSuccess}
@@ -232,7 +183,7 @@ export default function AuthLogin() {
             useOneTap
           />
         </Box>
-      </GoogleOAuthProvider>}
+      </GoogleOAuthProvider>
     </>
   );
 }
