@@ -202,14 +202,9 @@ public class MemberController {
         return ResponseEntity.ok(result);
     }
 
-<<<<<<< HEAD
-    /***
-     * 회원 탈퇴
-     * 
-=======
     /**
      * 회원 탈퇴
->>>>>>> 5cee0926e48ee5edd9dc9450490fe59c011500bd
+     *
      * @param memberDTO
      * @return
      */
