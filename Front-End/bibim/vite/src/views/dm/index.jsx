@@ -12,6 +12,8 @@ import {
     List,
     ListItem,
     ListItemText,
+    ListItemAvatar,
+    Avatar,
     Grid,
     Divider,
     Box,
@@ -21,6 +23,7 @@ import MainCard from "ui-component/cards/MainCard";
 import { ConfigContext } from "contexts/ConfigContext";
 import { fetchWorkspaceUsers } from "../../api/workspaceApi";
 import { useSelector } from 'react-redux';
+import UserLoading from "./components/UserLoading";
 
 const API_BASE_URL = "http://localhost:8080/api";
 
@@ -70,8 +73,8 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient 
             },
             withCredentials: true,
         })
-        .then((res) => setMessages(res.data))
-        .catch(console.error);
+            .then((res) => setMessages(res.data))
+            .catch(console.error);
     }, [wsId, roomId, token]);
 
     useEffect(() => {
@@ -117,7 +120,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient 
     return (
         <Card variant="outlined">
             <CardContent>
-                <Typography variant="h6">채팅 상대: {receiverId}</Typography>
+                <Typography variant="h5">채팅 상대: {receiverId}</Typography>
                 <List>
                     {messages.map((msg, i) => (
                         <ListItem key={i}>
@@ -168,6 +171,8 @@ export default function DmPage() {
     const [selectedUser, setSelectedUser] = useState(null);
     const [wsId, setWsId] = useState(thisws);
     const [stompClient, setStompClient] = useState(null);
+    const [loading, setLoading] = useState(true);
+
 
     useEffect(() => {
         const socket = new SockJS("http://localhost:8080/ws/chat");
@@ -182,10 +187,20 @@ export default function DmPage() {
     }, []);
 
     useEffect(() => {
-        fetchWorkspaceUsers(wsId)
-            .then(setUsers)
-            .catch(console.error);
-    }, [activeWorkspace]);
+        setLoading(true);
+        fetchWorkspaceUsers(thisws)
+            .then((usersData) => {
+                setUsers(usersData);
+                setLoading(false);
+            })
+            .catch((error) => {
+                console.error(error);
+                setLoading(false);
+            });
+    }, [thisws]);
+
+    // 자신을 제외한 유저들 목록
+    const filteredUsers = users.filter((u) => u.email !== user.email);
 
     return (
         <MainCard title="디엠 페이지">
@@ -193,22 +208,40 @@ export default function DmPage() {
                 <Grid item xs={4}>
                     <Card variant="outlined">
                         <CardContent>
-                            <Typography variant="h6">대화 목록</Typography>
+                            <Typography variant="h3">대화 목록</Typography>
                             <Divider />
-                            <List>
-                                {users
-                                    .filter((u) => u.email !== user.email)
-                                    .map((u, i) => (
-                                        <ListItem
-                                            key={i}
-                                            button
-                                            onClick={() => setSelectedUser(u)}
-                                            sx={{ backgroundColor: selectedUser?.email === u.email ? "#f0f0f0" : "inherit" }}
-                                        >
-                                            <ListItemText primary={u.nickname} secondary={u.email} />
-                                        </ListItem>
-                                    ))}
-                            </List>
+                            {loading ? (
+                                <UserLoading />
+                            ) : (
+                                filteredUsers.length === 0 ? (
+                                    <Typography
+                                        variant="h4"
+                                        align="center"
+                                        sx={{ mt: 3 }}
+                                    >
+                                        dm 가능한 사용자가 없습니다.
+                                    </Typography>
+                                ) : (
+                                    <List>
+                                        {filteredUsers.map((u, i) => (
+                                            <ListItem
+                                                key={i}
+                                                button
+                                                onClick={() => setSelectedUser(u)}
+                                                sx={{
+                                                    backgroundColor: selectedUser?.email === u.email ? "#f0f0f0" : "inherit",
+                                                    cursor: "pointer",
+                                                }}
+                                            >
+                                                <ListItemAvatar>
+                                                    <Avatar src={u.profileImage} alt={u.nickname} />
+                                                </ListItemAvatar>
+                                                <ListItemText primary={u.nickname} secondary={u.email} />
+                                            </ListItem>
+                                        ))}
+                                    </List>
+                                )
+                            )}
                         </CardContent>
                     </Card>
                 </Grid>

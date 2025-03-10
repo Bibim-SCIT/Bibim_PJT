@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Dialog,
     IconButton,
@@ -15,6 +15,9 @@ import CloseIcon from "@mui/icons-material/Close";
 import { styled } from "@mui/material/styles";
 import { createSchedule } from "../../../api/schedule"; // ✅ 일정 생성 API 추가
 import { useSelector } from "react-redux"; // ✅ Redux에서 현재 워크스페이스 가져오기
+
+// 태그 API 함수 import 추가
+import { fetchLargeTags, fetchMediumTags, fetchSmallTags } from "../../../api/tag";
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
     "& .MuiDialog-paper": {
@@ -39,9 +42,60 @@ const ScheduleCreateModal = ({ open, onClose }) => {
         scheduleFinishDate: "",
     });
 
+    useEffect(() => {
+        if (open) {
+            setFormData({
+                scheduleTitle: "",
+                scheduleContent: "",
+                tag1: "",
+                tag2: "",
+                tag3: "",
+                scheduleStatus: "UNASSIGNED",
+                scheduleStartDate: "",
+                scheduleFinishDate: "",
+            });
+        }
+    }, [open]);
+
+
     const [largeTags, setLargeTags] = useState([]);
     const [mediumTags, setMediumTags] = useState([]);
     const [smallTags, setSmallTags] = useState([]);
+
+    // 모달이 열릴 때 대분류 태그 가져오기
+    useEffect(() => {
+        if (open && activeWorkspace?.wsId) {
+            fetchLargeTags(activeWorkspace.wsId)
+                .then((tags) => setLargeTags(tags))
+                .catch((error) => console.error("대분류 태그 fetch 실패:", error));
+        }
+    }, [open, activeWorkspace]);
+
+    // 대분류 선택 시 중분류 태그 가져오기
+    useEffect(() => {
+        if (formData.tag1 && activeWorkspace?.wsId) {
+            // formData.tag1은 tagName이므로, 해당 tag의 tagNumber 찾기
+            const selectedLargeTag = largeTags.find(tag => tag.tagName === formData.tag1);
+            if (selectedLargeTag) {
+                fetchMediumTags(activeWorkspace.wsId, selectedLargeTag.tagNumber)
+                    .then((tags) => setMediumTags(tags))
+                    .catch((error) => console.error("중분류 태그 fetch 실패:", error));
+            }
+        }
+    }, [formData.tag1, activeWorkspace, largeTags]);
+
+    // 중분류 선택 시 소분류 태그 가져오기
+    useEffect(() => {
+        if (formData.tag2 && formData.tag1 && activeWorkspace?.wsId) {
+            const selectedLargeTag = largeTags.find(tag => tag.tagName === formData.tag1);
+            const selectedMediumTag = mediumTags.find(tag => tag.tagName === formData.tag2);
+            if (selectedLargeTag && selectedMediumTag) {
+                fetchSmallTags(activeWorkspace.wsId, selectedLargeTag.tagNumber, selectedMediumTag.tagNumber)
+                    .then((tags) => setSmallTags(tags))
+                    .catch((error) => console.error("소분류 태그 fetch 실패:", error));
+            }
+        }
+    }, [formData.tag2, formData.tag1, activeWorkspace, largeTags, mediumTags]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -136,7 +190,7 @@ const ScheduleCreateModal = ({ open, onClose }) => {
                     <InputLabel>대분류*</InputLabel>
                     <Select
                         value={formData.tag1}
-                        onChange={(e) => setFormData({ ...formData, tag1: e.target.value })}
+                        onChange={(e) => setFormData({ ...formData, tag1: e.target.value, tag2: "", tag3: "" })}
                     >
                         {largeTags.map((tag) => (
                             <MenuItem key={tag.tagNumber} value={tag.tagName}>
@@ -150,7 +204,7 @@ const ScheduleCreateModal = ({ open, onClose }) => {
                     <InputLabel>중분류*</InputLabel>
                     <Select
                         value={formData.tag2}
-                        onChange={(e) => setFormData({ ...formData, tag2: e.target.value })}
+                        onChange={(e) => setFormData({ ...formData, tag2: e.target.value, tag3: "" })}
                         disabled={!formData.tag1}
                     >
                         {mediumTags.map((tag) => (
