@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { Link, useNavigate } from 'react-router-dom';
-import { loginUser, api } from "../../../api/auth"; // 로그인 API
+import { loginUser, linkGoogleAccount, googleLoginUser, api } from "../../../api/auth"; // 로그인 API
 import { ConfigContext } from "../../../contexts/ConfigContext"; // 기존 ConfigContext 사용
 
 // material-ui
@@ -18,6 +18,7 @@ import InputLabel from '@mui/material/InputLabel';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import Dialog from '@mui/material/Dialog'; // 필요에 따라 모달 관련 컴포넌트를 사용할 수도 있음
 
 // project imports
 import AnimateButton from 'ui-component/extended/AnimateButton';
@@ -25,7 +26,9 @@ import AnimateButton from 'ui-component/extended/AnimateButton';
 // assets
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import GoogleIcon from '@mui/icons-material/Google'; // 구글 아이콘 추가
+// import GoogleIcon from '@mui/icons-material/Google'; // 구글 아이콘 추가
+
+import LinkAccountModal from "../authentication/LinkAccountModal";
 
 // Google Login
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
@@ -45,6 +48,10 @@ export default function AuthLogin() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false); // ❗ 로딩 상태 추가
+
+  // 모달 관련 state
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [pendingGoogleData, setPendingGoogleData] = useState(null);
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
@@ -87,20 +94,50 @@ export default function AuthLogin() {
     const decodedToken = jwtDecode(response.credential);
     console.log('Google 로그인 성공:', decodedToken);
 
-    // 예: 서버에 Google 토큰 전송
-    fetch('http://localhost:8080/oauth2/google', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jwtDecode })
-    })
-      .then((res) => res.json())
-      .then((data) => console.log('서버 응답:', data))
-      .catch((err) => console.error('오류 발생:', err));
+    // googleLoginUser API 호출: decodedToken 객체를 그대로 전달
+    googleLoginUser(decodedToken)
+      .then((userInfo) => {
+        // 토큰 저장 및 사용자 정보 업데이트는 googleLoginUser에서 처리됨
+        // 추가로 필요한 경우 userInfo를 활용해 업데이트할 수 있음
+        setUser(userInfo);
+        navigate("/ws-select");
+      })
+      .catch((err) => {
+        console.error('구글 로그인 처리 중 오류 발생:', err);
+        if (err.errorCode === "UNLINKED_MEMBER") {
+          setPendingGoogleData(decodedToken);
+          setShowLinkModal(true);
+        } else {
+          setError(err.message || "구글 로그인 실패");
+        }
+      });
   };
 
   // Google 로그인 실패 시 실행되는 함수
   const handleGoogleLoginFailure = () => {
     console.error('Google 로그인 실패');
+  };
+
+  // 모달에서 "예" 클릭 시 처리 함수
+  const handleLinkAccount = () => {
+    if (!pendingGoogleData) return;
+    linkGoogleAccount(pendingGoogleData.email, true)
+      .then((res) => {
+        // 연동 성공 후 다시 구글 로그인 시도
+        googleLoginUser(pendingGoogleData)
+          .then((userInfo) => {
+            setUser(userInfo);
+            navigate("/ws-select");
+            setShowLinkModal(false);
+            setPendingGoogleData(null);
+          })
+          .catch((err) => {
+            setError(err.message || "구글 로그인 실패");
+          });
+      })
+      .catch((err) => {
+        setError(err.message || "연동 요청 실패");
+      });
   };
 
   return (
@@ -206,7 +243,6 @@ export default function AuthLogin() {
       </Box>
 
       {/* 구글 로그인 버튼 */}
-      {/* <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID"> */}
       <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
           <GoogleLogin
@@ -216,6 +252,13 @@ export default function AuthLogin() {
           />
         </Box>
       </GoogleOAuthProvider >
+
+      {/* LinkAccountModal 컴포넌트 사용 */}
+      <LinkAccountModal
+        open={showLinkModal}
+        onClose={() => setShowLinkModal(false)}
+        onConfirm={handleLinkAccount}
+      />
     </>
   );
 }
