@@ -16,7 +16,7 @@ import net.scit.backend.dm.service.DmService;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/chat")
+@RequestMapping("/api/dm")
 public class DMController {
     private final DmService dmService;
     private final SimpMessagingTemplate messagingTemplate; // ✅ 메시지 전송을 위한 SimpMessagingTemplate 추가

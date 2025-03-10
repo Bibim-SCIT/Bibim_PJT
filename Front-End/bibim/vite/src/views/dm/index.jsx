@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import React, { useEffect, useState, useRef, useContext } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import axios from "axios";
@@ -15,11 +15,14 @@ import {
     Grid,
     Divider,
     Box,
+    Input,
 } from "@mui/material";
 import MainCard from "ui-component/cards/MainCard";
 import { ConfigContext } from "contexts/ConfigContext";
 import { fetchWorkspaceUsers } from "../../api/workspaceApi";
 import { useSelector } from 'react-redux';
+
+const API_BASE_URL = "http://localhost:8080/api";
 
 const generateRoomId = (wsId, senderEmail, receiverEmail) => {
     const cleanEmail = (email) => email.toLowerCase().split("@")[0];
@@ -27,24 +30,48 @@ const generateRoomId = (wsId, senderEmail, receiverEmail) => {
     return `dm-${wsId}-${emails[0]}-${emails[1]}`;
 };
 
-const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient }) => {
+const isImage = (fileName) => /\.(jpg|jpeg|png|gif)$/i.test(fileName);
+
+export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient }) => {
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState("");
+    const [file, setFile] = useState(null);
     const token = localStorage.getItem("token");
 
+    const uploadFile = async () => {
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("sender", senderId);
+        formData.append("receiver", receiverId);
+        formData.append("wsId", wsId);
+
+        try {
+            const response = await axios.post(`${API_BASE_URL}/dm/upload`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "multipart/form-data",
+                },
+                withCredentials: true,
+            });
+            setMessages((prev) => [...prev, response.data]);
+            setFile(null);
+        } catch (error) {
+            console.error("🚨 파일 업로드 실패:", error);
+        }
+    };
+
     useEffect(() => {
-        axios.get(`http://localhost:8080/api/chat/messages`, {
+        axios.get(`${API_BASE_URL}/dm/messages`, {
             params: { wsId, roomId },
             headers: {
                 Authorization: `Bearer ${token}`,
             },
             withCredentials: true,
         })
-            .then((res) => {
-                console.log("📩 기존 메시지:", res.data);
-                setMessages(res.data);
-            })
-            .catch(console.error);
+        .then((res) => setMessages(res.data))
+        .catch(console.error);
     }, [wsId, roomId, token]);
 
     useEffect(() => {
@@ -61,9 +88,7 @@ const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient }) => {
             }
         });
 
-        return () => {
-            subscription.unsubscribe();
-        };
+        return () => subscription.unsubscribe();
     }, [stompClient, roomId]);
 
     const sendMessage = () => {
@@ -97,12 +122,28 @@ const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient }) => {
                     {messages.map((msg, i) => (
                         <ListItem key={i}>
                             <ListItemText
-                                primary={msg.sender === senderId ? `나: ${msg.dmContent}` : `${msg.sender}: ${msg.dmContent}`}
+                                primary={msg.isFile ? (
+                                    isImage(msg.fileName) ? (
+                                        <img
+                                            src={msg.dmContent}
+                                            alt={msg.fileName}
+                                            style={{ maxWidth: "300px", maxHeight: "300px" }}
+                                        />
+                                    ) : (
+                                        <a href={msg.dmContent} target="_blank" rel="noopener noreferrer">
+                                            📎 {msg.fileName}
+                                        </a>
+                                    )
+                                ) : `${msg.sender === senderId ? "나" : msg.sender}: ${msg.dmContent}`}
                                 secondary={msg.sendTime}
                             />
                         </ListItem>
                     ))}
                 </List>
+                <Input type="file" onChange={(e) => setFile(e.target.files[0])} />
+                <Button onClick={uploadFile} variant="contained" color="secondary" disabled={!file}>
+                    파일 업로드
+                </Button>
                 <TextField
                     fullWidth
                     variant="outlined"
@@ -189,4 +230,4 @@ export default function DmPage() {
             </Grid>
         </MainCard>
     );
-}
+};
