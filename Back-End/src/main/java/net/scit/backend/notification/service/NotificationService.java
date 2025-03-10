@@ -20,7 +20,7 @@ public interface NotificationService {
     // 구독은 이제 receiverEmail 기준으로 처리
     SseEmitter subscribe(String receiverEmail);
 
-    void sendNotification(NotificationEntity notification);
+    NotificationEntity sendNotification(NotificationEntity notification);
 
     // 읽지 않은 알림 조회는 receiverEmail 기준
     List<NotificationEntity> getUnreadNotifications(String receiverEmail);
