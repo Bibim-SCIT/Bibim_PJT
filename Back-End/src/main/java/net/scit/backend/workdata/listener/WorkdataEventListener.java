@@ -3,6 +3,7 @@ package net.scit.backend.workdata.listener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.notification.entity.NotificationEntity;
+import net.scit.backend.notification.dto.NotificationResponseDTO; // 추가: 응답 DTO 사용
 import net.scit.backend.notification.service.NotificationService;
 import net.scit.backend.workdata.event.WorkdataEvent;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
@@ -30,7 +31,6 @@ public class WorkdataEventListener {
         log.info("📢 Workdata 이벤트 감지: {} | 워크스페이스 ID: {} | 메시지: {}",
                 event.getEventType(), workspaceId, notificationMessage);
 
-        // 기본 주소 설정 (WorkdataController의 매핑 기준)
         final String baseUrl = "http://localhost:8080/workdata";
         String notificationUrl;
         switch (event.getEventType()) {
@@ -47,7 +47,6 @@ public class WorkdataEventListener {
                 notificationUrl = baseUrl;
         }
 
-        // 특정 워크스페이스의 모든 멤버 조회 (네이티브 쿼리 사용)
         List<WorkspaceMemberEntity> workspaceMembers =
                 workspaceMemberRepository.findMembersByWorkspaceIdNative(workspaceId);
 
@@ -65,7 +64,9 @@ public class WorkdataEventListener {
             notification.setNotificationDate(LocalDateTime.now());
             notification.setNotificationUrl(notificationUrl);  // URL 설정
 
-            notificationService.sendNotification(notification);
+            // 변경: createAndSendNotification 호출 후 응답에서 notificationNumber를 확인
+            NotificationResponseDTO response = notificationService.createAndSendNotification(notification); // 변경
+            log.info("알림 전송 및 저장 완료, notificationNumber: {}", response.getNotificationNumber()); // 변경 로그
         }
     }
 }
