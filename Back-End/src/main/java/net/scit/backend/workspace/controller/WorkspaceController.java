@@ -258,7 +258,7 @@ public class WorkspaceController {
      */
     @GetMapping("/{workspaceId}/members")
     public List<WorkspaceMemberDTO> getWorkspaceMembers(
-            @PathVariable Long workspaceId) {
+            @PathVariable("workspaceId") Long workspaceId) {
         String email = AuthUtil.getLoginUserId(); // 현재 로그인한 사용자
         if (email == null || email.isEmpty()) {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
