@@ -162,11 +162,28 @@ export default function AuthLogin() {
             </Typography>
           </Grid> */}
         </Grid>
-        {/* 버튼 박스 */}
-        <Box sx={{ mt: 2 }}>
+       {/* 버튼 박스 */}
+        {/* <Box sx={{ mt: 2 }}>
           <AnimateButton>
             <Button color="secondary" fullWidth size="large" type="submit" variant="contained">
               로그인
+            </Button>
+          </AnimateButton>
+        </Box> */}
+
+        {/* ✅ 로그인 버튼 - 로딩 중일 때 비활성화 및 스피너 추가 */}
+        <Box sx={{ mt: 2 }}>
+          <AnimateButton>
+            <Button
+              color="secondary"
+              fullWidth
+              size="large"
+              type="submit"
+              variant="contained"
+              disabled={loading} // ✅ 로그인 중 버튼 비활성화
+              startIcon={loading ? <CircularProgress size={24} sx={{ color: "white" }} /> : null} // ✅ 로딩 아이콘 표시
+            >
+              {loading ? "로그인 중..." : "로그인"}
             </Button>
           </AnimateButton>
         </Box>
