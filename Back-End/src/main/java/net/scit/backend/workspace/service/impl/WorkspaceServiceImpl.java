@@ -9,6 +9,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import net.scit.backend.workspace.event.WorkspaceEvent;
 import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
@@ -73,6 +75,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     private static final String DEFAULT_ROLE = "None";
     private static final String OWNER_ROLE = "owner";
     private static final String USER_ROLE = "user";
+    private final WorkspaceChannelRoleRepository workspaceChannelRoleRepository;
 
     // 이미지 업로드 메소드
     private String uploadImage(MultipartFile file) {
@@ -109,7 +112,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     /**
      * Redis에서 초대 코드 검증 메소드
      * 한번에 여러 초대를 받아도 정상적으로 처리 할 수 있도록 구현
-     * 
+     *
      * 1. Redis에서 'newWorkspace: *' 패턴으로 모든 초대 코드 검색
      * 2. 저장된 초대 코드와 사용자가 입력한 코드가 일치하는지 확인
      * 3. 일치하는 경우, 해당 이메일에 연결된 워크스페이스 ID 조회
@@ -214,41 +217,51 @@ public class WorkspaceServiceImpl implements WorkspaceService {
             );
         }
 
-
-
         return ResultDTO.of("워크스페이스 생성에 성공했습니다.", SuccessDTO.builder().success(true).build());
     }
 
     // 워크스페이스 삭제 메소드
     @Override
     @Transactional
-    public ResultDTO<SuccessDTO> workspaceDelete(String wsName) {
+    public ResultDTO<SuccessDTO> workspaceDelete(Long wsId) {
+        // 1. 로그인한 사용자 정보 가져오기
         String senderEmail = AuthUtil.getLoginUserId();
-        Long wsId = workspaceRepository.findWsIdByWsNameAndEmail(wsName, senderEmail);
-        WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
 
-        // ✅ 수정됨: 삭제를 수행하는 사용자의 닉네임 조회
+        // 2. 워크스페이스 엔티티 조회
+        WorkspaceEntity workspaceEntity = workspaceRepository.findById(wsId)
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
+        String workspaceName = workspaceEntity.getWsName(); // 🔹 삭제 후 이벤트에서 사용할 값 미리 저장
+
+        // 3. 현재 사용자의 닉네임 조회
         WorkspaceMemberEntity senderMember = workspaceMemberRepository
                 .findByWorkspace_wsIdAndMember_Email(wsId, senderEmail)
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
         String senderNickname = senderMember.getNickname();
 
-        // ✅ 수정됨: 동일 워크스페이스에 속한 모든 멤버 조회 (알림 대상)
+        // 4. 워크스페이스 멤버 리스트 조회 (알림 대상)
         List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findByWorkspace_wsId(wsId);
 
-        Optional.ofNullable(workspaceEntity.getWsImg()).ifPresent(s3Uploader::deleteFile);
-        workspaceRepository.deleteById(wsId);
+        // 5. **워크스페이스 삭제 (연관 데이터 포함)**
+        workspaceRepository.deleteById(wsId); // ✅ 영속성 문제 해결 (delete 대신 deleteById 사용)
 
-        // ✅ 수정됨: 모든 대상에게 개별 알림 발행
+        // 6. **알림 이벤트 발행**
         for (WorkspaceMemberEntity member : workspaceMembers) {
             eventPublisher.publishEvent(
-                    new WorkspaceEvent(workspaceEntity, senderEmail, senderNickname, "delete",
-                            member.getMember().getEmail(), member.getNickname()) // ✅ 수정됨
+                    new WorkspaceEvent(
+                            wsId,                          // ✅ wsId만 전달
+                            workspaceName,                 // ✅ wsName도 전달
+                            senderEmail,
+                            senderNickname,
+                            "delete",
+                            member.getMember().getEmail(),
+                            member.getNickname()
+                    )
             );
         }
 
         return ResultDTO.of("워크스페이스 삭제에 성공했습니다.", SuccessDTO.builder().success(true).build());
     }
+
 
     // 사용자가 속한 모든 워크스페이스 목록 조회 메소드
     @Override
@@ -308,34 +321,42 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     // 워크스페이스 탈퇴 메소드
     @Override
     @Transactional
-    public ResultDTO<SuccessDTO> workspaceWithDrwal(Long wsId) {
+    public ResultDTO<SuccessDTO> workspaceWithDrawal(Long wsId) {
         String senderEmail = AuthUtil.getLoginUserId();
 
-        // ✅ 수정됨: 탈퇴할 사용자 정보 조회 (행동 주체 및 대상)
         WorkspaceMemberEntity member = workspaceMemberRepository
                 .findByWorkspace_wsIdAndMember_Email(wsId, senderEmail)
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
-        String receiverEmail = member.getMember().getEmail();  // sender와 receiver 동일
-        String receiverNickname = member.getNickname();
+        String senderNickname = member.getNickname();
 
+        // ✅ 삭제되기 전에 워크스페이스 정보를 미리 저장
         WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
+        String workspaceName = workspaceEntity.getWsName(); // 워크스페이스 이름을 미리 저장
 
         workspaceMemberRepository.deleteByWorkspace_wsIdAndMember_Email(wsId, senderEmail);
 
-        boolean isWorkspaceDeleted = false;
-        if (workspaceMemberRepository.findByWorkspace_wsId(wsId).isEmpty()) {
-            workspaceRepository.deleteById(wsId);
-            isWorkspaceDeleted = true;
-        }
+        List<WorkspaceMemberEntity> remainingMembers = workspaceMemberRepository.findByWorkspace_wsId(wsId);
 
-        // ✅ 수정됨: 탈퇴 이벤트 발행 (본인에게만 알림)
-        eventPublisher.publishEvent(
-                new WorkspaceEvent(workspaceEntity, senderEmail, receiverNickname, "withdraw",
-                        receiverEmail, receiverNickname) // ✅ 수정됨
-        );
+        if (remainingMembers.isEmpty()) {
+            // 삭제 전에 이벤트 먼저 발생
+            eventPublisher.publishEvent(
+                    new WorkspaceEvent(wsId, workspaceName, senderEmail, senderNickname, "delete",
+                            senderEmail, senderNickname)
+            );
+
+            // 이벤트가 발생한 후에 삭제
+            workspaceRepository.deleteById(wsId);
+        } else {
+            eventPublisher.publishEvent(
+                    new WorkspaceEvent(wsId, workspaceName, senderEmail, senderNickname, "withdraw",
+                            senderEmail, senderNickname)
+            );
+        }
 
         return ResultDTO.of("워크스페이스 탈퇴에 성공했습니다.", SuccessDTO.builder().success(true).build());
     }
+
+
 
     // 워크스페이스 강제 퇴출 메소드
     @Override
@@ -380,27 +401,29 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         // 워크스페이스 엔티티 조회
         WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
 
-        // ✅ 수정됨: 권한 부여한 사람(행동 주체)의 이메일과 닉네임 조회
-        String senderEmail = AuthUtil.getLoginUserId();  // 기존 email → senderEmail
+        // ✅ 권한 부여한 사람(행동 주체)의 이메일과 닉네임 조회
+        String senderEmail = AuthUtil.getLoginUserId();
         WorkspaceMemberEntity actorMember = workspaceMemberRepository
                 .findByWorkspace_wsIdAndMember_Email(wsId, senderEmail)
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
         String senderNickname = actorMember.getNickname();
 
-        // ✅ 수정됨: 대상 멤버의 이메일과 닉네임 조회
+        // ✅ 대상 멤버의 이메일과 닉네임 조회
         String receiverEmail = member.getMember().getEmail();
         String receiverNickname = member.getNickname();
 
-        // ✅ 수정됨: 동일 워크스페이스 내 모든 멤버에게 알림 전송 (각 멤버별 개별 알림)
-        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findByWorkspace_wsId(wsId);
-        for (WorkspaceMemberEntity wm : workspaceMembers) {
-            eventPublisher.publishEvent(
-                    new WorkspaceEvent(workspaceEntity, senderEmail, senderNickname, "grant", receiverEmail, receiverNickname)
-            );
-        }
+        // ✅ 알림을 받는 사람은 "권한을 부여한 사람(sender)" + "권한을 받은 사람(receiver)" 두 명만
+        eventPublisher.publishEvent(
+                new WorkspaceEvent(workspaceEntity, senderEmail, senderNickname, "grant", senderEmail, senderNickname)
+        );
+
+        eventPublisher.publishEvent(
+                new WorkspaceEvent(workspaceEntity, senderEmail, senderNickname, "grant", receiverEmail, receiverNickname)
+        );
 
         return ResultDTO.of("워크스페이스 채널 권한 부여에 성공했습니다.", SuccessDTO.builder().success(true).build());
     }
+
 
     // 워크스페이스 권한 삭제 메소드(특정 채널 접속 권한)
     @Override
@@ -415,7 +438,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     // 초대 메소드
     @Override
     @Transactional
-    public ResultDTO<SuccessDTO> workspaceInvate(Long wsId, String email) {
+    public ResultDTO<SuccessDTO> workspaceInvite(Long wsId, String email) {
         WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
         String wsName = workspaceEntity.getWsName();
 
@@ -447,14 +470,9 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         // Redis에 초대 코드 저장
         saveInvitationCodeToRedis(email, code, wsId);
 
-        // ✅ 수정됨: 초대 이벤트 발행 (두 명에게 알림 전송)
-        // 이벤트 for 초대하는 사람 (inviter)
+        // ✅ 수정됨: 초대 이벤트 발행 - 초대받는 사람 (invitee)
         eventPublisher.publishEvent(
                 new WorkspaceEvent(workspaceEntity, senderEmail, senderNickname, "invite", receiverEmail, receiverNickname)
-        );
-        // 이벤트 for 초대받는 사람 (invitee)
-        eventPublisher.publishEvent(
-                new WorkspaceEvent(workspaceEntity, receiverEmail, receiverNickname, "invite", senderEmail, senderNickname)
         );
         return ResultDTO.of("메일을 보내는 것을 성공했습니다.", SuccessDTO.builder().success(true).build());
     }
@@ -497,7 +515,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     /**
      * 워크스페이스 나의 회원 정보 조회
-     * 
+     *
      * @param wsId 조회할 워크스페이스 ID
      * @return 워크스페이스 나의 회원 정보
      */
@@ -527,60 +545,69 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     /**
      * 워크스페이스 내 회원 정보 수정
-     * 
+     *
      * @param wsId       워크스페이스 ID
      * @param updateInfo 수정할 정보
      * @param file       프로필 이미지 파일 (선택)
      * @return 수정 결과
-     * 
+     *
      */
     @Override
     @Transactional
     public ResultDTO<SuccessDTO> updateWorkspaceMemberInfo(Long wsId, UpdateWorkspaceMemberDTO updateInfo,
-            MultipartFile file) {
-        // JWT에서 로그인한 유저 이메일 가져오기
+                                                           MultipartFile file) {
+        // 로그인한 사용자 이메일 조회
         String senderEmail = AuthUtil.getLoginUserId();
 
-        // WorkSpace_Member 테이블에서 이메일과 wsId로 회원 정보 조회
+        // 회원 정보 조회
         WorkspaceMemberEntity workspaceMember = workspaceMemberRepository
                 .findByWorkspace_wsIdAndMember_Email(wsId, senderEmail)
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
 
-        // 닉네임 업데이트
-        if (updateInfo.getNickname() != null && !updateInfo.getNickname().isEmpty()) {
+        boolean isUpdated = false;  // 변경 여부 확인용
+
+        // 닉네임 업데이트 (updateInfo가 null이 아닐 때만)
+        if (updateInfo != null && updateInfo.getNickname() != null && !updateInfo.getNickname().isEmpty()) {
             workspaceMember.setNickname(updateInfo.getNickname());
+            isUpdated = true;
         }
 
-        // 프로필 이미지 업데이트
+        // 프로필 이미지 업데이트 (파일이 있을 경우만)
         if (file != null && !file.isEmpty()) {
             try {
-                // 기존 이미지가 있다면 삭제
+                // 기존 이미지 삭제
                 if (workspaceMember.getProfileImage() != null && !workspaceMember.getProfileImage().isEmpty()) {
                     s3Uploader.deleteFile(workspaceMember.getProfileImage());
                 }
                 // 새 이미지 업로드
                 String imageUrl = s3Uploader.upload(file, "workspace-profile-images");
                 workspaceMember.setProfileImage(imageUrl);
+                isUpdated = true;
             } catch (IOException e) {
+                log.error("이미지 업로드 실패: {}", e.getMessage());
                 throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
             }
         }
-        // 변경사항 저장
-        workspaceMemberRepository.save(workspaceMember);
 
-        // ✅ 수정됨: 현재 사용자의 닉네임 조회 (수정한 사람)
-        String myNickname = workspaceMember.getNickname();
+        // 변경사항이 하나라도 있으면 저장
+        if (isUpdated) {
+            workspaceMemberRepository.save(workspaceMember);
 
-        WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
+            // ✅ 알림 이벤트 전송
+            WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
 
-        // ✅ 수정됨: 알림은 나에게만 전송
-        eventPublisher.publishEvent(
-                new WorkspaceEvent(workspaceEntity, senderEmail, myNickname, "member_update", senderEmail, myNickname)
-        );
+            eventPublisher.publishEvent(
+                    new WorkspaceEvent(workspaceEntity, senderEmail, workspaceMember.getNickname(),
+                            "member_update", senderEmail, workspaceMember.getNickname())
+            );
+        } else {
+            return ResultDTO.of("변경된 사항이 없습니다.", SuccessDTO.builder().success(false).build());
+        }
 
         return ResultDTO.of("워크스페이스 회원 정보가 성공적으로 수정되었습니다.",
                 SuccessDTO.builder().success(true).build());
     }
+
 
     /**
      * 워크스페이스에 소속된 멤버들의 접속현황을 조회합니다.
@@ -615,7 +642,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     /**
      * 워크스페이스에 소속된 멤버 정보 조회.
-     * 
+     *
      * @param workspaceId
      * @param userEmail
      * @return 사용자 프로필 사진, 워크스페이스 닉네임, 이메일, 마지막 로그인, 권한이 포함된 멤버 정보 리스트
@@ -653,41 +680,53 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
     /**
      * 해당 유저의 워크스페이스의 역할을 변경하는 메소드(owner <-> user)
-     * 
+     *
      * @param wsId  워크스페이스 ID
      * @param email 이메일
      */
     @Override
+    @Transactional
     public ResultDTO<SuccessDTO> workspaceRoleUpdate(Long wsId, String email, String newRole) {
-        checkOwnerRole(wsId, AuthUtil.getLoginUserId());
+        // ✅ 현재 로그인한 사용자(역할 변경을 수행하는 사람) 이메일 조회
+        String senderEmail = AuthUtil.getLoginUserId();
 
+        // ✅ 현재 로그인한 사용자가 owner 권한을 가지고 있는지 확인
+        checkOwnerRole(wsId, senderEmail);
+
+        // ✅ 역할 변경 대상 사용자 정보 조회
         WorkspaceMemberEntity member = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // ✅ 역할이 동일하면 업데이트하지 않고 종료
+        if (member.getWsRole().equals(newRole)) {
+            return ResultDTO.of("이미 설정된 역할입니다.", SuccessDTO.builder().success(false).build());
+        }
+
+        // ✅ 역할 변경 수행
         member.setWsRole(newRole);
         workspaceMemberRepository.save(member);
 
-        // ✅ 수정됨: 역할 변경한 사람(행동 주체) 조회
-        String senderEmail = AuthUtil.getLoginUserId();
+        // ✅ 역할 변경을 수행한 사람(행동 주체)의 닉네임 조회
         WorkspaceMemberEntity actorMember = workspaceMemberRepository
                 .findByWorkspace_wsIdAndMember_Email(wsId, senderEmail)
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
         String senderNickname = actorMember.getNickname();
 
-        // ✅ 수정됨: 역할이 변경된 대상의 이메일과 닉네임 조회
+        // ✅ 역할이 변경된 대상의 이메일 및 닉네임 조회
         String receiverEmail = member.getMember().getEmail();
         String receiverNickname = member.getNickname();
 
+        // ✅ 워크스페이스 정보 조회
         WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
-        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findByWorkspace_wsId(wsId);
 
-        // ✅ 수정됨: 모든 대상에게 개별 알림 발행
-        for (WorkspaceMemberEntity wm : workspaceMembers) {
-            eventPublisher.publishEvent(
-                    new WorkspaceEvent(workspaceEntity, senderEmail, senderNickname, "role_update",
-                            receiverEmail, receiverNickname)
-            );
-        }
+        // ✅ 알림 이벤트 발송 (오직 대상자에게만 알림)
+        eventPublisher.publishEvent(
+                new WorkspaceEvent(workspaceEntity, senderEmail, senderNickname, "role_update",
+                        receiverEmail, receiverNickname)
+        );
+
         return ResultDTO.of("워크스페이스 역할 변경에 성공했습니다.", SuccessDTO.builder().success(true).build());
     }
+
 
 }

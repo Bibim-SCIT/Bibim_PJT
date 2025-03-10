@@ -42,26 +42,6 @@ public class NotificationEventListener {
         log.info("버퍼에 저장된 이벤트 처리 시작...");
         List<NotificationEntity> notifications = new ArrayList<>();
 
-        // 버퍼의 모든 WorkspaceEvent에 대해 알림 생성
-        for (BasedUpdatedEvent event : eventBuffer) {
-            if (!(event instanceof WorkspaceEvent)) continue; // WorkspaceEvent가 아닌 경우 스킵
-            WorkspaceEvent we = (WorkspaceEvent) event;
-            NotificationEntity notification = new NotificationEntity();
-
-            notification.setWsId(we.getWorkspace().getWsId());
-            notification.setSenderEmail(we.getSenderEmail());
-            notification.setSenderNickname(we.getSenderNickname());
-            notification.setReceiverEmail(we.getReceiverEmail());
-            notification.setReceiverNickname(we.getReceiverNickname());
-            notification.setNotificationName(we.getNotificationName());
-            notification.setNotificationType(we.getNotificationType());
-            notification.setNotificationContent(we.getNotificationContent());
-            notification.setNotificationStatus(false);
-            notification.setNotificationDate(LocalDateTime.now());
-
-            notifications.add(notification);
-        }
-
         // 변경: saveAll 후 flush 추가하여 즉시 DB에 반영해 ID가 생성되도록 함
         notificationRepository.saveAll(notifications);
         notificationRepository.flush(); // 변경
