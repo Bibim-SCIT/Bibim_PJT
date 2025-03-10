@@ -32,52 +32,6 @@ function ChatComponent({ channelId, workspaceId }) {
     // WebSocket 클라이언트 참조
     const stompClientRef = useRef(null);
 
-    // 워크스페이스 멤버 접속 현황 조회
-    const fetchActiveUsers = useCallback(async () => {
-        if (!workspaceId) {
-            console.warn("❗ workspaceId가 제공되지 않았습니다.");
-            return;
-        }
-
-        try {
-            setIsLoading(true);
-            setError(null);
-            console.log("🔍 워크스페이스 멤버 조회 시도:", workspaceId);
-            const response = await fetchWorkspaceUsers(workspaceId);
-            console.log("📌 API 응답:", response);
-            
-            if (response && response.data) {
-                const members = response.data.map(member => ({
-                    email: member.member?.email || member.email,
-                    role: member.wsRole || 'MEMBER',
-                    nickname: member.nickname || member.member?.nickname,
-                    profileImage: member.profileImage || member.member?.profileImage,
-                    loginStatus: member.member?.loginStatus ?? true
-                })).filter(member => member.email);
-
-                console.log("처리된 멤버 목록:", members);
-                setActiveUsers(members);
-            }
-        } catch (error) {
-            console.error("❌ 접속자 조회 오류:", error);
-            setError("멤버 정보를 불러오는데 실패했습니다.");
-            setActiveUsers([
-                { email: user?.email || "현재 사용자", role: "OWNER", loginStatus: true }
-            ]);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [workspaceId, user]);
-
-    // 컴포넌트 마운트 시 접속자 조회 및 5분마다 갱신
-    useEffect(() => {
-        if (workspaceId && user) {
-            fetchActiveUsers();
-            const interval = setInterval(fetchActiveUsers, 5 * 60 * 1000);
-            return () => clearInterval(interval);
-        }
-    }, [fetchActiveUsers, workspaceId, user]);
-
     /**
      * WebSocket 연결 설정
      * 컴포넌트 마운트 시 WebSocket 연결을 설정하고, 
