@@ -16,9 +16,9 @@ public class ScheduleTagEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long scheduleTagNumber;
 
-    @ManyToOne
-    @JoinColumn(name = "schedule_number")
-    private ScheduleEntity schedule;
+//    @ManyToOne
+//    @JoinColumn(name = "schedule_number")
+//    private ScheduleEntity schedule;
 
     @ManyToOne
     @JoinColumn(name = "large_tag_number")
