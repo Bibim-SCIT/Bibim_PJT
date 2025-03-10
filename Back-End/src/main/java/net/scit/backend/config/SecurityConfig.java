@@ -22,8 +22,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import net.scit.backend.auth.JwtAuthenticationFilter;
-import net.scit.backend.auth.JwtTokenProvider;
+import net.scit.backend.jwt.JwtAuthenticationFilter;
+import net.scit.backend.jwt.JwtTokenProvider;
 
 
 @Configuration
