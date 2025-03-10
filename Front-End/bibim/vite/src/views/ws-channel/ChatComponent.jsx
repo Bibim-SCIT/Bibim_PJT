@@ -5,6 +5,7 @@ import { ConfigContext } from "../../contexts/ConfigContext";
 import { FaPaperPlane, FaFileUpload } from "react-icons/fa";
 import TagIcon from '@mui/icons-material/Tag';
 import AddIcon from '@mui/icons-material/Add';
+import PersonIcon from '@mui/icons-material/Person';
 import "./ChatComponent.css";
 
 /**
@@ -181,8 +182,32 @@ function ChatComponent({ channelId }) {
         <div className="chat-container">
             {/* 채널 헤더 */}
             <div className="chat-header">
-                <TagIcon sx={{ color: '#6b7280', fontSize: 20 }} />
-                채널 {channelId}
+                <div className="channel-info">
+                    <TagIcon sx={{ color: '#6b7280', fontSize: 20 }} />
+                    <span>채널 {channelId}</span>
+                </div>
+                <div className="active-users">
+                    <PersonIcon sx={{ color: '#6b7280', fontSize: 20 }} />
+                    <span>5명 접속 중</span>
+                    <div className="active-users-list">
+                        {[
+                            { email: "user1@example.com" },
+                            { email: "user2@example.com" },
+                            { email: "user3@example.com" },
+                            { email: "user4@example.com" },
+                            { email: "user5@example.com" }
+                        ].map((user, index) => (
+                            <div key={index} className="active-user">
+                                <div className="user-avatar">
+                                    <div className="default-avatar">
+                                        {user.email.charAt(0).toUpperCase()}
+                                    </div>
+                                </div>
+                                <span>{user.email}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
 
             {/* 메시지 목록 */}
