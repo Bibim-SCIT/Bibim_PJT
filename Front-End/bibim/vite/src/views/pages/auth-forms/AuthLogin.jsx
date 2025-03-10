@@ -190,7 +190,7 @@ export default function AuthLogin() {
       </Box>
 
       {/* 구글 로그인 버튼 */}
-      <GoogleOAuthProvider clientId="683145059429-tifkm5q07fphttj9dqnglshu4vh95sk8.apps.googleusercontent.com">
+      <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
           <GoogleLogin
             onSuccess={handleGoogleLoginSuccess}
