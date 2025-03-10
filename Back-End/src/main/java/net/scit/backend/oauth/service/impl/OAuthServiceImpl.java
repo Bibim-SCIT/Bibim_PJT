@@ -2,6 +2,7 @@ package net.scit.backend.oauth.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import net.scit.backend.common.ResultDTO;
+import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.jwt.JwtTokenProvider;
@@ -23,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class OAuthServiceImpl implements OAuthService {
+    private static final Long link_EXPIRES = 300000L;
 
     private final JwtTokenProvider jwtTokenProvider;
     private final MemberRepository memberRepository;
@@ -111,4 +113,23 @@ public class OAuthServiceImpl implements OAuthService {
         return createToken(newMember);
     }
 
+    @Override
+    public ResultDTO<SuccessDTO> linkAccount(String email, boolean linkYn) {
+
+        MemberEntity member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        if (!member.getSocialLoginCheck().equals("없음")) {
+            throw new CustomException(ErrorCode.OAUTH_ALREADY_LINKED);
+        }
+
+        redisTemplate.opsForValue().set("oauth_link_" + email, String.valueOf(linkYn), link_EXPIRES,
+                TimeUnit.MILLISECONDS);
+
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+
+        return ResultDTO.of("연동 요청에 성공했습니다.", successDTO);
+    }
 }

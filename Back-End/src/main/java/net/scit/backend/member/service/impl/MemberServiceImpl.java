@@ -480,25 +480,4 @@ public class MemberServiceImpl implements MemberService {
             return new MemberLoginStatusDTO(userEmail, false, null);
         }
     }
-
-    @Override
-    public ResultDTO<SuccessDTO> linkAccount(String email, boolean linkYn) {
-
-        MemberEntity member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-        if (!member.getSocialLoginCheck().equals("없음")) {
-            throw new CustomException(ErrorCode.OAUTH_ALREADY_LINKED);
-        }
-
-        redisTemplate.opsForValue().set("oauth_link_" + email, String.valueOf(linkYn), MAIL_EXPIRES_IN,
-                TimeUnit.MILLISECONDS);
-
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
-
-        return ResultDTO.of("연동 요청에 성공했습니다.", successDTO);
-    }
-
 }
