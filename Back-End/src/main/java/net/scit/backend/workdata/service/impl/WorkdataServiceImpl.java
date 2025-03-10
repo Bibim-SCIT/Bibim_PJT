@@ -11,9 +11,7 @@ import net.scit.backend.workdata.dto.WorkdataTotalSearchDTO;
 import net.scit.backend.workdata.entity.WorkDataFileTagEntity;
 import net.scit.backend.workdata.entity.WorkdataEntity;
 import net.scit.backend.workdata.entity.WorkdataFileEntity;
-import net.scit.backend.workdata.event.WorkdataCreatedEvent;
-import net.scit.backend.workdata.event.WorkdataDeletedEvent;
-import net.scit.backend.workdata.event.WorkdataUpdatedEvent;
+import net.scit.backend.workdata.event.WorkdataEvent;
 import net.scit.backend.workdata.repository.WorkdataFileRepository;
 import net.scit.backend.workdata.repository.WorkdataFileTagRepository;
 import net.scit.backend.workdata.repository.WorkdataRepository;
@@ -46,7 +44,20 @@ public class WorkdataServiceImpl implements WorkdataService {
 
 
     /**
-     * 1. 자료실 등록
+     * 0) 해당 사용자의 워크스페이스 내 닉네임을 가져오는 메서드
+     * @param wsId   워크스페이스 ID
+     * @param email  사용자 이메일
+     * @return 닉네임
+     */
+    private String getSenderNickname(Long wsId, String email) {
+        return workspaceMemberRepository.findByWorkspace_WsIdAndMember_Email(wsId, email)
+                .map(WorkspaceMemberEntity::getNickname)
+                .orElseThrow(() -> new IllegalArgumentException("닉네임을 찾을 수 없습니다."));
+    }
+
+
+    /**
+     * 1-1) 자료실 등록
      * @param wsId
      * @param title
      * @param content
@@ -106,7 +117,9 @@ public class WorkdataServiceImpl implements WorkdataService {
                 .orElseThrow(() -> new IllegalArgumentException("자료글을 찾을 수 없습니다."));
 
         // 자료글 생성 이벤트 (알림 전송)
-        eventPublisher.publishEvent(new WorkdataCreatedEvent(workdataEntity, email));
+        String senderNickname = getSenderNickname(wsId, email);
+        eventPublisher.publishEvent(new WorkdataEvent(workdataEntity, email, senderNickname, "create"));
+
 
         // DTO 변환하여 반환
         return WorkdataDTO.toDTO(workdataEntity, new HashSet<>(fileEntities), new HashSet<>(tagEntities), wsMember);
@@ -129,7 +142,7 @@ public class WorkdataServiceImpl implements WorkdataService {
 
 
     /**
-     * 1-2)자료글 삭제(+ 파일, 태그)
+     * 1-2) 자료글 삭제(+ 파일, 태그)
      * @param wsId
      * @param dataNumber
      * @return
@@ -156,7 +169,8 @@ public class WorkdataServiceImpl implements WorkdataService {
         workdataRepository.delete(workdataEntity);
 
         // 삭제 이벤트 발생 (알림 전송)
-        eventPublisher.publishEvent(new WorkdataDeletedEvent(workdataEntity, email));
+        String senderNickname = getSenderNickname(wsId, email);
+        eventPublisher.publishEvent(new WorkdataEvent(workdataEntity, email, senderNickname, "delete"));
 
         // 성공 응답
         SuccessDTO successDTO = SuccessDTO.builder().success(true).build();
@@ -164,6 +178,18 @@ public class WorkdataServiceImpl implements WorkdataService {
     }
 
 
+    /**
+     * 1-3) 자료실 수정
+     * @param wsId
+     * @param dataNumber
+     * @param title
+     * @param content
+     * @param deleteFiles
+     * @param deleteTags
+     * @param newTags
+     * @param newFiles
+     * @return
+     */
     @Override
     public ResultDTO<SuccessDTO> updateWorkdata(Long wsId,
                                                 Long dataNumber,
@@ -288,7 +314,8 @@ public class WorkdataServiceImpl implements WorkdataService {
         workdataRepository.save(existingEntity);
 
         // 자료글 수정 이벤트 발생 (알림 등)
-        eventPublisher.publishEvent(new WorkdataUpdatedEvent(existingEntity, userEmail));
+        String senderNickname = getSenderNickname(wsId, userEmail);
+        eventPublisher.publishEvent(new WorkdataEvent(existingEntity, userEmail, senderNickname, "update"));
 
         // 수정 결과 응답
         return ResultDTO.of("자료글 수정 완료!", SuccessDTO.builder().success(true).build());
