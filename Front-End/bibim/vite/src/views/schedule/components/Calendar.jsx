@@ -6,9 +6,6 @@ import { Box } from '@mui/material';
 import styled from '@emotion/styled';
 import ScheduleDetailModal from './ScheduleDetailModal';
 import ScheduleEditModal from './ScheduleEditModal';
-// import { useSelector } from 'react-redux';
-// import { fetchKanbanTasks } from '../../../api/schedule'; // ✅ fetchKanbanTasks로 변경
-// import ScheduleLoading from '../calendar/components/ScheduleLoading';
 
 const CalendarWrapper = styled(Box)({
   padding: '20px',
@@ -76,6 +73,8 @@ const Calendar = ({ tasks }) => {
     setHoveredSchedule(null); // 초기화
   };
 
+  console.log("현재 선택 달력 스케줄", selectedSchedule);
+
   return (
     <Box
       sx={{
@@ -134,7 +133,6 @@ const Calendar = ({ tasks }) => {
           showNonCurrentDates={false}
           titleFormat={{ year: 'numeric', month: 'long' }}
           buttonText={{ today: 'Today', prev: '', next: '' }}
-          // eventClick={handleEventClick}
           eventClick={(clickInfo) => {
             setSelectedSchedule(clickInfo.event.extendedProps);
             setModalOpen(true);
@@ -147,7 +145,24 @@ const Calendar = ({ tasks }) => {
             info.el.addEventListener('mouseleave', () => handleEventHover(scheduleId, false));
           }}
           eventContent={(arg) => (
-            <Box sx={{ cursor: 'pointer', width: '100%', padding: '2px 4px' }}>
+            <Box
+              sx={{
+                '& .fc-daygrid-event-harness': {
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px', // ✅ 이벤트 간 간격 확보 (margin 없이!)
+                },
+                '& .fc-daygrid-event': {
+                  padding: '4px', // ✅ 내부 간격 조정 (이벤트 높이 변화 없음)
+                  borderRadius: '5px', // ✅ 둥근 테두리
+                  fontSize: '13px', // ✅ 폰트 크기 조정
+                },
+                '& .fc-event-title': {
+                  lineHeight: '1.2', // ✅ 글자 높이 조정
+                },
+              }}
+            >
+
               {arg.event.title}
             </Box>
           )}
