@@ -53,7 +53,6 @@ public class SecurityConfig {
                                 "/members/login",
                                 "/members/signup/send-mail", // ✅ 이메일 인증 요청 허용
                                 "/members/signup/check-mail", // ✅ 인증 코드 확인 요청 허용
-                                "/oauth2/link",
                                 "/oauth2/google",
                                 "/oauth2/link",
                                 "/workdata/**", // 자료실 관련(추후 삭제)
