@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.jwt.AuthUtil;
+import net.scit.backend.notification.dto.NotificationResponseDTO;
 import net.scit.backend.notification.entity.NotificationEntity;
 import net.scit.backend.notification.repository.NotificationRepository;
 import net.scit.backend.notification.service.NotificationService;
@@ -15,7 +16,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
@@ -26,26 +26,60 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationRepository notificationRepository;
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
-    @Override
-    public void createNotification(String senderEmail, String senderNickname,
-                                   String receiverEmail, String receiverNickname,
-                                   Long workspaceId, Long scheduleNumber, Long recordNumber, Long workdataNumber,
-                                   String notificationName, String notificationType, String notificationContent) {
-        NotificationEntity notification = new NotificationEntity();
-        notification.setSenderEmail(senderEmail);
-        notification.setSenderNickname(senderNickname);
-        notification.setReceiverEmail(receiverEmail);
-        notification.setReceiverNickname(receiverNickname);
-        notification.setWsId(workspaceId);  // ✅ 수정됨: workspaceId를 설정
-        notification.setNotificationName(notificationName);
-        notification.setNotificationType(notificationType);
-        notification.setNotificationContent(notificationContent);
-        notification.setNotificationStatus(false);
-        notification.setNotificationDate(LocalDateTime.now());
 
-        notificationRepository.save(notification);
-        sendNotification(notification);
+//    @Override
+//    public void createNotification(String senderEmail, String senderNickname,
+//                                   String receiverEmail, String receiverNickname,
+//                                   Long workspaceId, Long scheduleNumber, Long recordNumber, Long workdataNumber,
+//                                   String notificationName, String notificationType, String notificationContent) {
+//        NotificationEntity notification = new NotificationEntity();
+//        notification.setSenderEmail(senderEmail);
+//        notification.setSenderNickname(senderNickname);
+//        notification.setReceiverEmail(receiverEmail);
+//        notification.setReceiverNickname(receiverNickname);
+//        notification.setWsId(workspaceId);  // workspaceId 설정
+//        notification.setNotificationName(notificationName);
+//        notification.setNotificationType(notificationType);
+//        notification.setNotificationContent(notificationContent);
+//        notification.setNotificationStatus(false);
+//        notification.setNotificationDate(LocalDateTime.now());
+//
+//        // 변경: saveAndFlush() 사용하여 즉시 DB에 반영 및 자동 생성된 notificationNumber 확인
+//        notificationRepository.saveAndFlush(notification); // 변경된 부분
+//        log.info("Notification created with ID: {}", notification.getNotificationNumber()); // 변경 로그
+//
+//        sendNotification(notification);
+//    }
+
+    @Transactional
+    @Override
+    public NotificationResponseDTO createAndSendNotification(NotificationEntity notification) {
+        // 즉시 DB에 반영하여 자동 생성된 ID를 확인
+        NotificationEntity savedNotification = notificationRepository.saveAndFlush(notification);
+        log.info("Notification created with ID: {}", savedNotification.getNotificationNumber());
+
+        // 알림 전송
+        sendNotification(savedNotification);
+
+        // DTO 변환 후 반환
+        return convertToResponseDTO(savedNotification);
     }
+
+    private NotificationResponseDTO convertToResponseDTO(NotificationEntity notification) {
+        return new NotificationResponseDTO(
+                notification.getNotificationNumber(),
+                notification.getWsId(),
+                notification.getSenderEmail(),
+                notification.getSenderNickname(),
+                notification.getReceiverEmail(),
+                notification.getReceiverNickname(),
+                notification.getNotificationName(),
+                notification.getNotificationType(),
+                notification.getNotificationContent(),
+                notification.getNotificationUrl()  // URL 포함 (필요 시)
+        );
+    }
+
 
     @Override
     public SseEmitter subscribe(String receiverEmail) {

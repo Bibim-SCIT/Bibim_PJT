@@ -1,5 +1,6 @@
 package net.scit.backend.notification.service;
 
+import net.scit.backend.notification.dto.NotificationResponseDTO;
 import net.scit.backend.notification.entity.NotificationEntity;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.util.List;
@@ -7,10 +8,14 @@ import java.util.List;
 public interface NotificationService {
 
     // 수정: sender와 receiver 정보를 모두 포함
-    void createNotification(String senderEmail, String senderNickname,
-                            String receiverEmail, String receiverNickname,
-                            Long workspaceId, Long scheduleNumber, Long recordNumber, Long workdataNumber,
-                            String notificationName, String notificationType, String notificationContent);
+//    void createNotification(String senderEmail, String senderNickname,
+//                            String receiverEmail, String receiverNickname,
+//                            Long workspaceId, Long scheduleNumber, Long recordNumber, Long workdataNumber,
+//                            String notificationName, String notificationType, String notificationContent);
+
+    //실제 알림 생성 및 DTO 반환
+    NotificationResponseDTO createAndSendNotification(NotificationEntity notification); // ✅ 추가된 메서드
+
 
     // 구독은 이제 receiverEmail 기준으로 처리
     SseEmitter subscribe(String receiverEmail);
