@@ -224,15 +224,4 @@ public class MemberController {
         MemberLoginStatusDTO statusDTO = memberService.getLoginStatus(email);
         return ResponseEntity.ok(ResultDTO.of("로그인 상태 조회 성공", statusDTO));
     }
-
-    /**
-     * 연동여부를 저장하는 API
-     * @param linkYn 연동동의 여부
-     * @return
-     */
-    @PostMapping("/link")
-    public ResponseEntity<?> linkAccount(@RequestParam String email, @RequestParam boolean linkYn) {
-        ResultDTO<SuccessDTO> result = memberService.linkAccount(email, linkYn);
-        return ResponseEntity.ok(result);
-    }
 }

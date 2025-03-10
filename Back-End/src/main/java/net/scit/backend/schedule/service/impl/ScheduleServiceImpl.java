@@ -168,10 +168,13 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .map(scheduleEntity -> {
                     // 해당 스케줄의 담당자의 이메일로 닉네임을 가져오기
                     String nickname;
+                    String profileImage;
                     if (scheduleEntity.getMember() != null) {
                         nickname = memberNicknames.get(scheduleEntity.getMember().getEmail());
+                        profileImage = scheduleEntity.getMember().getProfileImage();
                     } else {
                         nickname = null;
+                        profileImage = null;
                     }
 
                     // 해당 스케줄의 태그를 미리 가져오기
@@ -181,8 +184,8 @@ public class ScheduleServiceImpl implements ScheduleService {
 
                     // 태그가 없을 때, 있으 때 ScheduleTagEntity 반환
                     return scheduleTagOptional
-                            .map(scheduleTagEntity -> ScheduleDTO.toDTO(scheduleEntity, nickname, scheduleTagEntity))
-                            .orElseGet(() -> ScheduleDTO.toDTO(scheduleEntity, nickname));
+                            .map(scheduleTagEntity -> ScheduleDTO.toDTO(scheduleEntity, nickname, profileImage, scheduleTagEntity))
+                            .orElseGet(() -> ScheduleDTO.toDTO(scheduleEntity, nickname, profileImage));
                 })
                 .collect(Collectors.toList());
 
@@ -215,15 +218,16 @@ public class ScheduleServiceImpl implements ScheduleService {
 
 
         // 담당자 찾아오기
-        String nickname = workspaceMemberRepository.findByWorkspaceAndMember(workspace, member)
-                .map(WorkspaceMemberEntity::getNickname)
-                .orElse(null);
+        WorkspaceMemberEntity workspaceMemberEntity = workspaceMemberRepository.findByWorkspaceAndMember(workspace, member)
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
+        String nickname = workspaceMemberEntity.getNickname();
+        String profileImage = workspaceMemberEntity.getProfileImage();
 
 
         // 해당 스케줄의 태그 가져오기
         ScheduleDTO scheduleDTO = scheduleTagRepository.findBySchedule(scheduleEntity)
-                .map(scheduleTagEntity -> ScheduleDTO.toDTO(scheduleEntity, nickname, scheduleTagEntity))
-                .orElseGet(() -> ScheduleDTO.toDTO(scheduleEntity, nickname));
+                .map(scheduleTagEntity -> ScheduleDTO.toDTO(scheduleEntity, nickname, profileImage, scheduleTagEntity))
+                .orElseGet(() -> ScheduleDTO.toDTO(scheduleEntity, nickname, profileImage));
 
         return ResultDTO.of("스케줄 상세 조회에 성공했습니다.", scheduleDTO);
     }
