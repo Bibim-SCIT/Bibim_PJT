@@ -1,5 +1,7 @@
 package net.scit.backend.dm.DTO;
 
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,4 +21,6 @@ public class DmMessageDTO
     private String fileName;
     private boolean isFile;
     private boolean isRead;
+    private LocalDateTime sendTime;
+    private String roomId;
 }

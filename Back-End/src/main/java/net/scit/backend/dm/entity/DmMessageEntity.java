@@ -30,6 +30,7 @@ public class DmMessageEntity
     private String fileName; // ✅ 파일명 (파일일 경우 저장)
     private boolean isFile; // ✅ 파일 여부
     private boolean isRead; // ✅ 읽음 여부
+    private String roomId; // ✅ 방 아이디
 
     @CurrentTimestamp
     private LocalDateTime sendTime; // ✅ 메시지 전송 시간

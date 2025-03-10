@@ -9,4 +9,6 @@ import net.scit.backend.dm.entity.DmMessageEntity;
 public interface DmRepository extends JpaRepository<DmMessageEntity, Long>
 {
     List<DmMessageEntity> findByWsIdAndSenderAndReceiver(Long wsId, String sender, String receiver);
+    List<DmMessageEntity> findByWsIdAndRoomIdOrderBySendTimeAsc(Long wsId, String roomId);
+	List<DmMessageEntity> findByRoomIdOrderBySendTimeAsc(String roomId);
 }
