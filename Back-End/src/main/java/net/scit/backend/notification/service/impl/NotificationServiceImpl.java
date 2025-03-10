@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -99,7 +98,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void sendNotification(NotificationEntity notification) {
+    public NotificationEntity sendNotification(NotificationEntity notification) {
         for (SseEmitter emitter : emitters) {
             try {
                 emitter.send(SseEmitter.event().name("notification").data(notification));
@@ -108,6 +107,7 @@ public class NotificationServiceImpl implements NotificationService {
                 emitters.remove(emitter);
             }
         }
+        return notification;
     }
 
     @Override
