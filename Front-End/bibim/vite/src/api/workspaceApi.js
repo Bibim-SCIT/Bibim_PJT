@@ -181,11 +181,17 @@ export const kickUserFromWorkspace = async (wsId, email) => {
 // 워크스페이스 내 모든 멤버 조회 API 호출 함수
 export const fetchWorkspaceUsers = async (workspaceId) => {
     try {
+        console.log("🔍 API 호출 시작 - workspaceId:", workspaceId);
         const response = await api.get(`${API_BASE_URL}/${workspaceId}/members`);
-        console.log('API 응답:', response); // 응답 확인을 위한 로그
+        console.log('🔍 API 응답:', response);
         return response.data;
     } catch (error) {
         console.error('워크스페이스 멤버 조회 실패:', error);
+        console.error('에러 상세:', {
+            status: error.response?.status,
+            data: error.response?.data,
+            message: error.message
+        });
         throw error;
     }
 };

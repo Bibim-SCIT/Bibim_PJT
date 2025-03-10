@@ -6,6 +6,7 @@ import { FaPaperPlane, FaFileUpload } from "react-icons/fa";
 import TagIcon from '@mui/icons-material/Tag';
 import AddIcon from '@mui/icons-material/Add';
 import PersonIcon from '@mui/icons-material/Person';
+import { fetchWorkspaceUsers } from "../../api/workspaceApi";
 import "./ChatComponent.css";
 
 /**
@@ -13,8 +14,9 @@ import "./ChatComponent.css";
  * WebSocket을 사용하여 실시간 채팅 기능을 구현한 컴포넌트
  * 
  * @param {string} channelId - 채팅 채널 ID
+ * @param {string} workspaceId - 워크스페이스 ID
  */
-function ChatComponent({ channelId }) {
+function ChatComponent({ channelId, workspaceId }) {
     // Context에서 현재 사용자 정보 가져오기
     const { user } = useContext(ConfigContext);
     
@@ -23,9 +25,58 @@ function ChatComponent({ channelId }) {
     const [input, setInput] = useState("");      // 입력창 텍스트
     const [file, setFile] = useState(null);      // 선택된 파일
     const [isUploading, setIsUploading] = useState(false); // 파일 업로드 상태
+    const [activeUsers, setActiveUsers] = useState([]); // 접속 중인 사용자 목록
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
     
     // WebSocket 클라이언트 참조
     const stompClientRef = useRef(null);
+
+    // 워크스페이스 멤버 접속 현황 조회
+    const fetchActiveUsers = useCallback(async () => {
+        if (!workspaceId) {
+            console.warn("❗ workspaceId가 제공되지 않았습니다.");
+            return;
+        }
+
+        try {
+            setIsLoading(true);
+            setError(null);
+            console.log("🔍 워크스페이스 멤버 조회 시도:", workspaceId);
+            const response = await fetchWorkspaceUsers(workspaceId);
+            console.log("📌 API 응답:", response);
+            
+            if (response && response.data) {
+                const members = response.data.map(member => ({
+                    email: member.member?.email || member.email,
+                    role: member.wsRole || 'MEMBER',
+                    nickname: member.nickname || member.member?.nickname,
+                    profileImage: member.profileImage || member.member?.profileImage,
+                    loginStatus: member.member?.loginStatus ?? true
+                })).filter(member => member.email);
+
+                console.log("처리된 멤버 목록:", members);
+                setActiveUsers(members);
+            }
+        } catch (error) {
+            console.error("❌ 접속자 조회 오류:", error);
+            setError("멤버 정보를 불러오는데 실패했습니다.");
+            setActiveUsers([
+                { email: user?.email || "현재 사용자", role: "OWNER", loginStatus: true }
+            ]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [workspaceId, user]);
+
+    // 컴포넌트 마운트 시 접속자 조회 및 5분마다 갱신
+    useEffect(() => {
+        if (workspaceId && user) {
+            fetchActiveUsers();
+            const interval = setInterval(fetchActiveUsers, 5 * 60 * 1000);
+            return () => clearInterval(interval);
+        }
+    }, [fetchActiveUsers, workspaceId, user]);
 
     /**
      * WebSocket 연결 설정
@@ -188,25 +239,38 @@ function ChatComponent({ channelId }) {
                 </div>
                 <div className="active-users">
                     <PersonIcon sx={{ color: '#6b7280', fontSize: 20 }} />
-                    <span>5명 접속 중</span>
-                    <div className="active-users-list">
-                        {[
-                            { email: "user1@example.com" },
-                            { email: "user2@example.com" },
-                            { email: "user3@example.com" },
-                            { email: "user4@example.com" },
-                            { email: "user5@example.com" }
-                        ].map((user, index) => (
-                            <div key={index} className="active-user">
-                                <div className="user-avatar">
-                                    <div className="default-avatar">
-                                        {user.email.charAt(0).toUpperCase()}
+                    {isLoading ? (
+                        <span>멤버 정보 로딩 중...</span>
+                    ) : error ? (
+                        <span className="error-text">{error}</span>
+                    ) : (
+                        <>
+                            <span>{activeUsers.length}명의 멤버</span>
+                            <div className="active-users-list">
+                                {activeUsers.map((member, index) => (
+                                    <div key={index} className="active-user">
+                                        <div className="user-avatar">
+                                            {member.profileImage ? (
+                                                <img src={member.profileImage} alt={member.email} />
+                                            ) : (
+                                                <div className="default-avatar">
+                                                    {member.email.charAt(0).toUpperCase()}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="user-info">
+                                            <span className="user-email">{member.email}</span>
+                                            {member.nickname && <span className="user-nickname">({member.nickname})</span>}
+                                        </div>
+                                        <div className="user-status">
+                                            <span className={`status-dot ${member.loginStatus ? 'online' : 'offline'}`} />
+                                            <span className="member-role">{member.role}</span>
+                                        </div>
                                     </div>
-                                </div>
-                                <span>{user.email}</span>
+                                ))}
                             </div>
-                        ))}
-                    </div>
+                        </>
+                    )}
                 </div>
             </div>
 
