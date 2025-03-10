@@ -25,7 +25,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import net.scit.backend.jwt.JwtAuthenticationFilter;
 import net.scit.backend.jwt.JwtTokenProvider;
 
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -40,12 +39,12 @@ public class SecurityConfig {
     @Lazy
     @Autowired
     public SecurityConfig(JwtTokenProvider jwtTokenProvider,
-                          UserDetailsService userDetailsService,
-                          RedisTemplate<String, String> redisTemplate,
-                          CustomOAuth2UserService customOAuth2UserService,
-                          CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler,
-                          CustomOAuth2FailureHandler customOAuth2FailureHandler) {
-      
+            UserDetailsService userDetailsService,
+            RedisTemplate<String, String> redisTemplate,
+            CustomOAuth2UserService customOAuth2UserService,
+            CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler,
+            CustomOAuth2FailureHandler customOAuth2FailureHandler) {
+
         this.jwtTokenProvider = jwtTokenProvider;
         this.userDetailsService = userDetailsService;
         this.redisTemplate = redisTemplate;
@@ -59,7 +58,9 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable()) // ✅ SSE 사용을 위해 CSRF 비활성화
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // ✅ JWT 기반 세션 관리
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // ✅ JWT
+                                                                                                              // 기반 세션
+                                                                                                              // 관리
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/members/check-email", "/members/signup/",
                                 "/members/signup/**",
@@ -78,14 +79,15 @@ public class SecurityConfig {
                                 "/workspace/**")
                         .hasRole("USER") // 사용자 전용
                         .requestMatchers("/notification/subscribe").permitAll() // ✅ SSE 구독 요청 허용
-                        .requestMatchers("/notification/unread", "/notification/read-single", "/notification/read-all", "/notification/delete").authenticated() // ✅ 알림 관련 API는 인증 필요
+                        .requestMatchers("/notification/unread", "/notification/read-single", "/notification/read-all",
+                                "/notification/delete")
+                        .authenticated() // ✅ 알림 관련 API는 인증 필요
                         .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         .successHandler(customAuthenticationSuccessHandler)
-                        .failureHandler(customOAuth2FailureHandler)
-                )
+                        .failureHandler(customOAuth2FailureHandler))
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService, redisTemplate),
                         UsernamePasswordAuthenticationFilter.class);
