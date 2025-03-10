@@ -22,24 +22,15 @@ const utilities = {
   children: [
     {
       id: 'schedules',
-      title: '업무 관리',
+      title: '일정 관리',
       type: 'collapse',
-      icon: icons.IconKey,
+      icon: icons.IconCalendar,
       children: [
         {
           id: 'calendarView',
           title: '캘린더로 보기',
           type: 'item',
-          icon: icons.IconCalendar,
-          url: '/schedule/calendar',
-          target: false,
-          breadcrumbs: false
-        },
-        {
-          id: 'ganttView',
-          title: '간트차트로 보기',
-          type: 'item',
-          url: '/schedule/gantt',
+          url: '/schedule',
           target: false,
           breadcrumbs: false
         },

@@ -12,19 +12,26 @@ public class NotificationEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long notificationNumber; // PK, 자동 증가
 
-    @Column(nullable = false, length = 255)
-    private String memberEmail; // 알림 대상 사용자 이메일
-
-    private Long workspaceId; // 워크스페이스 ID (NULL 가능)
-    private Long scheduleNumber; // 스케줄 ID (NULL 가능)
-    private Long recordNumber; // 회의록 ID (NULL 가능)
-    private Long workdataNumber; // 작업 데이터 ID (NULL 가능)
+    @Column(nullable = false)
+    private Long wsId; // 워크스페이스 ID
 
     @Column(nullable = false, length = 255)
-    private String notificationName; // 알림 이름
+    private String senderEmail; // 알림을 보낸 사람의 이메일
 
     @Column(nullable = false, length = 255)
-    private String notificationType; // 알림 유형 (ex. schedule_update, record_update)
+    private String senderNickname; // 알림을 보낸 사람의 닉네임
+
+    @Column(nullable = false, length = 255)
+    private String receiverEmail; // 알림을 받는 사람의 이메일
+
+    @Column(nullable = false, length = 255)
+    private String receiverNickname; // 알림을 받는 사람의 닉네임
+
+    @Column(nullable = false, length = 255)
+    private String notificationName; // 알림 제목
+
+    @Column(nullable = false, length = 255)
+    private String notificationType; // 알림 유형 (ex. workdata_create, schedule_update 등)
 
     @Column(nullable = false)
     private boolean notificationStatus; // 읽음 여부 (false: 읽지 않음, true: 읽음)
@@ -34,4 +41,6 @@ public class NotificationEntity {
 
     @Column(nullable = false)
     private LocalDateTime notificationDate; // 알림 생성일 (기본값: CURRENT_TIMESTAMP)
+
+    private String notificationUrl;  // ✅ 알림 클릭 시 이동할 URL 추가
 }

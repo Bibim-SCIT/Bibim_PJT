@@ -1,3 +1,7 @@
+import axios from "axios";
+
+const API_BASE_URL = "/api"; // ✅ Vite 프록시 적용
+
 /**
  * 워크스페이스 업데이트
  * @param {string} wsName - 현재 워크스페이스 이름
@@ -7,17 +11,17 @@
 export const updateWorkspace = async (wsName, newName, file) => {
     try {
         const formData = new FormData();
-        formData.append('wsName', wsName);
-        formData.append('newName', newName);
+        formData.append("wsName", wsName);
+        formData.append("newName", newName);
         
         if (file) {
-            formData.append('file', file);
+            formData.append("file", file);
         }
 
         const response = await axios.put(`${API_BASE_URL}/workspace`, formData, {
             headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${hardcodedToken}`
+                "Content-Type": "multipart/form-data",
+                "Authorization": `Bearer ${hardcodedToken}` // ✅ 기존 방식 유지
             }
         });
 
@@ -25,4 +29,4 @@ export const updateWorkspace = async (wsName, newName, file) => {
     } catch (error) {
         throw error;
     }
-}; 
+};

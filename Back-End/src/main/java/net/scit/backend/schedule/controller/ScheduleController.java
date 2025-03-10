@@ -19,6 +19,7 @@ public class ScheduleController {
 
     private final ScheduleService scheduleService;
 
+    // 스케줄 생성
     @PostMapping
     public ResponseEntity<ResultDTO<SuccessDTO>> createSchedule(@RequestBody ScheduleDTO scheduleDTO) {
         ResultDTO<SuccessDTO> result = scheduleService.createSchedule(scheduleDTO);

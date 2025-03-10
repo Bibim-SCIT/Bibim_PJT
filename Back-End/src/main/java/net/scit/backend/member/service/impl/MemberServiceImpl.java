@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import net.scit.backend.member.event.MemberEvent;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -35,21 +36,20 @@ import net.scit.backend.member.dto.SignupDTO;
 import net.scit.backend.member.dto.UpdateInfoDTO;
 import net.scit.backend.member.dto.VerificationDTO;
 import net.scit.backend.member.entity.MemberEntity;
-import net.scit.backend.member.event.MemberUpdatedEvent;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.member.service.MemberService;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.redis.core.RedisTemplate;
+// import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
+// import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+// import org.springframework.stereotype.Service;
+// import org.springframework.util.StringUtils;
+// import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
+// import java.io.IOException;
+// import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
+// import java.util.concurrent.TimeUnit;
 
 /**
  * Member관련 업무를 수행하는 Service
@@ -337,7 +337,10 @@ public class MemberServiceImpl implements MemberService {
         // 3. 변경된 정보 저장
         memberRepository.save(member);
 
-        // 4. SuccessDTO 생성 후 반환
+        // 4. 이벤트 발생 (회원 정보 수정 이벤트)
+        eventPublisher.publishEvent(new MemberEvent(member, member.getEmail(), member.getName(), "member_update"));
+
+        // 5. SuccessDTO 생성 후 반환
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
                 .build();
@@ -396,6 +399,9 @@ public class MemberServiceImpl implements MemberService {
         // 변경된 비밀번호로 사용자 비밀번호 번경 저장
         member.setPassword(password);
         memberRepository.save(member);
+
+        // 이벤트 발생 (비밀번호 변경 이벤트)
+        eventPublisher.publishEvent(new MemberEvent(member, member.getEmail(), member.getName(), "password_update"));
 
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
@@ -495,28 +501,4 @@ public class MemberServiceImpl implements MemberService {
         return ResultDTO.of("연동 요청에 성공했습니다.", successDTO);
     }
 
-    /**
-     * 멤버 DB 변경 시 알림 전송
-     * 
-     * @param updatedMember
-     * @param updatedBy
-     */
-    @Transactional
-    public void updateMember(MemberEntity updatedMember, String updatedBy) {
-        MemberEntity existingMember = memberRepository.findById(updatedMember.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다."));
-
-        // 변경 사항 반영
-        existingMember.setName(updatedMember.getName());
-        existingMember.setNationality(updatedMember.getNationality());
-        existingMember.setLanguage(updatedMember.getLanguage());
-        existingMember.setProfileImage(updatedMember.getProfileImage());
-        existingMember.setLoginStatus(updatedMember.isLoginStatus());
-
-        // 변경된 회원 정보 저장
-        memberRepository.save(existingMember);
-
-        // ✅ 회원 정보 변경 이벤트 발생
-        eventPublisher.publishEvent(new MemberUpdatedEvent(existingMember, updatedBy));
-    }
 }
