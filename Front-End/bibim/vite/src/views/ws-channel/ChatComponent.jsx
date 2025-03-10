@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import React, { useEffect, useState, useRef, useContext, useCallback } from "react";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
@@ -32,40 +33,59 @@ function ChatComponent({ channelId, workspaceId }) {
     // WebSocket 클라이언트 참조
     const stompClientRef = useRef(null);
 
-    /**
-     * WebSocket 연결 설정
-     * 컴포넌트 마운트 시 WebSocket 연결을 설정하고, 
-     * 언마운트 시 연결을 해제
-     */
-    useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (!token || !channelId || !user) return;
-
-        // WebSocket 연결 설정
-        const socket = new SockJS("http://localhost:8080/ws/chat");
-        const client = new Client({
-            webSocketFactory: () => socket,
-            connectHeaders: { Authorization: `Bearer ${token}` },
-            
-            // 연결 성공 시 채널 구독
-            onConnect: () => {
-                client.subscribe(`/exchange/chat-exchange/msg.${channelId}`, (message) => {
-                    try {
-                        const parsedMessage = JSON.parse(message.body);
-                        setMessages((prev) => [...prev, parsedMessage]);
-                    } catch (error) {
-                        console.error("❌ 메시지 파싱 오류:", error);
-                    }
-                });
-                stompClientRef.current = client;
-            },
-            onStompError: (error) => console.error("STOMP 에러:", error),
-            onWebSocketClose: () => console.log("WebSocket 연결 종료"),
+/**
+ * 과거 메시지 가져오기 함수
+ */
+const fetchMessages = async () => {
+    const token = localStorage.getItem("token");
+    try {
+        const response = await fetch(`http://localhost:8080/api/chat/messages/${channelId}`, {
+            headers: { Authorization: `Bearer ${token}` },
         });
+        if (!response.ok) throw new Error("메시지 조회 실패");
 
-        client.activate();
-        return () => client.deactivate(); // 컴포넌트 언마운트 시 연결 해제
-    }, [channelId, user]);
+        const data = await response.json();
+        setMessages(data); // 기존 메시지 상태에 추가
+    } catch (error) {
+        console.error("❌ 메시지 조회 오류:", error);
+    }
+};
+
+/**
+ * WebSocket 연결 설정 및 과거 메시지 로딩 추가
+ */
+useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token || !channelId || !user) return;
+
+    // ✅ 과거 메시지 먼저 가져오기
+    fetchMessages();
+
+    // WebSocket 연결 설정
+    const socket = new SockJS("http://localhost:8080/ws/chat");
+    const client = new Client({
+        webSocketFactory: () => socket,
+        connectHeaders: { Authorization: `Bearer ${token}` },
+        
+        // 연결 성공 시 채널 구독
+        onConnect: () => {
+            client.subscribe(`/exchange/chat-exchange/msg.${channelId}`, (message) => {
+                try {
+                    const parsedMessage = JSON.parse(message.body);
+                    setMessages((prev) => [...prev, parsedMessage]); // 실시간 메시지 추가
+                } catch (error) {
+                    console.error("❌ 메시지 파싱 오류:", error);
+                }
+            });
+            stompClientRef.current = client;
+        },
+        onStompError: (error) => console.error("STOMP 에러:", error),
+        onWebSocketClose: () => console.log("WebSocket 연결 종료"),
+    });
+
+    client.activate();
+    return () => client.deactivate(); // 컴포넌트 언마운트 시 연결 해제
+}, [channelId, user]);
 
     /**
      * 메시지 전송 함수
