@@ -3,7 +3,6 @@ package net.scit.backend.notification.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.jwt.AuthUtil;
-import net.scit.backend.notification.dto.NotificationRequestDTO;
 import net.scit.backend.notification.entity.NotificationEntity;
 import net.scit.backend.notification.service.NotificationService;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;

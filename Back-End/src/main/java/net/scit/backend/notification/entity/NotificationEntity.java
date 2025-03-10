@@ -10,9 +10,9 @@ import java.time.LocalDateTime;
 public class NotificationEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long notificationNumber; // PK, 자동 증가
+    @Column(name = "notification_number", nullable = false, updatable = false)
+    private Long notificationNumber;
 
-    @Column(nullable = false)
     private Long wsId; // 워크스페이스 ID
 
     @Column(nullable = false, length = 255)

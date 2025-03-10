@@ -48,6 +48,7 @@ const formatDate = (dateString) => {
 
 // 권한 이름을 한글로 변환하는 함수 (예: 'owner' -> '오너')
 const mapRole = (role) => {
+    if (!role) return '멤버';  // role이 없는 경우 기본값
     return role.toLowerCase() === 'owner' ? '오너' : '멤버';
 };
 
@@ -72,6 +73,9 @@ const WsUserRoleManagement = () => {
     // 워크스페이스 사용자 목록 상태
     const [users, setUsers] = useState([]);
 
+    // 로컬 로딩 상태 추가
+    const [isLoading, setIsLoading] = useState(false);
+
     // 알림 메시지 표시를 위한 스낵바 상태
     const [snackbar, setSnackbar] = useState({
         open: false,
@@ -84,19 +88,33 @@ const WsUserRoleManagement = () => {
     const loading = useSelector((state) => state.workspace.loading);
 
     useEffect(() => {
-        console.log("불러온다")
         const loadUsers = async () => {
             if (activeWorkspace) {
+                setIsLoading(true);
                 try {
                     const response = await fetchWorkspaceUsers(activeWorkspace.wsId);
-                    console.log("대답", response);
-                    console.log("대답2", response.data)
-                    const usersData = response || [];
-                    console.log('초기 로딩된 사용자 목록:', usersData);
-                    setUsers(usersData);
+                    console.log("워크스페이스 사용자 응답:", response);
+                    
+                    if (response && response.data) {
+                        setUsers(response.data);
+                    } else {
+                        setUsers([]);
+                        setSnackbar({
+                            open: true,
+                            message: '사용자 정보를 불러오는데 실패했습니다.',
+                            severity: 'error'
+                        });
+                    }
                 } catch (error) {
                     console.error('사용자 정보 조회 실패:', error);
                     setUsers([]);
+                    setSnackbar({
+                        open: true,
+                        message: '사용자 정보를 불러오는데 실패했습니다.',
+                        severity: 'error'
+                    });
+                } finally {
+                    setIsLoading(false);
                 }
             } else {
                 setUsers([]);
@@ -104,7 +122,7 @@ const WsUserRoleManagement = () => {
         };
 
         loadUsers();
-    }, [activeWorkspace, fetchWorkspaceUsers]);
+    }, [activeWorkspace]);
 
     // 사용자 강퇴 처리 함수
     const handleKickUser = (usermemeber) => {
@@ -258,16 +276,16 @@ const WsUserRoleManagement = () => {
                                                         bgcolor: '#e0e0e0'
                                                     }}
                                                 >
-                                                    {usermember.nickname[0]}
+                                                    {usermember.nickname ? usermember.nickname.charAt(0) : '?'}
                                                 </Avatar>
-                                                <Typography>{usermember.nickname}</Typography>
+                                                <Typography>{usermember.nickname || '알 수 없음'}</Typography>
                                             </Box>
                                         </TableCell>
                                         <TableCell sx={{ pl: 2 }}>{usermember.email}</TableCell>
                                         <TableCell sx={{ pl: 2 }}>{formatDate(usermember.lastActiveTime)}</TableCell>
                                         <TableCell sx={{ pl: 2 }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Typography>{mapRole(usermember.wsRole)}</Typography>
+                                                <Typography>{mapRole(usermember?.wsRole)}</Typography>
                                                 <Button
                                                     size="small"
                                                     onClick={() => handleOpenRoleSettings(usermember)}
@@ -316,8 +334,11 @@ const WsUserRoleManagement = () => {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={5} sx={{ textAlign: 'center' }}>
-                                        {/* <Typography>사용자가 없습니다.</Typography> */}
-                                        <WSMLoadingScreen />
+                                        {isLoading ? (
+                                            <WSMLoadingScreen />
+                                        ) : (
+                                            <Typography>사용자가 없습니다.</Typography>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             )}

@@ -33,8 +33,8 @@ public class SecurityConfig {
     @Lazy
     @Autowired
     public SecurityConfig(JwtTokenProvider jwtTokenProvider,
-                          UserDetailsService userDetailsService,
-                          RedisTemplate<String, String> redisTemplate) {
+            UserDetailsService userDetailsService,
+            RedisTemplate<String, String> redisTemplate) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.userDetailsService = userDetailsService;
         this.redisTemplate = redisTemplate;
@@ -45,7 +45,8 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable()) // ✅ SSE 사용을 위해 CSRF 비활성화
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // ✅ JWT 기반 관리
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // ✅ JWT
+                                                                                                              // 기반 관리
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/members/check-email", "/members/signup/",
                                 "/members/signup/**",
@@ -54,6 +55,7 @@ public class SecurityConfig {
                                 "/members/signup/check-mail", // ✅ 인증 코드 확인 요청 허용
                                 "/oauth2/link",
                                 "/oauth2/google",
+                                "/oauth2/link",
                                 "/workdata/**", // 자료실 관련(추후 삭제)
                                 "/workspace/**",
                                 "/ws/**",

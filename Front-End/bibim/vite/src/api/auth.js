@@ -176,3 +176,44 @@ export const updateWorkspaceMemberInfo = async (wsId, updateInfo, file) => {
         throw error.response?.data || "워크스페이스 프로필 수정 실패";
     }
 };
+
+// 구글 로그인 전용 함수 추가
+// 구글 로그인 요청 (googleData는 jwtDecode된 객체)
+export const googleLoginUser = async (googleData) => {
+    try {
+        // 백엔드의 구글 로그인 엔드포인트로 POST 요청
+        const response = await api.post("/oauth2/google", googleData);
+
+        // 응답에서 accessToken 추출 (백엔드에서 로그인 후 토큰과 함께 사용자 정보가 없다면, 별도로 사용자 정보를 조회해야 합니다)
+        const { data } = response.data;
+        const { accessToken } = data;
+
+        console.log("구글 로그인 성공, 발급된 토큰:", accessToken);
+
+        // JWT를 로컬스토리지에 저장
+        localStorage.setItem("token", accessToken);
+
+        // 모든 요청에 자동으로 JWT를 포함하도록 설정
+        api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+        console.log("요청 헤더에 JWT 설정 완료:", api.defaults.headers.common["Authorization"]);
+
+        // 로그인 성공 후 즉시 사용자 정보 요청
+        const userInfo = await getUserInfo();
+        return userInfo;
+    } catch (error) {
+        console.error("구글 로그인 오류:", error.response?.data || error);
+        throw error.response?.data || "구글 로그인 실패";
+    }
+};
+
+// 구글 계정 연동 요청 API (email과 linkYn을 쿼리 파라미터로 전송)
+export const linkGoogleAccount = async (email, linkYn) => {
+    try {
+        const response = await api.post("/oauth2/link", null, { params: { email, linkYn } });
+        console.log("구글 계정 연동 성공:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("연동 요청 오류:", error.response?.data || error);
+        throw error.response?.data || "연동 요청 오류";
+    }
+};
