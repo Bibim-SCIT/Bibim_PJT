@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Box, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import GanttChart from './components/GanttChart';
+import GanttChart from '../components/GanttChart';
 import KanbanBoard from '../components/KanbanBoard';
 import { useSelector, useDispatch } from 'react-redux';
 import { loadWorkspace } from '../../../store/workspaceRedux';

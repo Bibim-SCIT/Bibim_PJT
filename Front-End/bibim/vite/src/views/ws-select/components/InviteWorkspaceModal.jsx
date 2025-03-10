@@ -76,6 +76,10 @@ export default function InviteWorkspaceModal({ open, onClose }) {
                                         cursor: 'pointer',
                                         p: 1,
                                         borderBottom: '1px solid #eee',
+                                        transition: 'background-color 0.2s ease-in-out',
+                                        '&:hover': {
+                                            backgroundColor: '#f0f4ff', // 밝은 푸른색 계열 (원하는 색으로 변경 가능)
+                                        },
                                     }}
                                     onClick={() => handleWorkspaceSelect(ws)}
                                 >

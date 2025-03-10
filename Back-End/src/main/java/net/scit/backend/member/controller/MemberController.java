@@ -127,8 +127,6 @@ public class MemberController {
 
     /**
      * 회원 정보 조회
-     *
-     * @return 회원 정보
      */
     @GetMapping("/myinfo")
     public ResponseEntity<ResultDTO<MyInfoDTO>> myInfo() {
@@ -205,15 +203,11 @@ public class MemberController {
         return ResponseEntity.ok(result);
     }
 
-    /***
-     * 
-     * 회원 탈퇴**
-     * 
-     * @param token
-     * @param password
+    /**
+     * 회원 탈퇴
+     * @param memberDTO
      * @return
      */
-
     @DeleteMapping("/withdraw")
     public ResponseEntity<ResultDTO<SuccessDTO>> withdraw(@RequestBody MemberDTO memberDTO) {
 

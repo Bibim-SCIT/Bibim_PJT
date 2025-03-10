@@ -120,6 +120,7 @@ export const getWorkspaceMembers = async (workspaceId) => {
         const response = await api.get(`${API_BASE_URL}/myinfo`, {
             params: { wsId: workspaceId }
         });
+        console.log('API 응답:', response);  // 응답 확인
         return response.data;
     } catch (error) {
         throw error.response?.data || "워크스페이스 멤버 정보를 불러오는데 실패했습니다.";
