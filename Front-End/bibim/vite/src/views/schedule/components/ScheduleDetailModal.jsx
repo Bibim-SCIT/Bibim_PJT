@@ -8,6 +8,8 @@ import {
   Avatar,
   Chip,
   Button,
+  Divider,
+  Paper
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
@@ -16,11 +18,22 @@ import ScheduleEditModal from './ScheduleEditModal';
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
-    borderRadius: '12px',
+    borderRadius: '16px',
     padding: '24px',
-    maxWidth: '500px',
+    maxWidth: '550px',
     width: '100%',
+    backgroundColor: theme.palette.background.default,
   },
+}));
+
+const InfoBox = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px',
+  backgroundColor: theme.palette.grey[100],
+  padding: '12px',
+  borderRadius: '8px',
+  marginBottom: '12px',
 }));
 
 const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate }) => {
@@ -54,88 +67,85 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate }) => {
     setEditModalOpen(false);
   };
 
-  // ✅ 모달 닫기 시 selectedSchedule을 초기화하지 않고 유지
-  const handleClose = () => {
-    console.log("📌 모달 닫기 실행됨");
-    onClose(); // ✅ 모달만 닫고 기존 데이터 유지
-  };
-
   return (
     <>
-      <StyledDialog
-        open={open} // ✅ props.open을 기반으로 상태 관리
-        onClose={handleClose} // ✅ 수정된 닫기 함수 사용
-        maxWidth="sm"
-        fullWidth
-      >
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6">스케줄 보기</Typography>
-          <IconButton onClick={handleClose} size="small">
+      <StyledDialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+        {/* 모달 헤더 */}
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Typography variant="h3" fontWeight="bold">스케줄 상세 정보</Typography>
+          <IconButton onClick={onClose} size="small">
             <CloseIcon />
           </IconButton>
         </Box>
 
-        <Typography color="textSecondary" sx={{ mb: 3 }}>
-          마지막 수정 시간 : {formatDate(localSchedule.scheduleModifytime)}
-        </Typography>
+        <Divider sx={{ my: 2 }} />
 
-        <Box>
-          <Box display="flex" gap={2} mb={2}>
-            <Typography fontWeight="500">스케줄 제목:</Typography>
+        {/* 스케줄 정보 */}
+        <DialogContent>
+          <Typography color="textSecondary" sx={{ mb: 2, fontSize: '14px' }}>
+            마지막 수정: {formatDate(localSchedule.scheduleModifytime)}
+          </Typography>
+
+          <InfoBox>
+            <Typography fontWeight="600">📌 제목:</Typography>
             <Typography>{localSchedule.scheduleTitle}</Typography>
-          </Box>
+          </InfoBox>
 
-          <Box display="flex" gap={2} mb={2}>
-            <Typography fontWeight="500">담당자:</Typography>
+          {/* 담당자 정보 */}
+          <Paper elevation={2} sx={{ p: 2, mb: 2, borderRadius: '8px', display: 'flex', alignItems: 'center', gap: 2 }}>
             {localSchedule.nickname ? (
-              <Box display="flex" alignItems="center" gap={1}>
-                <Avatar
-                  src={localSchedule.userProfileImage}
-                  sx={{ width: 24, height: 24 }}
-                />
-                <Typography>{localSchedule.nickname}</Typography>
-              </Box>
+              <>
+                <Avatar src={localSchedule.userProfileImage} sx={{ width: 40, height: 40 }} />
+                <Typography fontWeight="500">{localSchedule.nickname}</Typography>
+              </>
             ) : (
-              <Typography color="text.secondary">담당자가 없습니다</Typography>
+              <Typography color="text.secondary">담당자가 지정되지 않았습니다</Typography>
             )}
-          </Box>
+          </Paper>
 
-          <Box display="flex" gap={2} mb={2}>
-            <Typography fontWeight="500">스케줄 시작일:</Typography>
+          <InfoBox>
+            <Typography fontWeight="600">🗓 시작일:</Typography>
             <Typography>{formatDate(localSchedule.scheduleStartDate)}</Typography>
-          </Box>
+          </InfoBox>
 
-          <Box display="flex" gap={2} mb={2}>
-            <Typography fontWeight="500">스케줄 완료일:</Typography>
+          <InfoBox>
+            <Typography fontWeight="600">⏳ 완료일:</Typography>
             <Typography>{formatDate(localSchedule.scheduleFinishDate)}</Typography>
+          </InfoBox>
+
+          <InfoBox>
+            <Typography fontWeight="600">📄 내용:</Typography>
+            <Typography>{localSchedule.scheduleContent || "내용이 없습니다."}</Typography>
+          </InfoBox>
+
+          {/* 태그 */}
+          <Box display="flex" gap={1} flexWrap="wrap" mt={2}>
+            {localSchedule.tag1 && <Chip label={`# ${localSchedule.tag1}`} color="primary" />}
+            {localSchedule.tag2 && <Chip label={`# ${localSchedule.tag2}`} color="secondary" />}
+            {localSchedule.tag3 && <Chip label={`# ${localSchedule.tag3}`} color="success" />}
           </Box>
 
-          {localSchedule.scheduleContent && (
-            <Box display="flex" gap={2} mb={2}>
-              <Typography fontWeight="500">스케줄 내용:</Typography>
-              <Typography>{localSchedule.scheduleContent}</Typography>
-            </Box>
-          )}
-
-          <Box display="flex" gap={2} flexWrap="wrap" mt={2}>
-            {localSchedule.tag1 && <Chip label={localSchedule.tag1} size="small" />}
-            {localSchedule.tag2 && <Chip label={localSchedule.tag2} size="small" />}
-            {localSchedule.tag3 && <Chip label={localSchedule.tag3} size="small" />}
-          </Box>
-
+          {/* 수정 버튼 */}
           <Box display="flex" justifyContent="center" mt={3}>
             <Button
               variant="contained"
               startIcon={<EditIcon />}
               onClick={handleEditClick}
-              sx={{ minWidth: '120px' }}
+              sx={{
+                minWidth: '140px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                backgroundColor: "#1976d2",
+                "&:hover": { backgroundColor: "#1565c0" },
+              }}
             >
               수정하기
             </Button>
           </Box>
-        </Box>
+        </DialogContent>
       </StyledDialog>
 
+      {/* 수정 모달 */}
       <ScheduleEditModal
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
@@ -147,4 +157,3 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate }) => {
 };
 
 export default ScheduleDetailModal;
-

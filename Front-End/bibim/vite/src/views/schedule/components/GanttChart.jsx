@@ -4,6 +4,7 @@ import { styled } from "@mui/material/styles";
 import { Gantt, ViewMode } from "gantt-task-react"; // ✅ Task 제거
 import "gantt-task-react/dist/index.css";
 import dayjs from "dayjs"; // ✅ 날짜 변환을 위한 dayjs 추가
+import ScheduleDetailModal from "./ScheduleDetailModal"; // ✅ 모달 추가
 
 const GanttWrapper = styled(Box)({
   padding: "20px",
@@ -47,18 +48,27 @@ const CustomTaskListHeader = ({ headerHeight, rowWidth }) => (
 );
 
 // ✅ 커스텀 Task List Table
-const CustomTaskListTable = ({ tasks, rowHeight, rowWidth }) => (
+const CustomTaskListTable = ({ tasks, rowHeight, onTaskClick }) => (
   <div>
     {tasks.map((task) => (
-      <div key={task.id} style={{
-        height: rowHeight,
-        width: "350px",
-        display: "grid",
-        gridTemplateColumns: "50% 25% 25%", // 👉 컬럼 크기 조정
-        alignItems: "center",
-        borderBottom: "1px solid #ddd",
-        padding: "5px"
-      }}>
+      <div
+        key={task.id}
+        style={{
+          height: rowHeight,
+          width: "350px",
+          display: "grid",
+          gridTemplateColumns: "50% 25% 25%", // 👉 컬럼 크기 조정
+          alignItems: "center",
+          borderBottom: "1px solid #ddd",
+          padding: "5px",
+          cursor: "pointer", // ✅ 클릭 가능하도록 설정
+          backgroundColor: "#fff",
+          transition: "background-color 0.2s ease-in-out",
+        }}
+        onClick={() => onTaskClick(task)} // ✅ 클릭 시 모달 열기
+        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f0f0")}
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#fff")}
+      >
         <span>{task.name}</span>
         <span>{formatDate(task.start)}</span>
         <span>{formatDate(task.end)}</span>
@@ -70,6 +80,8 @@ const CustomTaskListTable = ({ tasks, rowHeight, rowWidth }) => (
 const GanttChart = ({ tasks }) => {
   const [ganttTasks, setGanttTasks] = useState([]);
   const [viewMode, setViewMode] = useState(ViewMode.Day); // ✅ 기본값: Week
+  const [selectedTask, setSelectedTask] = useState(null); // ✅ 선택된 Task 저장
+  const [isModalOpen, setIsModalOpen] = useState(false); // ✅ 모달 상태
 
   console.log("간트 받아오는 값", tasks);
 
@@ -89,11 +101,18 @@ const GanttChart = ({ tasks }) => {
         progress: task.progress || 0, // 기본 진행률 0
         dependencies: task.dependencies || [], // 기본 의존성 []
         type: task.type || "task", // 기본 타입 설정
-        status: task.status
+        status: task.status,
+        extendedProps: task, // ✅ 원본 데이터 유지하여 모달에서 활용 가능하도록 추가
       }));
 
     setGanttTasks(formattedTasks);
   }, [tasks]);
+
+  // ✅ `selectedTask` 변경될 때 모니터링
+  useEffect(() => {
+    console.log("🎯 선택된 Task 변경됨:", selectedTask);
+  }, [selectedTask]);
+
 
   // ✅ 뷰 모드 변경 함수
   const handleViewModeChange = (event, newMode) => {
@@ -101,6 +120,30 @@ const GanttChart = ({ tasks }) => {
       setViewMode(newMode);
     }
   };
+
+  // ✅ Task 클릭 시 원본 tasks에서 데이터를 찾아서 저장
+  const handleTaskClick = (task) => {
+    console.log("📌 클릭한 Task (formattedTasks 데이터)", task);
+
+    // ✅ 원본 `tasks`에서 해당 ID와 매칭되는 데이터 찾기
+    const originalTask = tasks.find(t => String(t.id) === String(task.id));
+
+    if (originalTask) {
+      console.log("✅ 원본 데이터에서 찾은 Task", originalTask);
+      setSelectedTask(originalTask);
+      setIsModalOpen(true);
+    } else {
+      console.error("❌ 원본 데이터에서 일치하는 Task를 찾을 수 없음!", task.id);
+    }
+  };
+
+
+
+  // ✅ Task 클릭 시 모달 열기
+  // const handleTaskClick = (task) => {
+  //   setSelectedTask(task);
+  //   setIsModalOpen(true);
+  // };
 
   return (
 
@@ -135,11 +178,19 @@ const GanttChart = ({ tasks }) => {
           viewDate={new Date()} // ✅ 기본 표시 날짜 설정 (오늘 날짜 기준)
           listCellWidth="120px" // ✅ 왼쪽 Task List 너비 조절 (기본값: "155px")
           TaskListHeader={CustomTaskListHeader}
-          TaskListTable={CustomTaskListTable}
+          // TaskListTable={CustomTaskListTable}
+          TaskListTable={(props) => <CustomTaskListTable {...props} onTaskClick={handleTaskClick} />} // ✅ Task 클릭 핸들러 추가
         />
       ) : (
         <p>⏳ 등록된 작업이 없습니다.</p>
       )}
+
+      {/* ✅ 일정 상세 모달 추가 */}
+      <ScheduleDetailModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        schedule={selectedTask?.extendedProps || selectedTask} // ✅ 원본 데이터 유지
+      />
     </GanttWrapper>
   );
 };
