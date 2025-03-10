@@ -20,7 +20,6 @@ const SchedulePage = () => {
     <SchedulePageWrapper>
       <Typography variant="h4" component="h1">{activeWorkspace.wsName}의 일정 관리</Typography>
       <Calendar />
-      <KanbanBoard />
     </SchedulePageWrapper>
   );
 };
