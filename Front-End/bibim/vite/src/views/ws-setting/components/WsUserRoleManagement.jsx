@@ -94,9 +94,11 @@ const WsUserRoleManagement = () => {
                 try {
                     const response = await fetchWorkspaceUsers(activeWorkspace.wsId);
                     console.log("워크스페이스 사용자 응답:", response);
-                    
-                    if (response && response.data) {
-                        setUsers(response.data);
+
+                    if (response && (response.data || response)) {
+                        const usersData = response.data || response;
+                        console.log("받기성공", usersData);
+                        setUsers(usersData);
                     } else {
                         setUsers([]);
                         setSnackbar({
@@ -224,7 +226,7 @@ const WsUserRoleManagement = () => {
     // users 상태가 변경될 때마다 확인
     useEffect(() => {
         console.log('현재 users 상태:', users);
-    }, [users]);
+    }, [users, activeWorkspace]);
 
     if (loading) {
         return (
