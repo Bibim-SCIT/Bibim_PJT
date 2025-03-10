@@ -26,7 +26,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 // Google Login
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
-// import jwt_decode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 // ===============================|| JWT - LOGIN ||=============================== //
 
@@ -92,18 +92,18 @@ export default function AuthLogin() {
 
   // Google 로그인 성공 시 실행되는 함수
   const handleGoogleLoginSuccess = (response) => {
-    const decodedToken = jwt_decode(response.credential);
+    const decodedToken = jwtDecode(response.credential);
     console.log('Google 로그인 성공:', decodedToken);
 
     // 예: 서버에 Google 토큰 전송
-    // fetch('/api/google-login', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ token: response.credential })
-    // })
-    //   .then((res) => res.json())
-    //   .then((data) => console.log('서버 응답:', data))
-    //   .catch((err) => console.error('오류 발생:', err));
+    fetch('http://localhost:8080/oauth2/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(decodedToken) // ✅ `token` 키 없이 JSON만 전송
+    })
+      .then((res) => res.json())
+      .then((data) => console.log('서버 응답:', data))
+      .catch((err) => console.error('오류 발생:', err));
   };
 
   // Google 로그인 실패 시 실행되는 함수
@@ -190,7 +190,7 @@ export default function AuthLogin() {
       </Box>
 
       {/* 구글 로그인 버튼 */}
-      <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
+      <GoogleOAuthProvider clientId="683145059429-tifkm5q07fphttj9dqnglshu4vh95sk8.apps.googleusercontent.com">
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
           <GoogleLogin
             onSuccess={handleGoogleLoginSuccess}
