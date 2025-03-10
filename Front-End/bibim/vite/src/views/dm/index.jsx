@@ -19,6 +19,7 @@ import {
 import MainCard from "ui-component/cards/MainCard";
 import { ConfigContext } from "contexts/ConfigContext";
 import { fetchWorkspaceUsers } from "../../api/workspaceApi";
+import { useSelector } from 'react-redux';
 
 const generateRoomId = (wsId, senderEmail, receiverEmail) => {
     const cleanEmail = (email) => email.toLowerCase().split("@")[0];
@@ -39,11 +40,11 @@ const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient }) => {
             },
             withCredentials: true,
         })
-        .then((res) => {
-            console.log("📩 기존 메시지:", res.data);
-            setMessages(res.data);
-        })
-        .catch(console.error);
+            .then((res) => {
+                console.log("📩 기존 메시지:", res.data);
+                setMessages(res.data);
+            })
+            .catch(console.error);
     }, [wsId, roomId, token]);
 
     useEffect(() => {
@@ -120,9 +121,11 @@ const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient }) => {
 
 export default function DmPage() {
     const { user } = useContext(ConfigContext);
+    const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
+    const thisws = activeWorkspace?.wsId;
     const [users, setUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
-    const [wsId, setWsId] = useState(11);
+    const [wsId, setWsId] = useState(thisws);
     const [stompClient, setStompClient] = useState(null);
 
     useEffect(() => {
@@ -141,7 +144,7 @@ export default function DmPage() {
         fetchWorkspaceUsers(wsId)
             .then(setUsers)
             .catch(console.error);
-    }, [wsId]);
+    }, [activeWorkspace]);
 
     return (
         <MainCard title="디엠 페이지">

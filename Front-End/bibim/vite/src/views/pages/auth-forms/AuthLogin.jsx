@@ -206,7 +206,8 @@ export default function AuthLogin() {
       </Box>
 
       {/* 구글 로그인 버튼 */}
-      <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
+      {/* <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID"> */}
+      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
           <GoogleLogin
             onSuccess={handleGoogleLoginSuccess}
@@ -214,7 +215,7 @@ export default function AuthLogin() {
             useOneTap
           />
         </Box>
-      </GoogleOAuthProvider>
+      </GoogleOAuthProvider >
     </>
   );
 }
