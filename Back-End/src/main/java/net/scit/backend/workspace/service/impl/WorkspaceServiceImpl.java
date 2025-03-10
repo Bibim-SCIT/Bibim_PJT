@@ -486,7 +486,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
      * @return 사용자 프로필 사진, 워크스페이스 닉네임, 이메일, 마지막 로그인, 권한이 포함된 멤버 정보 리스트
      */
     @Override
-    @Cacheable(value = "workspaceMemberList", key = "#workspaceId", unless = "#result == null || #result.isEmpty()")
+//    @Cacheable(value = "workspaceMemberList", key = "#workspaceId", unless = "#result == null || #result.isEmpty()")
     public List<WorkspaceMemberDTO> getWorkspaceMembers(Long workspaceId, String userEmail) {
         // 요청한 사용자가 해당 워크스페이스의 멤버인지 확인
         Optional<WorkspaceMemberEntity> membershipOpt = workspaceMemberRepository
