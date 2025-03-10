@@ -3,11 +3,12 @@ package net.scit.backend.notification.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.jwt.AuthUtil;
-import net.scit.backend.notification.dto.NotificationRequestDTO;
 import net.scit.backend.notification.entity.NotificationEntity;
 import net.scit.backend.notification.service.NotificationService;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -111,49 +112,16 @@ public class NotificationController {
     }
 
     /**
-     * ✅ 새로운 알림을 수동으로 생성 (JWT 기반 + 워크스페이스 검증 추가)
-     * 
-     * @param token
-     * @param request
+     * 알림 클릭 시 해당 알림의 URL로 리다이렉트
+     * @param notificationId
      * @return
      */
-    @PostMapping("/create")
-    public ResponseEntity<String> createNotification(
-            @RequestHeader("Authorization") String token,
-            @RequestBody NotificationRequestDTO request) {
-        try {
-            String email = AuthUtil.getLoginUserId();
-
-            // 워크스페이스 검증 (workspaceId가 존재하는 경우에만 체크)
-            if (request.getWorkspaceId() != null) {
-                Optional<WorkspaceMemberEntity> optionalWsMember = workspaceMemberRepository
-                        .findByWorkspace_wsIdAndMember_Email(request.getWorkspaceId(), email);
-                if (optionalWsMember.isEmpty()) {
-                    return ResponseEntity.badRequest().body("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.");
-                }
-            }
-
-            // 알림 생성
-            notificationService.createNotification(email,
-                    request.getWorkspaceId(),
-                    request.getScheduleNumber(),
-                    request.getRecordNumber(),
-                    request.getWorkdataNumber(),
-                    request.getNotificationName(),
-                    request.getNotificationType(),
-                    request.getNotificationContent());
-
-            // 응답 메시지에 알림 정보 추가
-            String responseMessage = String.format(
-                    "알림 생성에 성공하였습니다. [알림 제목: %s, 유형: %s]",
-                    request.getNotificationName(),
-                    request.getNotificationType());
-
-            return ResponseEntity.ok(responseMessage);
-        } catch (Exception e) {
-            log.error("알림 생성 중 오류 발생", e);
-            return ResponseEntity.status(500).body("알림 생성 중 오류 발생: " + e.getMessage());
-        }
+    @GetMapping("/{notificationId}")
+    public ResponseEntity<Void> redirectToNotificationUrl(@PathVariable Long notificationId) {
+        String url = notificationService.getNotificationUrl(notificationId);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Location", url);
+        return new ResponseEntity<>(headers, HttpStatus.FOUND);
     }
 
 }

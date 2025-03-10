@@ -91,6 +91,7 @@ export const loginUser = async (email, password) => {
         const { data } = response.data; // ✅ 응답에서 data 객체 추출
         const { accessToken } = data; // ✅ accessToken 가져오기
 
+        console.log("data: ", response);
         console.log("🟢 로그인 성공, 발급된 토큰:", accessToken);
 
         // ✅ JWT를 로컬스토리지에 저장

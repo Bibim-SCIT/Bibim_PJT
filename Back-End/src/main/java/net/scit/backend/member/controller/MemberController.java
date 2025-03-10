@@ -34,8 +34,7 @@ public class MemberController {
      */
     @PostMapping("/signup")
     public ResponseEntity<ResultDTO<SuccessDTO>> signup(@RequestPart("signupDTO") SignupDTO signupDTO,
-
-            @RequestPart(value = "file", required = false) MultipartFile file) {
+                                                        @RequestPart(value = "file", required = false) MultipartFile file) {
 
         // 📌 `file`이 `null`인지 먼저 체크 후 로깅 (2025.02.17 추가코드)
         if (file == null) {
@@ -127,8 +126,6 @@ public class MemberController {
 
     /**
      * 회원 정보 조회
-     *
-     * @return 회원 정보
      */
     @GetMapping("/myinfo")
     public ResponseEntity<ResultDTO<MyInfoDTO>> myInfo() {
@@ -205,15 +202,11 @@ public class MemberController {
         return ResponseEntity.ok(result);
     }
 
-    /***
-     * 
-     * 회원 탈퇴**
-     * 
-     * @param token
-     * @param password
+    /**
+     * 회원 탈퇴
+     * @param memberDTO
      * @return
      */
-
     @DeleteMapping("/withdraw")
     public ResponseEntity<ResultDTO<SuccessDTO>> withdraw(@RequestBody MemberDTO memberDTO) {
 
@@ -230,16 +223,5 @@ public class MemberController {
         String email = AuthUtil.getLoginUserId();
         MemberLoginStatusDTO statusDTO = memberService.getLoginStatus(email);
         return ResponseEntity.ok(ResultDTO.of("로그인 상태 조회 성공", statusDTO));
-    }
-
-    /**
-     * 연동여부를 저장하는 API
-     * @param linkYn 연동동의 여부
-     * @return
-     */
-    @PostMapping("/link")
-    public ResponseEntity<?> linkAccount(@RequestParam String email, @RequestParam boolean linkYn) {
-        ResultDTO<SuccessDTO> result = memberService.linkAccount(email, linkYn);
-        return ResponseEntity.ok(result);
     }
 }

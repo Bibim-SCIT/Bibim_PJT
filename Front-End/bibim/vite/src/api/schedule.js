@@ -11,35 +11,54 @@ const getAxiosConfig = () => {
   };
 };
 
-// ✅ [공통] 스케줄 목록 조회 (간트 차트 & 캘린더에서 사용)
-export const fetchScheduleTasks = async (wsId) => {
+// ✅ 상태 코드 매핑 (프론트 → 백엔드)
+const statusMapping = {
+  unassigned: '1',
+  inProgress: '2',
+  completed: '3',
+  backlog: '4'
+};
+
+// ✅ 상태 코드 매핑 (백엔드 → 프론트)
+const statusMappingReverse = {
+  '1': "unassigned",
+  '2': "inProgress",
+  '3': "completed",
+  '4': "backlog",
+};
+
+// ✅ [공통] 칸반 보드 및 캘린더 작업 목록 조회
+export const fetchKanbanTasks = async (wsId) => {
+  if (!wsId) {
+    console.warn("🚨 fetchKanbanTasks: wsId가 없어서 요청을 중단합니다.");
+    return [];
+  }
+
   try {
-    const response = await api.get(`/schedule`, {
+    console.log(`📌 fetchKanbanTasks(${wsId}) API 요청 시작...`);
+
+    const response = await api.get("/schedule", {
       params: { wsId },
+      ...getAxiosConfig(),
     });
 
     console.log("📌 API 응답 데이터:", response.data);
 
     if (!response.data || !response.data.data) {
-      console.error("올바르지 않은 데이터 구조:", response.data);
+      console.error("❌ 올바르지 않은 데이터 구조:", response.data);
       return [];
     }
 
     return response.data.data.map((task) => ({
-      id: task.scheduleNumber || Math.random().toString(),
-      name: task.scheduleTitle || "제목 없음",
-      title: task.scheduleTitle || "제목 없음", // ✅ 캘린더용 title 추가
-      start: new Date(task.scheduleStartDate),
-      end: new Date(task.scheduleFinishDate),
-      allDay: true, // ✅ 캘린더용 추가 필드
-      type: "task",
-      progress: 0,
-      isDisabled: false,
-      styles: { backgroundColor: task.color || "#DBE2EF" },
-      extendedProps: { ...task }, // ✅ 모달에서 쓰기 위한 추가 데이터
+      id: task.scheduleNumber,
+      title: task.scheduleTitle || "제목 없음",
+      start: task.scheduleStartDate ? new Date(task.scheduleStartDate) : null,  
+      end: task.scheduleFinishDate ? new Date(task.scheduleFinishDate) : null,  
+      status: statusMappingReverse[task.scheduleStatus] || "unassigned", // ✅ 숫자 → 텍스트 변환
+      extendedProps: task,
     }));
   } catch (error) {
-    console.error("❌ 스케줄 데이터 가져오기 오류:", error.response?.data || error);
+    console.error("❌ fetchKanbanTasks API 요청 실패:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -56,10 +75,23 @@ export const createSchedule = async (scheduleData) => {
   return response.data;
 };
 
-// ✅ [공통] 스케줄 수정
-export const updateSchedule = async (scheduleNumber, changeScheduleDTO) => {
-  const response = await api.put(`/schedule/${scheduleNumber}`, changeScheduleDTO, getAxiosConfig());
-  return response.data;
+// ✅ [공통] 스케줄 수정 (PUT 요청)
+export const updateSchedule = async (scheduleId, updatedData) => {
+  if (!scheduleId || !updatedData) {
+    console.warn("🚨 updateSchedule: 잘못된 입력 값 (scheduleId, updatedData)");
+    return;
+  }
+
+  try {
+    console.log(`📌 updateSchedule(${scheduleId}) 요청 데이터:`, updatedData);
+
+    await api.put(`/schedule/${scheduleId}`, updatedData, getAxiosConfig());
+
+    console.log(`✅ ${scheduleId} 스케줄 수정 완료`);
+  } catch (error) {
+    console.error(`❌ ${scheduleId} 스케줄 수정 실패:`, error.response?.data || error.message);
+    throw error;
+  }
 };
 
 // ✅ [공통] 스케줄 삭제
@@ -68,24 +100,61 @@ export const deleteSchedule = async (scheduleNumber) => {
   return response.data;
 };
 
-// ✅ [공통] 스케줄 담당자 지정
+// ✅ [공통] 스케줄 담당자 지정 (추가)
 export const assignSchedule = async (scheduleNumber) => {
-  const response = await api.put(`/schedule/${scheduleNumber}/assignees`, {}, getAxiosConfig());
-  return response.data;
+  if (!scheduleNumber) {
+    console.warn("🚨 assignSchedule: 잘못된 입력 값 (scheduleNumber)");
+    return;
+  }
+
+  try {
+    console.log(`📌 assignSchedule(${scheduleNumber}) 요청`);
+
+    await api.put(`/schedule/${scheduleNumber}/assignees`, {}, getAxiosConfig());
+
+    console.log(`✅ ${scheduleNumber} 스케줄 담당자 지정 완료`);
+  } catch (error) {
+    console.error(`❌ ${scheduleNumber} 스케줄 담당자 지정 실패:`, error.response?.data || error.message);
+    throw error;
+  }
 };
 
-// ✅ [공통] 스케줄 상태 변경
-export const changeStatus = async (scheduleNumber, status) => {
-  const response = await api.put(`/schedule/${scheduleNumber}/status?status=${status}`, {}, getAxiosConfig());
-  return response.data;
+// ✅ [공통] 칸반 보드 상태 변경
+export const updateKanbanTaskStatus = async (taskId, newStatus) => {
+  if (!taskId || !newStatus) {
+    console.warn("🚨 updateKanbanTaskStatus: 잘못된 입력 값 (taskId, newStatus)");
+    return;
+  }
+
+  const statusCode = statusMapping[newStatus]; // ✅ 변환된 값 사용
+  if (!statusCode) {
+    console.error(`❌ updateKanbanTaskStatus: 잘못된 상태 값 (${newStatus})`);
+    return;
+  }
+
+  try {
+    console.log(`📌 updateKanbanTaskStatus(${taskId}) → ${statusCode} 요청`);
+    
+    // ✅ params 옵션을 사용하여 상태 값을 전송 (쿼리 파라미터 방식 수정)
+    await api.put(`/schedule/${taskId}/status`, null, {
+      params: { status: statusCode },
+      ...getAxiosConfig(),
+    });
+
+    console.log(`✅ ${taskId} 상태 변경 완료 (${newStatus})`);
+  } catch (error) {
+    console.error(`❌ ${taskId} 상태 변경 실패 (${newStatus}):`, error.response?.data || error.message);
+    throw error;
+  }
 };
 
+// ✅ 수정된 `fetchKanbanTasks`로 변경
 export default {
-  fetchScheduleTasks,
+  fetchKanbanTasks,
   getSchedule,
   createSchedule,
   updateSchedule,
   deleteSchedule,
   assignSchedule,
-  changeStatus,
+  updateKanbanTaskStatus, // ✅ 칸반 보드 상태 업데이트 추가
 };

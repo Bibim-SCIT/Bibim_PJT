@@ -16,6 +16,7 @@ public class ScheduleDTO {
     private Long wsId;
     private Long scheduleNumber;
     private String nickname;
+    private String profileImage;
     private String tag1;
     private String tag2;
     private String tag3;
@@ -27,7 +28,7 @@ public class ScheduleDTO {
     private LocalDateTime scheduleModifytime;
     private String color;
 
-    public static ScheduleDTO toDTO(ScheduleEntity scheduleEntity, String nickname, ScheduleTagEntity scheduleTagEntity) {
+    public static ScheduleDTO toDTO(ScheduleEntity scheduleEntity, String nickname, String profileImage, ScheduleTagEntity scheduleTagEntity) {
         String tag2 = (scheduleTagEntity.getMediumTag() != null) ? scheduleTagEntity.getMediumTag().getTagName() : null; // null 처리 추가
         String tag3 = (scheduleTagEntity.getSmallTag() != null) ? scheduleTagEntity.getSmallTag().getTagName() : null; // null 처리 추가
 
@@ -35,6 +36,7 @@ public class ScheduleDTO {
                 .wsId(scheduleEntity.getWorkspace().getWsId())
                 .scheduleNumber(scheduleEntity.getScheduleNumber())
                 .nickname(nickname)
+                .profileImage(profileImage)
                 .tag1(scheduleTagEntity.getLargeTag().getTagName())
                 .tag2(tag2)
                 .tag3(tag3)
@@ -48,11 +50,12 @@ public class ScheduleDTO {
                 .build();
     }
 
-    public static ScheduleDTO toDTO(ScheduleEntity scheduleEntity, String nickname) {
+    public static ScheduleDTO toDTO(ScheduleEntity scheduleEntity, String nickname, String profileImage) {
         return ScheduleDTO.builder()
                 .wsId(scheduleEntity.getWorkspace().getWsId())
                 .scheduleNumber(scheduleEntity.getScheduleNumber())
                 .nickname(nickname)
+                .profileImage(profileImage)
                 .tag1(null)
                 .tag2(null)
                 .tag3(null)

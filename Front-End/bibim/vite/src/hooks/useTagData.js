@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import tagApi from '../api/tagApi';
+import tagApi from '../api/tag';
 
 const useTagData = () => {
   const [largeTags, setLargeTags] = useState([]);
