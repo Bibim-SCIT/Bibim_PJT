@@ -1,11 +1,9 @@
 package net.scit.backend.schedule.repository;
 
-import net.scit.backend.schedule.dto.ScheduleDTO;
+import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.schedule.entity.ScheduleEntity;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,4 +15,6 @@ public interface ScheduleRepository extends JpaRepository<ScheduleEntity, Long> 
     List<ScheduleEntity> findAllByWorkspace(WorkspaceEntity workspace);
 
     Optional<ScheduleEntity> findByScheduleNumber(Long scheduleNumber);
+
+    List<ScheduleEntity> findAllByMember(MemberEntity member);
 }

@@ -32,6 +32,10 @@
         @JoinColumn(name = "ws_id")
         private WorkspaceEntity workspace;
 
+        @ManyToOne
+        @JoinColumn(name = "scheduleTagNumber")
+        private ScheduleTagEntity scheduleTag;
+
         private String scheduleTitle;
         private String scheduleContent;
 
@@ -45,9 +49,11 @@
         private LocalDateTime scheduleStartdate;
         private LocalDateTime scheduleFinishdate;
 
-        public static ScheduleEntity toEntity(ScheduleDTO scheduleDTO, WorkspaceEntity workspace, ScheduleStatus scheduleStatus) {
+        public static ScheduleEntity toEntity(ScheduleDTO scheduleDTO, WorkspaceEntity workspace,
+                                              ScheduleTagEntity scheduleTagEntity, ScheduleStatus scheduleStatus) {
             return ScheduleEntity.builder()
                     .workspace(workspace)
+                    .scheduleTag(scheduleTagEntity)
                     .scheduleTitle(scheduleDTO.getScheduleTitle())
                     .scheduleContent(scheduleDTO.getScheduleContent())
                     .scheduleStatus(scheduleStatus)
