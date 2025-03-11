@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import axios from "axios";
@@ -40,6 +40,11 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient 
     const [message, setMessage] = useState("");
     const [file, setFile] = useState(null);
     const token = localStorage.getItem("token");
+    const messagesEndRef = useRef(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    };
 
     const uploadFile = async () => {
         if (!file) return;
@@ -73,9 +78,28 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient 
             },
             withCredentials: true,
         })
-            .then((res) => setMessages(res.data))
+            .then((res) => {
+                setMessages(res.data);
+                setTimeout(() => {
+                    scrollToBottom();
+                }, 100);
+            })
             .catch(console.error);
     }, [wsId, roomId, token]);
+
+    useEffect(() => {
+        if (messages.length > 0) {
+            scrollToBottom();
+        }
+    }, [messages]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            scrollToBottom();
+        }, 300);
+        
+        return () => clearTimeout(timer);
+    }, []);
 
     useEffect(() => {
         if (!stompClient || !roomId) return;
@@ -121,7 +145,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient 
         <Card variant="outlined">
             <CardContent>
                 <Typography variant="h5">채팅 상대: {receiverId}</Typography>
-                <List>
+                <List sx={{ maxHeight: '400px', overflow: 'auto' }}>
                     {messages.map((msg, i) => (
                         <ListItem key={i}>
                             <ListItemText
@@ -142,6 +166,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient 
                             />
                         </ListItem>
                     ))}
+                    <div ref={messagesEndRef} />
                 </List>
                 <Input type="file" onChange={(e) => setFile(e.target.files[0])} />
                 <Button onClick={uploadFile} variant="contained" color="secondary" disabled={!file}>
