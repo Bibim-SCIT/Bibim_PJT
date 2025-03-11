@@ -63,15 +63,16 @@ public class WorkspaceController {
     /**
      * 워크스페이스 삭제 메소드
      * 
-     * @param wsName         삭제할 워크스페이스 이름
+     * @param wsId         삭제할 워크스페이스 이름
      * @param authentication 현재 로그인한 유저 정보
      * @return
      */
     @DeleteMapping("")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceDelete(@RequestParam("wsName") String wsName) {
-        ResultDTO<SuccessDTO> result = workspaceService.workspaceDelete(wsName);
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceDelete(@RequestParam("wsId") Long wsId) {
+        ResultDTO<SuccessDTO> result = workspaceService.workspaceDelete(wsId);
         return ResponseEntity.ok(result);
     }
+
 
     /**
      * 워크스페이스 업데이트 메소드
@@ -117,9 +118,9 @@ public class WorkspaceController {
      * @return
      */
     @PostMapping("/invite")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceInvate(@RequestParam("wsId") Long wsId,
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceInvite(@RequestParam("wsId") Long wsId,
             @RequestParam("email") String email) {
-        ResultDTO<SuccessDTO> result = workspaceService.workspaceInvate(wsId, email);
+        ResultDTO<SuccessDTO> result = workspaceService.workspaceInvite(wsId, email);
         return ResponseEntity.ok(result);
     }
 
@@ -142,8 +143,8 @@ public class WorkspaceController {
      * @return
      */
     @DeleteMapping("/withdrawal")
-    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceWithDrwal(@RequestParam("wsId") Long wsId) {
-        ResultDTO<SuccessDTO> result = workspaceService.workspaceWithDrwal(wsId);
+    public ResponseEntity<ResultDTO<SuccessDTO>> workspaceWithDrawal(@RequestParam("wsId") Long wsId) {
+        ResultDTO<SuccessDTO> result = workspaceService.workspaceWithDrawal(wsId);
         return ResponseEntity.ok(result);
     }
 

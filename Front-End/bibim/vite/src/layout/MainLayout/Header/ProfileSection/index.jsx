@@ -169,7 +169,7 @@ export default function ProfileSection() {
                 {open && (
                   <MainCard border={false} elevation={16} content={false} boxShadow shadow={theme.shadows[16]}>
                     <Box sx={{ p: 2, pb: 0 }}>
-                      <Stack>
+                      <Stack sx={{ mb: 2 }}>
                         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                           <Typography variant="h4">반갑습니다.</Typography>
                           <Typography component="span" variant="h4" sx={{ fontWeight: 400 }}>
@@ -180,7 +180,7 @@ export default function ProfileSection() {
                           {user ? user.email : "test@email"} {/* ✅ 현재 로그인한 사용자 이메일 표시 */}
                         </Typography>
                       </Stack>
-                      <OutlinedInput
+                      {/* <OutlinedInput
                         sx={{ width: '100%', pr: 1, pl: 2, my: 2 }}
                         id="input-search-profile"
                         value={value}
@@ -195,7 +195,7 @@ export default function ProfileSection() {
                         inputProps={{
                           'aria-label': 'weight'
                         }}
-                      />
+                      /> */}
                       <Divider />
                     </Box>
                     <Box
@@ -226,7 +226,7 @@ export default function ProfileSection() {
                               <ListItemIcon>
                                 <IconUser stroke={1.5} size="20px" />
                               </ListItemIcon>
-                              <ListItemText primary={<Typography variant="body2">내 프로필</Typography>} />
+                              <ListItemText primary={<Typography variant="body2">마이페이지</Typography>} />
                             </ListItemButton>
 
                             <ListItemButton sx={{ borderRadius: `${borderRadius}px` }} onClick={handleProfileUpdate}>

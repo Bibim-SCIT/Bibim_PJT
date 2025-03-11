@@ -1,11 +1,13 @@
 package net.scit.backend.workspace.repository;
 
 import io.lettuce.core.dynamic.annotation.Param;
+import jakarta.transaction.Transactional;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.Optional;
@@ -45,4 +47,10 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
     List<WorkspaceMemberEntity> findMembersByWorkspaceIdNative(@Param("workspaceId") Long workspaceId);
 
     List<WorkspaceMemberEntity> findByMember(MemberEntity member);
+  
+    // ✅ 특정 워크스페이스에 속한 모든 멤버 삭제
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM WorkspaceMemberEntity wm WHERE wm.workspace.wsId = :wsId")
+    void deleteByWorkspace(@Param("wsId") Long wsId);
 }

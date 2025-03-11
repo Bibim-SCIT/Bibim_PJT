@@ -43,27 +43,56 @@ function Sidebar()
 
     const drawer = useMemo(() =>
     {
-        const drawerContent = (
+        let drawerSX = { paddingLeft: '0px', paddingRight: '0px', marginTop: '20px' };
+        if (drawerOpen) drawerSX = { paddingLeft: '16px', paddingRight: '16px', marginTop: '0px' };
+
+        // 스크롤 영역에 들어갈 컨텐츠
+        const scrollableContent = (
             <>
                 <WorkspaceSelector /> {/* ✅ 1️⃣ 최상단에 워크스페이스 선택자 추가 */}
                 <MenuList /> {/* ✅ 2️⃣ 그 아래에 메뉴 리스트 추가 */}
-                {drawerOpen && <MenuCard />} {/* ✅ 3️⃣ 마지막에 MenuCard 추가 */}
             </>
         );
 
-        let drawerSX = { paddingLeft: '0px', paddingRight: '0px', marginTop: '20px' };
-        if (drawerOpen) drawerSX = { paddingLeft: '16px', paddingRight: '16px', marginTop: '0px' };
+        // 고정 영역에 들어갈 컨텐츠 (MenuCard)
+        const fixedContent = drawerOpen && <MenuCard />;
 
         return (
             <>
                 {downMD ? (
-                    <Box sx={drawerSX}>
-                        {drawerContent}
+                    // 모바일 뷰
+                    <Box sx={{ 
+                        ...drawerSX, 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        height: '100%',
+                        justifyContent: 'space-between'
+                    }}>
+                        <Box sx={{ overflow: 'auto' }}>
+                            {scrollableContent}
+                        </Box>
+                        <Box>
+                            {fixedContent}
+                        </Box>
                     </Box>
                 ) : (
-                    <PerfectScrollbar style={{ height: 'calc(100vh - 88px)', ...drawerSX }}>
-                        {drawerContent}
-                    </PerfectScrollbar>
+                    // 데스크톱 뷰
+                    <Box sx={{ 
+                        ...drawerSX, 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        height: 'calc(100vh - 88px)',
+                        justifyContent: 'space-between'
+                    }}>
+                        <Box sx={{ overflow: 'auto' }}>
+                            <PerfectScrollbar>
+                                {scrollableContent}
+                            </PerfectScrollbar>
+                        </Box>
+                        <Box>
+                            {fixedContent}
+                        </Box>
+                    </Box>
                 )}
             </>
         );
