@@ -267,7 +267,7 @@ function MenuCard() {
       <Card
         sx={{
           bgcolor: 'primary.light',
-          mb: 2.75,
+          mb: 0,
           overflow: 'hidden',
           position: 'relative',
           '&:after': {
@@ -323,7 +323,7 @@ function MenuCard() {
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    maxWidth: 150 // 최대 너비 설정
+                    maxWidth: 190 // 최대 너비 170에서 190으로 확장
                   }}>
                     {currentUser ? currentUser.nickname : '불러오는 중...'}
                   </Typography>
@@ -334,7 +334,7 @@ function MenuCard() {
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     display: 'block',
-                    maxWidth: 150 // 최대 너비 설정
+                    maxWidth: 190 // 최대 너비 170에서 190으로 확장
                   }}>
                     {user?.name || '알 수 없음'}
                   </Typography>
@@ -342,8 +342,8 @@ function MenuCard() {
               />
             </ListItem>
           </List>
-          <IconButton onClick={handleOpen} sx={{ ml: 1, flexShrink: 0 }}>
-            <SettingsIcon />
+          <IconButton onClick={handleOpen} sx={{ ml: 0.5, flexShrink: 0, p: 0.75 }}>
+            <SettingsIcon fontSize="small" />
           </IconButton>
         </Box>
       </Card>
