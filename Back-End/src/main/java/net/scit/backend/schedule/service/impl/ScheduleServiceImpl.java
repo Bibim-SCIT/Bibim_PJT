@@ -164,24 +164,29 @@ public class ScheduleServiceImpl implements ScheduleService {
         List<ScheduleEntity> schedules = scheduleRepository.findAllByWorkspace(workspace);
 
         // 스케줄에 관련된 태그를 미리 가져오기
-//        List<ScheduleTagEntity> scheduleTags = scheduleTagRepository.findBySchedules(schedules);
-        List<ScheduleTagEntity> scheduleTags = new ArrayList<>();
-        if (!schedules.isEmpty()) {
-            for (ScheduleEntity scheduleEntity : schedules) {
-                scheduleTags.add(scheduleEntity.getScheduleTag());
-            }
-        }
+        List<ScheduleTagEntity> scheduleTags = schedules.stream()
+                .map(ScheduleEntity::getScheduleTag)
+                .filter(Objects::nonNull)  // null 값 제거
+                .collect(Collectors.toList());
 
         // 태그를 빠르게 검색할 수 있도록 Map으로 변환
-        Map<Long, ScheduleTagEntity> scheduleTagMap = scheduleTags.stream()
-                .collect(Collectors.toMap(ScheduleTagEntity::getScheduleTagNumber, tag -> tag));
+        Map<Long, ScheduleTagEntity> scheduleTagMap =
+                Optional.ofNullable(scheduleTags)
+                        .orElse(Collections.emptyList()) // null 방지
+                        .stream()
+                        .filter(tag -> tag.getScheduleTagNumber() != null) // null 키 방지
+                        .collect(Collectors.toMap(
+                                ScheduleTagEntity::getScheduleTagNumber,
+                                tag -> tag,
+                                (existing, replacement) -> existing // 중복 키 발생 시 기존 값 유지
+                        ));
 
         List<ScheduleDTO> scheduleDTOList = schedules.stream()
                 .map(scheduleEntity -> {
                     // 해당 스케줄의 담당자의 이메일로 닉네임을 가져오기
                     String nickname;
                     String profileImage;
-                    if (scheduleEntity.getMember() != null) {
+                    if (scheduleEntity.getMember() != null && scheduleEntity.getMember().getEmail() != null) {
                         nickname = memberNicknames.get(scheduleEntity.getMember().getEmail());
                         profileImage = scheduleEntity.getMember().getProfileImage();
                     } else {
@@ -189,13 +194,10 @@ public class ScheduleServiceImpl implements ScheduleService {
                         profileImage = null;
                     }
 
-                    // 해당 스케줄의 태그를 미리 가져오기
-//                    Optional<ScheduleTagEntity> scheduleTagOptional = scheduleTags.stream()
-//                            .filter(tag -> tag.getSchedule().equals(scheduleEntity))
-//                            .findFirst();
-                    // 해당 스케줄의 태그 가져오기
-                    ScheduleTagEntity scheduleTagEntity = scheduleTagMap.get(scheduleEntity.getScheduleNumber());
-
+//                    ScheduleTagEntity scheduleTagEntity = scheduleTagMap.get(scheduleEntity.getScheduleNumber());
+                    ScheduleTagEntity scheduleTagEntity = (scheduleEntity.getScheduleNumber() != null)
+                            ? scheduleTagMap.get(scheduleEntity.getScheduleNumber())
+                            : null;
 
                     // 태그가 있을 경우와 없을 경우 분기 처리하여 DTO 생성
                     return scheduleTagEntity != null
