@@ -1,5 +1,5 @@
 import React from 'react';
-import Calendar from './components/calendar.jsx';
+import Calendar from './components/Calendar.jsx';
 import { styled } from '@mui/material/styles';
 import { Box, Typography } from '@mui/material';
 import { useSelector } from 'react-redux';
