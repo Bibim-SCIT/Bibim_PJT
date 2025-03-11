@@ -373,7 +373,7 @@ function MenuCard() {
                 ml: 0.5
               }}
             >
-              프로필 수정
+              워크스페이스 내 프로필 수정
             </Typography>
           </Box>
 

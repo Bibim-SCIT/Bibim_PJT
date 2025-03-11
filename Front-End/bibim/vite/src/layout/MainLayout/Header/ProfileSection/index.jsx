@@ -226,7 +226,7 @@ export default function ProfileSection() {
                               <ListItemIcon>
                                 <IconUser stroke={1.5} size="20px" />
                               </ListItemIcon>
-                              <ListItemText primary={<Typography variant="body2">내 프로필</Typography>} />
+                              <ListItemText primary={<Typography variant="body2">마이페이지</Typography>} />
                             </ListItemButton>
 
                             <ListItemButton sx={{ borderRadius: `${borderRadius}px` }} onClick={handleProfileUpdate}>
