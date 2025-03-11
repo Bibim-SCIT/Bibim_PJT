@@ -2,6 +2,7 @@ package net.scit.backend.schedule.listener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.scit.backend.notification.dto.NotificationResponseDTO;
 import net.scit.backend.notification.entity.NotificationEntity;
 import net.scit.backend.notification.service.NotificationService;
 import net.scit.backend.schedule.event.ScheduleEvent;
@@ -66,7 +67,8 @@ public class ScheduleEventListener {
             notification.setNotificationDate(LocalDateTime.now());
             notification.setNotificationUrl(notificationUrl); // URL 추가
 
-            notificationService.sendNotification(notification);
+            NotificationResponseDTO response = notificationService.createAndSendNotification(notification);
+            log.info("📢 알림 전송 및 저장 완료 - NotificationNumber: {}", response.getNotificationNumber());
         }
     }
 }
