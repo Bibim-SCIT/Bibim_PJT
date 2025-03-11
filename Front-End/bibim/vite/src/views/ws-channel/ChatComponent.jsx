@@ -32,6 +32,15 @@ function ChatComponent({ channelId, workspaceId }) {
 
     // WebSocket 클라이언트 참조
     const stompClientRef = useRef(null);
+    // 메시지 컨테이너 참조 추가
+    const messagesEndRef = useRef(null);
+
+    /**
+     * 스크롤을 맨 아래로 이동시키는 함수
+     */
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    };
 
     /**
      * 과거 메시지 가져오기 함수
@@ -46,6 +55,11 @@ function ChatComponent({ channelId, workspaceId }) {
 
             const data = await response.json();
             setMessages(data); // 기존 메시지 상태에 추가
+            
+            // 메시지 로드 후 약간의 지연을 두고 스크롤 이동
+            setTimeout(() => {
+                scrollToBottom();
+            }, 100);
         } catch (error) {
             console.error("❌ 메시지 조회 오류:", error);
         }
@@ -203,6 +217,27 @@ function ChatComponent({ channelId, workspaceId }) {
         }
     };
 
+    /**
+     * 메시지 상태가 변경될 때마다 스크롤을 맨 아래로 이동
+     */
+    useEffect(() => {
+        if (messages.length > 0) {
+            scrollToBottom();
+        }
+    }, [messages]);
+
+    /**
+     * 컴포넌트 마운트 시 한 번 스크롤 이동
+     */
+    useEffect(() => {
+        // 컴포넌트가 마운트된 후 약간의 지연을 두고 스크롤 이동
+        const timer = setTimeout(() => {
+            scrollToBottom();
+        }, 300);
+        
+        return () => clearTimeout(timer);
+    }, []);
+
     return (
         <div className="chat-container">
             {/* 채널 헤더 */}
@@ -288,6 +323,8 @@ function ChatComponent({ channelId, workspaceId }) {
                         </div>
                     </div>
                 ))}
+                {/* 스크롤 위치 참조를 위한 빈 div 추가 */}
+                <div ref={messagesEndRef} />
             </div>
 
             {/* 메시지 입력 영역 */}
