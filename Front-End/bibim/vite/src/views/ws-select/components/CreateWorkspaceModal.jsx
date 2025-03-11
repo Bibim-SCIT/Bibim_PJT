@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Box, Typography, TextField, Button, Avatar, IconButton } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import { createWorkspace } from '../../../api/workspaceApi';
-import { loadWorkspace } from '../../../store/workSpaceRedux';
+import { loadWorkspace } from '../../../store/workspaceRedux';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import DeleteIcon from '@mui/icons-material/Delete';
 
