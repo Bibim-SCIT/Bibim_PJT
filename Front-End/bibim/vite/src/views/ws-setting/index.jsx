@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material';
-import WsBasicSetting from './components/WsBasicSetting';
-import WsUserRoleManagement from './components/WsUserRoleManagement';
+import WsBasicSetting from './components/WsBasicSetting.jsx';
+import WsUserRoleManagement from './components/WsUserRoleManagement.jsx';
 
 const WsSettingPage = () => {
     return (
