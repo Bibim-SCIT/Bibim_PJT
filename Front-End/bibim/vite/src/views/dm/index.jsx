@@ -206,7 +206,14 @@ export default function DmPage() {
         <MainCard title="디엠 페이지">
             <Grid container spacing={2}>
                 <Grid item xs={4}>
-                    <Card variant="outlined">
+                    <Card
+                        variant="outlined"
+                        sx={{
+                            border: '1px solid #ddd',
+                            borderRadius: 2,
+                            boxShadow: '2px 2px 8px rgba(0,0,0,0.1)',
+                        }}
+                    >
                         <CardContent>
                             <Typography variant="h3">대화 목록</Typography>
                             <Divider />
