@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 import { useContext } from "react";
 import { ConfigContext } from "../../../../contexts/ConfigContext";
 import { logoutUser } from "../../../../api/auth"; // ✅ 로그아웃 API 불러오기
-import { logoutWorkspace } from '../../../../store/workSpaceRedux';
+import { logoutWorkspace } from '../../../../store/workspaceRedux';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
