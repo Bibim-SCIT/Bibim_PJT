@@ -63,7 +63,8 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 전용
                         .requestMatchers("/user/**", "/schedule/**", "/members/myinfo", "/members/changeinfo",
                                 "/members/withdraw",
-                                "/workspace/**")
+                                "/workspace/**",
+                                "/mypage/**")
                         .hasRole("USER") // 사용자 전용
                         .requestMatchers("/notification/subscribe").permitAll() // ✅ SSE 구독 요청 허용
                         .requestMatchers("/notification/unread", "/notification/read-single",

@@ -194,7 +194,6 @@ public class ScheduleServiceImpl implements ScheduleService {
                         profileImage = null;
                     }
 
-//                    ScheduleTagEntity scheduleTagEntity = scheduleTagMap.get(scheduleEntity.getScheduleNumber());
                     ScheduleTagEntity scheduleTagEntity = (scheduleEntity.getScheduleNumber() != null)
                             ? scheduleTagMap.get(scheduleEntity.getScheduleNumber())
                             : null;
@@ -242,10 +241,6 @@ public class ScheduleServiceImpl implements ScheduleService {
 
 
         // 해당 스케줄의 태그 가져오기
-//        ScheduleDTO scheduleDTO = scheduleTagRepository.findBySchedule(scheduleEntity)
-//                .map(scheduleTagEntity -> ScheduleDTO.toDTO(scheduleEntity, nickname, profileImage, scheduleTagEntity))
-//                .orElseGet(() -> ScheduleDTO.toDTO(scheduleEntity, nickname, profileImage));
-
         ScheduleTagEntity scheduleTagEntity = scheduleEntity.getScheduleTag();
         ScheduleDTO scheduleDTO = scheduleTagEntity != null
                 ? ScheduleDTO.toDTO(scheduleEntity, nickname, profileImage, scheduleTagEntity)
