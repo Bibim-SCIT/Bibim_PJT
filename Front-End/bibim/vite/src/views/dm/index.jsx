@@ -18,12 +18,17 @@ import {
     Divider,
     Box,
     Input,
+    IconButton,
 } from "@mui/material";
+import { FaPaperPlane, FaFileUpload } from "react-icons/fa";
+import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
 import MainCard from "ui-component/cards/MainCard";
 import { ConfigContext } from "contexts/ConfigContext";
 import { fetchWorkspaceUsers } from "../../api/workspaceApi";
 import { useSelector } from 'react-redux';
 import UserLoading from "./components/UserLoading";
+import './DmChat.css';
 
 const API_BASE_URL = "http://localhost:8080/api";
 
@@ -35,12 +40,24 @@ const generateRoomId = (wsId, senderEmail, receiverEmail) => {
 
 const isImage = (fileName) => /\.(jpg|jpeg|png|gif)$/i.test(fileName);
 
-export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient }) => {
+// 첫 글자를 가져오는 함수
+const getInitials = (name) => {
+    return name.charAt(0).toUpperCase();
+};
+
+// 시간 포맷팅 함수
+const formatTime = (timeString) => {
+    const date = new Date(timeString);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient, receiverInfo }) => {
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState("");
     const [file, setFile] = useState(null);
     const token = localStorage.getItem("token");
     const messagesEndRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
@@ -141,50 +158,150 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient 
         setMessage("");
     };
 
+    const handleFileSelect = (e) => {
+        setFile(e.target.files[0]);
+    };
+
+    const handleRemoveFile = () => {
+        setFile(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    };
+
     return (
-        <Card variant="outlined">
-            <CardContent>
-                <Typography variant="h5">채팅 상대: {receiverId}</Typography>
-                <List sx={{ maxHeight: '400px', overflow: 'auto' }}>
-                    {messages.map((msg, i) => (
-                        <ListItem key={i}>
-                            <ListItemText
-                                primary={msg.isFile ? (
+        <div className="dm-chat-container">
+            <div className="dm-chat-header">
+                <div className="dm-chat-header-info">
+                    <div className="dm-chat-header-avatar">
+                        {receiverInfo?.profileImage ? (
+                            <img src={receiverInfo.profileImage} alt={receiverInfo.nickname} />
+                        ) : (
+                            getInitials(receiverInfo?.nickname || receiverId)
+                        )}
+                    </div>
+                    <div className="dm-chat-header-text">
+                        <div className="dm-chat-header-name">{receiverInfo?.nickname || receiverId}</div>
+                        <div className="dm-chat-header-email">{receiverId}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="dm-chat-messages">
+                {messages.length === 0 ? (
+                    <div className="dm-no-messages">메시지가 없습니다. 첫 메시지를 보내보세요!</div>
+                ) : (
+                    messages.map((msg, i) => (
+                        <div 
+                            key={i} 
+                            className={`dm-message ${msg.sender === senderId ? 'dm-my-message' : 'dm-other-message'}`}
+                        >
+                            {msg.sender !== senderId && (
+                                <div className="dm-sender">
+                                    <div className="dm-sender-avatar">
+                                        {getInitials(msg.sender)}
+                                    </div>
+                                    <div className="dm-sender-name">
+                                        {msg.sender.split('@')[0]}
+                                    </div>
+                                </div>
+                            )}
+                            <div className="dm-message-content-container">
+                                {msg.isFile ? (
                                     isImage(msg.fileName) ? (
-                                        <img
-                                            src={msg.dmContent}
-                                            alt={msg.fileName}
-                                            style={{ maxWidth: "300px", maxHeight: "300px" }}
-                                        />
+                                        <div className="dm-message-content has-image">
+                                            <img
+                                                src={msg.dmContent}
+                                                alt={msg.fileName}
+                                                className="dm-chat-image"
+                                            />
+                                        </div>
                                     ) : (
-                                        <a href={msg.dmContent} target="_blank" rel="noopener noreferrer">
+                                        <a href={msg.dmContent} target="_blank" rel="noopener noreferrer" className="dm-file-message">
                                             📎 {msg.fileName}
                                         </a>
                                     )
-                                ) : `${msg.sender === senderId ? "나" : msg.sender}: ${msg.dmContent}`}
-                                secondary={msg.sendTime}
-                            />
-                        </ListItem>
-                    ))}
-                    <div ref={messagesEndRef} />
-                </List>
-                <Input type="file" onChange={(e) => setFile(e.target.files[0])} />
-                <Button onClick={uploadFile} variant="contained" color="secondary" disabled={!file}>
-                    파일 업로드
-                </Button>
+                                ) : (
+                                    <div className="dm-message-content">
+                                        {msg.dmContent}
+                                    </div>
+                                )}
+                                <div className="dm-message-time">
+                                    {formatTime(msg.sendTime)}
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
+                <div ref={messagesEndRef} />
+            </div>
+
+            {file && (
+                <div className="dm-file-upload-container">
+                    <div className="dm-selected-file">
+                        <FaFileUpload size={14} />
+                        {file.name}
+                        <IconButton 
+                            size="small" 
+                            className="dm-remove-file" 
+                            onClick={handleRemoveFile}
+                        >
+                            <CloseIcon fontSize="small" />
+                        </IconButton>
+                    </div>
+                    <Button 
+                        variant="contained" 
+                        size="small" 
+                        onClick={uploadFile}
+                        disabled={!file}
+                    >
+                        업로드
+                    </Button>
+                </div>
+            )}
+
+            <div className="dm-chat-input-box">
+                <input
+                    type="file"
+                    id="file-upload"
+                    className="dm-file-upload-input"
+                    onChange={handleFileSelect}
+                    ref={fileInputRef}
+                />
+                <label htmlFor="file-upload" className="dm-icon-btn">
+                    <AddIcon sx={{ fontSize: 24 }} />
+                </label>
+                
                 <TextField
-                    fullWidth
-                    variant="outlined"
+                    className="dm-chat-input"
                     placeholder="메시지를 입력하세요..."
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                    onKeyDown={handleKeyDown}
+                    multiline
+                    maxRows={4}
+                    variant="standard"
+                    InputProps={{
+                        disableUnderline: true,
+                    }}
                 />
-                <Button onClick={sendMessage} variant="contained" color="primary">
-                    전송
-                </Button>
-            </CardContent>
-        </Card>
+                
+                <button 
+                    className="dm-send-btn"
+                    onClick={sendMessage}
+                    disabled={!message.trim() && !file}
+                >
+                    <FaPaperPlane size={18} />
+                </button>
+            </div>
+        </div>
     );
 };
 
@@ -285,6 +402,7 @@ export default function DmPage() {
                             senderId={user.email}
                             receiverId={selectedUser.email}
                             stompClient={stompClient}
+                            receiverInfo={selectedUser}
                         />
                     ) : (
                         <Box display="flex" alignItems="center" justifyContent="center" height="100%">
