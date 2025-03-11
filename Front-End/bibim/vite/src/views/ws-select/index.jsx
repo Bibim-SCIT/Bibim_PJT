@@ -1,7 +1,7 @@
 import { useState, useContext, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { ConfigContext } from '../../contexts/ConfigContext'; // ✅ ConfigContext import
-import { loadWorkspace, setActiveWorkspace } from '../../store/workSpaceRedux';
+import { loadWorkspace, setActiveWorkspace } from '../../store/workspaceRedux';
 import { useNavigate } from 'react-router-dom';
 import { Grid, Box } from '@mui/material';
 
