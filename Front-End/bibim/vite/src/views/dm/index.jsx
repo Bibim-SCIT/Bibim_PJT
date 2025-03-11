@@ -353,7 +353,7 @@ export default function DmPage() {
     const filteredUsers = users.filter((u) => u.email !== user.email);
 
     return (
-        <MainCard title="디엠 페이지">
+        <MainCard title="DM">
             <Grid container spacing={2}>
                 <Grid item xs={4}>
                     <Card
