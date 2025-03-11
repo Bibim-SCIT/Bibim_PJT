@@ -55,6 +55,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState("");
     const [file, setFile] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
     const token = localStorage.getItem("token");
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
@@ -88,6 +89,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
     };
 
     useEffect(() => {
+        setIsLoading(true);
         axios.get(`${API_BASE_URL}/dm/messages`, {
             params: { wsId, roomId },
             headers: {
@@ -99,9 +101,13 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                 setMessages(res.data);
                 setTimeout(() => {
                     scrollToBottom();
+                    setIsLoading(false);
                 }, 100);
             })
-            .catch(console.error);
+            .catch((error) => {
+                console.error("메시지 로딩 실패:", error);
+                setIsLoading(false);
+            });
     }, [wsId, roomId, token]);
 
     useEffect(() => {
@@ -195,7 +201,9 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
             </div>
 
             <div className="dm-chat-messages">
-                {messages.length === 0 ? (
+                {isLoading ? (
+                    <UserLoading text="메시지 불러오는중..." />
+                ) : messages.length === 0 ? (
                     <div className="dm-no-messages">메시지가 없습니다. 첫 메시지를 보내보세요!</div>
                 ) : (
                     messages.map((msg, i) => (
