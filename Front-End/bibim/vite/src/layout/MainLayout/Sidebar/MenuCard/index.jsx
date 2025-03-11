@@ -235,7 +235,7 @@ function MenuCard() {
       // 성공 스낵바 표시
       setSnackbar({
         open: true,
-        message: '프로필이 성공적으로 업데이트되었습니다.',
+        message: '프로필이 성공적으로 변경되었습니다.',
         severity: 'success'
       });
 
@@ -259,7 +259,7 @@ function MenuCard() {
     if (reason === 'clickaway') {
       return;
     }
-    setSnackbar((prev) => ({ ...prev, open: false }));
+    setSnackbar(prev => ({ ...prev, open: false }));
   };
 
   return (
@@ -462,7 +462,6 @@ function MenuCard() {
                 variant="outlined"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                placeholder="김세빈"
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: '4px',
@@ -530,14 +529,13 @@ function MenuCard() {
       {/* 스낵바 */}
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={4000}
+        autoHideDuration={3000}
         onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert 
           onClose={handleSnackbarClose} 
           severity={snackbar.severity}
-          variant="filled"
           sx={{ width: '100%' }}
         >
           {snackbar.message}
