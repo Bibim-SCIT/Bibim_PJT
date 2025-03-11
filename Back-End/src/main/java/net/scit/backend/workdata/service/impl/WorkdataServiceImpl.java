@@ -342,18 +342,47 @@ public class WorkdataServiceImpl implements WorkdataService {
         List<WorkdataEntity> workdataEntities = Optional.ofNullable(workdataRepository.findWithFilesAndTags(wsId))
                 .orElse(Collections.emptyList());
 
-        // 4) 각 자료글에 대해 작성자(workspaceMember) 정보를 writerEmail 기준으로 조회하여 DTO 변환
+        // 4) 각 자료글에 대해 작성자(workspaceMember) 정보를 조회하여 DTO 변환
         List<WorkdataTotalSearchDTO> responseDTOs = workdataEntities.stream()
                 .map(entity -> {
                     WorkspaceMemberEntity writerMember = workspaceMemberRepository
                             .findByMember_EmailAndWorkspace_WsId(entity.getWriter(), wsId)
                             .orElseThrow(() -> new IllegalArgumentException("해당 작성자의 워크스페이스 정보를 찾을 수 없습니다."));
-                    return WorkdataTotalSearchDTO.toDTO(
-                            entity,
-                            new ArrayList<>(entity.getWorkdataFiles()),
-                            new ArrayList<>(entity.getWorkdataFileTags()),
-                            writerMember
+
+                    // 상세조회와 유사하게 DTO 빌더로 생성
+                    WorkdataTotalSearchDTO dto = WorkdataTotalSearchDTO.builder()
+                            .dataNumber(entity.getDataNumber())
+                            .writer(entity.getWriter())
+                            .title(entity.getTitle())
+                            .content(entity.getContent())
+                            .regDate(entity.getRegDate())
+                            .mWsNumber(writerMember.getMWsNumber())
+                            .nickname(writerMember.getNickname())
+                            .wsRole(writerMember.getWsRole())
+                            .profileImage(writerMember.getProfileImage())
+                            .build();
+
+                    // 파일 이름 및 URL, 태그 목록 설정
+                    dto.setFileNames(
+                            entity.getWorkdataFiles().stream()
+                                    .map(WorkdataFileEntity::getFileName)
+                                    .distinct()
+                                    .collect(Collectors.toList())
                     );
+                    dto.setFileUrls(
+                            entity.getWorkdataFiles().stream()
+                                    .map(WorkdataFileEntity::getFile)
+                                    .distinct()
+                                    .collect(Collectors.toList())
+                    );
+                    dto.setTags(
+                            entity.getWorkdataFileTags().stream()
+                                    .map(WorkDataFileTagEntity::getTag)
+                                    .distinct()
+                                    .collect(Collectors.toList())
+                    );
+
+                    return dto;
                 })
                 .collect(Collectors.toList());
 
@@ -372,6 +401,7 @@ public class WorkdataServiceImpl implements WorkdataService {
         // 6) 응답 반환
         return ResponseEntity.ok(ResultDTO.of("자료글 전체 조회 성공!", responseDTOs));
     }
+
 
 
 
