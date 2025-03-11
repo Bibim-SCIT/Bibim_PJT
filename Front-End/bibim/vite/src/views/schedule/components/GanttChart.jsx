@@ -182,7 +182,12 @@ const GanttChart = ({ tasks }) => {
           TaskListTable={(props) => <CustomTaskListTable {...props} onTaskClick={handleTaskClick} />} // ✅ Task 클릭 핸들러 추가
         />
       ) : (
-        <p>⏳ 등록된 작업이 없습니다.</p>
+        <Box sx={{
+          width: '100%',
+          maxWidth: '1200px',
+        }}>
+          <p>⏳ 등록된 작업이 없습니다.</p>
+        </Box>
       )}
 
       {/* ✅ 일정 상세 모달 추가 */}
