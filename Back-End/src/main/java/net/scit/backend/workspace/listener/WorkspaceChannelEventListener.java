@@ -2,6 +2,7 @@ package net.scit.backend.workspace.listener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.scit.backend.notification.dto.NotificationResponseDTO;
 import net.scit.backend.notification.entity.NotificationEntity;
 import net.scit.backend.notification.service.NotificationService;
 import net.scit.backend.workspace.event.WorkspaceChannelEvent;
@@ -30,24 +31,20 @@ public class WorkspaceChannelEventListener {
         log.info("📢 워크스페이스 채널 이벤트 감지: {} | 워크스페이스 ID: {} | 메시지: {}",
                 event.getEventType(), wsId, notificationMessage);
 
-        // 기본 주소 설정 (워크스페이스 컨트롤러 기준)
         final String baseUrl = "http://localhost:8080/workspace";
         String notificationUrl;
         switch (event.getEventType()) {
             case "create":
             case "update":
-                // 채널 상세 페이지: /workspace/{wsId}/channel/{channelNumber}
                 notificationUrl = String.format("%s/%d/channel/%d", baseUrl, wsId, channelNumber);
                 break;
             case "delete":
-                // 삭제 시 목록 페이지: /workspace/{wsId}/channel
                 notificationUrl = String.format("%s/%d/channel", baseUrl, wsId);
                 break;
             default:
                 notificationUrl = baseUrl;
         }
 
-        // 워크스페이스 내 모든 멤버 조회
         List<WorkspaceMemberEntity> workspaceMembers =
                 workspaceMemberRepository.findMembersByWorkspaceIdNative(wsId);
 
@@ -65,7 +62,13 @@ public class WorkspaceChannelEventListener {
             notification.setNotificationDate(LocalDateTime.now());
             notification.setNotificationUrl(notificationUrl);
 
-            notificationService.sendNotification(notification);
+            // ✅ 저장 후 즉시 반영되도록 수정
+            NotificationResponseDTO response = notificationService.createAndSendNotification(notification);
+
+            log.info("📢 알림 전송 및 저장 완료 - NotificationNumber: {}", response.getNotificationNumber());
+            if (response.getNotificationNumber() == null) {
+                log.error("❌ 알림이 DB에 저장되지 않았습니다! 확인 필요.");
+            }
         }
     }
 }
