@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
-import workspaceReducer from './workspaceRedux';
+import workspaceReducer from './workSpaceRedux';
 import storage from 'redux-persist/lib/storage';
 import { persistReducer, persistStore } from 'redux-persist';
 

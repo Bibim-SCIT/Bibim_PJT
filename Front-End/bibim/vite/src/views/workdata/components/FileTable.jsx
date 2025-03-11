@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Button, Avatar, Chip, Box, Dialog,
-    DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemIcon, ListItemText
+    DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemIcon, ListItemText, Popover
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -24,6 +24,7 @@ import fileIcon from "assets/images/icons/file.png";
 const fileTypeIcons = {
     "pdf": pdfIcon,
     "png": imageIcon,
+    "gif": imageIcon,
     "jpg": imageIcon,
     "docx": docIcon,
     "xlsx": excelIcon,
@@ -47,6 +48,11 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
     const [downloadFile, setDownloadFile] = useState(null); // 테이블뷰에서 다운로드할 파일 정보
     const { user } = useContext(ConfigContext); // ✅ Context에서 로그인 유저 정보 가져오기
     const navigate = useNavigate();
+
+    // 미리보기 관련 상태
+    const [previewAnchorEl, setPreviewAnchorEl] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const closeTimeoutRef = useRef(null);
 
     console.log("📌 FileTable에서 받은 files 데이터:", files); // ✅ 전달된 데이터 확인
     console.log("현재 유저정보", user)
@@ -147,6 +153,33 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
         document.body.removeChild(link);
     };
 
+    // 미리보기 열기 함수: 파일의 URL과 이벤트 타겟을 인자로 받아 Popover를 연다.
+    const handlePreviewOpen = (event, fileName, fileUrls) => {
+        const ext = fileName.split(".").pop().toLowerCase();
+        if (["png", "jpg", "jpeg", "pdf", "gif"].includes(ext)) {
+            if (fileUrls && fileUrls[0]) {
+                setPreviewUrl(fileUrls[0]);
+                setPreviewAnchorEl(event.currentTarget);
+
+                // 기존 닫기 타이머가 있다면 취소
+                if (closeTimeoutRef.current) {
+                    clearTimeout(closeTimeoutRef.current);
+                }
+            }
+        }
+    };
+
+    const handlePreviewClose = () => {
+        // 300ms 후 Popover 닫기 (사용자가 Popover 위로 이동할 여유를 줌)
+        closeTimeoutRef.current = setTimeout(() => {
+            setPreviewAnchorEl(null);
+            setPreviewUrl(null);
+        }, 300);
+    };
+
+
+    const previewOpen = Boolean(previewAnchorEl);
+
 
 
     console.log("📌 선택된 파일 정보:", selectedFile);
@@ -204,9 +237,20 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                         padding: "4px 8px", // 🔹 패딩 추가
                                         // border: "1px solid #E0E0E0", // 🔹 테두리 추가
                                     }}
-                                    onClick={() => handleOpenModal(file)}
+                                    // onClick={() => handleOpenModal(file)}
+                                    onMouseEnter={(e) => handlePreviewOpen(e, file.files[0], file.fileUrls)}
+                                    onMouseLeave={handlePreviewClose}
                                 >
-                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                    <Box
+                                        sx={{
+                                            width: "100%",
+                                            height: "100%",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 1,
+                                            // 내부 요소들은 이벤트를 캡처하지 않도록 설정
+                                            // pointerEvents: "none",
+                                        }}>
                                         <img
                                             src={fileTypeIcons[file.files[0].split(".").pop().toLowerCase()] || fileTypeIcons.default}
                                             alt={file.files[0]}
@@ -218,7 +262,8 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                                 whiteSpace: "nowrap",
                                                 overflow: "hidden",
                                                 textOverflow: "ellipsis",
-                                                maxWidth: 200  // 🔹 최대 너비 설정
+                                                maxWidth: 200,  // 🔹 최대 너비 설정
+                                                // pointerEvents: "auto", // 텍스트 영역은 클릭 이벤트를 받도록 함
                                             }}
                                         >
                                             {/* {truncateFileName(file.name, 12)} 🔥 파일명 줄이기 함수 적용 */}
@@ -274,6 +319,47 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                     </TableBody>
                 </Table>
             </TableContainer >
+
+            {/* 파일 미리보기 Popover */}
+            <Popover
+                open={previewOpen}
+                anchorEl={previewAnchorEl}
+                onClose={handlePreviewClose}
+                anchorOrigin={{
+                    vertical: "top",
+                    horizontal: "right",
+                }}
+                transformOrigin={{
+                    vertical: "top",
+                    horizontal: "left",
+                }}
+            >
+                <Box
+                    sx={{ p: 1, maxWidth: 300, maxHeight: 300 }}
+                    onMouseEnter={() => {
+                        if (closeTimeoutRef.current) {
+                            clearTimeout(closeTimeoutRef.current);
+                        }
+                    }}
+                    onMouseLeave={handlePreviewClose} // Popover를 벗어나면 닫힘
+                >
+                    {previewUrl && (() => {
+                        const ext = previewUrl.split('.').pop().toLowerCase();
+                        if (["png", "jpg", "jpeg", "gif"].includes(ext)) {
+                            return <img src={previewUrl} alt="미리보기" style={{ width: "100%", height: "auto" }} />;
+                        } else if (ext === "pdf") {
+                            return (
+                                <object data={previewUrl} type="application/pdf" width="100%" height="300">
+                                    PDF 미리보기를 지원하지 않습니다.
+                                </object>
+                            );
+                        }
+                        return null;
+                    })()}
+                </Box>
+            </Popover>
+
+
 
             {/* 파일 정보 모달 */}
             <Dialog
