@@ -7,7 +7,7 @@ import KickUserModal from './KickUserModal';
 import RoleSettingModal from './RoleSettingModal';
 import { useContext } from 'react';
 import { ConfigContext } from '../../../contexts/ConfigContext';
-import WSMLoadingScreen from './WSMLoadingScreen.JSX';
+import WSMLoadingScreen from './WSMLoadingScreen.jsx';
 
 // 상대적인 시간 또는 날짜를 표시하는 함수
 const formatDate = (dateString) => {
