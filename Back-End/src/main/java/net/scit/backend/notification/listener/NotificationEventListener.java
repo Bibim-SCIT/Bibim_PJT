@@ -1,3 +1,4 @@
+// 파일: net/scit/backend/notification/listener/NotificationEventListener.java
 package net.scit.backend.notification.listener;
 
 import lombok.RequiredArgsConstructor;
@@ -6,6 +7,7 @@ import net.scit.backend.notification.entity.NotificationEntity;
 import net.scit.backend.notification.repository.NotificationRepository;
 import net.scit.backend.notification.service.NotificationService;
 import net.scit.backend.notification.event.BasedUpdatedEvent;
+import net.scit.backend.workspace.event.WorkspaceEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -23,7 +25,7 @@ public class NotificationEventListener {
     private final NotificationRepository notificationRepository;
     private final NotificationService notificationService;
 
-    // 1) ConcurrentHashMap 대신 List를 사용
+    // 이벤트 버퍼 (동시성 고려)
     private final List<BasedUpdatedEvent> eventBuffer = new CopyOnWriteArrayList<>();
 
     @EventListener
@@ -32,7 +34,7 @@ public class NotificationEventListener {
         log.info("이벤트 감지 (버퍼 저장): {} - {}", event.getNotificationType(), event.getEntityId());
     }
 
-    // SSE 가동 시간: 1분 * ?
+    // 30초마다 버퍼 처리 (예시)
     @Scheduled(fixedRate = 1000 * 30)
     public void processBufferedEvents() {
         if (eventBuffer.isEmpty()) return;
@@ -40,26 +42,14 @@ public class NotificationEventListener {
         log.info("버퍼에 저장된 이벤트 처리 시작...");
         List<NotificationEntity> notifications = new ArrayList<>();
 
-        // 2) 버퍼에 들어있는 모든 이벤트를 순회하며 알림 생성
-        for (BasedUpdatedEvent event : eventBuffer) {
-            NotificationEntity notification = new NotificationEntity();
-            notification.setMemberEmail(event.getUpdatedBy());
-            notification.setNotificationName(event.getNotificationName());
-            notification.setNotificationType(event.getNotificationType());
-            notification.setNotificationContent(event.getNotificationContent());
-            notification.setNotificationStatus(false);
-            notification.setNotificationDate(LocalDateTime.now());
-
-            notifications.add(notification);
-        }
-
-        // 3) 알림을 DB에 저장 및 SSE 실시간 전송
+        // 변경: saveAll 후 flush 추가하여 즉시 DB에 반영해 ID가 생성되도록 함
         notificationRepository.saveAll(notifications);
+        notificationRepository.flush(); // 변경
+
+        // 저장 후 각각 알림 발송 (발송 로직은 sendNotification 내부에서 처리)
         notifications.forEach(notificationService::sendNotification);
 
-        // 4) 버퍼 초기화
         eventBuffer.clear();
         log.info("버퍼 초기화 완료.");
     }
-
 }

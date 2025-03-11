@@ -11,7 +11,7 @@ public interface DmService
 
     DmMessageDTO uploadFile(MultipartFile file, String sender, String receiver, Long wsId);
 
-    List<DmMessageDTO> getMessages(Long wsId, String sender, String receiver);
+    List<DmMessageDTO> getMessages(Long wsId, String roomId);
 
     void markMessagesAsRead(Long wsId, String sender, String receiver);
 }

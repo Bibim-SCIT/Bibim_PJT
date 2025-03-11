@@ -9,12 +9,15 @@ import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.workspace.dto.ChannelUpdateRequest;
 import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
+import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
+import net.scit.backend.workspace.event.WorkspaceChannelEvent;
 import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
-import net.scit.backend.workspace.repository.WorkspaceChannelRoleRepository;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import net.scit.backend.workspace.service.WorkspaceChannelService;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -23,113 +26,124 @@ public class WorkspaceChannelServiceImpl implements WorkspaceChannelService {
 
     private final WorkspaceChannelRepository workspaceChannelRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
-    private final WorkspaceChannelRoleRepository workspaceChannelRoleRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
-     * 채널 생성 메서드
-     * @param workspaceId 워크스페이스 ID
-     * @param channelName 생성할 채널 이름
-     * @return 성공 여부를 포함한 ResultDTO
+     * 1️⃣ 채널 생성
      */
     @Override
+    @Transactional
     public ResultDTO<SuccessDTO> createChannel(Long workspaceId, String channelName) {
         String userEmail = AuthUtil.getLoginUserId();
-        log.info("채널 생성 요청: workspaceId={}, userEmail={}, channelName={}", workspaceId, userEmail, channelName);
+        log.info("📢 채널 생성 요청: workspaceId={}, userEmail={}, channelName={}", workspaceId, userEmail, channelName);
 
-        validateChannelName(channelName);
-        validateOwnerRole(workspaceId, userEmail);
-
+        // 1. 채널 중복 검사
         if (workspaceChannelRepository.existsByWorkspace_wsIdAndChannelName(workspaceId, channelName)) {
             throw new CustomException(ErrorCode.CHANNEL_ALREADY_EXISTS);
         }
 
+        // 2. 사용자 정보 조회 (닉네임 포함)
+        WorkspaceMemberEntity member = workspaceMemberRepository
+                .findByWorkspace_wsIdAndMember_Email(workspaceId, userEmail)
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
+
+        // 3. 채널 저장
         WorkspaceChannelEntity channel = WorkspaceChannelEntity.builder()
-                .workspace(workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(workspaceId, userEmail).get().getWorkspace())
+                .workspace(member.getWorkspace())
                 .channelName(channelName)
                 .build();
         workspaceChannelRepository.save(channel);
 
-        log.info("채널 생성 완료: channelName={}, workspaceId={}", channelName, workspaceId);
-        return buildSuccessResponse("채널 생성 완료");
+        log.info("✅ 채널 생성 완료: channelName={}, workspaceId={}", channelName, workspaceId);
+
+        // 4. 채널 생성 이벤트 발행 (🔔 알림)
+        eventPublisher.publishEvent(new WorkspaceChannelEvent(
+                member.getWorkspace(), userEmail, member.getNickname(),
+                "create", channelName, channel.getChannelNumber()
+        ));
+
+        return ResultDTO.of("채널이 성공적으로 생성되었습니다.", SuccessDTO.builder().success(true).build());
     }
 
     /**
-     * 채널 삭제 메서드
-     * @param channelNumber 삭제할 채널 ID
-     * @return 성공 여부를 포함한 ResultDTO
+     * 2️⃣ 채널 수정 (채널 이름 변경)
      */
     @Override
-    public ResultDTO<SuccessDTO> deleteChannel(Long channelNumber) {
-        String userEmail = AuthUtil.getLoginUserId();
-        log.info("채널 삭제 요청: channelId={}, userEmail={}", channelNumber, userEmail);
-
-        WorkspaceChannelEntity channel = workspaceChannelRepository.findById(channelNumber)
-                .orElseThrow(() -> new CustomException(ErrorCode.CHANNEL_NOT_FOUND));
-
-        validateOwnerRole(channel.getWorkspace().getWsId(), userEmail);
-        workspaceChannelRepository.delete(channel);
-
-        log.info("채널 삭제 완료: channelNumber={}", channelNumber);
-        return buildSuccessResponse("채널 삭제 완료");
-    }
-
-    /**
-     * 채널 정보 수정 메서드 (채널 이름, 역할 수정 가능)
-     * @param channelNumber 수정할 채널 ID
-     * @param request 채널 수정 요청 데이터
-     * @return 성공 여부를 포함한 ResultDTO
-     */
-    @Override
+    @Transactional
     public ResultDTO<SuccessDTO> updateChannel(Long channelNumber, ChannelUpdateRequest request) {
         String userEmail = AuthUtil.getLoginUserId();
-        log.info("채널 수정 요청: channelNumber={}, userEmail={}", channelNumber, userEmail);
+        log.info("📢 채널 수정 요청: channelNumber={}, userEmail={}", channelNumber, userEmail);
 
+        // 1. 채널 정보 조회
         WorkspaceChannelEntity channel = workspaceChannelRepository.findById(channelNumber)
                 .orElseThrow(() -> new CustomException(ErrorCode.CHANNEL_NOT_FOUND));
+        WorkspaceEntity workspace = channel.getWorkspace();
+        Long wsId = workspace.getWsId();
 
-        validateOwnerRole(channel.getWorkspace().getWsId(), userEmail);
+        // 2. 사용자 정보 조회
+        WorkspaceMemberEntity member = workspaceMemberRepository
+                .findByWorkspace_wsIdAndMember_Email(wsId, userEmail)
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
 
-        if (request.getChannelName() != null && !request.getChannelName().isBlank()) {
-            channel.setChannelName(request.getChannelName());
+        // 3. 채널 이름 수정 로직
+        String newName = request.getChannelName();
+        if (newName != null && !newName.isBlank()) {
+            // (1) 기존 채널명과 다른 경우만 검사
+            if (!newName.equals(channel.getChannelName())) {
+                // (2) 동일 워크스페이스 내, 다른 채널 번호에 같은 이름이 있는지 체크
+                boolean nameExists = workspaceChannelRepository
+                        .existsByWorkspace_wsIdAndChannelNameAndChannelNumberNot(wsId, newName, channelNumber);
+                if (nameExists) {
+                    throw new CustomException(ErrorCode.CHANNEL_ALREADY_EXISTS);
+                }
+                // (3) 중복이 없다면 채널명 수정
+                channel.setChannelName(newName);
+            }
         }
-        if (request.getWorkspaceRole() != null) {
-            workspaceChannelRoleRepository.findById(request.getWorkspaceRole())
-                    .ifPresentOrElse(channel::setWorkspaceRole,
-                            () -> { throw new CustomException(ErrorCode.ROLE_NOT_FOUND); });
-        }
+
+        // DB 반영
         workspaceChannelRepository.save(channel);
-        log.info("채널 수정 완료: channelNumber={}", channelNumber);
+        log.info("✅ 채널 수정 완료: channelNumber={}, channelName={}", channelNumber, channel.getChannelName());
 
-        return buildSuccessResponse("채널 수정 완료");
+        // 5. 채널 수정 이벤트 발행 (🔔 알림)
+        eventPublisher.publishEvent(new WorkspaceChannelEvent(
+                workspace, userEmail, member.getNickname(),
+                "update", channel.getChannelName(), channel.getChannelNumber()
+        ));
+
+        return ResultDTO.of("채널이 성공적으로 수정되었습니다.", SuccessDTO.builder().success(true).build());
     }
 
-    /**
-     * 채널 이름 유효성 검사
-     * @param channelName 검사할 채널 이름
-     */
-    private void validateChannelName(String channelName) {
-        if (channelName == null || channelName.isBlank()) {
-            throw new CustomException(ErrorCode.CHANNEL_NOT_FOUND);
-        }
-    }
 
     /**
-     * 사용자 권한 검증 (채널 소유자 여부 확인)
-     * @param workspaceId 워크스페이스 ID
-     * @param userEmail 검증할 사용자 이메일
+     * 3️⃣ 채널 삭제
      */
-    private void validateOwnerRole(Long workspaceId, String userEmail) {
-        workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(workspaceId, userEmail)
-                .filter(member -> "owner".equals(member.getWsRole()))
-                .orElseThrow(() -> new CustomException(ErrorCode.ACCESS_DENIED));
-    }
+    @Override
+    @Transactional
+    public ResultDTO<SuccessDTO> deleteChannel(Long channelNumber) {
+        String userEmail = AuthUtil.getLoginUserId();
+        log.info("📢 채널 삭제 요청: channelNumber={}, userEmail={}", channelNumber, userEmail);
 
-    /**
-     * 성공 응답 생성 메서드
-     * @param message 응답 메시지
-     * @return 성공 여부를 포함한 ResultDTO
-     */
-    private ResultDTO<SuccessDTO> buildSuccessResponse(String message) {
-        return ResultDTO.of(message, SuccessDTO.builder().success(true).build());
+        // 1. 채널 정보 조회
+        WorkspaceChannelEntity channel = workspaceChannelRepository.findById(channelNumber)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHANNEL_NOT_FOUND));
+        WorkspaceEntity workspace = channel.getWorkspace();
+
+        // 2. 사용자 정보 조회
+        WorkspaceMemberEntity member = workspaceMemberRepository
+                .findByWorkspace_wsIdAndMember_Email(workspace.getWsId(), userEmail)
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
+
+        // 3. 채널 삭제
+        workspaceChannelRepository.delete(channel);
+        log.info("✅ 채널 삭제 완료: channelNumber={}", channelNumber);
+
+        // 4. 채널 삭제 이벤트 발행 (🔔 알림)
+        eventPublisher.publishEvent(new WorkspaceChannelEvent(
+                workspace, userEmail, member.getNickname(),
+                "delete", channel.getChannelName(), null
+        ));
+
+        return ResultDTO.of("채널이 성공적으로 삭제되었습니다.", SuccessDTO.builder().success(true).build());
     }
 }

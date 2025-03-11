@@ -20,6 +20,30 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+// ✅ **비밀번호 변경 메일 전송**
+export const sendChangePasswordMail = async (email) => {
+    try {
+        const response = await api.post(`/members/change-password?email=${email}`);
+        console.log("✅ 비밀번호 변경 메일 전송 성공:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("❌ 비밀번호 변경 메일 전송 실패:", error.response?.data?.message || error.message);
+        throw error.response?.data || "비밀번호 변경 메일 전송 실패";
+    }
+};
+
+// ✅ **비밀번호 변경**
+export const changePassword = async (changePasswordData) => {
+    try {
+        const response = await api.put("/members/change-password", changePasswordData);
+        console.log("✅ 비밀번호 변경 성공:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("❌ 비밀번호 변경 실패:", error.response?.data?.message || error.message);
+        throw error.response?.data || "비밀번호 변경 실패";
+    }
+};
+
 // ✅ **회원 정보 수정하기**
 export const updateUserInfo = async (formData, file) => {
     try {

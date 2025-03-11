@@ -1,91 +1,266 @@
 /* eslint-disable prettier/prettier */
-import { useState, useEffect, useContext } from "react";
-import { Grid, List, ListItem, ListItemText, Card, CardContent, Typography, Box, Divider } from "@mui/material";
-import MainCard from "ui-component/cards/MainCard";
-import ChatComponent from "./ChatComponent"; // ✅ 1:1 채팅창 컴포넌트
-import { ConfigContext } from "contexts/ConfigContext"; // ✅ 유저 정보 가져오기
-import { getWorkspaceMembers } from "../../api/workspaceApi"; // ✅ API 호출
+import React, { useEffect, useState, useContext } from "react";
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
 import axios from "axios";
+import {
+    TextField,
+    Button,
+    Card,
+    CardContent,
+    Typography,
+    List,
+    ListItem,
+    ListItemText,
+    ListItemAvatar,
+    Avatar,
+    Grid,
+    Divider,
+    Box,
+    Input,
+} from "@mui/material";
+import MainCard from "ui-component/cards/MainCard";
+import { ConfigContext } from "contexts/ConfigContext";
+import { fetchWorkspaceUsers } from "../../api/workspaceApi";
+import { useSelector } from 'react-redux';
+import UserLoading from "./components/UserLoading";
+
+const API_BASE_URL = "http://localhost:8080/api";
+
+const generateRoomId = (wsId, senderEmail, receiverEmail) => {
+    const cleanEmail = (email) => email.toLowerCase().split("@")[0];
+    const emails = [cleanEmail(senderEmail), cleanEmail(receiverEmail)].sort();
+    return `dm-${wsId}-${emails[0]}-${emails[1]}`;
+};
+
+const isImage = (fileName) => /\.(jpg|jpeg|png|gif)$/i.test(fileName);
+
+export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient }) => {
+    const [messages, setMessages] = useState([]);
+    const [message, setMessage] = useState("");
+    const [file, setFile] = useState(null);
+    const token = localStorage.getItem("token");
+
+    const uploadFile = async () => {
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("sender", senderId);
+        formData.append("receiver", receiverId);
+        formData.append("wsId", wsId);
+
+        try {
+            const response = await axios.post(`${API_BASE_URL}/dm/upload`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "multipart/form-data",
+                },
+                withCredentials: true,
+            });
+            setMessages((prev) => [...prev, response.data]);
+            setFile(null);
+        } catch (error) {
+            console.error("🚨 파일 업로드 실패:", error);
+        }
+    };
+
+    useEffect(() => {
+        axios.get(`${API_BASE_URL}/dm/messages`, {
+            params: { wsId, roomId },
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            withCredentials: true,
+        })
+            .then((res) => setMessages(res.data))
+            .catch(console.error);
+    }, [wsId, roomId, token]);
+
+    useEffect(() => {
+        if (!stompClient || !roomId) return;
+
+        const subscription = stompClient.subscribe(`/exchange/dm-exchange/msg.${roomId}`, (message) => {
+            try {
+                const parsedMessage = JSON.parse(message.body);
+                if (parsedMessage.sender !== senderId) {
+                    setMessages((prev) => [...prev, parsedMessage]);
+                }
+            } catch (error) {
+                console.error("❌ 메시지 파싱 오류:", error);
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, [stompClient, roomId]);
+
+    const sendMessage = () => {
+        if (!message.trim() || !stompClient) return;
+
+        const messageDTO = {
+            wsId,
+            sender: senderId,
+            receiver: receiverId,
+            dmContent: message,
+            isFile: false,
+            isRead: false,
+            sendTime: new Date().toISOString(),
+        };
+
+        stompClient.publish({
+            destination: "/app/dm.sendMessage",
+            body: JSON.stringify(messageDTO),
+            headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setMessages((prev) => [...prev, messageDTO]);
+        setMessage("");
+    };
+
+    return (
+        <Card variant="outlined">
+            <CardContent>
+                <Typography variant="h5">채팅 상대: {receiverId}</Typography>
+                <List>
+                    {messages.map((msg, i) => (
+                        <ListItem key={i}>
+                            <ListItemText
+                                primary={msg.isFile ? (
+                                    isImage(msg.fileName) ? (
+                                        <img
+                                            src={msg.dmContent}
+                                            alt={msg.fileName}
+                                            style={{ maxWidth: "300px", maxHeight: "300px" }}
+                                        />
+                                    ) : (
+                                        <a href={msg.dmContent} target="_blank" rel="noopener noreferrer">
+                                            📎 {msg.fileName}
+                                        </a>
+                                    )
+                                ) : `${msg.sender === senderId ? "나" : msg.sender}: ${msg.dmContent}`}
+                                secondary={msg.sendTime}
+                            />
+                        </ListItem>
+                    ))}
+                </List>
+                <Input type="file" onChange={(e) => setFile(e.target.files[0])} />
+                <Button onClick={uploadFile} variant="contained" color="secondary" disabled={!file}>
+                    파일 업로드
+                </Button>
+                <TextField
+                    fullWidth
+                    variant="outlined"
+                    placeholder="메시지를 입력하세요..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                />
+                <Button onClick={sendMessage} variant="contained" color="primary">
+                    전송
+                </Button>
+            </CardContent>
+        </Card>
+    );
+};
 
 export default function DmPage() {
     const { user } = useContext(ConfigContext);
-    const [dmList, setDmList] = useState([]); // ✅ 기존 DM 목록
-    const [users, setUsers] = useState([]); // ✅ 워크스페이스 사용자 목록
-    const [selectedUser, setSelectedUser] = useState(null); // ✅ 선택된 상대방
-    const [wsId, setWsId] = useState(9); // ✅ 기본 워크스페이스 ID (테스트용)
+    const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
+    const thisws = activeWorkspace?.wsId;
+    const [users, setUsers] = useState([]);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [wsId, setWsId] = useState(thisws);
+    const [stompClient, setStompClient] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    // ✅ 기존 DM 목록 가져오기
+
     useEffect(() => {
-        axios
-            .get(`/api/chat/recent?wsId=${wsId}&user=${user.email}`)
-            .then((res) => setDmList(res.data || [])) // ✅ 응답이 null일 경우 빈 배열 설정
-            .catch(console.error);
-    }, [wsId]);
-
-    // ✅ 워크스페이스 내 사용자 목록 가져오기
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const members = await getWorkspaceMembers(wsId);
-                console.log("✅ 워크스페이스 사용자 목록:", members);
-                setUsers(members || []);
-            } catch (error) {
-                console.error("🚨 워크스페이스 사용자 목록 불러오기 실패:", error);
-            }
-        };
-        fetchUsers();
-    }, [wsId]);
-
-    // ✅ 사용자 목록과 DM 목록을 통합하여 하나의 리스트 생성
-    const mergedList = users
-        .filter((u) => u.email !== user.email) // ✅ 본인 제외
-        .map((userItem) => {
-            // ✅ 해당 유저가 기존 DM이 있는지 확인
-            const existingDm = dmList.find((dm) => dm.receiver === userItem.email);
-            return {
-                ...userItem,
-                unreadCount: existingDm ? existingDm.unreadCount : 0, // ✅ 기존 DM이 있으면 unreadCount 유지
-            };
+        const socket = new SockJS("http://localhost:8080/ws/chat");
+        const client = new Client({
+            webSocketFactory: () => socket,
+            connectHeaders: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+            onConnect: () => setStompClient(client),
         });
+
+        client.activate();
+        return () => client.deactivate();
+    }, []);
+
+    useEffect(() => {
+        setLoading(true);
+        fetchWorkspaceUsers(thisws)
+            .then((usersData) => {
+                setUsers(usersData);
+                setLoading(false);
+            })
+            .catch((error) => {
+                console.error(error);
+                setLoading(false);
+            });
+    }, [thisws]);
+
+    // 자신을 제외한 유저들 목록
+    const filteredUsers = users.filter((u) => u.email !== user.email);
 
     return (
         <MainCard title="디엠 페이지">
             <Grid container spacing={2}>
-                {/* ✅ 왼쪽: DM + 워크스페이스 유저 목록 통합 */}
                 <Grid item xs={4}>
-                    <Card variant="outlined">
+                    <Card
+                        variant="outlined"
+                        sx={{
+                            border: '1px solid #ddd',
+                            borderRadius: 2,
+                            boxShadow: '2px 2px 8px rgba(0,0,0,0.1)',
+                        }}
+                    >
                         <CardContent>
-                            <Typography variant="h6">대화 목록</Typography>
+                            <Typography variant="h3">대화 목록</Typography>
                             <Divider />
-                            <List>
-                                {mergedList.length === 0 ? (
-                                    <Typography variant="body2">대화할 수 있는 사람이 없습니다.</Typography>
+                            {loading ? (
+                                <UserLoading />
+                            ) : (
+                                filteredUsers.length === 0 ? (
+                                    <Typography
+                                        variant="h4"
+                                        align="center"
+                                        sx={{ mt: 3 }}
+                                    >
+                                        dm 가능한 사용자가 없습니다.
+                                    </Typography>
                                 ) : (
-                                    mergedList.map((u, i) => (
-                                        <ListItem
-                                            key={i}
-                                            button
-                                            onClick={() => setSelectedUser(u.email)}
-                                            sx={{ backgroundColor: selectedUser === u.email ? "#f0f0f0" : "inherit" }}
-                                        >
-                                            <ListItemText primary={u.nickname} secondary={u.email} />
-                                            {u.unreadCount > 0 && (
-                                                <Typography variant="caption" color="error">
-                                                    🔴 {u.unreadCount}
-                                                </Typography>
-                                            )}
-                                        </ListItem>
-                                    ))
-                                )}
-                            </List>
+                                    <List>
+                                        {filteredUsers.map((u, i) => (
+                                            <ListItem
+                                                key={i}
+                                                button
+                                                onClick={() => setSelectedUser(u)}
+                                                sx={{
+                                                    backgroundColor: selectedUser?.email === u.email ? "#f0f0f0" : "inherit",
+                                                    cursor: "pointer",
+                                                }}
+                                            >
+                                                <ListItemAvatar>
+                                                    <Avatar src={u.profileImage} alt={u.nickname} />
+                                                </ListItemAvatar>
+                                                <ListItemText primary={u.nickname} secondary={u.email} />
+                                            </ListItem>
+                                        ))}
+                                    </List>
+                                )
+                            )}
                         </CardContent>
                     </Card>
                 </Grid>
-
-                {/* ✅ 오른쪽: 선택된 사용자와의 DM 창 */}
                 <Grid item xs={8}>
                     {selectedUser ? (
-                        <ChatComponent wsId={wsId} receiverId={selectedUser} />
+                        <ChatComponent
+                            wsId={wsId}
+                            roomId={generateRoomId(wsId, user.email, selectedUser.email)}
+                            senderId={user.email}
+                            receiverId={selectedUser.email}
+                            stompClient={stompClient}
+                        />
                     ) : (
                         <Box display="flex" alignItems="center" justifyContent="center" height="100%">
                             <Typography variant="body1">대화할 상대를 선택하세요.</Typography>
@@ -95,4 +270,4 @@ export default function DmPage() {
             </Grid>
         </MainCard>
     );
-}
+};

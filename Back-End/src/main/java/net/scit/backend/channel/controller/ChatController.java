@@ -2,6 +2,9 @@ package net.scit.backend.channel.controller;
 
 import net.scit.backend.channel.DTO.MessageDTO;
 import net.scit.backend.channel.service.ChannelService;
+
+import java.util.List;
+
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -40,5 +43,13 @@ public class ChatController {
             @PathVariable("channelId") Long channelId
     ) {
         return chatService.uploadFile(file, sender, channelId);
+    }
+
+    /**
+     * 과거 메시지 조회 API
+     */
+    @GetMapping("/messages/{channelId}")
+    public List<MessageDTO> getMessagesByChannel(@PathVariable("channelId") Long channelId) {
+        return chatService.getMessagesByChannel(channelId);
     }
 }

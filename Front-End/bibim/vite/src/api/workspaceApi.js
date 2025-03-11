@@ -140,15 +140,16 @@ export const updateWorkspace = async (wsName, newName, imageFile) => {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
 
-        // 응답 데이터 확인
-        if (!response.data || !response.data.success) {
-            throw new Error(response.data?.message || '업데이트 실패');
+        // 응답 데이터 확인 - 성공 응답 처리 수정
+        // 백엔드에서 성공 응답을 다양한 형태로 보낼 수 있으므로 유연하게 처리
+        if (response.data) {
+            return response.data;
         }
 
-        return response.data;
+        return { success: true, message: "워크스페이스 업데이트에 성공했습니다." };
     } catch (error) {
         console.error("🚨 워크스페이스 업데이트 실패:", error);
-        throw error;
+        throw new Error(error.response?.data?.message || "워크스페이스 업데이트에 실패했습니다.");
     }
 };
 
@@ -181,11 +182,17 @@ export const kickUserFromWorkspace = async (wsId, email) => {
 // 워크스페이스 내 모든 멤버 조회 API 호출 함수
 export const fetchWorkspaceUsers = async (workspaceId) => {
     try {
+        console.log("🔍 API 호출 시작 - workspaceId:", workspaceId);
         const response = await api.get(`${API_BASE_URL}/${workspaceId}/members`);
-        console.log('API 응답:', response); // 응답 확인을 위한 로그
+        console.log('🔍 API 응답:', response);
         return response.data;
     } catch (error) {
         console.error('워크스페이스 멤버 조회 실패:', error);
+        console.error('에러 상세:', {
+            status: error.response?.status,
+            data: error.response?.data,
+            message: error.message
+        });
         throw error;
     }
 };

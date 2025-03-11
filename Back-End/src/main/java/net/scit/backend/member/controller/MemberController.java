@@ -1,19 +1,35 @@
 package net.scit.backend.member.controller;
 
-import net.scit.backend.jwt.AuthUtil;
-import net.scit.backend.member.dto.*;
+import java.time.LocalDateTime;
+
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.jwt.AuthUtil;
+import net.scit.backend.member.dto.ChangePasswordDTO;
+import net.scit.backend.member.dto.LoginRequest;
+import net.scit.backend.member.dto.MemberDTO;
+import net.scit.backend.member.dto.MemberLoginStatusDTO;
+import net.scit.backend.member.dto.MyInfoDTO;
+import net.scit.backend.member.dto.SignupDTO;
+import net.scit.backend.member.dto.TokenDTO;
+import net.scit.backend.member.dto.UpdateInfoDTO;
+import net.scit.backend.member.dto.VerificationDTO;
 import net.scit.backend.member.service.MemberDetailsService;
 import net.scit.backend.member.service.MemberService;
-
-import java.time.LocalDateTime;
 
 /**
  * Member 관련 업무 메소드가 지정된 Controller
@@ -34,8 +50,7 @@ public class MemberController {
      */
     @PostMapping("/signup")
     public ResponseEntity<ResultDTO<SuccessDTO>> signup(@RequestPart("signupDTO") SignupDTO signupDTO,
-
-            @RequestPart(value = "file", required = false) MultipartFile file) {
+                                                        @RequestPart(value = "file", required = false) MultipartFile file) {
 
         // 📌 `file`이 `null`인지 먼저 체크 후 로깅 (2025.02.17 추가코드)
         if (file == null) {
@@ -197,6 +212,10 @@ public class MemberController {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * 로그아웃
+     * @return
+     */
     @PostMapping("/logout")
     public ResponseEntity<ResultDTO<SuccessDTO>> logout() {
         ResultDTO<SuccessDTO> result = memberService.logout();
@@ -224,16 +243,5 @@ public class MemberController {
         String email = AuthUtil.getLoginUserId();
         MemberLoginStatusDTO statusDTO = memberService.getLoginStatus(email);
         return ResponseEntity.ok(ResultDTO.of("로그인 상태 조회 성공", statusDTO));
-    }
-
-    /**
-     * 연동여부를 저장하는 API
-     * @param linkYn 연동동의 여부
-     * @return
-     */
-    @PostMapping("/link")
-    public ResponseEntity<?> linkAccount(@RequestParam String email, @RequestParam boolean linkYn) {
-        ResultDTO<SuccessDTO> result = memberService.linkAccount(email, linkYn);
-        return ResponseEntity.ok(result);
     }
 }

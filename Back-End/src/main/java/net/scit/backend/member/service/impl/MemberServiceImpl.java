@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import net.scit.backend.member.event.MemberEvent;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -336,13 +337,8 @@ public class MemberServiceImpl implements MemberService {
         // 3. 변경된 정보 저장
         memberRepository.save(member);
 
-//        // 4. 이벤트 발생 (회원 정보 수정 이벤트)
-//        eventPublisher.publishEvent(new MemberUpdatedEvent(
-//                member,
-//                email,
-//                "회원 정보 수정됨",
-//                "member_update"
-//        ));
+        // 4. 이벤트 발생 (회원 정보 수정 이벤트)
+        eventPublisher.publishEvent(new MemberEvent(member, member.getEmail(), member.getName(), "member_update"));
 
         // 5. SuccessDTO 생성 후 반환
         SuccessDTO successDTO = SuccessDTO.builder()
@@ -404,14 +400,8 @@ public class MemberServiceImpl implements MemberService {
         member.setPassword(password);
         memberRepository.save(member);
 
-//        // 이벤트 발생 (비밀번호 변경 이벤트)
-//        eventPublisher.publishEvent(new MemberUpdatedEvent(
-//                member,
-//                changePasswordDTO.getEmail(),
-//                "비밀번호 변경됨",
-//                "password_update"
-//        ));
-//
+        // 이벤트 발생 (비밀번호 변경 이벤트)
+        eventPublisher.publishEvent(new MemberEvent(member, member.getEmail(), member.getName(), "password_update"));
 
         SuccessDTO successDTO = SuccessDTO.builder()
                 .success(true)
@@ -489,50 +479,5 @@ public class MemberServiceImpl implements MemberService {
             // 이메일이 존재하지 않는 경우에도 false 반환 (lastActiveTime은 null로 처리)
             return new MemberLoginStatusDTO(userEmail, false, null);
         }
-    }
-
-    @Override
-    public ResultDTO<SuccessDTO> linkAccount(String email, boolean linkYn) {
-
-        MemberEntity member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-        if (!member.getSocialLoginCheck().equals("없음")) {
-            throw new CustomException(ErrorCode.OAUTH_ALREADY_LINKED);
-        }
-
-        redisTemplate.opsForValue().set("oauth_link_" + email, String.valueOf(linkYn), MAIL_EXPIRES_IN,
-                TimeUnit.MILLISECONDS);
-
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
-
-        return ResultDTO.of("연동 요청에 성공했습니다.", successDTO);
-    }
-
-    /**
-     * 멤버 DB 변경 시 알림 전송
-     * 
-     * @param updatedMember
-     * @param updatedBy
-     */
-    @Transactional
-    public void updateMember(MemberEntity updatedMember, String updatedBy) {
-        MemberEntity existingMember = memberRepository.findById(updatedMember.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다."));
-
-        // 변경 사항 반영
-        existingMember.setName(updatedMember.getName());
-        existingMember.setNationality(updatedMember.getNationality());
-        existingMember.setLanguage(updatedMember.getLanguage());
-        existingMember.setProfileImage(updatedMember.getProfileImage());
-        existingMember.setLoginStatus(updatedMember.isLoginStatus());
-
-        // 변경된 회원 정보 저장
-        memberRepository.save(existingMember);
-
-        // ✅ 회원 정보 변경 이벤트 발생
-//        eventPublisher.publishEvent(new MemberUpdatedEvent(existingMember, updatedBy));
     }
 }
