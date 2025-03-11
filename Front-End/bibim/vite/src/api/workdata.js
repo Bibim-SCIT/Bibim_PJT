@@ -87,25 +87,6 @@ export const deleteTag = async (wsId, dataNumber, tag) => {
 };
 
 // 자료 수정 API
-// export const updateWorkdata = async (wsId, dataNumber, title, content, deleteFiles, tagRequests, newFiles) => {
-//     const formData = new FormData();
-//     formData.append('wsId', wsId);
-//     formData.append('dataNumber', dataNumber);
-//     if (title) formData.append('title', title);
-//     if (content) formData.append('content', content);
-//     formData.append('deleteFiles', JSON.stringify(deleteFiles));
-//     formData.append('tagRequests', JSON.stringify(tagRequests));
-//     newFiles.forEach(file => formData.append('files', file));
-
-//     try {
-//         const response = await api.put('/workdata', formData, {
-//             headers: { 'Content-Type': 'multipart/form-data' }
-//         });
-//         return response.data;
-//     } catch (error) {
-//         throw error.response?.data || error.message;
-//     }
-// };
 export const updateWorkdata = async (wsId, dataNumber, title, content, deleteFiles, deletedTags, newTags, newFiles) => {
     const formData = new FormData();
     if (title) formData.append('title', title);
