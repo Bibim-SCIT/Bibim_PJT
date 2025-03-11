@@ -3,8 +3,7 @@ import React, { useEffect, useState, useContext } from "react";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import axios from "axios";
-import
-{
+import {
     TextField,
     Button,
     Card,
@@ -25,11 +24,11 @@ import { ConfigContext } from "contexts/ConfigContext";
 import { fetchWorkspaceUsers } from "../../api/workspaceApi";
 import { useSelector } from 'react-redux';
 import UserLoading from "./components/UserLoading";
+import ChatLoading from "./components/ChatLoading";
 
 const API_BASE_URL = "http://localhost:8080/api";
 
-const generateRoomId = (wsId, senderEmail, receiverEmail) =>
-{
+const generateRoomId = (wsId, senderEmail, receiverEmail) => {
     const cleanEmail = (email) => email.toLowerCase().split("@")[0];
     const emails = [cleanEmail(senderEmail), cleanEmail(receiverEmail)].sort();
     return `dm-${wsId}-${emails[0]}-${emails[1]}`;
@@ -37,8 +36,7 @@ const generateRoomId = (wsId, senderEmail, receiverEmail) =>
 
 // const isImage = (fileName) => /\.(jpg|jpeg|png|gif)$/i.test(fileName);
 
-const isImage = (fileName) =>
-{
+const isImage = (fileName) => {
     if (!fileName) return false;
     const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
     const extension = fileName.split(".").pop().toLowerCase();
@@ -46,21 +44,18 @@ const isImage = (fileName) =>
 };
 
 // YouTube 링크 확인 함수
-const isYouTubeLink = (url) =>
-{
+const isYouTubeLink = (url) => {
     return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/.test(url);
 };
 
 // YouTube Embed URL 생성 함수
-const getYouTubeEmbedUrl = (url) =>
-{
+const getYouTubeEmbedUrl = (url) => {
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
     return match ? `https://www.youtube.com/embed/${match[1]}` : null;
 };
 
 // 메시지 내용 렌더링 함수
-const renderMessageContent = (msg) =>
-{
+const renderMessageContent = (msg) => {
     if (msg.file && isImage(msg.fileName)) {
         return (
             <img
@@ -97,15 +92,14 @@ const renderMessageContent = (msg) =>
 };
 
 
-export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient }) =>
-{
+export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient }) => {
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState("");
     const [file, setFile] = useState(null);
     const token = localStorage.getItem("token");
+    const [loading, setLoading] = useState(false);  // ✅ 추가
 
-    const uploadFile = async () =>
-    {
+    const uploadFile = async () => {
         if (!file) return;
 
         const formData = new FormData();
@@ -129,8 +123,8 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient 
         }
     };
 
-    useEffect(() =>
-    {
+    useEffect(() => {
+        setLoading(true);  // ✅ 새로운 roomId가 들어오면 로딩 시작
         axios.get(`${API_BASE_URL}/dm/messages`, {
             params: { wsId, roomId },
             headers: {
@@ -138,16 +132,20 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient 
             },
             withCredentials: true,
         })
-            .then((res) => setMessages(res.data))
-            .catch(console.error);
+            .then((res) => {
+                setMessages(res.data);
+                setLoading(false); // ✅ 데이터 로드 완료 후 로딩 종료
+            })
+            .catch((error) => {
+                console.error("❌ 메시지 로드 실패:", error);
+                setLoading(false);
+            });
     }, [wsId, roomId, token]);
 
-    useEffect(() =>
-    {
+    useEffect(() => {
         if (!stompClient || !roomId) return;
 
-        const subscription = stompClient.subscribe(`/exchange/dm-exchange/msg.${roomId}`, (message) =>
-        {
+        const subscription = stompClient.subscribe(`/exchange/dm-exchange/msg.${roomId}`, (message) => {
             try {
                 const parsedMessage = JSON.parse(message.body);
                 if (parsedMessage.sender !== senderId) {
@@ -161,8 +159,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient 
         return () => subscription.unsubscribe();
     }, [stompClient, roomId]);
 
-    const sendMessage = () =>
-    {
+    const sendMessage = () => {
         if (!message.trim() || !stompClient) return;
 
         const messageDTO = {
@@ -188,34 +185,26 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient 
     return (
         <div style={{ border: '1px solid #ccc', padding: '16px', borderRadius: '8px' }}>
             <h2>채팅 상대: {receiverId}</h2>
-            <div>
+
+            {loading ? (  // ✅ 로딩 중에는 로딩 화면 표시
+                <div style={{ textAlign: "center", padding: "20px" }}>
+                    <ChatLoading />
+                </div>
+            ) : (
                 <div>
                     {messages.map((msg, i) => (
-                        <div
-                            key={i}
-                            style={{
-                                border: '1px solid #ddd',
-                                borderRadius: '8px',
-                                padding: '12px',
-                                marginBottom: '10px',
-                                backgroundColor: '#f9f9f9'
-                            }}
-                        >
+                        <div key={i} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '12px', marginBottom: '10px', backgroundColor: '#f9f9f9' }}>
                             <div style={{ fontSize: '14px', color: '#555' }}>
                                 {msg.sender === senderId ? "나" : msg.sender}
                             </div>
-
-                            {/* ✅ 메시지 내용 렌더링 */}
                             {renderMessageContent(msg)}
-
                             <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
                                 {msg.sendTime}
                             </div>
                         </div>
                     ))}
                 </div>
-
-            </div>
+            )}
 
             <input type="file" onChange={(e) => setFile(e.target.files[0])} />
             <button onClick={uploadFile} disabled={!file} style={{ marginLeft: '8px' }}>
@@ -235,8 +224,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient 
         </div>
     );
 }
-export default function DmPage()
-{
+export default function DmPage() {
     const { user } = useContext(ConfigContext);
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
     const thisws = activeWorkspace?.wsId;
@@ -247,8 +235,7 @@ export default function DmPage()
     const [loading, setLoading] = useState(true);
 
 
-    useEffect(() =>
-    {
+    useEffect(() => {
         const socket = new SockJS("http://localhost:8080/ws/chat");
         const client = new Client({
             webSocketFactory: () => socket,
@@ -260,17 +247,14 @@ export default function DmPage()
         return () => client.deactivate();
     }, []);
 
-    useEffect(() =>
-    {
+    useEffect(() => {
         setLoading(true);
         fetchWorkspaceUsers(thisws)
-            .then((usersData) =>
-            {
+            .then((usersData) => {
                 setUsers(usersData);
                 setLoading(false);
             })
-            .catch((error) =>
-            {
+            .catch((error) => {
                 console.error(error);
                 setLoading(false);
             });
