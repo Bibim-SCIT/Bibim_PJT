@@ -37,12 +37,65 @@ const generateRoomId = (wsId, senderEmail, receiverEmail) =>
 
 // const isImage = (fileName) => /\.(jpg|jpeg|png|gif)$/i.test(fileName);
 
-const isImage = (fileName) => {
+const isImage = (fileName) =>
+{
     if (!fileName) return false;
     const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
     const extension = fileName.split(".").pop().toLowerCase();
     return imageExtensions.includes(extension);
 };
+
+// YouTube 링크 확인 함수
+const isYouTubeLink = (url) =>
+{
+    return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/.test(url);
+};
+
+// YouTube Embed URL 생성 함수
+const getYouTubeEmbedUrl = (url) =>
+{
+    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
+    return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+};
+
+// 메시지 내용 렌더링 함수
+const renderMessageContent = (msg) =>
+{
+    if (msg.file && isImage(msg.fileName)) {
+        return (
+            <img
+                src={msg.dmContent}
+                alt="파일 미리보기"
+                style={{ maxWidth: "300px", maxHeight: "300px" }}
+                onError={(e) => console.error("🚨 이미지 로드 실패:", e.target.src)}
+            />
+        );
+    } else if (msg.isFile) {
+        return (
+            <a href={msg.dmContent} target="_blank" rel="noopener noreferrer">
+                📎 {msg.fileName}
+            </a>
+        );
+    } else if (isYouTubeLink(msg.dmContent)) {
+        const embedUrl = getYouTubeEmbedUrl(msg.dmContent);
+        return embedUrl ? (
+            <div className="youtube-wrapper">
+                <iframe
+                    src={embedUrl}
+                    title="YouTube video player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                ></iframe>
+            </div>
+        ) : (
+            <div>{msg.dmContent}</div>
+        );
+    } else {
+        return <div>{msg.dmContent}</div>;
+    }
+};
+
 
 export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient }) =>
 {
@@ -136,43 +189,34 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient 
         <div style={{ border: '1px solid #ccc', padding: '16px', borderRadius: '8px' }}>
             <h2>채팅 상대: {receiverId}</h2>
             <div>
-                {messages.map((msg, i) => (
-                    console.log(msg),
-                    <div
-                        key={i}
-                        style={{
-                            border: '1px solid #ddd',
-                            borderRadius: '8px',
-                            padding: '12px',
-                            marginBottom: '10px',
-                            backgroundColor: '#f9f9f9'
-                        }}
-                    >
-                        <div style={{ fontSize: '14px', color: '#555' }}>
-                            {msg.sender === senderId ? "나" : msg.sender}
+                <div>
+                    {messages.map((msg, i) => (
+                        <div
+                            key={i}
+                            style={{
+                                border: '1px solid #ddd',
+                                borderRadius: '8px',
+                                padding: '12px',
+                                marginBottom: '10px',
+                                backgroundColor: '#f9f9f9'
+                            }}
+                        >
+                            <div style={{ fontSize: '14px', color: '#555' }}>
+                                {msg.sender === senderId ? "나" : msg.sender}
+                            </div>
+
+                            {/* ✅ 메시지 내용 렌더링 */}
+                            {renderMessageContent(msg)}
+
+                            <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
+                                {msg.sendTime}
+                            </div>
                         </div>
-                        {msg.file && isImage(msg.fileName) ? (
-                            <img
-                                src={msg.dmContent}
-                                alt="파일 미리보기"
-                                style={{ maxWidth: "300px", maxHeight: "300px" }}
-                                onError={(e) => console.error("🚨 이미지 로드 실패:", e.target.src)}
-                            />
-                        ) : msg.isFile ? (
-                            <a href={msg.dmContent} target="_blank" rel="noopener noreferrer">
-                                📎 {msg.fileName}
-                            </a>
-                        ) : (
-                            <div>{msg.dmContent}</div>
-                        )}
-    
-                        <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
-                            {msg.sendTime}
-                        </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
+
             </div>
-    
+
             <input type="file" onChange={(e) => setFile(e.target.files[0])} />
             <button onClick={uploadFile} disabled={!file} style={{ marginLeft: '8px' }}>
                 파일 업로드
