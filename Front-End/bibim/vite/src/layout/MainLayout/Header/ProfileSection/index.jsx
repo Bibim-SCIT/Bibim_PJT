@@ -180,22 +180,6 @@ export default function ProfileSection() {
                           {user ? user.email : "test@email"} {/* ✅ 현재 로그인한 사용자 이메일 표시 */}
                         </Typography>
                       </Stack>
-                      {/* <OutlinedInput
-                        sx={{ width: '100%', pr: 1, pl: 2, my: 2 }}
-                        id="input-search-profile"
-                        value={value}
-                        onChange={(e) => setValue(e.target.value)}
-                        placeholder="이건 필요 없을듯"
-                        startAdornment={
-                          <InputAdornment position="start">
-                            <IconSearch stroke={1.5} size="16px" />
-                          </InputAdornment>
-                        }
-                        aria-describedby="search-helper-text"
-                        inputProps={{
-                          'aria-label': 'weight'
-                        }}
-                      /> */}
                       <Divider />
                     </Box>
                     <Box

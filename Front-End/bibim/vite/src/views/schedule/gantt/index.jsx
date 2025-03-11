@@ -4,7 +4,7 @@ import { styled } from '@mui/material/styles';
 import GanttChart from '../components/GanttChart';
 import KanbanBoard from '../components/KanbanBoard';
 import { useSelector, useDispatch } from 'react-redux';
-import { loadWorkspace } from '../../../store/workspaceRedux';
+import { loadWorkspace } from '../../../store/workSpaceRedux';
 
 const ScheduleWrapper = styled(Box)({
   padding: '20px',

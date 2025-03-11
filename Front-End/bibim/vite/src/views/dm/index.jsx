@@ -3,7 +3,8 @@ import React, { useEffect, useState, useContext, useRef } from "react";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import axios from "axios";
-import {
+import
+{
     TextField,
     Button,
     Card,
@@ -32,7 +33,8 @@ import './DmChat.css';
 
 const API_BASE_URL = "http://localhost:8080/api";
 
-const generateRoomId = (wsId, senderEmail, receiverEmail) => {
+const generateRoomId = (wsId, senderEmail, receiverEmail) =>
+{
     const cleanEmail = (email) => email.toLowerCase().split("@")[0];
     const emails = [cleanEmail(senderEmail), cleanEmail(receiverEmail)].sort();
     return `dm-${wsId}-${emails[0]}-${emails[1]}`;
@@ -64,7 +66,8 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
         messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
     };
 
-    const uploadFile = async () => {
+    const uploadFile = async () =>
+    {
         if (!file) return;
 
         const formData = new FormData();
@@ -127,7 +130,8 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
     useEffect(() => {
         if (!stompClient || !roomId) return;
 
-        const subscription = stompClient.subscribe(`/exchange/dm-exchange/msg.${roomId}`, (message) => {
+        const subscription = stompClient.subscribe(`/exchange/dm-exchange/msg.${roomId}`, (message) =>
+        {
             try {
                 const parsedMessage = JSON.parse(message.body);
                 if (parsedMessage.sender !== senderId) {
@@ -141,7 +145,8 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
         return () => subscription.unsubscribe();
     }, [stompClient, roomId]);
 
-    const sendMessage = () => {
+    const sendMessage = () =>
+    {
         if (!message.trim() || !stompClient) return;
 
         const messageDTO = {
@@ -311,9 +316,9 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
             </div>
         </div>
     );
-};
-
-export default function DmPage() {
+}
+export default function DmPage()
+{
     const { user } = useContext(ConfigContext);
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
     const thisws = activeWorkspace?.wsId;
@@ -324,7 +329,8 @@ export default function DmPage() {
     const [loading, setLoading] = useState(true);
 
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         const socket = new SockJS("http://localhost:8080/ws/chat");
         const client = new Client({
             webSocketFactory: () => socket,
@@ -336,14 +342,17 @@ export default function DmPage() {
         return () => client.deactivate();
     }, []);
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         setLoading(true);
         fetchWorkspaceUsers(thisws)
-            .then((usersData) => {
+            .then((usersData) =>
+            {
                 setUsers(usersData);
                 setLoading(false);
             })
-            .catch((error) => {
+            .catch((error) =>
+            {
                 console.error(error);
                 setLoading(false);
             });
