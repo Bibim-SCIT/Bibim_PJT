@@ -3,7 +3,8 @@ import React, { useEffect, useState, useContext } from "react";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import axios from "axios";
-import {
+import
+{
     TextField,
     Button,
     Card,
@@ -27,21 +28,31 @@ import UserLoading from "./components/UserLoading";
 
 const API_BASE_URL = "http://localhost:8080/api";
 
-const generateRoomId = (wsId, senderEmail, receiverEmail) => {
+const generateRoomId = (wsId, senderEmail, receiverEmail) =>
+{
     const cleanEmail = (email) => email.toLowerCase().split("@")[0];
     const emails = [cleanEmail(senderEmail), cleanEmail(receiverEmail)].sort();
     return `dm-${wsId}-${emails[0]}-${emails[1]}`;
 };
 
-const isImage = (fileName) => /\.(jpg|jpeg|png|gif)$/i.test(fileName);
+// const isImage = (fileName) => /\.(jpg|jpeg|png|gif)$/i.test(fileName);
 
-export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient }) => {
+const isImage = (fileName) => {
+    if (!fileName) return false;
+    const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
+    const extension = fileName.split(".").pop().toLowerCase();
+    return imageExtensions.includes(extension);
+};
+
+export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient }) =>
+{
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState("");
     const [file, setFile] = useState(null);
     const token = localStorage.getItem("token");
 
-    const uploadFile = async () => {
+    const uploadFile = async () =>
+    {
         if (!file) return;
 
         const formData = new FormData();
@@ -65,7 +76,8 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient 
         }
     };
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         axios.get(`${API_BASE_URL}/dm/messages`, {
             params: { wsId, roomId },
             headers: {
@@ -77,10 +89,12 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient 
             .catch(console.error);
     }, [wsId, roomId, token]);
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         if (!stompClient || !roomId) return;
 
-        const subscription = stompClient.subscribe(`/exchange/dm-exchange/msg.${roomId}`, (message) => {
+        const subscription = stompClient.subscribe(`/exchange/dm-exchange/msg.${roomId}`, (message) =>
+        {
             try {
                 const parsedMessage = JSON.parse(message.body);
                 if (parsedMessage.sender !== senderId) {
@@ -94,7 +108,8 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient 
         return () => subscription.unsubscribe();
     }, [stompClient, roomId]);
 
-    const sendMessage = () => {
+    const sendMessage = () =>
+    {
         if (!message.trim() || !stompClient) return;
 
         const messageDTO = {
@@ -118,52 +133,66 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient 
     };
 
     return (
-        <Card variant="outlined">
-            <CardContent>
-                <Typography variant="h5">채팅 상대: {receiverId}</Typography>
-                <List>
-                    {messages.map((msg, i) => (
-                        <ListItem key={i}>
-                            <ListItemText
-                                primary={msg.isFile ? (
-                                    isImage(msg.fileName) ? (
-                                        <img
-                                            src={msg.dmContent}
-                                            alt={msg.fileName}
-                                            style={{ maxWidth: "300px", maxHeight: "300px" }}
-                                        />
-                                    ) : (
-                                        <a href={msg.dmContent} target="_blank" rel="noopener noreferrer">
-                                            📎 {msg.fileName}
-                                        </a>
-                                    )
-                                ) : `${msg.sender === senderId ? "나" : msg.sender}: ${msg.dmContent}`}
-                                secondary={msg.sendTime}
+        <div style={{ border: '1px solid #ccc', padding: '16px', borderRadius: '8px' }}>
+            <h2>채팅 상대: {receiverId}</h2>
+            <div>
+                {messages.map((msg, i) => (
+                    console.log(msg),
+                    <div
+                        key={i}
+                        style={{
+                            border: '1px solid #ddd',
+                            borderRadius: '8px',
+                            padding: '12px',
+                            marginBottom: '10px',
+                            backgroundColor: '#f9f9f9'
+                        }}
+                    >
+                        <div style={{ fontSize: '14px', color: '#555' }}>
+                            {msg.sender === senderId ? "나" : msg.sender}
+                        </div>
+                        {msg.file && isImage(msg.fileName) ? (
+                            <img
+                                src={msg.dmContent}
+                                alt="파일 미리보기"
+                                style={{ maxWidth: "300px", maxHeight: "300px" }}
+                                onError={(e) => console.error("🚨 이미지 로드 실패:", e.target.src)}
                             />
-                        </ListItem>
-                    ))}
-                </List>
-                <Input type="file" onChange={(e) => setFile(e.target.files[0])} />
-                <Button onClick={uploadFile} variant="contained" color="secondary" disabled={!file}>
-                    파일 업로드
-                </Button>
-                <TextField
-                    fullWidth
-                    variant="outlined"
-                    placeholder="메시지를 입력하세요..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                />
-                <Button onClick={sendMessage} variant="contained" color="primary">
-                    전송
-                </Button>
-            </CardContent>
-        </Card>
+                        ) : msg.isFile ? (
+                            <a href={msg.dmContent} target="_blank" rel="noopener noreferrer">
+                                📎 {msg.fileName}
+                            </a>
+                        ) : (
+                            <div>{msg.dmContent}</div>
+                        )}
+    
+                        <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
+                            {msg.sendTime}
+                        </div>
+                    </div>
+                ))}
+            </div>
+    
+            <input type="file" onChange={(e) => setFile(e.target.files[0])} />
+            <button onClick={uploadFile} disabled={!file} style={{ marginLeft: '8px' }}>
+                파일 업로드
+            </button>
+            <input
+                type="text"
+                placeholder="메시지를 입력하세요..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                style={{ width: '100%', padding: '8px', marginTop: '8px', marginBottom: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+            />
+            <button onClick={sendMessage} style={{ backgroundColor: '#007BFF', color: '#fff', padding: '8px 16px', borderRadius: '4px', border: 'none' }}>
+                전송
+            </button>
+        </div>
     );
-};
-
-export default function DmPage() {
+}
+export default function DmPage()
+{
     const { user } = useContext(ConfigContext);
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
     const thisws = activeWorkspace?.wsId;
@@ -174,7 +203,8 @@ export default function DmPage() {
     const [loading, setLoading] = useState(true);
 
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         const socket = new SockJS("http://localhost:8080/ws/chat");
         const client = new Client({
             webSocketFactory: () => socket,
@@ -186,14 +216,17 @@ export default function DmPage() {
         return () => client.deactivate();
     }, []);
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         setLoading(true);
         fetchWorkspaceUsers(thisws)
-            .then((usersData) => {
+            .then((usersData) =>
+            {
                 setUsers(usersData);
                 setLoading(false);
             })
-            .catch((error) => {
+            .catch((error) =>
+            {
                 console.error(error);
                 setLoading(false);
             });
