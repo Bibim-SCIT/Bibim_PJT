@@ -241,8 +241,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         // 4. 워크스페이스 멤버 리스트 조회 (알림 대상)
         List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findByWorkspace_wsId(wsId);
 
-        // 5. **워크스페이스 삭제 (연관 데이터 포함)**
-        workspaceRepository.deleteById(wsId); // ✅ 영속성 문제 해결 (delete 대신 deleteById 사용)
 
         // 6. **알림 이벤트 발행**
         for (WorkspaceMemberEntity member : workspaceMembers) {
@@ -258,6 +256,9 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                     )
             );
         }
+
+        // 5. **워크스페이스 삭제 (연관 데이터 포함)**
+        workspaceRepository.deleteById(wsId); // ✅ 영속성 문제 해결 (delete 대신 deleteById 사용)
 
         return ResultDTO.of("워크스페이스 삭제에 성공했습니다.", SuccessDTO.builder().success(true).build());
     }
