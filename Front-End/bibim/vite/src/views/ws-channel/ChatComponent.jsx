@@ -17,7 +17,8 @@ import "./ChatComponent.css";
  * @param {string} channelId - 채팅 채널 ID
  * @param {string} workspaceId - 워크스페이스 ID
  */
-function ChatComponent({ channelId, workspaceId }) {
+function ChatComponent({ channelId, workspaceId })
+{
     // Context에서 현재 사용자 정보 가져오기
     const { user } = useContext(ConfigContext);
 
@@ -32,11 +33,77 @@ function ChatComponent({ channelId, workspaceId }) {
 
     // WebSocket 클라이언트 참조
     const stompClientRef = useRef(null);
+    // 메시지 컨테이너 참조 추가
+    const messagesEndRef = useRef(null);
+
+    /**
+     * 스크롤을 맨 아래로 이동시키는 함수
+     */
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    };
+
+    /**
+     * YouTube 링크 여부 확인 함수
+     * @param {string} url - 메시지 내용
+     * @returns {boolean} YouTube 링크인지 여부
+     */
+    const isYouTubeLink = (url) =>
+    {
+        return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/.test(url);
+    };
+
+    /**
+     * YouTube Embed URL 생성 함수
+     * @param {string} url - YouTube URL
+     * @returns {string} 임베드 URL
+     */
+    const getYouTubeEmbedUrl = (url) =>
+    {
+        const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
+        return videoIdMatch ? `https://www.youtube.com/embed/${videoIdMatch[1]}` : null;
+    };
+
+    /**
+     * 메시지 내용 렌더링 함수
+     */
+    const renderMessageContent = (msg) =>
+    {
+        if (msg.messageOrFile && msg.content) {
+            return isImageFile(msg.content) ? (
+                <img src={msg.content} alt="파일 미리보기" className="chat-image" />
+            ) : (
+                <a href={msg.content} target="_blank" rel="noopener noreferrer" className="file-message">
+                    📎 파일 다운로드
+                </a>
+            );
+        } else if (isYouTubeLink(msg.content)) {
+            const embedUrl = getYouTubeEmbedUrl(msg.content);
+            return embedUrl ? (
+                <div className="youtube-wrapper">
+                    <iframe
+                        src={embedUrl}
+                        title="YouTube video player"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                    ></iframe>
+                </div>
+            ) : (
+                <div>{msg.content}</div>
+            );
+        } else {
+            return <div>{msg.content}</div>;
+        }
+    };
+
+
 
     /**
      * 과거 메시지 가져오기 함수
      */
-    const fetchMessages = async () => {
+    const fetchMessages = async () =>
+    {
         const token = localStorage.getItem("token");
         try {
             const response = await fetch(`http://localhost:8080/api/chat/messages/${channelId}`, {
@@ -46,6 +113,11 @@ function ChatComponent({ channelId, workspaceId }) {
 
             const data = await response.json();
             setMessages(data); // 기존 메시지 상태에 추가
+            
+            // 메시지 로드 후 약간의 지연을 두고 스크롤 이동
+            setTimeout(() => {
+                scrollToBottom();
+            }, 100);
         } catch (error) {
             console.error("❌ 메시지 조회 오류:", error);
         }
@@ -54,7 +126,8 @@ function ChatComponent({ channelId, workspaceId }) {
     /**
      * WebSocket 연결 설정 및 과거 메시지 로딩 추가
      */
-    useEffect(() => {
+    useEffect(() =>
+    {
         const token = localStorage.getItem("token");
         if (!token || !channelId || !user) return;
 
@@ -68,8 +141,10 @@ function ChatComponent({ channelId, workspaceId }) {
             connectHeaders: { Authorization: `Bearer ${token}` },
 
             // 연결 성공 시 채널 구독
-            onConnect: () => {
-                client.subscribe(`/exchange/chat-exchange/msg.${channelId}`, (message) => {
+            onConnect: () =>
+            {
+                client.subscribe(`/exchange/chat-exchange/msg.${channelId}`, (message) =>
+                {
                     try {
                         const parsedMessage = JSON.parse(message.body);
                         setMessages((prev) => [...prev, parsedMessage]); // 실시간 메시지 추가
@@ -91,7 +166,8 @@ function ChatComponent({ channelId, workspaceId }) {
      * 메시지 전송 함수
      * 텍스트 메시지 또는 파일을 서버로 전송
      */
-    const sendMessage = useCallback(async () => {
+    const sendMessage = useCallback(async () =>
+    {
         if ((!input.trim() && !file) || !stompClientRef.current) return;
 
         // 파일 전송 처리
@@ -138,7 +214,8 @@ function ChatComponent({ channelId, workspaceId }) {
      * @param {File} file - 업로드할 파일
      * @returns {Promise<string|null>} 업로드된 파일의 URL 또는 null
      */
-    const uploadFile = async (file) => {
+    const uploadFile = async (file) =>
+    {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("sender", user?.email);
@@ -175,7 +252,8 @@ function ChatComponent({ channelId, workspaceId }) {
      * @param {string} url - 확인할 파일 URL
      * @returns {boolean} 이미지 파일 여부
      */
-    const isImageFile = (url) => {
+    const isImageFile = (url) =>
+    {
         const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
         const extension = url.split(".").pop().toLowerCase();
         return imageExtensions.includes(extension);
@@ -185,7 +263,8 @@ function ChatComponent({ channelId, workspaceId }) {
      * Enter 키 입력 처리
      * Enter 키 입력 시 메시지 전송
      */
-    const handleKeyPress = (e) => {
+    const handleKeyPress = (e) =>
+    {
         if (e.key === "Enter" && !file) {
             e.preventDefault();
             sendMessage();
@@ -196,12 +275,34 @@ function ChatComponent({ channelId, workspaceId }) {
      * 파일 선택 처리
      * 파일 선택 시 상태 업데이트
      */
-    const handleFileChange = (e) => {
+    const handleFileChange = (e) =>
+    {
         if (e.target.files.length > 0) {
             setFile(e.target.files[0]);
             setInput(""); // 파일 선택 시 텍스트 입력 비활성화
         }
     };
+
+    /**
+     * 메시지 상태가 변경될 때마다 스크롤을 맨 아래로 이동
+     */
+    useEffect(() => {
+        if (messages.length > 0) {
+            scrollToBottom();
+        }
+    }, [messages]);
+
+    /**
+     * 컴포넌트 마운트 시 한 번 스크롤 이동
+     */
+    useEffect(() => {
+        // 컴포넌트가 마운트된 후 약간의 지연을 두고 스크롤 이동
+        const timer = setTimeout(() => {
+            scrollToBottom();
+        }, 300);
+        
+        return () => clearTimeout(timer);
+    }, []);
 
     return (
         <div className="chat-container">
@@ -249,6 +350,7 @@ function ChatComponent({ channelId, workspaceId }) {
             </div>
 
             {/* 메시지 목록 */}
+            {/* 메시지 목록 */}
             <div className="chat-messages">
                 {messages.map((msg, index) => (
                     <div key={index} className={`message ${msg.sender === user?.email ? "my-message" : "other-message"}`}>
@@ -269,26 +371,14 @@ function ChatComponent({ channelId, workspaceId }) {
 
                         {/* 메시지 내용 */}
                         <div className="message-content-container">
-                            {msg.messageOrFile && msg.content ? (
-                                isImageFile(msg.content) ? (
-                                    // 이미지 파일인 경우
-                                    <div className="message-content has-image">
-                                        <img src={msg.content} alt="파일 미리보기" className="chat-image" />
-                                    </div>
-                                ) : (
-                                    // 일반 파일인 경우
-                                    <a href={msg.content} target="_blank" rel="noopener noreferrer" className="file-message">
-                                        📎 파일 다운로드
-                                    </a>
-                                )
-                            ) : (
-                                // 텍스트 메시지인 경우
-                                <div className="message-content">{msg.content}</div>
-                            )}
+                            {renderMessageContent(msg)}
                         </div>
                     </div>
                 ))}
+                {/* 스크롤 위치 참조를 위한 빈 div 추가 */}
+                <div ref={messagesEndRef} />
             </div>
+
 
             {/* 메시지 입력 영역 */}
             <div className="chat-input-box">

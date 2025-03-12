@@ -5,7 +5,7 @@ import Lottie from 'lottie-react';
 // 로컬 JSON 파일 사용 (또는 URL 사용 가능)
 import loadingAnimation from '../../../assets/images/lottie/loading2.json';
 
-const UserLoading = ({ text = "채팅 유저 불러오는중..." }) => {
+const ChatLoading = ({ text = "채팅 불러오는중..." }) => {
     return (
         <Box
             sx={{
@@ -13,7 +13,7 @@ const UserLoading = ({ text = "채팅 유저 불러오는중..." }) => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                height: '50vh', // 전체 화면 높이로 중앙 정렬
+                height: '30vh', // 전체 화면 높이로 중앙 정렬
             }}
         >
             <Lottie
@@ -27,4 +27,4 @@ const UserLoading = ({ text = "채팅 유저 불러오는중..." }) => {
     );
 };
 
-export default UserLoading;
+export default ChatLoading;

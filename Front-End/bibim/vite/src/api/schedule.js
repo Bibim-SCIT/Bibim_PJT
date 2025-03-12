@@ -19,12 +19,12 @@ const statusMapping = {
   backlog: '4'
 };
 
-// ✅ 상태 코드 매핑 (백엔드 → 프론트)
+// ✅ 상태 코드 역매핑 (백엔드 ENUM → 프론트)
 const statusMappingReverse = {
-  '1': "unassigned",
-  '2': "inProgress",
-  '3': "completed",
-  '4': "backlog",
+  "UNASSIGNED": "unassigned",
+  "IN_PROGRESS": "inProgress",
+  "COMPLETED": "completed",
+  "ON_HOLD": "backlog"  // "보류" 상태
 };
 
 // ✅ [공통] 칸반 보드 및 캘린더 작업 목록 조회
@@ -42,26 +42,36 @@ export const fetchKanbanTasks = async (wsId) => {
       ...getAxiosConfig(),
     });
 
-    console.log("📌 API 응답 데이터:", response.data);
+    console.log("📌 API 응답 데이터:", response.data);  // 👈 백엔드 응답 확인
 
     if (!response.data || !response.data.data) {
       console.error("❌ 올바르지 않은 데이터 구조:", response.data);
       return [];
     }
 
-    return response.data.data.map((task) => ({
-      id: task.scheduleNumber,
-      title: task.scheduleTitle || "제목 없음",
-      start: task.scheduleStartDate ? new Date(task.scheduleStartDate) : null,  
-      end: task.scheduleFinishDate ? new Date(task.scheduleFinishDate) : null,  
-      status: statusMappingReverse[task.scheduleStatus] || "unassigned", // ✅ 숫자 → 텍스트 변환
-      extendedProps: task,
-    }));
+    return response.data.data.map((task) => {
+      console.log(`📌 변환 전 상태: ${task.scheduleStatus}`); // 👈 상태값 확인
+
+      const statusKey = task.scheduleStatus?.toUpperCase(); // ✅ 대문자로 변환 후 매핑
+      const mappedStatus = statusMappingReverse[statusKey] || "unassigned"; // ✅ 변환 후 상태 확인
+
+      console.log(`🔄 변환 과정: 원본 상태="${task.scheduleStatus}", 변환된 상태="${statusKey}", 최종 매핑 결과="${mappedStatus}"`); // 👈 매핑 확인
+
+      return {
+        id: task.scheduleNumber,
+        title: task.scheduleTitle || "제목 없음",
+        start: task.scheduleStartDate ? new Date(task.scheduleStartDate) : null,  
+        end: task.scheduleFinishDate ? new Date(task.scheduleFinishDate) : null,  
+        status: mappedStatus, // ✅ ENUM 변환 적용
+        extendedProps: task,
+      };
+    });
   } catch (error) {
     console.error("❌ fetchKanbanTasks API 요청 실패:", error.response?.data || error.message);
     throw error;
   }
 };
+
 
 // ✅ [공통] 단일 스케줄 조회
 export const getSchedule = async (scheduleNumber) => {
