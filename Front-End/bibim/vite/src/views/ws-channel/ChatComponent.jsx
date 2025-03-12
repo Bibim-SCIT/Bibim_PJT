@@ -93,8 +93,8 @@ function ChatComponent({ channelId, workspaceId })
             return isImageFile(msg.content) ? (
                 <img src={msg.content} alt="파일 미리보기" className="chat-image" />
             ) : (
-                <a href={msg.content} target="_blank" rel="noopener noreferrer" className="file-message">
-                    📎 파일 다운로드
+                <a href={msg.content} target="_blank" rel="noopener noreferrer" className="file-message" download={msg.fileName}>
+                    📎 파일 다운로드 : {msg.fileName}
                 </a>
             );
         } else if (isYouTubeLink(msg.content)) {
@@ -191,7 +191,7 @@ function ChatComponent({ channelId, workspaceId })
     const sendMessage = useCallback(async () =>
     {
         if ((!input.trim() && !file) || !stompClientRef.current) return;
-
+        const currentTime = new Date().toISOString();
         // 파일 전송 처리
         if (file) {
             setIsUploading(true);
@@ -205,6 +205,8 @@ function ChatComponent({ channelId, workspaceId })
                     sender: user?.email || "Unknown Sender",
                     messageOrFile: true,
                     fileUrl: fileUrl,
+                    fileName: file.name,
+                    sendTime: currentTime,
                 };
                 stompClientRef.current.publish({
                     destination: `/app/chat.sendMessage.${channelId}`,
@@ -220,6 +222,7 @@ function ChatComponent({ channelId, workspaceId })
                 content: input,
                 sender: user?.email || "Unknown Sender",
                 messageOrFile: false,
+                sendTime: currentTime,
             };
             stompClientRef.current.publish({
                 destination: `/app/chat.sendMessage.${channelId}`,
@@ -375,7 +378,6 @@ function ChatComponent({ channelId, workspaceId })
                 </div>
             </div>
 
-            {/* 메시지 목록 */}
             {/* 메시지 목록 */}
             <div className="chat-messages">
                 {messages.map((msg, index) => (

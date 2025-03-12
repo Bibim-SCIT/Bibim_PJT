@@ -4,21 +4,22 @@ import { useSelector } from 'react-redux';
 import axios from "axios";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
-import {
-    TextField,
-    Button,
-    Card,
-    CardContent,
-    Typography,
-    List,
-    ListItem,
-    ListItemText,
-    ListItemAvatar,
-    Avatar,
-    Grid,
-    Divider,
-    Badge,
-} from "@mui/material";
+import
+    {
+        TextField,
+        Button,
+        Card,
+        CardContent,
+        Typography,
+        List,
+        ListItem,
+        ListItemText,
+        ListItemAvatar,
+        Avatar,
+        Grid,
+        Divider,
+        Badge,
+    } from "@mui/material";
 import MessageIcon from '@mui/icons-material/Message';
 import { FaPlus, FaPaperPlane } from "react-icons/fa";
 import { ConfigContext } from "contexts/ConfigContext";
@@ -83,8 +84,8 @@ const renderMessageContent = (msg) => {
         );
     } else if (msg.file && isImage(msg.fileName)) {
         return <img src={msg.dmContent} alt="파일 미리보기" className="dm-chat-image" onError={(e) => console.error("🚨 이미지 로드 실패:", e.target.src)} />;
-    } else if (msg.isFile) {
-        return <a href={msg.dmContent} target="_blank" rel="noopener noreferrer" className="dm-file-message">📎 {msg.fileName}</a>;
+    } else if (msg.file && !isImage(msg.fileName)) {
+        return <a href={msg.dmContent} target="_blank" rel="noopener noreferrer" className="dm-file-message" download={msg.fileName}>📎 {msg.fileName}</a>;
     } else {
         return <div>{msg.dmContent}</div>;
     }
@@ -158,7 +159,8 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
         }
     };
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         setLoading(true);
 
         if (!roomId || !wsId) {
@@ -171,9 +173,11 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
             headers: { Authorization: `Bearer ${token}` },
             withCredentials: true,
         })
-            .then((res) => {
+            .then((res) =>
+            {
                 // 메시지에 프로필 이미지 정보 추가
-                const messagesWithProfile = res.data.map(msg => {
+                const messagesWithProfile = res.data.map(msg =>
+                {
                     // 상대방 메시지인 경우 receiverInfo의 프로필 이미지 사용
                     if (msg.sender === receiverId && receiverInfo) {
                         return {
@@ -202,6 +206,10 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
         const subscription = stompClient.subscribe(`/exchange/dm-exchange/msg.${roomId}`, (message) => {
             try {
                 const parsedMessage = JSON.parse(message.body);
+                // 자기 자신의 메시지인지 확인하여 필터링
+                if (parsedMessage.sender !== user?.email) {
+                    setMessages((prev) => [...prev, parsedMessage]); // 실시간 메시지 추가
+                }
 
                 // 상대방 메시지인 경우 프로필 이미지 추가
                 if (parsedMessage.sender !== senderId && receiverInfo) {
@@ -215,7 +223,8 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
             }
         });
 
-        return () => {
+        return () =>
+        {
             subscription.unsubscribe();
         };
     }, [stompClient, roomId, senderId, receiverInfo]);
@@ -407,7 +416,8 @@ export default function DmPage() {
     const [loading, setLoading] = useState(true); // 사용자 로딩 상태
 
     // 워크스페이스 ID 변경 시 상태 업데이트
-    useEffect(() => {
+    useEffect(() =>
+    {
         if (thisws) {
             setWsId(thisws);
         }
@@ -438,7 +448,8 @@ export default function DmPage() {
             return;
         }
 
-        const fetchUsersAndStatus = async () => {
+        const fetchUsersAndStatus = async () =>
+        {
             try {
                 // 1. 워크스페이스 멤버 목록 가져오기
                 const usersData = await fetchWorkspaceUsers(wsId);
@@ -457,7 +468,8 @@ export default function DmPage() {
                 }
 
                 // 3. usersData에 statusData를 매핑하여 온라인/오프라인 상태 추가
-                const updatedUsers = usersData.map(user => {
+                const updatedUsers = usersData.map(user =>
+                {
                     // 이메일로 상태 데이터 찾기
                     const userStatus = statusData.find(status => status.email === user.email);
 

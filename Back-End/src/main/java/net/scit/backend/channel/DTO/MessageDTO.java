@@ -44,5 +44,7 @@ public class MessageDTO
     private Boolean messageOrFile;
 
     private LocalDateTime sendTime;
+
+    private String fileName;
 }
 

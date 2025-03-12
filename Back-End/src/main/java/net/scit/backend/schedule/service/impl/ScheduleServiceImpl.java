@@ -199,8 +199,9 @@ public class ScheduleServiceImpl implements ScheduleService {
                         profileImage = null;
                     }
 
-                    ScheduleTagEntity scheduleTagEntity = (scheduleEntity.getScheduleNumber() != null)
-                            ? scheduleTagMap.get(scheduleEntity.getScheduleNumber())
+                    ScheduleTagEntity scheduleTagEntity = (scheduleEntity.getScheduleNumber() != null
+                            && scheduleEntity.getScheduleTag() != null)
+                            ? scheduleTagMap.get(scheduleEntity.getScheduleTag().getScheduleTagNumber())
                             : null;
 
                     // 태그가 있을 경우와 없을 경우 분기 처리하여 DTO 생성
