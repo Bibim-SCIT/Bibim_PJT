@@ -58,13 +58,12 @@ public class DmServiceImpl implements DmService {
     @Override
     public DmMessageDTO uploadFile(MultipartFile file, String sender, String receiver, Long wsId) {
         String fileUrl = null;
+        String roomId = generateRoomId(wsId, sender, receiver);
         try {
-            fileUrl = s3Uploader.upload(file, "chat/" + wsId);
+            fileUrl = s3Uploader.upload(file, "chat/" + wsId + "/" + roomId);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        String roomId = generateRoomId(wsId, sender, receiver);
-
         DmMessageEntity messageEntity = DmMessageEntity.builder()
                 .wsId(wsId)
                 .roomId(roomId)

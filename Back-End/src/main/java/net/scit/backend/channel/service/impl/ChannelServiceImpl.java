@@ -30,24 +30,20 @@ public class ChannelServiceImpl implements ChannelService {
     // s3업로더
     private final S3Uploader s3Uploader;
 
-    // 상수 선언
-    private static final List<String> ALLOWED_IMAGE_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif", "zip",
-            "md");
-
     // 파일 업로드 메소드
     private String uploadImage(MultipartFile file, Long channelId) {
         if (file != null && !file.isEmpty()) {
             String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
-            if (fileExtension != null && ALLOWED_IMAGE_EXTENSIONS.contains(fileExtension.toLowerCase())) {
-                try {
-                    return s3Uploader.upload(file, "workspace-channel/" + channelId);
-                } catch (Exception e) {
-                    log.error("❌ S3 업로드 실패: {}", e.getMessage(), e);
-                    throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
-                }
-            } else {
-                throw new CustomException(ErrorCode.UN_SUPPORTED_IMAGE_TYPE);
+            try
+            {
+                return s3Uploader.upload(file, "workspace-channel/" + channelId);
             }
+            catch (Exception e)
+            {
+               log.error("❌ S3 업로드 실패: {}", e.getMessage(), e);
+               throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
+            }
+
         }
         return null;
     }
