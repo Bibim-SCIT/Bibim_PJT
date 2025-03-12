@@ -17,8 +17,12 @@ public interface NotificationService {
     NotificationResponseDTO createAndSendNotification(NotificationEntity notification); // ✅ 추가된 메서드
 
 
-    // 구독은 이제 receiverEmail 기준으로 처리
+    // SSE 구독(Emitter 생성)
     SseEmitter subscribe(String receiverEmail);
+
+    // SSE 구독 해제(Emitter 제거)
+    void unsubscribe(String receiverEmail);
+
 
     NotificationEntity sendNotification(NotificationEntity notification);
 

@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,12 +26,58 @@ public class NotificationController {
     private final NotificationService notificationService;
     private final WorkspaceMemberRepository workspaceMemberRepository;
 
-    // ✅ SSE 구독 엔드포인트 (JWT 기반)
+
+    /**
+     * 로그인 후 SSE 연결 수립
+     * @param token
+     * @return
+     */
     @GetMapping("/subscribe")
-    public SseEmitter subscribe(@RequestHeader("Authorization") String token) {
-        String email = AuthUtil.getLoginUserId();
-        return notificationService.subscribe(email);
-    }
+        public SseEmitter subscribe(@RequestHeader("Authorization") String token) {
+            // 현재 로그인한 사용자 이메일 가져오기
+            String email = AuthUtil.getLoginUserId();
+
+            // SSE 구독 (Service 계층 호출)
+            SseEmitter emitter = notificationService.subscribe(email);
+
+            // 미확인 알림 조회 (읽음 처리는 여기서 하지 않는다고 가정)
+            List<NotificationEntity> unreadNotifications = notificationService.getUnreadNotifications(email);
+
+            // 미확인 알림을 SSE 이벤트로 전송 (이 시점에서는 "자동 읽음" 처리 안 함)
+            unreadNotifications.forEach(notification -> {
+                try {
+                    emitter.send(
+                            SseEmitter.event()
+                                    .name("HISTORY")
+                                    .data(notification)
+                    );
+                } catch (IOException e) {
+                    emitter.completeWithError(e);
+                }
+            });
+
+            return emitter;
+        }
+
+    /**
+     * 로그아웃 시 SSE 연결 종료
+     * @param token
+     * @return
+     */
+    @PostMapping("/logout")
+        public ResponseEntity<String> logout(@RequestHeader("Authorization") String token) {
+            // 현재 로그인한 사용자 이메일
+            String email = AuthUtil.getLoginUserId();
+
+            // SSE 구독 해제
+            notificationService.unsubscribe(email);
+
+            // 여기서 세션 무효화 등의 로그아웃 처리 로직 추가 가능
+            // session.invalidate() 등
+
+            return ResponseEntity.ok("로그아웃 성공");
+        }
+
 
     /**
      * ✅ 특정 사용자의 읽지 않은 알림 조회 (JWT 기반)

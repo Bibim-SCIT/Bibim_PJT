@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Calendar from './components/Calendar.jsx';
 import { ToggleButton, ToggleButtonGroup, Box, Typography, Button } from '@mui/material';
 import { useSelector } from 'react-redux';
-import { fetchKanbanTasks } from '../../api/schedule.js';
+import { fetchKanbanTasks, fetchScheduleTasks } from '../../api/schedule.js';
 
 // 아이콘 import
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -40,7 +40,7 @@ const SchedulePage = () => {
       setError(null);
 
       try {
-        const data = await fetchKanbanTasks(wsId);
+        const data = await fetchScheduleTasks(wsId);
         console.log("📌 일정 데이터 로드 완료:", data);
         setTasks(data);
       } catch (error) {
@@ -65,7 +65,7 @@ const SchedulePage = () => {
     <MainCard title="일정 관리">
       {/* 상단 뷰 - 캘린더뷰, 간트차트뷰 토글버튼 */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
-        <Typography variant="h4" component="h1">{activeWorkspace.wsName}의 일정 관리</Typography>
+        <Typography variant="h4" component="h1">{activeWorkspace.wsName}의 일정</Typography>
         <Box sx={{ display: "flex", gap: 2 }}>
           <ToggleButtonGroup
             value={view} // ✅ 현재 선택된 뷰 유지
@@ -99,7 +99,7 @@ const SchedulePage = () => {
       </Box>
 
       {/* 스케줄 생성 버튼 추가 */}
-      <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+      <Box sx={{ display: "flex", gap: 2, mb: 2, mt: 2 }}>
         <Button variant="contained" color="primary" onClick={() => setModalOpen(true)}>
           일정 생성
         </Button>
@@ -117,7 +117,7 @@ const SchedulePage = () => {
       {/* 일정 생성 모달 추가 */}
       <ScheduleCreateModal open={isModalOpen} onClose={() => setModalOpen(false)} />
       <ScheduleEditModal open={isModalOpen2} onClose={() => setModalOpen2(false)} />
-       {/* ✅ 태그 생성 & 수정 모달 */}
+      {/* ✅ 태그 생성 & 수정 모달 */}
       <TagCreateModal open={isTagCreateModalOpen} onClose={() => setTagCreateModalOpen(false)} />
       <TagEditModal open={isTagEditModalOpen} onClose={() => setTagEditModalOpen(false)} />
     </MainCard >

@@ -156,7 +156,7 @@ public class WorkdataController {
     /**
      * 1-4-2) 자료실 개별 조회
      */
-    @GetMapping("/detail/{wsId}/{dataNumber}")
+    @GetMapping("/{wsId}/{dataNumber}")
     public ResponseEntity<ResultDTO<WorkdataTotalSearchDTO>> workdataDetail(
             @PathVariable Long wsId,
             @PathVariable Long dataNumber) {
