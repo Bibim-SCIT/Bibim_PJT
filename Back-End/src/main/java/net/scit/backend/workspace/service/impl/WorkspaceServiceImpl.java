@@ -37,14 +37,12 @@ import net.scit.backend.workspace.dto.UpdateWorkspaceMemberDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
 import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
-import net.scit.backend.workspace.entity.WorkspaceChannelRoleEntity;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 // import net.scit.backend.workspace.event.WorkspaceUpdatedEvent;
 // import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
 
 
-import net.scit.backend.workspace.repository.WorkspaceChannelRoleRepository;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import net.scit.backend.workspace.repository.WorkspaceRepository;
 import net.scit.backend.workspace.service.WorkspaceService;
@@ -58,7 +56,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final MemberRepository memberRepository;
-    private final WorkspaceChannelRoleRepository workspaceRoleRepository;
     private final WorkspaceChannelRepository workspaceChannelRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -72,7 +69,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     private static final String DEFAULT_ROLE = "None";
     private static final String OWNER_ROLE = "owner";
     private static final String USER_ROLE = "user";
-    private final WorkspaceChannelRoleRepository workspaceChannelRoleRepository;
 
     // 이미지 업로드 메소드
     private String uploadImage(MultipartFile file) {
@@ -178,8 +174,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         WorkspaceEntity workspaceEntity = workspaceRepository.saveAndFlush(
                 WorkspaceEntity.builder().wsName(workspaceDTO.getWsName()).wsImg(imageUrl).build());
 
-        workspaceRoleRepository.saveAndFlush(
-                WorkspaceChannelRoleEntity.builder().workspace(workspaceEntity).build());
 
         MemberEntity memberEntity = getMemberEntity(AuthUtil.getLoginUserId());
 
@@ -373,8 +367,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     public ResultDTO<SuccessDTO> workspaceRightCreate(Long wsId, String newRole) {
         WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
 
-        workspaceRoleRepository.save(
-                WorkspaceChannelRoleEntity.builder().workspace(workspaceEntity).chRole(newRole).build());
 
         return ResultDTO.of("워크스페이스 채널 권한 생성에 성공했습니다.", SuccessDTO.builder().success(true).build());
     }
@@ -428,7 +420,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     @Transactional
     public ResultDTO<SuccessDTO> workspaceRightDelete(Long wsId, Long chRole) {
         checkOwnerRole(wsId, AuthUtil.getLoginUserId());
-        workspaceRoleRepository.deleteById(chRole);
 
         return ResultDTO.of("워크스페이스 채널 권한 삭제에 성공했습니다.", SuccessDTO.builder().success(true).build());
     }
