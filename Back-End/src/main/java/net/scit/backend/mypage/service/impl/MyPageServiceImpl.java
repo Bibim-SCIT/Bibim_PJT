@@ -1,5 +1,11 @@
 package net.scit.backend.mypage.service.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
 import lombok.RequiredArgsConstructor;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.exception.CustomException;
@@ -17,11 +23,6 @@ import net.scit.backend.workdata.repository.WorkdataRepository;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
-import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +33,11 @@ public class MyPageServiceImpl implements MyPageService {
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final WorkdataRepository workdataRepository;
 
+    /**
+     * 내 스케줄 조회
+     * @return 내 스케줄 목록
+     * 
+     */
     @Override
     public ResultDTO<List<MyScheduleDTO>> getSchedule() {
 
@@ -65,6 +71,10 @@ public class MyPageServiceImpl implements MyPageService {
         return ResultDTO.of("나의 전체 스케줄 불러오기에 성공했습니다.", myScheduleDTOList);
     }
 
+    /**
+     * 모든 워크스페이스 데이터 조회
+     * @return 모든 워크스페이스 데이터 목록
+     */
     @Override
     public ResultDTO<List<AllWorkspaceDataDTO>> getWorkData() {
 

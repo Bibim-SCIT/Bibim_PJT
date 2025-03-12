@@ -58,7 +58,7 @@ export default function NotificationList() {
           <ListItemAvatar>
             <Avatar alt="John Doe" src={User1} />
           </ListItemAvatar>
-          <ListItemText primary="John Doe" />
+          <ListItemText primary="John Do" />
         </ListItem>
         <Stack spacing={2} sx={containerSX}>
           <Typography variant="subtitle2">It is a long established fact that a reader will be distracted</Typography>
