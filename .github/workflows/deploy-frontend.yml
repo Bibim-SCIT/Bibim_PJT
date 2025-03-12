@@ -1,0 +1,30 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - main  # main 브랜치에 푸시될 때만 배포 트리거
+      - dev   # dev 브랜치에 푸시될 때도 배포 트리거
+    paths:
+      - 'Front-End/**'  # 'Front-End/' 폴더 내의 파일들이 변경될 때만 배포 트리거
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Trigger Vercel Deploy for Main
+        if: github.ref == 'refs/heads/main'  # main 브랜치일 때만 실행
+        run: |
+          curl -X POST https://api.vercel.com/v1/integrations/deploy/${{ secrets.VERCEL_DEPLOY_HOOK_ID_MAIN }}
+        env:
+          VERCEL_DEPLOY_HOOK_ID_MAIN: ${{ secrets.VERCEL_DEPLOY_HOOK_ID_MAIN }}  # main Vercel Deploy Hook URL을 GitHub Secrets에 저장
+
+      - name: Trigger Vercel Deploy for Dev
+        if: github.ref == 'refs/heads/dev'  # dev 브랜치일 때만 실행
+        run: |
+          curl -X POST https://api.vercel.com/v1/integrations/deploy/${{ secrets.VERCEL_DEPLOY_HOOK_ID_DEV }}
+        env:
+          VERCEL_DEPLOY_HOOK_ID_DEV: ${{ secrets.VERCEL_DEPLOY_HOOK_ID_DEV }}  # dev Vercel Deploy Hook URL을 GitHub Secrets에 저장

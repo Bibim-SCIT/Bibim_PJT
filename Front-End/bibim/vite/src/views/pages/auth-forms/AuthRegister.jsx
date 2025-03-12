@@ -207,9 +207,11 @@ export default function AuthRegister() {
   return (
     <>
       {/* 이메일 입력 및 인증 */}
-      <Grid container spacing={1} alignItems="center">
-        <Grid item xs={10}>
-          <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
+      <Grid container spacing={1} alignItems="center" >
+        <Grid item xs={10} sx={{ width: '70%' }}>
+          <FormControl fullWidth
+            sx={{ ...theme.typography.customInput }}
+          >
             <InputLabel htmlFor="email">이메일</InputLabel>
             <OutlinedInput
               id="email"
@@ -220,7 +222,7 @@ export default function AuthRegister() {
             />
           </FormControl>
         </Grid>
-        <Grid item xs={2} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Grid item xs={2} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button variant="contained" color="secondary" fullWidth sx={{ fontSize: '12px', height: '35px' }} onClick={handleSendVerificationCode} disabled={!email}>
             인증코드 발송
           </Button>
@@ -229,7 +231,7 @@ export default function AuthRegister() {
 
       {/* 인증코드 입력 */}
       <Grid container spacing={1} sx={{ mt: 1 }} alignItems="center">
-        <Grid item xs={8}>
+        <Grid item xs={10} sx={{ width: '70%' }}>
           <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
             <InputLabel htmlFor="verification-code">인증코드</InputLabel>
             <OutlinedInput
@@ -241,7 +243,7 @@ export default function AuthRegister() {
             />
           </FormControl>
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={2} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button
             variant="contained"
             color="secondary"
@@ -275,7 +277,7 @@ export default function AuthRegister() {
       </FormControl>
 
       {/* 비밀번호 확인 */}
-      <FormControl fullWidth sx={{ ...theme.typography.customInput, mt: 1 }}>
+      <FormControl fullWidth sx={{ ...theme.typography.customInput, mt: 2 }}>
         <InputLabel htmlFor="outlined-adornment-confirm-password">비밀번호 확인</InputLabel>
         <OutlinedInput
           id="outlined-adornment-confirm-password"
@@ -295,7 +297,7 @@ export default function AuthRegister() {
       </FormControl>
 
       {/* 이름 입력 */}
-      <FormControl fullWidth sx={{ mt: 2 }}>
+      <FormControl fullWidth sx={{ ...theme.typography.customInput, mt: 2 }}>
         <InputLabel>이름</InputLabel>
         <OutlinedInput
           id="name"
@@ -307,7 +309,7 @@ export default function AuthRegister() {
       </FormControl>
 
       {/* 국적 선택 (SelectBox) */}
-      <FormControl fullWidth sx={{ mt: 2 }}>
+      <FormControl fullWidth sx={{ mt: 3 }}>
         <InputLabel shrink>국적 선택</InputLabel>
         <Select value={nationality} onChange={(e) => setNationality(e.target.value)}>
           <MenuItem value="KR">대한민국 / Republic of Korea</MenuItem>
@@ -317,7 +319,7 @@ export default function AuthRegister() {
       </FormControl>
 
       {/* 사용 언어 선택 (SelectBox) */}
-      <FormControl fullWidth sx={{ mt: 2 }}>
+      <FormControl fullWidth sx={{ mt: 3 }}>
         <InputLabel shrink>사용 언어 선택</InputLabel>
         <Select value={language} onChange={(e) => setLanguage(e.target.value)}>
           <MenuItem value="ko">한국어 / Korean</MenuItem>

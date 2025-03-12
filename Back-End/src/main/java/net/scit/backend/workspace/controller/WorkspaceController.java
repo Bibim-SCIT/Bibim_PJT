@@ -2,6 +2,7 @@ package net.scit.backend.workspace.controller;
 
 import java.util.List;
 
+import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,11 +24,12 @@ import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
-import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import net.scit.backend.workspace.dto.UpdateWorkspaceMemberDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
 import net.scit.backend.workspace.service.WorkspaceService;
+import net.scit.backend.member.dto.MemberLoginStatusDTO;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -64,7 +66,6 @@ public class WorkspaceController {
      * 워크스페이스 삭제 메소드
      * 
      * @param wsId         삭제할 워크스페이스 이름
-     * @param authentication 현재 로그인한 유저 정보
      * @return
      */
     @DeleteMapping("")

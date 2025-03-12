@@ -3,12 +3,31 @@ import React, { useEffect, useState, useRef, useContext, useCallback } from "rea
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import { ConfigContext } from "../../contexts/ConfigContext";
-import { FaPaperPlane, FaFileUpload } from "react-icons/fa";
+import { FaPaperPlane, FaPlus } from "react-icons/fa";
 import TagIcon from '@mui/icons-material/Tag';
-import AddIcon from '@mui/icons-material/Add';
 import PersonIcon from '@mui/icons-material/Person';
 import { fetchWorkspaceUsers } from "../../api/workspaceApi";
 import "./ChatComponent.css";
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+/**
+ * LocalDateTime을 Asia/Seoul 시간대로 변환하고 포맷팅하는 함수
+ * @param {string} timestamp - 서버에서 전달된 LocalDateTime
+ * @returns {string} - 변환된 시간 
+ */
+const formatToKoreanTime = (timestamp) =>
+{
+    dayjs.extend(utc);
+    dayjs.extend(timezone);
+
+    if (!timestamp) return '';
+    // 서버에서 localdatetime으로 전달되므로 UTC로 변환 후 서울로 변환
+    // 위 방법 대로 했음에도 불구하고 09시간 오차가 계속 발생 하여 강제로 9시간 추가
+    return dayjs(timestamp).add(9, 'hour').format('MM-DD HH:mm');
+};
+
 
 /**
  * 채팅 컴포넌트
@@ -39,7 +58,8 @@ function ChatComponent({ channelId, workspaceId })
     /**
      * 스크롤을 맨 아래로 이동시키는 함수
      */
-    const scrollToBottom = () => {
+    const scrollToBottom = () =>
+    {
         messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
     };
 
@@ -113,9 +133,11 @@ function ChatComponent({ channelId, workspaceId })
 
             const data = await response.json();
             setMessages(data); // 기존 메시지 상태에 추가
-            
+
+
             // 메시지 로드 후 약간의 지연을 두고 스크롤 이동
-            setTimeout(() => {
+            setTimeout(() =>
+            {
                 scrollToBottom();
             }, 100);
         } catch (error) {
@@ -286,8 +308,10 @@ function ChatComponent({ channelId, workspaceId })
     /**
      * 메시지 상태가 변경될 때마다 스크롤을 맨 아래로 이동
      */
-    useEffect(() => {
-        if (messages.length > 0) {
+
+    useEffect(() =>
+    {
+      if (messages.length > 0) {
             scrollToBottom();
         }
     }, [messages]);
@@ -295,12 +319,14 @@ function ChatComponent({ channelId, workspaceId })
     /**
      * 컴포넌트 마운트 시 한 번 스크롤 이동
      */
-    useEffect(() => {
+    useEffect(() =>
+    {
         // 컴포넌트가 마운트된 후 약간의 지연을 두고 스크롤 이동
-        const timer = setTimeout(() => {
+        const timer = setTimeout(() =>
+        {
             scrollToBottom();
         }, 300);
-        
+
         return () => clearTimeout(timer);
     }, []);
 
@@ -366,7 +392,9 @@ function ChatComponent({ channelId, workspaceId })
                                 )}
                             </div>
                             <span className="sender-name">{msg.sender}</span>
-                            <span className="message-time">10:15</span>
+                            <span className="message-time">
+                                {formatToKoreanTime(msg.sendTime)}
+                            </span>
                         </div>
 
                         {/* 메시지 내용 */}
@@ -382,29 +410,45 @@ function ChatComponent({ channelId, workspaceId })
 
             {/* 메시지 입력 영역 */}
             <div className="chat-input-box">
-                {/* 파일 업로드 버튼 */}
-                <input type="file" id="file-upload" onChange={handleFileChange} hidden />
-                <label htmlFor="file-upload" className="icon-btn">
-                    <AddIcon sx={{ fontSize: 24 }} />
-                </label>
+                {/* 파일 업로드 영역 */}
+                <div className="file-upload">
+                    <input 
+                        type="file" 
+                        id="file-upload" 
+                        onChange={handleFileChange} 
+                    />
+                    <label htmlFor="file-upload" className="icon-btn">
+                        <FaPlus />
+                    </label>
+                    {file && <span className="selected-file">{file.name}</span>}
+                </div>
 
-                {/* 선택된 파일명 표시 */}
-                {file && <span className="selected-file">{file.name}</span>}
-
-                {/* 메시지 입력창 */}
-                <input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyPress}
-                    placeholder="메시지를 입력하세요..."
-                    className="chat-input"
-                    disabled={file} // 파일 선택 시 입력창 비활성화
-                />
-
-                {/* 전송 버튼 */}
-                <button onClick={sendMessage} className="send-btn" disabled={isUploading}>
-                    <FaPaperPlane size={18} />
-                </button>
+                {file ? (
+                    <button 
+                        onClick={sendMessage} 
+                        className="send-btn" 
+                        disabled={isUploading}
+                    >
+                        <FaPaperPlane />
+                    </button>
+                ) : (
+                    <>
+                        <input
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={handleKeyPress}
+                            placeholder="메시지를 입력하세요..."
+                            className="chat-input"
+                        />
+                        <button 
+                            onClick={sendMessage} 
+                            className="send-btn" 
+                            disabled={!input.trim()}
+                        >
+                            <FaPaperPlane />
+                        </button>
+                    </>
+                )}
             </div>
         </div>
     );

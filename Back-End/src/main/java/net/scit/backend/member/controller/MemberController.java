@@ -2,6 +2,7 @@ package net.scit.backend.member.controller;
 
 import java.time.LocalDateTime;
 
+import net.scit.backend.member.dto.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,15 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.jwt.AuthUtil;
-import net.scit.backend.member.dto.ChangePasswordDTO;
-import net.scit.backend.member.dto.LoginRequest;
-import net.scit.backend.member.dto.MemberDTO;
-import net.scit.backend.member.dto.MemberLoginStatusDTO;
-import net.scit.backend.member.dto.MyInfoDTO;
-import net.scit.backend.member.dto.SignupDTO;
-import net.scit.backend.member.dto.TokenDTO;
-import net.scit.backend.member.dto.UpdateInfoDTO;
-import net.scit.backend.member.dto.VerificationDTO;
 import net.scit.backend.member.service.MemberDetailsService;
 import net.scit.backend.member.service.MemberService;
 
