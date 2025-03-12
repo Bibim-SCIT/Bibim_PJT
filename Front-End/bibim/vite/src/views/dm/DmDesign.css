@@ -544,3 +544,18 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 } 
+
+.dm-user-status {
+    margin-left: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    color: gray;
+}
+
+.dm-user-status.online {
+    color: green;
+}
+
+.dm-user-status.offline {
+    color: red;
+}

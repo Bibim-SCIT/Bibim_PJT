@@ -22,7 +22,7 @@ import MessageIcon from '@mui/icons-material/Message';
 import { FaPlus, FaPaperPlane } from "react-icons/fa";
 import { ConfigContext } from "contexts/ConfigContext";
 import MainCard from "ui-component/cards/MainCard";
-import { fetchWorkspaceUsers } from "../../api/workspaceApi";
+import { fetchWorkspaceUsers, fetchWorkspaceMembersStatus} from "../../api/workspaceApi";
 import "./DmDesign.css";
 import UserLoading from "./components/UserLoading";
 import ChatLoading from "./components/ChatLoading";
@@ -181,6 +181,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
     {
         scrollToBottom();
     }, [messages]);
+
 
     const sendMessage = () =>
     {
@@ -344,17 +345,32 @@ export default function DmPage()
     }, []);
 
     useEffect(() => {
-        setLoading(true);
-        fetchWorkspaceUsers(thisws)
-            .then((usersData) => {
-                setUsers(usersData);
-                setLoading(false);
-            })
-            .catch((error) => {
-                console.error(error);
-                setLoading(false);
-            });
-    }, [thisws]);
+    setLoading(true);
+
+    const fetchUsersAndStatus = async () => {
+        try {
+            // 1. 워크스페이스 멤버 목록 가져오기
+            const usersData = await fetchWorkspaceUsers(thisws);
+
+            // 2. 워크스페이스 멤버의 접속 상태 가져오기
+            const statusData = await fetchWorkspaceMembersStatus(thisws);
+
+            // 3. usersData에 statusData를 매핑하여 온라인/오프라인 상태 추가
+            const updatedUsers = usersData.map(user => ({
+                ...user,
+                status: statusData.find(status => status.email === user.email)?.status || "offline",
+            }));
+
+            setUsers(updatedUsers);
+        } catch (error) {
+            console.error("🚨 사용자 목록 및 접속 상태 불러오기 실패:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    fetchUsersAndStatus();
+}, [thisws]);
 
     // 자신을 제외한 유저들 목록
     const filteredUsers = users.filter((u) => u.email !== user.email);
