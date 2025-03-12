@@ -191,7 +191,7 @@ function ChatComponent({ channelId, workspaceId })
     const sendMessage = useCallback(async () =>
     {
         if ((!input.trim() && !file) || !stompClientRef.current) return;
-
+        const currentTime = new Date().toISOString();
         // 파일 전송 처리
         if (file) {
             setIsUploading(true);
@@ -206,6 +206,7 @@ function ChatComponent({ channelId, workspaceId })
                     messageOrFile: true,
                     fileUrl: fileUrl,
                     fileName: file.name,
+                    sendTime: currentTime,
                 };
                 stompClientRef.current.publish({
                     destination: `/app/chat.sendMessage.${channelId}`,
@@ -221,6 +222,7 @@ function ChatComponent({ channelId, workspaceId })
                 content: input,
                 sender: user?.email || "Unknown Sender",
                 messageOrFile: false,
+                sendTime: currentTime,
             };
             stompClientRef.current.publish({
                 destination: `/app/chat.sendMessage.${channelId}`,
@@ -376,7 +378,6 @@ function ChatComponent({ channelId, workspaceId })
                 </div>
             </div>
 
-            {/* 메시지 목록 */}
             {/* 메시지 목록 */}
             <div className="chat-messages">
                 {messages.map((msg, index) => (

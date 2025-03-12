@@ -269,8 +269,8 @@
 
 .my-message .message-time {
     text-align: left;
-    margin-left: 12px;
-    margin-top: 4px;
+    /* margin-left: 12px;
+    margin-top: 4px; */
     font-size: 12px;
     color: #999;
 }
