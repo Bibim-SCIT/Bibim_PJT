@@ -18,6 +18,9 @@
 /build
 /dist
 
+# 환경 변수 파일 제외
+.env
+
 # misc
 .DS_Store
 .env.local

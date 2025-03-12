@@ -391,10 +391,10 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 .findByWorkspace_wsIdAndMember_Email(wsId, email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        // 대상 멤버의 역할 정보 업데이트
-        member.setChRoleNumber(workspaceRoleRepository.findById(chRole)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_HAVE_NOT_ROLE)));
-        workspaceMemberRepository.save(member);
+//        // 대상 멤버의 역할 정보 업데이트
+//        member.setChRoleNumber(workspaceRoleRepository.findById(chRole)
+//                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_HAVE_NOT_ROLE)));
+//        workspaceMemberRepository.save(member);
 
         // 워크스페이스 엔티티 조회
         WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
@@ -494,7 +494,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                         .workspace(workspaceEntity)
                         .member(memberEntity)
                         .wsRole(USER_ROLE)
-                        .chRoleNumber(null)
+//                        .chRoleNumber(null)
                         .nickname(memberEntity.getName())
                         .profileImage(memberEntity.getProfileImage())
                         .build());
@@ -518,6 +518,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
      * @return 워크스페이스 나의 회원 정보
      */
     @Override
+    @Transactional
     public ResultDTO<WorkspaceMemberDTO> getWorkspaceMemberInfo(Long wsId) {
         // JWT에서 로그인한 유저 이메일 가져오기
         String email = AuthUtil.getLoginUserId();

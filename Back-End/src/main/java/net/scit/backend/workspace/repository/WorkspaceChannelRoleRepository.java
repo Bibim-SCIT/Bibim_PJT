@@ -1,5 +1,6 @@
 package net.scit.backend.workspace.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,4 +12,5 @@ public interface WorkspaceChannelRoleRepository extends JpaRepository<WorkspaceC
 
     Optional<WorkspaceChannelRoleEntity> findByWorkspace_wsIdAndChRole(Long wsId, String chRole);
 
+    List<WorkspaceChannelRoleEntity> findByWorkspace_wsId(Long workspaceId);
 }
