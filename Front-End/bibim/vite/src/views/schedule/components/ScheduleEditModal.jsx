@@ -51,7 +51,7 @@ const ScheduleEditModal = ({ open, onClose, scheduleData, onUpdate }) => {
   const [largeTags, setLargeTags] = useState([]);
   const [mediumTags, setMediumTags] = useState([]);
   const [smallTags, setSmallTags] = useState([]);
-  
+
   // 스낵바 상태 추가
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -80,8 +80,10 @@ const ScheduleEditModal = ({ open, onClose, scheduleData, onUpdate }) => {
         setLargeTags(tags);
         if (scheduleData.tag1) {
           const largeTag = tags.find((tag) => tag.tagName === scheduleData.tag1);
+          console.log("대분류 되나?", largeTag);
           if (largeTag) {
             fetchMediumTags(wsId, largeTag.largeTagNumber).then((medTags) => {
+              console.log("수정 중분류 태그 불러오기", medTags);
               setMediumTags(medTags);
               if (scheduleData.tag2) {
                 const mediumTag = medTags.find((tag) => tag.tagName === scheduleData.tag2);
@@ -133,7 +135,7 @@ const ScheduleEditModal = ({ open, onClose, scheduleData, onUpdate }) => {
       await updateSchedule(scheduleData.scheduleNumber, updatedData);
 
       console.log("✅ 스케줄 수정 성공");
-      
+
       // 성공 스낵바 표시
       setSnackbar({
         open: true,
@@ -148,7 +150,7 @@ const ScheduleEditModal = ({ open, onClose, scheduleData, onUpdate }) => {
       onClose();
     } catch (error) {
       console.error("❌ 스케줄 수정 실패:", error);
-      
+
       // 실패 스낵바 표시
       setSnackbar({
         open: true,
@@ -157,7 +159,7 @@ const ScheduleEditModal = ({ open, onClose, scheduleData, onUpdate }) => {
       });
     }
   };
-  
+
   // 스낵바 닫기 핸들러
   const handleSnackbarClose = (event, reason) => {
     if (reason === 'clickaway') {
@@ -319,7 +321,7 @@ const ScheduleEditModal = ({ open, onClose, scheduleData, onUpdate }) => {
           </Box>
         </Box>
       </Modal>
-      
+
       {/* 스낵바 추가 */}
       <Snackbar
         open={snackbar.open}

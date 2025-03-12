@@ -27,7 +27,7 @@ const statusMappingReverse = {
   '4': "backlog",
 };
 
-// ✅ [공통] 칸반 보드 및 캘린더 작업 목록 조회
+// ✅ [공통] 칸반 보드 목록 조회
 export const fetchKanbanTasks = async (wsId) => {
   if (!wsId) {
     console.warn("🚨 fetchKanbanTasks: wsId가 없어서 요청을 중단합니다.");
@@ -52,13 +52,49 @@ export const fetchKanbanTasks = async (wsId) => {
     return response.data.data.map((task) => ({
       id: task.scheduleNumber,
       title: task.scheduleTitle || "제목 없음",
-      start: task.scheduleStartDate ? new Date(task.scheduleStartDate) : null,  
-      end: task.scheduleFinishDate ? new Date(task.scheduleFinishDate) : null,  
+      start: task.scheduleStartDate ? new Date(task.scheduleStartDate) : null,
+      end: task.scheduleFinishDate ? new Date(task.scheduleFinishDate) : null,
       status: statusMappingReverse[task.scheduleStatus] || "unassigned", // ✅ 숫자 → 텍스트 변환
       extendedProps: task,
     }));
   } catch (error) {
     console.error("❌ fetchKanbanTasks API 요청 실패:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// ✅ [공통] 스케줄 목록 조회 (캘린더, 간트차트용)
+export const fetchScheduleTasks = async (wsId) => {
+  if (!wsId) {
+    console.warn("🚨 fetchScheduleTasks: wsId가 없어서 요청을 중단합니다.");
+    return [];
+  }
+
+  try {
+    console.log(`📌 fetchScheduleTasks(${wsId}) API 요청 시작...`);
+
+    const response = await api.get("/schedule", {
+      params: { wsId },
+      ...getAxiosConfig(),
+    });
+
+    console.log("📌 API 응답 데이터:", response.data);
+
+    if (!response.data || !response.data.data) {
+      console.error("❌ 올바르지 않은 데이터 구조:", response.data);
+      return [];
+    }
+
+    return response.data.data.map((task) => ({
+      id: task.scheduleNumber,
+      title: task.scheduleTitle || "제목 없음",
+      start: task.scheduleStartDate ? new Date(task.scheduleStartDate) : null,
+      end: task.scheduleFinishDate ? new Date(task.scheduleFinishDate) : null,
+      status: task.scheduleStatus || "unassigned", // ✅ 숫자 → 텍스트 변환
+      extendedProps: task,
+    }));
+  } catch (error) {
+    console.error("❌ fetchScheduleTasks API 요청 실패:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -134,7 +170,7 @@ export const updateKanbanTaskStatus = async (taskId, newStatus) => {
 
   try {
     console.log(`📌 updateKanbanTaskStatus(${taskId}) → ${statusCode} 요청`);
-    
+
     // ✅ params 옵션을 사용하여 상태 값을 전송 (쿼리 파라미터 방식 수정)
     await api.put(`/schedule/${taskId}/status`, null, {
       params: { status: statusCode },

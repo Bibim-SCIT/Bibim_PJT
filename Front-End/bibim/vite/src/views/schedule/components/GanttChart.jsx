@@ -5,6 +5,10 @@ import { Gantt, ViewMode } from "gantt-task-react"; // ✅ Task 제거
 import "gantt-task-react/dist/index.css";
 import dayjs from "dayjs"; // ✅ 날짜 변환을 위한 dayjs 추가
 import ScheduleDetailModal from "./ScheduleDetailModal"; // ✅ 모달 추가
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty'; // 미배정
+import PlayCircleIcon from '@mui/icons-material/PlayCircle'; // 진행 중
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'; // 완료
+import PauseCircleIcon from '@mui/icons-material/PauseCircle'; // 보류
 
 const GanttWrapper = styled(Box)({
   padding: "20px",
@@ -17,15 +21,30 @@ const GanttWrapper = styled(Box)({
 // ✅ 날짜를 'YYYY.MM.DD' 형식으로 변환하는 함수
 const formatDate = (date) => dayjs(date).format("YYYY.MM.DD");
 
+const statusMapping = {
+  UNASSIGNED: { label: "미배정", icon: <HourglassEmptyIcon /> },
+  IN_PROGRESS: { label: "진행 중", icon: <PlayCircleIcon /> },
+  COMPLETED: { label: "완료", icon: <CheckCircleIcon /> },
+  ON_HOLD: { label: "보류", icon: <PauseCircleIcon /> },
+};
+
+
 // ✅ 커스텀 툴팁 컴포넌트 (기본 툴팁 오버라이드)
-const CustomTooltip = ({ task }) => (
-  <div style={{ background: "#222", color: "#fff", padding: "5px", borderRadius: "5px" }}>
-    <p><strong>{task.name}</strong></p>
-    <p>시작: {formatDate(task.start)}</p>
-    <p>종료: {formatDate(task.end)}</p>
-    <p>상태: {task.status}</p>
-  </div>
-);
+const CustomTooltip = ({ task }) => {
+  console.log("툴팁일정", task);
+  const taskStatus = statusMapping[task.status] || { label: "알 수 없음", icon: null };
+
+  return (
+    <div style={{ background: "#222", color: "#fff", padding: "5px", borderRadius: "5px" }}>
+      <p><strong>{task.name}</strong></p>
+      <p>시작: {formatDate(task.start)}</p>
+      <p>종료: {formatDate(task.end)}</p>
+      <p>
+        상태: {taskStatus.icon} {taskStatus.label}
+      </p>
+    </div>
+  );
+};
 
 
 // ✅ 커스텀 Task List 헤더
@@ -82,8 +101,6 @@ const GanttChart = ({ tasks }) => {
   const [viewMode, setViewMode] = useState(ViewMode.Day); // ✅ 기본값: Week
   const [selectedTask, setSelectedTask] = useState(null); // ✅ 선택된 Task 저장
   const [isModalOpen, setIsModalOpen] = useState(false); // ✅ 모달 상태
-
-  console.log("간트 받아오는 값", tasks);
 
   // ✅ 데이터 변환: 필수 속성이 누락되지 않도록 보정
   useEffect(() => {
