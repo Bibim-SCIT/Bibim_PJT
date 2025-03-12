@@ -226,9 +226,8 @@
 
 /* 메시지 시간 */
 .message-time {
-    font-size: 12px;
+    font-size: 12px ;
     color: #999;
-    margin-left: 4px;  /* 이름과의 간격 */
 }
 
 /* 메시지 내용 컨테이너 */

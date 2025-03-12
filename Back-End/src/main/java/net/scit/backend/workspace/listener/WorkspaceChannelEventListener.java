@@ -36,10 +36,10 @@ public class WorkspaceChannelEventListener {
         switch (event.getEventType()) {
             case "create":
             case "update":
-                notificationUrl = String.format("%s/%d/channel/%d", baseUrl, wsId, channelNumber);
+                notificationUrl = String.format("%s/%d", baseUrl, wsId);
                 break;
             case "delete":
-                notificationUrl = String.format("%s/%d/channel", baseUrl, wsId);
+                notificationUrl = String.format("%s", baseUrl);
                 break;
             default:
                 notificationUrl = baseUrl;

@@ -72,7 +72,7 @@ const ScheduleCreateModal = ({ open, onClose }) => {
     const [largeTags, setLargeTags] = useState([]);
     const [mediumTags, setMediumTags] = useState([]);
     const [smallTags, setSmallTags] = useState([]);
-    
+
     // 스낵바 상태 추가
     const [snackbar, setSnackbar] = useState({
         open: false,
@@ -95,7 +95,8 @@ const ScheduleCreateModal = ({ open, onClose }) => {
             // formData.tag1은 tagName이므로, 해당 tag의 tagNumber 찾기
             const selectedLargeTag = largeTags.find(tag => tag.tagName === formData.tag1);
             if (selectedLargeTag) {
-                fetchMediumTags(activeWorkspace.wsId, selectedLargeTag.tagNumber)
+                console.log("대분류에서 중분류로", activeWorkspace.wsId, selectedLargeTag.largeTagNumber);
+                fetchMediumTags(activeWorkspace.wsId, selectedLargeTag.largeTagNumber)
                     .then((tags) => setMediumTags(tags))
                     .catch((error) => console.error("중분류 태그 fetch 실패:", error));
             }
@@ -108,7 +109,8 @@ const ScheduleCreateModal = ({ open, onClose }) => {
             const selectedLargeTag = largeTags.find(tag => tag.tagName === formData.tag1);
             const selectedMediumTag = mediumTags.find(tag => tag.tagName === formData.tag2);
             if (selectedLargeTag && selectedMediumTag) {
-                fetchSmallTags(activeWorkspace.wsId, selectedLargeTag.tagNumber, selectedMediumTag.tagNumber)
+                console.log("중분류에서 소분류로", activeWorkspace.wsId, selectedLargeTag.largeTagNumber, selectedMediumTag.mediumTagNumber);
+                fetchSmallTags(activeWorkspace.wsId, selectedLargeTag.largeTagNumber, selectedMediumTag.mediumTagNumber)
                     .then((tags) => setSmallTags(tags))
                     .catch((error) => console.error("소분류 태그 fetch 실패:", error));
             }
@@ -333,7 +335,7 @@ const ScheduleCreateModal = ({ open, onClose }) => {
                     </Box>
                 </Box>
             </Modal>
-            
+
             {/* 스낵바 추가 */}
             <Snackbar
                 open={snackbar.open}

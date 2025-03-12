@@ -28,76 +28,70 @@ import "./DmDesign.css";
 import UserLoading from "./components/UserLoading";
 import ChatLoading from "./components/ChatLoading";
 import { styled } from '@mui/system';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 
+// ✅ API 기본 URL 설정
 const API_BASE_URL = "http://localhost:8080/api";
 
-const generateRoomId = (wsId, senderEmail, receiverEmail) => {
+// ✅ DM 방의 고유 ID 생성 함수
+const generateRoomId = (wsId, senderEmail, receiverEmail) =>
+{
     const cleanEmail = (email) => email.toLowerCase().split("@")[0];
     const emails = [cleanEmail(senderEmail), cleanEmail(receiverEmail)].sort();
     return `dm-${wsId}-${emails[0]}-${emails[1]}`;
 };
 
-// const isImage = (fileName) => /\.(jpg|jpeg|png|gif)$/i.test(fileName);
-
-const isImage = (fileName) => {
+// ✅ 파일 이름으로 이미지 여부 확인 함수
+const isImage = (fileName) =>
+{
     if (!fileName) return false;
     const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
     const extension = fileName.split(".").pop().toLowerCase();
     return imageExtensions.includes(extension);
 };
 
-// YouTube 링크 확인 함수
-const isYouTubeLink = (url) => {
+// ✅ YouTube 링크 확인 함수
+const isYouTubeLink = (url) =>
+{
     return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/.test(url);
 };
 
-// YouTube Embed URL 생성 함수
-const getYouTubeEmbedUrl = (url) => {
+// ✅ YouTube 링크로부터 Embed URL 생성 함수
+const getYouTubeEmbedUrl = (url) =>
+{
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
     return match ? `https://www.youtube.com/embed/${match[1]}` : null;
 };
 
-// 메시지 내용 렌더링 함수
+// ✅ LocalDateTime을 한국 시간으로 포맷팅하는 함수
+const formatToKoreanTime = (timestamp) =>
+{
+    dayjs.extend(utc);
+    dayjs.extend(timezone);
+
+    if (!timestamp) return '';
+    return dayjs(timestamp).add(9, 'hour').format('MM-DD HH:mm');
+};
+
+// ✅ 메시지 내용을 렌더링하는 함수
 const renderMessageContent = (msg) =>
 {
-    // 유튜브 링크 확인 (파일이 아닌 경우에만)
     if (!msg.isFile && !msg.file && isYouTubeLink(msg.dmContent)) {
         const embedUrl = getYouTubeEmbedUrl(msg.dmContent);
         return embedUrl ? (
             <div className="dm-youtube-wrapper">
-                <iframe
-                    src={embedUrl}
-                    title="YouTube video player"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                ></iframe>
+                <iframe src={embedUrl} title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
             </div>
         ) : (
             <div>{msg.dmContent}</div>
         );
-    } 
-    // 이미지 파일인 경우
-    else if (msg.file && isImage(msg.fileName)) {
-        return (
-            <img
-                src={msg.dmContent}
-                alt="파일 미리보기"
-                className="dm-chat-image"
-                onError={(e) => console.error("🚨 이미지 로드 실패:", e.target.src)}
-            />
-        );
-    } 
-    // 일반 파일인 경우
-    else if (msg.isFile) {
-        return (
-            <a href={msg.dmContent} target="_blank" rel="noopener noreferrer" className="dm-file-message">
-                📎 {msg.fileName}
-            </a>
-        );
-    } 
-    // 일반 텍스트 메시지
-    else {
+    } else if (msg.file && isImage(msg.fileName)) {
+        return <img src={msg.dmContent} alt="파일 미리보기" className="dm-chat-image" onError={(e) => console.error("🚨 이미지 로드 실패:", e.target.src)} />;
+    } else if (msg.isFile) {
+        return <a href={msg.dmContent} target="_blank" rel="noopener noreferrer" className="dm-file-message">📎 {msg.fileName}</a>;
+    } else {
         return <div>{msg.dmContent}</div>;
     }
 };
@@ -131,22 +125,25 @@ const StyledBadge = styled(Badge)(({ theme, status }) => ({
     },
 }));
 
+// ✅ ChatComponent 정의
 export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient, receiverInfo }) =>
 {
-    const [messages, setMessages] = useState([]);
-    const [message, setMessage] = useState("");
-    const [file, setFile] = useState(null);
+    const [messages, setMessages] = useState([]); // 메시지 목록 상태 관리
+    const [message, setMessage] = useState(""); // 현재 입력된 메시지 상태 관리
+    const [file, setFile] = useState(null); // 선택된 파일 상태 관리
     const token = localStorage.getItem("token");
-    const messagesEndRef = useRef(null);
+    const messagesEndRef = useRef(null); // 메시지 목록 끝 위치를 참조
+    const [loading, setLoading] = useState(false); // 메시지 로딩 상태 관리
 
+    // ✅ 메시지 목록 스크롤을 맨 아래로 이동
     const scrollToBottom = () =>
     {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
-    const [loading, setLoading] = useState(false);
 
-
-    const uploadFile = async () => {
+    // ✅ 파일 업로드 함수
+    const uploadFile = async () =>
+    {
         if (!file) return;
 
         const formData = new FormData();
@@ -180,9 +177,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
         
         axios.get(`${API_BASE_URL}/dm/messages`, {
             params: { wsId, roomId },
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
             withCredentials: true,
         })
             .then((res) => {
@@ -199,19 +194,24 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                 });
                 
                 setMessages(messagesWithProfile);
+
                 setLoading(false);
                 setTimeout(scrollToBottom, 100);
             })
-            .catch((error) => {
+            .catch((error) =>
+            {
                 console.error("❌ 메시지 로드 실패:", error);
                 setLoading(false);
             });
     }, [wsId, roomId, token, receiverId, receiverInfo]);
 
-    useEffect(() => {
+    // ✅ WebSocket을 통해 실시간 메시지 수신 처리
+    useEffect(() =>
+    {
         if (!stompClient || !roomId) return;
 
-        const subscription = stompClient.subscribe(`/exchange/dm-exchange/msg.${roomId}`, (message) => {
+        const subscription = stompClient.subscribe(`/exchange/dm-exchange/msg.${roomId}`, (message) =>
+        {
             try {
                 const parsedMessage = JSON.parse(message.body);
                 
@@ -232,12 +232,14 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
         };
     }, [stompClient, roomId, senderId, receiverInfo]);
 
+    // ✅ 메시지가 업데이트되면 자동으로 스크롤 이동
     useEffect(() =>
     {
         scrollToBottom();
     }, [messages]);
 
 
+    // ✅ 메시지 전송 함수
     const sendMessage = () =>
     {
         if (!message.trim() || !stompClient) return;
@@ -263,6 +265,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
         setTimeout(scrollToBottom, 100);
     };
 
+    // ✅ Enter 키로 메시지 전송
     const handleKeyPress = (e) =>
     {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -270,6 +273,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
             sendMessage();
         }
     };
+
 
     return (
         <div className="dm-chat-area" style={{ width: "100%" }}>
@@ -295,6 +299,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                         </Avatar>
                     )}
                 </div>
+
                 <div className="dm-chat-header-info">
                     <div className="dm-chat-header-name">
                         {receiverInfo?.nickname || receiverId.split('@')[0]}
@@ -302,7 +307,6 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                     <div className="dm-chat-header-email">{receiverId}</div>
                 </div>
             </div>
-
             {/* 메시지 목록 */}
             <div className="dm-chat-messages">
                 {messages.map((msg, index) => (
@@ -337,7 +341,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                                 </>
                             )}
                             <span className="dm-message-time">
-                                {new Date(msg.sendTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {formatToKoreanTime(msg.sendTime)}
                             </span>
                         </div>
                         <div className="dm-message-content-container">
@@ -353,22 +357,22 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
             {/* 입력 영역 */}
             <div className="dm-chat-input-box">
                 <div className="dm-file-upload">
-                    <input 
-                        type="file" 
-                        id="dm-file-upload" 
-                        className="dm-file-upload-input" 
-                        onChange={(e) => setFile(e.target.files[0])} 
+                    <input
+                        type="file"
+                        id="dm-file-upload"
+                        className="dm-file-upload-input"
+                        onChange={(e) => setFile(e.target.files[0])}
                     />
                     <label htmlFor="dm-file-upload" className="dm-file-upload-label">
                         <FaPlus />
                     </label>
                     {file && <span className="dm-selected-file">{file.name}</span>}
                 </div>
-                
+
                 {file ? (
-                    <button 
-                        onClick={uploadFile} 
-                        className="dm-send-btn" 
+                    <button
+                        onClick={uploadFile}
+                        className="dm-send-btn"
                         disabled={!file}
                     >
                         <FaPaperPlane />
@@ -383,9 +387,9 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                             onKeyDown={handleKeyPress}
                             className="dm-chat-input"
                         />
-                        <button 
-                            onClick={sendMessage} 
-                            className="dm-send-btn" 
+                        <button
+                            onClick={sendMessage}
+                            className="dm-send-btn"
                             disabled={!message.trim()}
                         >
                             <FaPaperPlane />
@@ -399,15 +403,19 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
 
 export default function DmPage()
 {
+    // ✅ ConfigContext에서 현재 로그인한 사용자 정보 가져오기
     const { user } = useContext(ConfigContext);
+    
+    // ✅ Redux에서 현재 활성화된 워크스페이스 가져오기
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace);
-    const thisws = activeWorkspace?.wsId;
-    const [users, setUsers] = useState([]);
-    const [selectedUser, setSelectedUser] = useState(null);
-    const [wsId, setWsId] = useState(null);
-    const [stompClient, setStompClient] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const thisws = activeWorkspace?.wsId; // 워크스페이스 ID 가져오기
 
+    const [users, setUsers] = useState([]); // 워크스페이스에 속한 사용자 목록 상태
+    const [selectedUser, setSelectedUser] = useState(null); // 선택된 사용자 상태
+    const [wsId, setWsId] = useState(thisws); // 현재 워크스페이스 ID 상태
+    const [stompClient, setStompClient] = useState(null); // WebSocket 클라이언트 상태
+    const [loading, setLoading] = useState(true); // 사용자 로딩 상태
+    
     // 워크스페이스 ID 변경 시 상태 업데이트
     useEffect(() => {
         if (thisws) {
@@ -415,19 +423,25 @@ export default function DmPage()
         }
     }, [thisws]);
 
-    useEffect(() => {
+    // ✅ WebSocket 클라이언트 초기화 및 연결 설정
+    useEffect(() =>
+    {
         const socket = new SockJS("http://localhost:8080/ws/chat");
         const client = new Client({
             webSocketFactory: () => socket,
             connectHeaders: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-            onConnect: () => setStompClient(client),
+            onConnect: () => setStompClient(client), // 연결 완료 시 클라이언트 상태 설정
         });
 
-        client.activate();
+        client.activate(); // WebSocket 연결 활성화
+
+        // 컴포넌트 언마운트 시 WebSocket 연결 해제
         return () => client.deactivate();
     }, []);
 
-    useEffect(() => {
+    // ✅ 워크스페이스 사용자를 가져오는 비동기 처리
+    useEffect(() =>
+    {
         setLoading(true);
 
         // wsId가 없으면 API 호출하지 않음
@@ -485,35 +499,40 @@ export default function DmPage()
         fetchUsersAndStatus();
     }, [wsId]);
 
-    // 자신을 제외한 유저들 목록
+    // ✅ 현재 로그인된 사용자를 제외한 사용자 목록 필터링
     const filteredUsers = users.filter((u) => u.email !== user.email);
 
     return (
         <MainCard>
             <div className="dm-grid-container">
-                {/* 사용자 목록 */}
+
+                {/* 사용자 목록 영역 */}
                 <div className="dm-users-card">
                     <div className="dm-users-header">
                         <h3>대화 목록</h3>
                     </div>
                     <Divider />
+
                     <div className="dm-users-list">
                         {loading ? (
+                            // ✅ 사용자 목록 로딩 중일 때 표시
                             <div className="dm-loading">
                                 <div className="dm-loading-spinner"></div>
                                 <span>사용자 로딩 중...</span>
                             </div>
                         ) : (
                             filteredUsers.length === 0 ? (
+                                // ✅ DM 가능한 사용자가 없는 경우 표시
                                 <div className="dm-no-users">
                                     DM 가능한 사용자가 없습니다.
                                 </div>
                             ) : (
+                                // ✅ 사용자 목록 렌더링
                                 filteredUsers.map((u, i) => (
                                     <div
                                         key={i}
                                         className={`dm-user-item ${selectedUser?.email === u.email ? "selected" : ""}`}
-                                        onClick={() => setSelectedUser(u)}
+                                        onClick={() => setSelectedUser(u)} // 클릭 시 사용자 선택
                                     >
                                         <div className={`dm-user-avatar ${u.status === 'online' ? 'online' : 'offline'}`}>
                                             {u.profileImage ? (
@@ -548,7 +567,10 @@ export default function DmPage()
 
                 {/* 채팅 영역 */}
                 <div style={{ width: "70%", height: "100%", display: "flex" }}>
+                
                     {selectedUser && wsId ? (
+                        // ✅ 사용자가 선택된 경우 채팅 컴포넌트 렌더링
+
                         <ChatComponent
                             wsId={wsId}
                             roomId={generateRoomId(wsId, user.email, selectedUser.email)}
@@ -558,6 +580,7 @@ export default function DmPage()
                             receiverInfo={selectedUser}
                         />
                     ) : (
+                        // ✅ 사용자가 선택되지 않았을 때 표시
                         <div className="dm-chat-area">
                             <div className="dm-no-chat-selected">
                                 <MessageIcon className="dm-no-chat-icon" style={{ fontSize: 48 }} />

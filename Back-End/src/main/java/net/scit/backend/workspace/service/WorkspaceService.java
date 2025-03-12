@@ -8,7 +8,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
-import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import net.scit.backend.workspace.dto.UpdateWorkspaceMemberDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceMemberDTO;

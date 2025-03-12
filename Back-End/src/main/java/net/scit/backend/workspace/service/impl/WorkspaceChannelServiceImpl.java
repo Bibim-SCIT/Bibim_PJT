@@ -7,6 +7,9 @@ import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
+import net.scit.backend.member.dto.MemberLoginStatusDTO;
+import net.scit.backend.member.dto.WorkspaceChannelLoginStatusDTO;
+import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.workspace.dto.ChannelUpdateRequest;
 import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
@@ -18,6 +21,10 @@ import net.scit.backend.workspace.service.WorkspaceChannelService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -145,5 +152,47 @@ public class WorkspaceChannelServiceImpl implements WorkspaceChannelService {
         ));
 
         return ResultDTO.of("채널이 성공적으로 삭제되었습니다.", SuccessDTO.builder().success(true).build());
+    }
+
+
+    /**
+     * 지정된 채널 역할 번호(ch_role_number)를 가진 워크스페이스 멤버들의 로그인 상태 정보를 조회합니다.
+     * WorkspaceMemberEntity는 MemberEntity를 참조하는 외래키를 보유하므로, 연관된 회원의 로그인 상태를 함께 반환합니다.
+     *
+     * @param chRoleNumber 워크스페이스 채널 역할 번호 (예: 1, 2, 3 등)
+     * @return 해당 역할을 가진 회원들의 이메일, 로그인 상태, 마지막 활동 시간 정보를 담은 DTO 리스트
+     */
+    @Override
+    public List<WorkspaceChannelLoginStatusDTO> getLoginStatusByRole(Long chRoleNumber) {
+        // 입력값 검증: chRoleNumber가 null인 경우 빈 리스트 반환
+        if (chRoleNumber == null) {
+            return Collections.emptyList();
+        }
+
+        // chRoleNumber를 기준으로 워크스페이스 멤버 조회
+        // (Repository에 아래와 같은 메서드가 정의되어 있어야 합니다.
+        //  List<WorkspaceMemberEntity> findByChRoleNumber_ChRoleNumber(Long chRoleNumber);)
+        List<WorkspaceMemberEntity> workspaceMembers =
+                workspaceMemberRepository.findByChRoleNumber_ChRoleNumber(chRoleNumber);
+
+        // 조회 결과가 없으면 빈 리스트 반환
+        if (workspaceMembers == null || workspaceMembers.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Member의 로그인 상태 정보를 추출하여 DTO 리스트 생성
+        List<WorkspaceChannelLoginStatusDTO> statusDTOList = new ArrayList<>();
+        for (WorkspaceMemberEntity workspaceMember : workspaceMembers) {
+            MemberEntity member = workspaceMember.getMember();
+            if (member != null) {
+                statusDTOList.add(new WorkspaceChannelLoginStatusDTO(
+                        member.getEmail(),
+                        member.isLoginStatus(),
+                        member.getLastActiveTime(),
+                        member.getProfileImage()
+                ));
+            }
+        }
+        return statusDTOList;
     }
 }
