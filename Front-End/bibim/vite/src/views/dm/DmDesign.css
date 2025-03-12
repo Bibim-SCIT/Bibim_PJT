@@ -83,10 +83,60 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    overflow: hidden;
+    overflow: visible;
     background-color: #e0e0e0;
     margin-right: 12px;
     flex-shrink: 0;
+    position: relative;
+}
+
+/* 접속 상태 표시 (아바타 오른쪽 아래) */
+.dm-user-avatar::after,
+.dm-chat-header-avatar::after,
+.dm-sender-avatar::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #bdbdbd; /* 기본 오프라인 색상 */
+    border: 2px solid #ffffff;
+}
+
+/* 온라인 상태 표시 */
+.dm-user-avatar.online::after,
+.dm-chat-header-avatar.online::after,
+.dm-sender-avatar.online::after {
+    background-color: #44b700; /* 온라인 색상 */
+    box-shadow: 0 0 0 2px #ffffff;
+    animation: pulse 1.5s infinite;
+}
+
+/* 오프라인 상태 표시 */
+.dm-user-avatar.offline::after,
+.dm-chat-header-avatar.offline::after,
+.dm-sender-avatar.offline::after {
+    background-color: #bdbdbd; /* 오프라인 색상 */
+}
+
+/* 펄스 애니메이션 */
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(68, 183, 0, 0.7);
+    }
+    
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 5px rgba(68, 183, 0, 0);
+    }
+    
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(68, 183, 0, 0);
+    }
 }
 
 /* 사용자 아바타 이미지 */
@@ -94,6 +144,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: 50%;
 }
 
 /* 기본 아바타 (이미지가 없을 때) */
@@ -180,9 +231,18 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    overflow: hidden;
+    overflow: visible;
     background-color: #e0e0e0;
     margin-right: 12px;
+    position: relative;
+}
+
+/* 채팅 헤더 아바타 이미지 */
+.dm-chat-header-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
 }
 
 /* 채팅 헤더 정보 컨테이너 */
@@ -250,8 +310,17 @@
     height: 28px;
     border-radius: 50%;
     background-color: #e0e0e0;
-    overflow: hidden;
+    overflow: visible;
     flex-shrink: 0;
+    position: relative;
+}
+
+/* 발신자 아바타 이미지 */
+.dm-sender-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
 }
 
 /* 발신자 이름 */
@@ -546,16 +615,52 @@
 } 
 
 .dm-user-status {
-    margin-left: 8px;
     font-size: 12px;
-    font-weight: bold;
-    color: gray;
+    color: #666;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
 }
 
-.dm-user-status.online {
-    color: green;
+.dm-user-status::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 4px;
 }
 
-.dm-user-status.offline {
-    color: red;
+.dm-user-status.online::before {
+    background-color: #44b700;
+}
+
+.dm-user-status.offline::before {
+    background-color: #bdbdbd;
+}
+
+/* 접속 상태 표시 스타일 */
+.dm-chat-header-status {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+}
+
+.dm-chat-header-status::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.dm-chat-header-status.online::before {
+    background-color: #44b700;
+}
+
+.dm-chat-header-status.offline::before {
+    background-color: #bdbdbd;
 }

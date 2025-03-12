@@ -220,15 +220,47 @@ export const updateUserRole = async (wsId, email, newRole) => {
 // 워크스페이스 멤버 접속 현황 조회 API
 export const fetchWorkspaceMembersStatus = async (workspaceId) => {
     try {
+        console.log("🔍 fetchWorkspaceMembersStatus 호출 - workspaceId:", workspaceId);
+        
+        if (!workspaceId) {
+            console.error("🚨 workspaceId가 없어 API 호출을 중단합니다.");
+            return [];
+        }
+        
         const response = await axios.get(`${API_BASE_URL}/${workspaceId}/members/status`, {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
             withCredentials: true,
         });
-        return response.data.data;  // ResultDTO에서 data 부분만 추출
+        
+        console.log("✅ 접속 상태 API 응답:", response);
+        
+        if (!response.data || !response.data.data) {
+            console.error("🚨 API 응답에 data 필드가 없습니다:", response);
+            return [];
+        }
+        
+        // 응답 데이터 형식 확인
+        const statusData = response.data.data;
+        console.log("✅ 접속 상태 데이터:", statusData);
+        
+        // 데이터 형식 변환 (loginStatus -> status)
+        const formattedData = statusData.map(item => ({
+            email: item.email,
+            status: item.loginStatus ? 'online' : 'offline',
+            lastActiveTime: item.lastActiveTime
+        }));
+        
+        console.log("✅ 변환된 접속 상태 데이터:", formattedData);
+        return formattedData;
     } catch (error) {
         console.error("🚨 워크스페이스 멤버 접속 현황 조회 실패:", error);
+        console.error("🚨 에러 상세:", {
+            status: error.response?.status,
+            data: error.response?.data,
+            message: error.message
+        });
         return [];
     }
 };

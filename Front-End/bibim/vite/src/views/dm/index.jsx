@@ -17,6 +17,7 @@ import {
     Avatar,
     Grid,
     Divider,
+    Badge,
 } from "@mui/material";
 import MessageIcon from '@mui/icons-material/Message';
 import { FaPlus, FaPaperPlane } from "react-icons/fa";
@@ -26,6 +27,7 @@ import { fetchWorkspaceUsers, fetchWorkspaceMembersStatus} from "../../api/works
 import "./DmDesign.css";
 import UserLoading from "./components/UserLoading";
 import ChatLoading from "./components/ChatLoading";
+import { styled } from '@mui/system';
 
 const API_BASE_URL = "http://localhost:8080/api";
 
@@ -100,6 +102,35 @@ const renderMessageContent = (msg) =>
     }
 };
 
+const StyledBadge = styled(Badge)(({ theme, status }) => ({
+    '& .MuiBadge-badge': {
+        backgroundColor: status === 'online' ? '#44b700' : '#777',
+        color: status === 'online' ? '#44b700' : '#777',
+        boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
+        '&::after': {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            borderRadius: '50%',
+            animation: status === 'online' ? 'ripple 1.2s infinite ease-in-out' : 'none',
+            border: '1px solid currentColor',
+            content: '""',
+        },
+    },
+    '@keyframes ripple': {
+        '0%': {
+            transform: 'scale(.8)',
+            opacity: 1,
+        },
+        '100%': {
+            transform: 'scale(2.4)',
+            opacity: 0,
+        },
+    },
+}));
+
 export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient, receiverInfo }) =>
 {
     const [messages, setMessages] = useState([]);
@@ -141,6 +172,14 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
 
     useEffect(() => {
         setLoading(true);  // ✅ 새로운 roomId가 들어오면 로딩 시작
+        console.log("🔍 메시지 로딩 시작 - roomId:", roomId, "wsId:", wsId);
+        
+        if (!roomId || !wsId) {
+            console.log("⚠️ roomId 또는 wsId가 없어 메시지를 로드할 수 없습니다.");
+            setLoading(false);
+            return;
+        }
+        
         axios.get(`${API_BASE_URL}/dm/messages`, {
             params: { wsId, roomId },
             headers: {
@@ -220,7 +259,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
         <div className="dm-chat-area" style={{ width: "100%" }}>
             {/* 채팅 헤더 */}
             <div className="dm-chat-header">
-                <div className="dm-chat-header-avatar">
+                <div className={`dm-chat-header-avatar ${receiverInfo?.status === 'online' ? 'online' : 'offline'}`}>
                     {receiverInfo?.profileImage ? (
                         <img src={receiverInfo.profileImage} alt={receiverInfo.nickname} />
                     ) : (
@@ -245,7 +284,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                         <div className="dm-sender">
                             {msg.sender !== senderId && (
                                 <>
-                                    <div className="dm-sender-avatar">
+                                    <div className={`dm-sender-avatar ${msg.sender === receiverId && receiverInfo?.status === 'online' ? 'online' : 'offline'}`}>
                                         {msg.profileImage ? (
                                             <img src={msg.profileImage} alt={msg.sender} />
                                         ) : (
@@ -351,19 +390,48 @@ export default function DmPage()
         try {
             // 1. 워크스페이스 멤버 목록 가져오기
             const usersData = await fetchWorkspaceUsers(thisws);
+            console.log("🔍 워크스페이스 멤버 목록:", usersData);
 
             // 2. 워크스페이스 멤버의 접속 상태 가져오기
             const statusData = await fetchWorkspaceMembersStatus(thisws);
+            console.log("🔍 워크스페이스 멤버 접속 상태:", statusData);
+
+            if (!statusData || statusData.length === 0) {
+                console.warn("⚠️ 접속 상태 데이터가 없습니다. 모든 사용자를 오프라인으로 표시합니다.");
+                // 접속 상태 데이터가 없는 경우 모든 사용자를 오프라인으로 표시
+                const offlineUsers = usersData.map(user => ({
+                    ...user,
+                    status: 'offline'
+                }));
+                setUsers(offlineUsers);
+                return;
+            }
 
             // 3. usersData에 statusData를 매핑하여 온라인/오프라인 상태 추가
-            const updatedUsers = usersData.map(user => ({
-                ...user,
-                status: statusData.find(status => status.email === user.email)?.status || "offline",
-            }));
+            const updatedUsers = usersData.map(user => {
+                // 이메일로 상태 데이터 찾기
+                const userStatus = statusData.find(status => status.email === user.email);
+                console.log(`사용자 ${user.email}의 상태:`, userStatus);
+                
+                // 상태 데이터가 있으면 해당 상태 사용, 없으면 오프라인으로 설정
+                return {
+                    ...user,
+                    status: userStatus?.status || 'offline'
+                };
+            });
 
+            console.log("🔍 상태 정보가 추가된 사용자 목록:", updatedUsers);
             setUsers(updatedUsers);
         } catch (error) {
             console.error("🚨 사용자 목록 및 접속 상태 불러오기 실패:", error);
+            // 오류 발생 시 기존 사용자 목록을 모두 오프라인으로 표시
+            if (users.length > 0) {
+                const offlineUsers = users.map(user => ({
+                    ...user,
+                    status: 'offline'
+                }));
+                setUsers(offlineUsers);
+            }
         } finally {
             setLoading(false);
         }
@@ -402,7 +470,7 @@ export default function DmPage()
                                         className={`dm-user-item ${selectedUser?.email === u.email ? "selected" : ""}`}
                                         onClick={() => setSelectedUser(u)}
                                     >
-                                        <div className="dm-user-avatar">
+                                        <div className={`dm-user-avatar ${u.status === 'online' ? 'online' : 'offline'}`}>
                                             {u.profileImage ? (
                                                 <img src={u.profileImage} alt={u.nickname} />
                                             ) : (
