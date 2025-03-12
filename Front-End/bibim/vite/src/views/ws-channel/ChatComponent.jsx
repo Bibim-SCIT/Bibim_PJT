@@ -39,7 +39,6 @@ const formatToKoreanTime = (timestamp) =>
  */
 function ChatComponent({ channelId, workspaceId })
 {
-
     // Context에서 현재 사용자 정보 가져오기
     const { user } = useContext(ConfigContext);
 
@@ -135,6 +134,7 @@ function ChatComponent({ channelId, workspaceId })
 
             const data = await response.json();
             setMessages(data); // 기존 메시지 상태에 추가
+
 
             // 메시지 로드 후 약간의 지연을 두고 스크롤 이동
             setTimeout(() =>
@@ -309,9 +309,10 @@ function ChatComponent({ channelId, workspaceId })
     /**
      * 메시지 상태가 변경될 때마다 스크롤을 맨 아래로 이동
      */
+
     useEffect(() =>
     {
-        if (messages.length > 0) {
+      if (messages.length > 0) {
             scrollToBottom();
         }
     }, [messages]);
@@ -375,6 +376,7 @@ function ChatComponent({ channelId, workspaceId })
                 </div>
             </div>
 
+            {/* 메시지 목록 */}
             {/* 메시지 목록 */}
             <div className="chat-messages">
                 {messages.map((msg, index) => (
