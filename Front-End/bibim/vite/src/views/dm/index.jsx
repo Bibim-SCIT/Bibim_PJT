@@ -37,16 +37,14 @@ import timezone from 'dayjs/plugin/timezone';
 const API_BASE_URL = "http://localhost:8080/api";
 
 // ✅ DM 방의 고유 ID 생성 함수
-const generateRoomId = (wsId, senderEmail, receiverEmail) =>
-{
+const generateRoomId = (wsId, senderEmail, receiverEmail) => {
     const cleanEmail = (email) => email.toLowerCase().split("@")[0];
     const emails = [cleanEmail(senderEmail), cleanEmail(receiverEmail)].sort();
     return `dm-${wsId}-${emails[0]}-${emails[1]}`;
 };
 
 // ✅ 파일 이름으로 이미지 여부 확인 함수
-const isImage = (fileName) =>
-{
+const isImage = (fileName) => {
     if (!fileName) return false;
     const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
     const extension = fileName.split(".").pop().toLowerCase();
@@ -54,21 +52,18 @@ const isImage = (fileName) =>
 };
 
 // ✅ YouTube 링크 확인 함수
-const isYouTubeLink = (url) =>
-{
+const isYouTubeLink = (url) => {
     return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/.test(url);
 };
 
 // ✅ YouTube 링크로부터 Embed URL 생성 함수
-const getYouTubeEmbedUrl = (url) =>
-{
+const getYouTubeEmbedUrl = (url) => {
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
     return match ? `https://www.youtube.com/embed/${match[1]}` : null;
 };
 
 // ✅ LocalDateTime을 한국 시간으로 포맷팅하는 함수
-const formatToKoreanTime = (timestamp) =>
-{
+const formatToKoreanTime = (timestamp) => {
     dayjs.extend(utc);
     dayjs.extend(timezone);
 
@@ -77,8 +72,7 @@ const formatToKoreanTime = (timestamp) =>
 };
 
 // ✅ 메시지 내용을 렌더링하는 함수
-const renderMessageContent = (msg) =>
-{
+const renderMessageContent = (msg) => {
     if (!msg.isFile && !msg.file && isYouTubeLink(msg.dmContent)) {
         const embedUrl = getYouTubeEmbedUrl(msg.dmContent);
         return embedUrl ? (
@@ -127,8 +121,7 @@ const StyledBadge = styled(Badge)(({ theme, status }) => ({
 }));
 
 // ✅ ChatComponent 정의
-export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient, receiverInfo }) =>
-{
+export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient, receiverInfo }) => {
     const [messages, setMessages] = useState([]); // 메시지 목록 상태 관리
     const [message, setMessage] = useState(""); // 현재 입력된 메시지 상태 관리
     const [file, setFile] = useState(null); // 선택된 파일 상태 관리
@@ -137,14 +130,12 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
     const [loading, setLoading] = useState(false); // 메시지 로딩 상태 관리
 
     // ✅ 메시지 목록 스크롤을 맨 아래로 이동
-    const scrollToBottom = () =>
-    {
+    const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     // ✅ 파일 업로드 함수
-    const uploadFile = async () =>
-    {
+    const uploadFile = async () => {
         if (!file) return;
 
         const formData = new FormData();
@@ -202,20 +193,17 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                 setLoading(false);
                 setTimeout(scrollToBottom, 100);
             })
-            .catch((error) =>
-            {
+            .catch((error) => {
                 console.error("❌ 메시지 로드 실패:", error);
                 setLoading(false);
             });
     }, [wsId, roomId, token, receiverId, receiverInfo]);
 
     // ✅ WebSocket을 통해 실시간 메시지 수신 처리
-    useEffect(() =>
-    {
+    useEffect(() => {
         if (!stompClient || !roomId) return;
 
-        const subscription = stompClient.subscribe(`/exchange/dm-exchange/msg.${roomId}`, (message) =>
-        {
+        const subscription = stompClient.subscribe(`/exchange/dm-exchange/msg.${roomId}`, (message) => {
             try {
                 const parsedMessage = JSON.parse(message.body);
                 // 자기 자신의 메시지인지 확인하여 필터링
@@ -242,15 +230,13 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
     }, [stompClient, roomId, senderId, receiverInfo]);
 
     // ✅ 메시지가 업데이트되면 자동으로 스크롤 이동
-    useEffect(() =>
-    {
+    useEffect(() => {
         scrollToBottom();
     }, [messages]);
 
 
     // ✅ 메시지 전송 함수
-    const sendMessage = () =>
-    {
+    const sendMessage = () => {
         if (!message.trim() || !stompClient) return;
 
         const messageDTO = {
@@ -275,8 +261,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
     };
 
     // ✅ Enter 키로 메시지 전송
-    const handleKeyPress = (e) =>
-    {
+    const handleKeyPress = (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
@@ -317,51 +302,57 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                 </div>
             </div>
             {/* 메시지 목록 */}
-            <div className="dm-chat-messages">
-                {messages.map((msg, index) => (
-                    <div key={index} className={`dm-message ${msg.sender === senderId ? "dm-my-message" : "dm-other-message"}`}>
-                        {/* 발신자 정보 */}
-                        <div className="dm-sender">
-                            {msg.sender !== senderId && (
-                                <>
-                                    <div className="dm-sender-avatar">
-                                        {msg.profileImage ? (
-                                            <Avatar
-                                                src={msg.profileImage}
-                                                alt={msg.sender}
-                                                sx={{ width: 28, height: 28 }}
-                                            />
-                                        ) : (
-                                            <Avatar
-                                                sx={{
-                                                    width: 28,
-                                                    height: 28,
-                                                    bgcolor: '#007AFF',
-                                                    fontSize: '14px'
-                                                }}
-                                            >
-                                                {msg.sender.charAt(0).toUpperCase()}
-                                            </Avatar>
-                                        )}
-                                    </div>
-                                    <span className="dm-sender-name">
-                                        {msg.sender.split('@')[0]}
-                                    </span>
-                                </>
-                            )}
-                            <span className="dm-message-time">
-                                {formatToKoreanTime(msg.sendTime)}
-                            </span>
-                        </div>
-                        <div className="dm-message-content-container">
-                            <div className={`dm-message-content ${(msg.file && isImage(msg.fileName)) || isYouTubeLink(msg.dmContent) ? "has-media" : ""}`}>
-                                {renderMessageContent(msg)}
+            {loading ? (  // ✅ 로딩 중에는 로딩 화면 표시
+                <div style={{ textAlign: "center", padding: "20px" }}>
+                    <ChatLoading />
+                </div>
+            ) : (
+                <div className="dm-chat-messages">
+                    {messages.map((msg, index) => (
+                        <div key={index} className={`dm-message ${msg.sender === senderId ? "dm-my-message" : "dm-other-message"}`}>
+                            {/* 발신자 정보 */}
+                            <div className="dm-sender">
+                                {msg.sender !== senderId && (
+                                    <>
+                                        <div className="dm-sender-avatar">
+                                            {msg.profileImage ? (
+                                                <Avatar
+                                                    src={msg.profileImage}
+                                                    alt={msg.sender}
+                                                    sx={{ width: 28, height: 28 }}
+                                                />
+                                            ) : (
+                                                <Avatar
+                                                    sx={{
+                                                        width: 28,
+                                                        height: 28,
+                                                        bgcolor: '#007AFF',
+                                                        fontSize: '14px'
+                                                    }}
+                                                >
+                                                    {msg.sender.charAt(0).toUpperCase()}
+                                                </Avatar>
+                                            )}
+                                        </div>
+                                        <span className="dm-sender-name">
+                                            {msg.sender.split('@')[0]}
+                                        </span>
+                                    </>
+                                )}
+                                <span className="dm-message-time">
+                                    {formatToKoreanTime(msg.sendTime)}
+                                </span>
+                            </div>
+                            <div className="dm-message-content-container">
+                                <div className={`dm-message-content ${(msg.file && isImage(msg.fileName)) || isYouTubeLink(msg.dmContent) ? "has-media" : ""}`}>
+                                    {renderMessageContent(msg)}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
-                <div ref={messagesEndRef} />
-            </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                </div>
+            )}
 
             {/* 입력 영역 */}
             <div className="dm-chat-input-box">
@@ -410,8 +401,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
     );
 }
 
-export default function DmPage()
-{
+export default function DmPage() {
     // ✅ ConfigContext에서 현재 로그인한 사용자 정보 가져오기
     const { user } = useContext(ConfigContext);
 
@@ -434,8 +424,7 @@ export default function DmPage()
     }, [thisws]);
 
     // ✅ WebSocket 클라이언트 초기화 및 연결 설정
-    useEffect(() =>
-    {
+    useEffect(() => {
         const socket = new SockJS("http://localhost:8080/ws/chat");
         const client = new Client({
             webSocketFactory: () => socket,
@@ -450,8 +439,7 @@ export default function DmPage()
     }, []);
 
     // ✅ 워크스페이스 사용자를 가져오는 비동기 처리
-    useEffect(() =>
-    {
+    useEffect(() => {
         setLoading(true);
 
         // wsId가 없으면 API 호출하지 않음

@@ -127,7 +127,7 @@ export const getWorkdataList = async (wsId, sort = "regDate", order = "desc") =>
 // ✅ 자료실 상세 조회 API
 export const getWorkdataDetail = async (wsId, dataNumber) => {
     try {
-        const response = await api.get(`/workdata/detail/${wsId}/${dataNumber}`);
+        const response = await api.get(`/workdata/${wsId}/${dataNumber}`);
         return response.data.data;
     } catch (error) {
         throw error.response?.data || "자료 상세 조회 실패";
