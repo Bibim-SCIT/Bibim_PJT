@@ -3,9 +3,8 @@ import React, { useEffect, useState, useRef, useContext, useCallback } from "rea
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import { ConfigContext } from "../../contexts/ConfigContext";
-import { FaPaperPlane, FaFileUpload } from "react-icons/fa";
+import { FaPaperPlane, FaPlus } from "react-icons/fa";
 import TagIcon from '@mui/icons-material/Tag';
-import AddIcon from '@mui/icons-material/Add';
 import PersonIcon from '@mui/icons-material/Person';
 import { fetchWorkspaceUsers } from "../../api/workspaceApi";
 import "./ChatComponent.css";
@@ -411,29 +410,45 @@ function ChatComponent({ channelId, workspaceId })
 
             {/* 메시지 입력 영역 */}
             <div className="chat-input-box">
-                {/* 파일 업로드 버튼 */}
-                <input type="file" id="file-upload" onChange={handleFileChange} hidden />
-                <label htmlFor="file-upload" className="icon-btn">
-                    <AddIcon sx={{ fontSize: 24 }} />
-                </label>
+                {/* 파일 업로드 영역 */}
+                <div className="file-upload">
+                    <input 
+                        type="file" 
+                        id="file-upload" 
+                        onChange={handleFileChange} 
+                    />
+                    <label htmlFor="file-upload" className="icon-btn">
+                        <FaPlus />
+                    </label>
+                    {file && <span className="selected-file">{file.name}</span>}
+                </div>
 
-                {/* 선택된 파일명 표시 */}
-                {file && <span className="selected-file">{file.name}</span>}
-
-                {/* 메시지 입력창 */}
-                <input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyPress}
-                    placeholder="메시지를 입력하세요..."
-                    className="chat-input"
-                    disabled={file} // 파일 선택 시 입력창 비활성화
-                />
-
-                {/* 전송 버튼 */}
-                <button onClick={sendMessage} className="send-btn" disabled={isUploading}>
-                    <FaPaperPlane size={18} />
-                </button>
+                {file ? (
+                    <button 
+                        onClick={sendMessage} 
+                        className="send-btn" 
+                        disabled={isUploading}
+                    >
+                        <FaPaperPlane />
+                    </button>
+                ) : (
+                    <>
+                        <input
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={handleKeyPress}
+                            placeholder="메시지를 입력하세요..."
+                            className="chat-input"
+                        />
+                        <button 
+                            onClick={sendMessage} 
+                            className="send-btn" 
+                            disabled={!input.trim()}
+                        >
+                            <FaPaperPlane />
+                        </button>
+                    </>
+                )}
             </div>
         </div>
     );

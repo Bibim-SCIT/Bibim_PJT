@@ -4,33 +4,33 @@ import { useSelector } from 'react-redux';
 import axios from "axios";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
-import
-    {
-        TextField,
-        Button,
-        Card,
-        CardContent,
-        Typography,
-        List,
-        ListItem,
-        ListItemText,
-        ListItemAvatar,
-        Avatar,
-        Grid,
-        Divider,
-    } from "@mui/material";
+import {
+    TextField,
+    Button,
+    Card,
+    CardContent,
+    Typography,
+    List,
+    ListItem,
+    ListItemText,
+    ListItemAvatar,
+    Avatar,
+    Grid,
+    Divider,
+    Badge,
+} from "@mui/material";
 import MessageIcon from '@mui/icons-material/Message';
 import { FaPlus, FaPaperPlane } from "react-icons/fa";
 import { ConfigContext } from "contexts/ConfigContext";
 import MainCard from "ui-component/cards/MainCard";
-import { fetchWorkspaceUsers } from "../../api/workspaceApi";
+import { fetchWorkspaceUsers, fetchWorkspaceMembersStatus} from "../../api/workspaceApi";
 import "./DmDesign.css";
 import UserLoading from "./components/UserLoading";
 import ChatLoading from "./components/ChatLoading";
+import { styled } from '@mui/system';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-
 
 // ✅ API 기본 URL 설정
 const API_BASE_URL = "http://localhost:8080/api";
@@ -96,6 +96,35 @@ const renderMessageContent = (msg) =>
     }
 };
 
+const StyledBadge = styled(Badge)(({ theme, status }) => ({
+    '& .MuiBadge-badge': {
+        backgroundColor: status === 'online' ? '#44b700' : '#777',
+        color: status === 'online' ? '#44b700' : '#777',
+        boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
+        '&::after': {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            borderRadius: '50%',
+            animation: status === 'online' ? 'ripple 1.2s infinite ease-in-out' : 'none',
+            border: '1px solid currentColor',
+            content: '""',
+        },
+    },
+    '@keyframes ripple': {
+        '0%': {
+            transform: 'scale(.8)',
+            opacity: 1,
+        },
+        '100%': {
+            transform: 'scale(2.4)',
+            opacity: 0,
+        },
+    },
+}));
+
 // ✅ ChatComponent 정의
 export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient, receiverInfo }) =>
 {
@@ -138,18 +167,34 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
         }
     };
 
-    // ✅ 기존 메시지 로드
-    useEffect(() =>
-    {
+    useEffect(() => {
         setLoading(true);
+        
+        if (!roomId || !wsId) {
+            setLoading(false);
+            return;
+        }
+        
         axios.get(`${API_BASE_URL}/dm/messages`, {
             params: { wsId, roomId },
             headers: { Authorization: `Bearer ${token}` },
             withCredentials: true,
         })
-            .then((res) =>
-            {
-                setMessages(res.data);
+            .then((res) => {
+                // 메시지에 프로필 이미지 정보 추가
+                const messagesWithProfile = res.data.map(msg => {
+                    // 상대방 메시지인 경우 receiverInfo의 프로필 이미지 사용
+                    if (msg.sender === receiverId && receiverInfo) {
+                        return {
+                            ...msg,
+                            profileImage: receiverInfo.profileImage
+                        };
+                    }
+                    return msg;
+                });
+                
+                setMessages(messagesWithProfile);
+
                 setLoading(false);
                 setTimeout(scrollToBottom, 100);
             })
@@ -158,7 +203,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                 console.error("❌ 메시지 로드 실패:", error);
                 setLoading(false);
             });
-    }, [wsId, roomId, token]);
+    }, [wsId, roomId, token, receiverId, receiverInfo]);
 
     // ✅ WebSocket을 통해 실시간 메시지 수신 처리
     useEffect(() =>
@@ -169,23 +214,30 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
         {
             try {
                 const parsedMessage = JSON.parse(message.body);
-                if (parsedMessage.sender !== senderId) {
-                    setMessages((prev) => [...prev, parsedMessage]);
-                    setTimeout(scrollToBottom, 100);
+                
+                // 상대방 메시지인 경우 프로필 이미지 추가
+                if (parsedMessage.sender !== senderId && receiverInfo) {
+                    parsedMessage.profileImage = receiverInfo.profileImage;
                 }
+                
+                setMessages((prev) => [...prev, parsedMessage]);
+                setTimeout(scrollToBottom, 100);
             } catch (error) {
                 console.error("❌ 메시지 파싱 오류:", error);
             }
         });
 
-        return () => subscription.unsubscribe();
-    }, [stompClient, roomId]);
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, [stompClient, roomId, senderId, receiverInfo]);
 
     // ✅ 메시지가 업데이트되면 자동으로 스크롤 이동
     useEffect(() =>
     {
         scrollToBottom();
     }, [messages]);
+
 
     // ✅ 메시지 전송 함수
     const sendMessage = () =>
@@ -227,13 +279,24 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
         <div className="dm-chat-area" style={{ width: "100%" }}>
             {/* 채팅 헤더 */}
             <div className="dm-chat-header">
-                <div className="dm-chat-header-avatar">
+                <div className={`dm-chat-header-avatar ${receiverInfo?.status === 'online' ? 'online' : 'offline'}`}>
                     {receiverInfo?.profileImage ? (
-                        <img src={receiverInfo.profileImage} alt={receiverInfo.nickname} />
+                        <Avatar
+                            src={receiverInfo.profileImage}
+                            alt={receiverInfo.nickname}
+                            sx={{ width: 36, height: 36 }}
+                        />
                     ) : (
-                        <div className="dm-default-avatar">
+                        <Avatar
+                            sx={{
+                                width: 36,
+                                height: 36,
+                                bgcolor: '#007AFF',
+                                fontSize: '16px'
+                            }}
+                        >
                             {receiverId.charAt(0).toUpperCase()}
-                        </div>
+                        </Avatar>
                     )}
                 </div>
 
@@ -254,11 +317,22 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                                 <>
                                     <div className="dm-sender-avatar">
                                         {msg.profileImage ? (
-                                            <img src={msg.profileImage} alt={msg.sender} />
+                                            <Avatar
+                                                src={msg.profileImage}
+                                                alt={msg.sender}
+                                                sx={{ width: 28, height: 28 }}
+                                            />
                                         ) : (
-                                            <div className="dm-default-avatar">
+                                            <Avatar
+                                                sx={{
+                                                    width: 28,
+                                                    height: 28,
+                                                    bgcolor: '#007AFF',
+                                                    fontSize: '14px'
+                                                }}
+                                            >
                                                 {msg.sender.charAt(0).toUpperCase()}
-                                            </div>
+                                            </Avatar>
                                         )}
                                     </div>
                                     <span className="dm-sender-name">
@@ -331,7 +405,7 @@ export default function DmPage()
 {
     // ✅ ConfigContext에서 현재 로그인한 사용자 정보 가져오기
     const { user } = useContext(ConfigContext);
-
+    
     // ✅ Redux에서 현재 활성화된 워크스페이스 가져오기
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace);
     const thisws = activeWorkspace?.wsId; // 워크스페이스 ID 가져오기
@@ -341,6 +415,13 @@ export default function DmPage()
     const [wsId, setWsId] = useState(thisws); // 현재 워크스페이스 ID 상태
     const [stompClient, setStompClient] = useState(null); // WebSocket 클라이언트 상태
     const [loading, setLoading] = useState(true); // 사용자 로딩 상태
+    
+    // 워크스페이스 ID 변경 시 상태 업데이트
+    useEffect(() => {
+        if (thisws) {
+            setWsId(thisws);
+        }
+    }, [thisws]);
 
     // ✅ WebSocket 클라이언트 초기화 및 연결 설정
     useEffect(() =>
@@ -362,18 +443,61 @@ export default function DmPage()
     useEffect(() =>
     {
         setLoading(true);
-        fetchWorkspaceUsers(thisws)
-            .then((usersData) =>
-            {
-                setUsers(usersData); // 가져온 사용자 데이터로 상태 업데이트
-                setLoading(false); // 로딩 상태 종료
-            })
-            .catch((error) =>
-            {
-                console.error(error);
+
+        // wsId가 없으면 API 호출하지 않음
+        if (!wsId) {
+            setLoading(false);
+            return;
+        }
+
+        const fetchUsersAndStatus = async () => {
+            try {
+                // 1. 워크스페이스 멤버 목록 가져오기
+                const usersData = await fetchWorkspaceUsers(wsId);
+                
+                // 2. 워크스페이스 멤버의 접속 상태 가져오기
+                const statusData = await fetchWorkspaceMembersStatus(wsId);
+                
+                if (!statusData || statusData.length === 0) {
+                    // 접속 상태 데이터가 없는 경우 모든 사용자를 오프라인으로 표시
+                    const offlineUsers = usersData.map(user => ({
+                        ...user,
+                        status: 'offline'
+                    }));
+                    setUsers(offlineUsers);
+                    return;
+                }
+
+                // 3. usersData에 statusData를 매핑하여 온라인/오프라인 상태 추가
+                const updatedUsers = usersData.map(user => {
+                    // 이메일로 상태 데이터 찾기
+                    const userStatus = statusData.find(status => status.email === user.email);
+                    
+                    // 상태 데이터가 있으면 해당 상태 사용, 없으면 오프라인으로 설정
+                    return {
+                        ...user,
+                        status: userStatus?.status || 'offline'
+                    };
+                });
+
+                setUsers(updatedUsers);
+            } catch (error) {
+                console.error("🚨 사용자 목록 및 접속 상태 불러오기 실패:", error);
+                // 오류 발생 시 기존 사용자 목록을 모두 오프라인으로 표시
+                if (users.length > 0) {
+                    const offlineUsers = users.map(user => ({
+                        ...user,
+                        status: 'offline'
+                    }));
+                    setUsers(offlineUsers);
+                }
+            } finally {
                 setLoading(false);
-            });
-    }, [thisws]);
+            }
+        };
+
+        fetchUsersAndStatus();
+    }, [wsId]);
 
     // ✅ 현재 로그인된 사용자를 제외한 사용자 목록 필터링
     const filteredUsers = users.filter((u) => u.email !== user.email);
@@ -410,13 +534,24 @@ export default function DmPage()
                                         className={`dm-user-item ${selectedUser?.email === u.email ? "selected" : ""}`}
                                         onClick={() => setSelectedUser(u)} // 클릭 시 사용자 선택
                                     >
-                                        <div className="dm-user-avatar">
+                                        <div className={`dm-user-avatar ${u.status === 'online' ? 'online' : 'offline'}`}>
                                             {u.profileImage ? (
-                                                <img src={u.profileImage} alt={u.nickname} />
+                                                <Avatar
+                                                    src={u.profileImage}
+                                                    alt={u.nickname}
+                                                    sx={{ width: 40, height: 40 }}
+                                                />
                                             ) : (
-                                                <div className="dm-default-avatar">
+                                                <Avatar
+                                                    sx={{
+                                                        width: 40,
+                                                        height: 40,
+                                                        bgcolor: '#007AFF',
+                                                        fontSize: '16px'
+                                                    }}
+                                                >
                                                     {u.email.charAt(0).toUpperCase()}
-                                                </div>
+                                                </Avatar>
                                             )}
                                         </div>
                                         <div className="dm-user-info">
@@ -432,8 +567,10 @@ export default function DmPage()
 
                 {/* 채팅 영역 */}
                 <div style={{ width: "70%", height: "100%", display: "flex" }}>
-                    {selectedUser ? (
+                
+                    {selectedUser && wsId ? (
                         // ✅ 사용자가 선택된 경우 채팅 컴포넌트 렌더링
+
                         <ChatComponent
                             wsId={wsId}
                             roomId={generateRoomId(wsId, user.email, selectedUser.email)}
