@@ -5,6 +5,17 @@ import axios from "axios";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import {
+    TextField,
+    Button,
+    Card,
+    CardContent,
+    Typography,
+    List,
+    ListItem,
+    ListItemText,
+    ListItemAvatar,
+    Avatar,
+    Grid,
     Divider,
 } from "@mui/material";
 import MessageIcon from '@mui/icons-material/Message';
@@ -13,11 +24,13 @@ import { ConfigContext } from "contexts/ConfigContext";
 import MainCard from "ui-component/cards/MainCard";
 import { fetchWorkspaceUsers } from "../../api/workspaceApi";
 import "./DmDesign.css";
+import { useSelector } from 'react-redux';
+import UserLoading from "./components/UserLoading";
+import ChatLoading from "./components/ChatLoading";
 
 const API_BASE_URL = "http://localhost:8080/api";
 
-const generateRoomId = (wsId, senderEmail, receiverEmail) =>
-{
+const generateRoomId = (wsId, senderEmail, receiverEmail) => {
     const cleanEmail = (email) => email.toLowerCase().split("@")[0];
     const emails = [cleanEmail(senderEmail), cleanEmail(receiverEmail)].sort();
     return `dm-${wsId}-${emails[0]}-${emails[1]}`;
@@ -25,8 +38,7 @@ const generateRoomId = (wsId, senderEmail, receiverEmail) =>
 
 // const isImage = (fileName) => /\.(jpg|jpeg|png|gif)$/i.test(fileName);
 
-const isImage = (fileName) =>
-{
+const isImage = (fileName) => {
     if (!fileName) return false;
     const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
     const extension = fileName.split(".").pop().toLowerCase();
@@ -34,14 +46,12 @@ const isImage = (fileName) =>
 };
 
 // YouTube 링크 확인 함수
-const isYouTubeLink = (url) =>
-{
+const isYouTubeLink = (url) => {
     return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/.test(url);
 };
 
 // YouTube Embed URL 생성 함수
-const getYouTubeEmbedUrl = (url) =>
-{
+const getYouTubeEmbedUrl = (url) => {
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
     return match ? `https://www.youtube.com/embed/${match[1]}` : null;
 };
@@ -91,7 +101,6 @@ const renderMessageContent = (msg) =>
     }
 };
 
-
 export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient, receiverInfo }) =>
 {
     const [messages, setMessages] = useState([]);
@@ -104,9 +113,10 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
     {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
+    const [loading, setLoading] = useState(false);  // ✅ 추가
 
-    const uploadFile = async () =>
-    {
+
+    const uploadFile = async () => {
         if (!file) return;
 
         const formData = new FormData();
@@ -130,8 +140,8 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
         }
     };
 
-    useEffect(() =>
-    {
+    useEffect(() => {
+        setLoading(true);  // ✅ 새로운 roomId가 들어오면 로딩 시작
         axios.get(`${API_BASE_URL}/dm/messages`, {
             params: { wsId, roomId },
             headers: {
@@ -141,17 +151,19 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
         })
             .then((res) => {
                 setMessages(res.data);
+                setLoading(false); // ✅ 데이터 로드 완료 후 로딩 종료
                 setTimeout(scrollToBottom, 100);
             })
-            .catch(console.error);
+            .catch((error) => {
+                console.error("❌ 메시지 로드 실패:", error);
+                setLoading(false);
+            });
     }, [wsId, roomId, token]);
 
-    useEffect(() =>
-    {
+    useEffect(() => {
         if (!stompClient || !roomId) return;
 
-        const subscription = stompClient.subscribe(`/exchange/dm-exchange/msg.${roomId}`, (message) =>
-        {
+        const subscription = stompClient.subscribe(`/exchange/dm-exchange/msg.${roomId}`, (message) => {
             try {
                 const parsedMessage = JSON.parse(message.body);
                 if (parsedMessage.sender !== senderId) {
@@ -275,7 +287,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                     </label>
                     {file && <span className="dm-selected-file">{file.name}</span>}
                 </div>
-
+                
                 {file ? (
                     <button 
                         onClick={uploadFile} 
@@ -320,8 +332,7 @@ export default function DmPage()
     const [loading, setLoading] = useState(true);
 
 
-    useEffect(() =>
-    {
+    useEffect(() => {
         const socket = new SockJS("http://localhost:8080/ws/chat");
         const client = new Client({
             webSocketFactory: () => socket,
@@ -333,17 +344,14 @@ export default function DmPage()
         return () => client.deactivate();
     }, []);
 
-    useEffect(() =>
-    {
+    useEffect(() => {
         setLoading(true);
         fetchWorkspaceUsers(thisws)
-            .then((usersData) =>
-            {
+            .then((usersData) => {
                 setUsers(usersData);
                 setLoading(false);
             })
-            .catch((error) =>
-            {
+            .catch((error) => {
                 console.error(error);
                 setLoading(false);
             });

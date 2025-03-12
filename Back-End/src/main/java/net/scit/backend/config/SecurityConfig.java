@@ -82,7 +82,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000")); // ✅ React 허용
+        config.setAllowedOrigins(List.of("http://localhost:3000", // ✅ React 허용
+                                         "https://bibim-main.vercel.app",
+                                         "https://bibim-dev.vercel.app"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")); // ✅ 허용할 HTTP 메소드
         config.setAllowedHeaders(List.of("*")); // ✅ 모든 헤더 허용
         config.setAllowCredentials(true);
