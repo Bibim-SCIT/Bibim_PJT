@@ -1,0 +1,452 @@
+/* DM 페이지 스타일 */
+/* 전체 컨테이너 */
+.dm-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+/* 메인 그리드 레이아웃 */
+.dm-grid-container {
+    display: flex;
+    height: calc(100vh - 120px);
+    overflow: hidden;
+    width: 100%;
+}
+
+/* 사용자 목록 영역 */
+.dm-users-card {
+    width: 30%;
+    border-radius: 12px;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+    border: 1px solid #eaeaea;
+    min-height: 0;
+}
+
+.dm-users-header {
+    padding: 16px 20px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.dm-users-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+.dm-users-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+    min-height: 0;
+}
+
+.dm-user-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-radius: 8px;
+    margin: 4px 8px;
+}
+
+.dm-user-item:hover {
+    background-color: #f5f5f5;
+}
+
+.dm-user-item.selected {
+    background-color: #f0f0f0;
+}
+
+.dm-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background-color: #e0e0e0;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.dm-user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.dm-default-avatar {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #007AFF;
+    color: white;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.dm-user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.dm-user-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dm-user-email {
+    font-size: 13px;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dm-no-users {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #888;
+    font-size: 15px;
+    padding: 20px;
+    text-align: center;
+}
+
+/* 채팅 영역 */
+.dm-chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #eaeaea;
+    margin-left: 16px;
+    background-color: #ffffff;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+}
+
+.dm-chat-header {
+    background-color: #f8f9fa;
+    padding: 15px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 1px solid #eaeaea;
+    display: flex;
+    align-items: center;
+}
+
+.dm-chat-header-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    background-color: #e0e0e0;
+    margin-right: 12px;
+}
+
+.dm-chat-header-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.dm-chat-header-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.dm-chat-header-email {
+    font-size: 13px;
+    color: #666;
+}
+
+.dm-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background-color: #ffffff;
+    min-height: 0;
+}
+
+.dm-message {
+    display: flex;
+    flex-direction: column;
+    padding: 2px 20px;
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 16px;
+}
+
+.dm-sender {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.dm-sender-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: #e0e0e0;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.dm-sender-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+}
+
+.dm-message-time {
+    font-size: 12px;
+    color: #999;
+    margin-left: 4px;
+}
+
+.dm-message-content-container {
+    display: flex;
+    padding-left: 36px;
+    margin-top: -4px;
+    max-width: 100%;
+}
+
+.dm-message-content {
+    padding: 8px 12px;
+    font-size: 14px;
+    line-height: 1.4;
+    max-width: 60%;
+    border-radius: 12px;
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+/* 유튜브 영상이 있는 메시지는 더 넓게 표시 */
+.dm-message-content .dm-youtube-wrapper {
+    max-width: 400px;
+    min-width: 300px;
+}
+
+.dm-my-message .dm-message-content {
+    color: #1a1a1a;
+    background-color: #E3F2FD;
+    border-bottom-left-radius: 4px;
+}
+
+.dm-other-message .dm-message-content {
+    background-color: #F3E5F5;
+    color: #1a1a1a;
+    border-bottom-left-radius: 4px;
+}
+
+/* 이미지나 유튜브 영상이 있는 메시지 */
+.dm-message-content.has-media {
+    padding: 8px;
+    max-width: 320px;
+}
+
+.dm-my-message .dm-message-content.has-media {
+    background-color: #E3F2FD;
+}
+
+.dm-other-message .dm-message-content.has-media {
+    background-color: #F3E5F5;
+}
+
+.dm-chat-image {
+    max-width: 300px;
+    max-height: 300px;
+    border-radius: 8px;
+    margin: 0;
+    display: block;
+}
+
+.dm-file-message {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: #F5F5F5;
+    border-radius: 12px;
+    color: #666;
+    text-decoration: none;
+    font-size: 14px;
+    margin: 5px 0;
+}
+
+.dm-chat-input-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 20px;
+    background-color: #ffffff;
+    border-top: 1px solid #eaeaea;
+}
+
+.dm-chat-input {
+    flex: 1;
+    padding: 12px 15px;
+    border-radius: 25px;
+    border: 1px solid #e0e0e0;
+    font-size: 15px;
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+}
+
+.dm-chat-input:focus {
+    outline: none;
+    border-color: #007AFF;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
+}
+
+.dm-file-upload {
+    display: flex;
+    align-items: center;
+}
+
+.dm-file-upload-input {
+    display: none;
+}
+
+.dm-file-upload-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background-color: #f5f6f8;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dm-file-upload-label:hover {
+    background-color: #e4e6e7;
+}
+
+.dm-selected-file {
+    font-size: 13px;
+    color: #666;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-left: 8px;
+}
+
+.dm-send-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #007AFF;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dm-send-btn:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+.dm-send-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.dm-no-chat-selected {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #888;
+    text-align: center;
+    padding: 20px;
+}
+
+.dm-no-chat-icon {
+    font-size: 48px;
+    color: #ccc;
+    margin-bottom: 16px;
+}
+
+.dm-no-chat-text {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.dm-youtube-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+    height: 0;
+    padding-bottom: 56.25%;
+    margin: 0;
+    overflow: hidden;
+}
+
+.dm-youtube-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    border: none;
+}
+
+/* 로딩 상태 */
+.dm-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+}
+
+.dm-loading-spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #007AFF;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+} 
