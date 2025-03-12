@@ -12,12 +12,10 @@ import net.scit.backend.member.dto.WorkspaceChannelLoginStatusDTO;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.workspace.dto.ChannelUpdateRequest;
 import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
-import net.scit.backend.workspace.entity.WorkspaceChannelRoleEntity;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import net.scit.backend.workspace.event.WorkspaceChannelEvent;
 import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
-import net.scit.backend.workspace.repository.WorkspaceChannelRoleRepository;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import net.scit.backend.workspace.service.WorkspaceChannelService;
 import org.springframework.context.ApplicationEventPublisher;
@@ -36,7 +34,6 @@ public class WorkspaceChannelServiceImpl implements WorkspaceChannelService {
     private final WorkspaceChannelRepository workspaceChannelRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final WorkspaceChannelRoleRepository workspaceChannelRoleRepository;
 
     /**
      * 1️⃣ 채널 생성
@@ -56,9 +53,6 @@ public class WorkspaceChannelServiceImpl implements WorkspaceChannelService {
         WorkspaceMemberEntity member = workspaceMemberRepository
                 .findByWorkspace_wsIdAndMember_Email(workspaceId, userEmail)
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
-
-        WorkspaceChannelRoleEntity workspaceChannelRoleEntity = workspaceChannelRoleRepository.findById(roleId).orElse(null);
-
         // 3. 채널 저장
         WorkspaceChannelEntity channel = WorkspaceChannelEntity.builder()
                 .workspace(member.getWorkspace())
