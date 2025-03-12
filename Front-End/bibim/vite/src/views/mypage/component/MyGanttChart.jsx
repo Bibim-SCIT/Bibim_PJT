@@ -1,30 +1,46 @@
-import React, { useState } from 'react';
-import { Box, ToggleButton, ToggleButtonGroup, Paper } from '@mui/material';
+import React, { useState, useCallback, useMemo } from "react";
+import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { styled } from "@mui/material/styles";
 import { Gantt, ViewMode } from "gantt-task-react";
 import "gantt-task-react/dist/index.css";
 import dayjs from "dayjs";
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty'; // 미배정
+import PlayCircleIcon from '@mui/icons-material/PlayCircle'; // 진행 중
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'; // 완료
+import PauseCircleIcon from '@mui/icons-material/PauseCircle'; // 보류
+
+// GanttChart 컴포넌트와 동일한 스타일 적용
+const GanttWrapper = styled(Box)({
+  padding: "20px",
+  background: "#fff",
+  borderRadius: "10px",
+  boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+  overflow: 'hidden', // 'hidden'으로 설정 (GanttChart와 동일하게)
+});
 
 // 날짜를 'YYYY.MM.DD' 형식으로 변환하는 함수
 const formatDate = (date) => dayjs(date).format("YYYY.MM.DD");
 
 const statusMapping = {
-  UNASSIGNED: { label: "미배정" },
-  IN_PROGRESS: { label: "진행 중" },
-  COMPLETED: { label: "완료" },
-  ON_HOLD: { label: "보류" },
+  UNASSIGNED: { label: "미배정", icon: <HourglassEmptyIcon /> },
+  IN_PROGRESS: { label: "진행 중", icon: <PlayCircleIcon /> },
+  COMPLETED: { label: "완료", icon: <CheckCircleIcon /> },
+  ON_HOLD: { label: "보류", icon: <PauseCircleIcon /> },
 };
 
 // 커스텀 툴팁 컴포넌트
 const CustomTooltip = ({ task }) => {
-  const taskStatus = statusMapping[task.status] || { label: "알 수 없음" };
+  const taskStatus = statusMapping[task.status] || { label: "알 수 없음", icon: null };
 
   return (
-    <div style={{ background: "#222", color: "#fff", padding: "5px", borderRadius: "0" }}>
+    <div style={{ background: "#222", color: "#fff", padding: "5px", borderRadius: "5px" }}>
       <p><strong>{task.name}</strong></p>
       <p>시작: {formatDate(task.start)}</p>
       <p>종료: {formatDate(task.end)}</p>
       <p>워크스페이스: {task.wsName}</p>
-      <p>상태: {taskStatus.label}</p>
+      <p>
+        상태: {taskStatus.icon} {taskStatus.label}
+      </p>
     </div>
   );
 };
@@ -48,8 +64,8 @@ const CustomTaskListHeader = ({ headerHeight, rowWidth }) => (
   </div>
 );
 
-// 커스텀 Task List Table
-const CustomTaskListTable = ({ tasks, rowHeight, onTaskClick }) => (
+// 커스텀 Task List Table - 메모이제이션 적용
+const CustomTaskListTable = React.memo(({ tasks, rowHeight, onTaskClick }) => (
   <div>
     {tasks.map((task) => (
       <div
@@ -76,76 +92,80 @@ const CustomTaskListTable = ({ tasks, rowHeight, onTaskClick }) => (
       </div>
     ))}
   </div>
-);
+));
 
 const MyGanttChart = ({ tasks, onTaskClick }) => {
   const [viewMode, setViewMode] = useState(ViewMode.Day);
 
-  // 간트 차트 뷰 모드 변경 핸들러
-  const handleViewModeChange = (event, newMode) => {
+  // 뷰 모드 변경 함수 - useCallback으로 메모이제이션
+  const handleViewModeChange = useCallback((event, newMode) => {
     if (newMode !== null) {
       setViewMode(newMode);
     }
-  };
+  }, []);
+
+  // Task 클릭 핸들러 - useCallback으로 메모이제이션
+  const handleTaskClick = useCallback((task) => {
+    if (onTaskClick) {
+      onTaskClick(task);
+    }
+  }, [onTaskClick]);
+
+  // 간트 차트 렌더링 최적화를 위한 메모이제이션
+  const memoizedTasks = useMemo(() => tasks, [tasks]);
+
+  // 간트 차트 컴포넌트 속성 메모이제이션
+  const ganttProps = useMemo(() => ({
+    tasks: memoizedTasks,
+    viewMode,
+    columnWidth: 80,
+    barCornerRadius: 5,
+    fontSize: 12,
+    locale: "ko",
+    TooltipContent: CustomTooltip,
+    preStepsCount: 5,
+    viewDate: new Date(),
+    listCellWidth: "120px",
+    TaskListHeader: CustomTaskListHeader,
+    ganttHeight: 400,
+  }), [memoizedTasks, viewMode]);
 
   return (
-    <Paper 
-      elevation={0}
-      sx={{ 
-        width: '100%',
-        borderRadius: 2,
-        border: '1px solid #e0e0e0',
-        transition: 'all 0.2s ease',
-        '&:hover': {
-          boxShadow: '0 3px 10px rgba(0,0,0,0.03), 0 1px 5px rgba(0,0,0,0.02)',
-          transform: 'translateY(-1px)'
-        }
-      }}
-    >
-      <Box sx={{ padding: 2, overflow: 'auto' }}>
-        <Box sx={{ textAlign: "right", mb: 2 }}>
-          <ToggleButtonGroup
-            value={viewMode}
-            exclusive
-            onChange={handleViewModeChange}
-            aria-label="Gantt View Mode"
-          >
-            <ToggleButton value={ViewMode.Week} aria-label="Week View">
-              주 단위 보기
-            </ToggleButton>
-            <ToggleButton value={ViewMode.Day} aria-label="Day View">
-              일 단위 보기
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-        
-        {tasks.length > 0 ? (
-          <Gantt
-            tasks={tasks}
-            viewMode={viewMode}
-            columnWidth={80}
-            barCornerRadius={0}
-            fontSize={12}
-            locale="ko"
-            TooltipContent={CustomTooltip}
-            preStepsCount={5}
-            viewDate={new Date()}
-            listCellWidth="120px"
-            TaskListHeader={CustomTaskListHeader}
-            TaskListTable={(props) => <CustomTaskListTable {...props} onTaskClick={onTaskClick} />}
-          />
-        ) : (
-          <Box sx={{
-            width: '100%',
-            padding: 2,
-            textAlign: 'center'
-          }}>
-            <p>⏳ 등록된 작업이 없습니다.</p>
-          </Box>
-        )}
+    <GanttWrapper>
+      <Box sx={{ textAlign: "right", mb: 2 }}>
+        <ToggleButtonGroup
+          value={viewMode}
+          exclusive
+          onChange={handleViewModeChange}
+          aria-label="Gantt View Mode"
+        >
+          <ToggleButton value={ViewMode.Week} aria-label="Week View">
+            주 단위 보기
+          </ToggleButton>
+          <ToggleButton value={ViewMode.Day} aria-label="Day View">
+            일 단위 보기
+          </ToggleButton>
+        </ToggleButtonGroup>
       </Box>
-    </Paper>
+
+      {memoizedTasks.length > 0 ? (
+        <Gantt
+          {...ganttProps}
+          TaskListTable={(props) => <CustomTaskListTable {...props} onTaskClick={handleTaskClick} />}
+        />
+      ) : (
+        <Box sx={{
+          width: '100%',
+          maxWidth: '1200px',
+          padding: '20px',
+          textAlign: 'center'
+        }}>
+          <p>⏳ 등록된 작업이 없습니다.</p>
+        </Box>
+      )}
+    </GanttWrapper>
   );
 };
 
-export default MyGanttChart;
+// 컴포넌트 자체를 메모이제이션하여 불필요한 리렌더링 방지
+export default React.memo(MyGanttChart); 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box, Typography, Divider, Stack, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import InsertChartIcon from '@mui/icons-material/InsertChart';
@@ -12,7 +12,7 @@ const MySchedule = () => {
   const [ganttTasks, setGanttTasks] = useState([]);
   
   // 더미 스케줄 데이터 - FullCalendar 형식으로 변환
-  const scheduleData = [
+  const scheduleData = useMemo(() => [
     {
       id: '1',
       title: 'test_schedule_1 수정버전',
@@ -69,7 +69,7 @@ const MySchedule = () => {
         status: 'ON_HOLD'
       }
     }
-  ];
+  ], []); // 빈 의존성 배열로 한 번만 생성
 
   // 스케줄 데이터를 간트 차트 형식으로 변환
   useEffect(() => {
@@ -89,24 +89,34 @@ const MySchedule = () => {
     setGanttTasks(formattedTasks);
   }, [scheduleData]);
 
-  // 캘린더 이벤트 클릭 핸들러
-  const handleCalendarEventClick = (clickInfo) => {
+  // 캘린더 이벤트 클릭 핸들러 - useCallback으로 메모이제이션
+  const handleCalendarEventClick = useCallback((clickInfo) => {
     setSelectedSchedule(clickInfo.event.extendedProps);
     console.log('선택된 일정:', clickInfo.event.extendedProps);
-  };
+  }, []);
 
-  // 간트 차트 이벤트 클릭 핸들러
-  const handleGanttTaskClick = (task) => {
-    setSelectedSchedule(task.extendedProps);
-    console.log('선택된 일정:', task.extendedProps);
-  };
+  // 간트 차트 이벤트 클릭 핸들러 - useCallback으로 메모이제이션
+  const handleGanttTaskClick = useCallback((task) => {
+    // 새로운 MyGanttChart 컴포넌트에 맞게 수정
+    console.log('간트 차트에서 선택된 일정:', task);
+    if (task.extendedProps) {
+      setSelectedSchedule(task.extendedProps);
+    } else {
+      // extendedProps가 없는 경우 task 자체를 사용
+      setSelectedSchedule({
+        content: task.name,
+        wsName: task.wsName,
+        status: task.status
+      });
+    }
+  }, []);
 
-  // 뷰 변경 핸들러
-  const handleViewChange = (event, newView) => {
+  // 뷰 변경 핸들러 - useCallback으로 메모이제이션
+  const handleViewChange = useCallback((event, newView) => {
     if (newView !== null) {
       setView(newView);
     }
-  };
+  }, []);
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -120,7 +130,7 @@ const MySchedule = () => {
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center' }}>
             <CalendarMonthIcon sx={{ mr: 1 }} />
-            내 스케줄
+            내 스케줄 ver.4
           </Typography>
           
           <ToggleButtonGroup
@@ -151,9 +161,18 @@ const MySchedule = () => {
             onTaskClick={handleGanttTaskClick} 
           />
         )}
+        
+        {selectedSchedule && (
+          <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 2 }}>
+            <Typography variant="h6">선택된 일정 정보</Typography>
+            <Typography>워크스페이스: {selectedSchedule.wsName}</Typography>
+            <Typography>상태: {selectedSchedule.status}</Typography>
+            <Typography>내용: {selectedSchedule.content}</Typography>
+          </Box>
+        )}
       </Box>
     </Box>
   );
 };
 
-export default MySchedule;
+export default React.memo(MySchedule);
