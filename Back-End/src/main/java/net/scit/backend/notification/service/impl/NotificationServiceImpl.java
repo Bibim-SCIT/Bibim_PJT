@@ -169,6 +169,7 @@ public class NotificationServiceImpl implements NotificationService {
         }
 
         // ✅ 정상적인 경우 알림 URL 반환
+        log.info("notificationUrl : {}", notificationUrl);
         return notificationUrl;
     }
 
