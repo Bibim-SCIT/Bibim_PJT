@@ -95,10 +95,13 @@ const WsUserRoleManagement = () => {
                     const response = await fetchWorkspaceUsers(activeWorkspace.wsId);
                     console.log("워크스페이스 사용자 응답:", response);
 
-                    if (response && (response.data || response)) {
-                        const usersData = response.data || response;
-                        console.log("받기성공", usersData);
-                        setUsers(usersData);
+                    if (response && response.data) {
+                        setUsers(response.data);
+                        console.log("받기성공 - response.data:", response.data);
+                    } else if (response) {
+                        // response 자체가 데이터인 경우
+                        setUsers(response);
+                        console.log("받기성공 - response:", response);
                     } else {
                         setUsers([]);
                         setSnackbar({
@@ -140,9 +143,14 @@ const WsUserRoleManagement = () => {
 
                 // 강퇴 성공 후 즉시 목록 갱신
                 const response = await fetchWorkspaceUsers(activeWorkspace.wsId);
-                const updatedUsers = response.data || [];
-                console.log("강퇴 후 불러온 사용자 목록:", response.data);  // 🟢 콘솔 로그 추가
-                setUsers(updatedUsers);
+                if (response && response.data) {
+                    setUsers(response.data);
+                    console.log("강퇴 후 불러온 사용자 목록:", response.data);
+                } else {
+                    // response 자체가 데이터인 경우
+                    setUsers(response || []);
+                    console.log("강퇴 후 불러온 사용자 목록:", response);
+                }
 
                 setOpenKickModal(false);
                 setSelectedUser(null);
@@ -195,9 +203,14 @@ const WsUserRoleManagement = () => {
 
             // 변경 성공 후 즉시 목록 갱신
             const response = await fetchWorkspaceUsers(activeWorkspace.wsId);
-            const updatedUsers = response.data || [];
-            console.log("변경 후 불러온 사용자 목록:", response.data);  // 🟢 콘솔 로그 추가
-            setUsers(updatedUsers);
+            if (response && response.data) {
+                setUsers(response.data);
+                console.log("권한 변경 후 불러온 사용자 목록:", response.data);
+            } else {
+                // response 자체가 데이터인 경우
+                setUsers(response || []);
+                console.log("권한 변경 후 불러온 사용자 목록:", response);
+            }
 
             setOpenRoleModal(false);
             setSelectedUser(null);
@@ -231,7 +244,7 @@ const WsUserRoleManagement = () => {
     if (loading) {
         return (
             <Box sx={{ p: 4, textAlign: 'center' }}>
-                <Typography>로딩 중...</Typography>
+                <WSMLoadingScreen />
             </Box>
         );
     }
