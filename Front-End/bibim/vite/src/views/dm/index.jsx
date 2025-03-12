@@ -25,6 +25,9 @@ import { fetchWorkspaceUsers } from "../../api/workspaceApi";
 import { useSelector } from 'react-redux';
 import UserLoading from "./components/UserLoading";
 import ChatLoading from "./components/ChatLoading";
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 
 const API_BASE_URL = "http://localhost:8080/api";
 
@@ -53,6 +56,23 @@ const getYouTubeEmbedUrl = (url) => {
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
     return match ? `https://www.youtube.com/embed/${match[1]}` : null;
 };
+
+/**
+ * LocalDateTime을 Asia/Seoul 시간대로 변환하고 포맷팅하는 함수
+ * @param {string} timestamp - 서버에서 전달된 LocalDateTime
+ * @returns {string} - 변환된 시간 
+ */
+const formatToKoreanTime = (timestamp) =>
+{
+        dayjs.extend(utc);
+        dayjs.extend(timezone);
+    
+        if (!timestamp) return '';
+        // 서버에서 localdatetime으로 전달되므로 UTC로 변환 후 서울로 변환
+        // 위 방법 대로 했음에도 불구하고 09시간 오차가 계속 발생 하여 강제로 9시간 추가
+        return dayjs(timestamp).add(9, 'hour').format('YYYY-MM-DD HH:mm');
+};
+
 
 // 메시지 내용 렌더링 함수
 const renderMessageContent = (msg) => {
@@ -199,7 +219,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient 
                             </div>
                             {renderMessageContent(msg)}
                             <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
-                                {msg.sendTime}
+                                {formatToKoreanTime(msg.sendTime)}
                             </div>
                         </div>
                     ))}

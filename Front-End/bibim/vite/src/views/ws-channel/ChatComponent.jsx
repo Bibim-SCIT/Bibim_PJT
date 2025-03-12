@@ -9,6 +9,26 @@ import AddIcon from '@mui/icons-material/Add';
 import PersonIcon from '@mui/icons-material/Person';
 import { fetchWorkspaceUsers } from "../../api/workspaceApi";
 import "./ChatComponent.css";
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+/**
+ * LocalDateTime을 Asia/Seoul 시간대로 변환하고 포맷팅하는 함수
+ * @param {string} timestamp - 서버에서 전달된 LocalDateTime
+ * @returns {string} - 변환된 시간 
+ */
+const formatToKoreanTime = (timestamp) =>
+{
+    dayjs.extend(utc);
+    dayjs.extend(timezone);
+
+    if (!timestamp) return '';
+    // 서버에서 localdatetime으로 전달되므로 UTC로 변환 후 서울로 변환
+    // 위 방법 대로 했음에도 불구하고 09시간 오차가 계속 발생 하여 강제로 9시간 추가
+    return dayjs(timestamp).add(9, 'hour').format('YYYY-MM-DD HH:mm');
+};
+
 
 /**
  * 채팅 컴포넌트
@@ -19,6 +39,7 @@ import "./ChatComponent.css";
  */
 function ChatComponent({ channelId, workspaceId })
 {
+
     // Context에서 현재 사용자 정보 가져오기
     const { user } = useContext(ConfigContext);
 
@@ -39,7 +60,8 @@ function ChatComponent({ channelId, workspaceId })
     /**
      * 스크롤을 맨 아래로 이동시키는 함수
      */
-    const scrollToBottom = () => {
+    const scrollToBottom = () =>
+    {
         messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
     };
 
@@ -113,9 +135,10 @@ function ChatComponent({ channelId, workspaceId })
 
             const data = await response.json();
             setMessages(data); // 기존 메시지 상태에 추가
-            
+
             // 메시지 로드 후 약간의 지연을 두고 스크롤 이동
-            setTimeout(() => {
+            setTimeout(() =>
+            {
                 scrollToBottom();
             }, 100);
         } catch (error) {
@@ -286,7 +309,8 @@ function ChatComponent({ channelId, workspaceId })
     /**
      * 메시지 상태가 변경될 때마다 스크롤을 맨 아래로 이동
      */
-    useEffect(() => {
+    useEffect(() =>
+    {
         if (messages.length > 0) {
             scrollToBottom();
         }
@@ -295,12 +319,14 @@ function ChatComponent({ channelId, workspaceId })
     /**
      * 컴포넌트 마운트 시 한 번 스크롤 이동
      */
-    useEffect(() => {
+    useEffect(() =>
+    {
         // 컴포넌트가 마운트된 후 약간의 지연을 두고 스크롤 이동
-        const timer = setTimeout(() => {
+        const timer = setTimeout(() =>
+        {
             scrollToBottom();
         }, 300);
-        
+
         return () => clearTimeout(timer);
     }, []);
 
@@ -350,7 +376,6 @@ function ChatComponent({ channelId, workspaceId })
             </div>
 
             {/* 메시지 목록 */}
-            {/* 메시지 목록 */}
             <div className="chat-messages">
                 {messages.map((msg, index) => (
                     <div key={index} className={`message ${msg.sender === user?.email ? "my-message" : "other-message"}`}>
@@ -366,7 +391,9 @@ function ChatComponent({ channelId, workspaceId })
                                 )}
                             </div>
                             <span className="sender-name">{msg.sender}</span>
-                            <span className="message-time">10:15</span>
+                            <span className="message-time">
+                                {formatToKoreanTime(msg.sendTime)}
+                            </span>
                         </div>
 
                         {/* 메시지 내용 */}
@@ -411,3 +438,4 @@ function ChatComponent({ channelId, workspaceId })
 }
 
 export default ChatComponent;
+s
