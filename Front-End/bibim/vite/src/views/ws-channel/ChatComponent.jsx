@@ -26,7 +26,7 @@ const formatToKoreanTime = (timestamp) =>
     if (!timestamp) return '';
     // 서버에서 localdatetime으로 전달되므로 UTC로 변환 후 서울로 변환
     // 위 방법 대로 했음에도 불구하고 09시간 오차가 계속 발생 하여 강제로 9시간 추가
-    return dayjs(timestamp).add(9, 'hour').format('YYYY-MM-DD HH:mm');
+    return dayjs(timestamp).add(9, 'hour').format('MM-DD HH:mm');
 };
 
 
@@ -438,4 +438,3 @@ function ChatComponent({ channelId, workspaceId })
 }
 
 export default ChatComponent;
-s
