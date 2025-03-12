@@ -4,11 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
-import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import net.scit.backend.member.dto.WorkspaceChannelLoginStatusDTO;
 import net.scit.backend.workspace.dto.ChannelUpdateRequest;
-import net.scit.backend.workspace.entity.WorkspaceChannelRoleEntity;
-import net.scit.backend.workspace.repository.WorkspaceChannelRoleRepository;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import net.scit.backend.workspace.service.WorkspaceChannelService;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +22,6 @@ public class WorkspaceChannelController {
 
     private final WorkspaceChannelService workspaceChannelService;
     private final WorkspaceMemberRepository workspaceMemberRepository;
-    private final WorkspaceChannelRoleRepository workspaceChannelRoleRepository;
 
     /**
      * 1. 채널 생성
@@ -81,10 +77,5 @@ public class WorkspaceChannelController {
 
         return ResponseEntity.ok(ResultDTO.of("로그인 상태 조회 성공", statusList));
     }
-
-    @GetMapping("/{ws_id}/role")
-    public List<WorkspaceChannelRoleEntity> getRole(@PathVariable("ws_id") Long workspaceId)
-    {
-        return workspaceChannelRoleRepository.findByWorkspace_wsId(workspaceId);
-    }
+    
 }
