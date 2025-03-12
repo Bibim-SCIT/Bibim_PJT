@@ -66,7 +66,7 @@ public class SecurityConfig {
                                 "/workspace/**",
                                 "/mypage/**")
                         .hasRole("USER") // 사용자 전용
-                        .requestMatchers("/notification/subscribe").permitAll() // ✅ SSE 구독 요청 허용
+                        .requestMatchers("/notification/{notificationId}", "/notification/subscribe").permitAll() // ✅ SSE 및 리다이렉트 허용
                         .requestMatchers("/notification/unread", "/notification/read-single",
                                 "/notification/read-all", "/notification/delete")
                         .authenticated() // ✅ 알림 관련 API는 인증 필요
