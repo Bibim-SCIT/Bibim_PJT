@@ -93,8 +93,8 @@ function ChatComponent({ channelId, workspaceId })
             return isImageFile(msg.content) ? (
                 <img src={msg.content} alt="파일 미리보기" className="chat-image" />
             ) : (
-                <a href={msg.content} target="_blank" rel="noopener noreferrer" className="file-message">
-                    📎 파일 다운로드
+                <a href={msg.content} target="_blank" rel="noopener noreferrer" className="file-message" download={msg.fileName}>
+                    📎 파일 다운로드 : {msg.fileName}
                 </a>
             );
         } else if (isYouTubeLink(msg.content)) {
@@ -205,6 +205,7 @@ function ChatComponent({ channelId, workspaceId })
                     sender: user?.email || "Unknown Sender",
                     messageOrFile: true,
                     fileUrl: fileUrl,
+                    fileName: file.name,
                 };
                 stompClientRef.current.publish({
                     destination: `/app/chat.sendMessage.${channelId}`,

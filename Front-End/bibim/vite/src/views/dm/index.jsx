@@ -89,8 +89,8 @@ const renderMessageContent = (msg) =>
         );
     } else if (msg.file && isImage(msg.fileName)) {
         return <img src={msg.dmContent} alt="파일 미리보기" className="dm-chat-image" onError={(e) => console.error("🚨 이미지 로드 실패:", e.target.src)} />;
-    } else if (msg.isFile) {
-        return <a href={msg.dmContent} target="_blank" rel="noopener noreferrer" className="dm-file-message">📎 {msg.fileName}</a>;
+    } else if (msg.file && !isImage(msg.fileName)) {
+        return <a href={msg.dmContent} target="_blank" rel="noopener noreferrer" className="dm-file-message" download={msg.fileName}>📎 {msg.fileName}</a>;
     } else {
         return <div>{msg.dmContent}</div>;
     }

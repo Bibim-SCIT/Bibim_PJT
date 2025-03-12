@@ -47,5 +47,7 @@ public class MessageEntity
     @Builder.Default
     private Boolean messageOrFile = false;
 
+    private String fileName;
+
 
 }
