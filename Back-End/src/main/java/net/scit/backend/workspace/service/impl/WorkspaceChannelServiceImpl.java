@@ -12,10 +12,12 @@ import net.scit.backend.member.dto.WorkspaceChannelLoginStatusDTO;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.workspace.dto.ChannelUpdateRequest;
 import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
+import net.scit.backend.workspace.entity.WorkspaceChannelRoleEntity;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import net.scit.backend.workspace.event.WorkspaceChannelEvent;
 import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
+import net.scit.backend.workspace.repository.WorkspaceChannelRoleRepository;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import net.scit.backend.workspace.service.WorkspaceChannelService;
 import org.springframework.context.ApplicationEventPublisher;
@@ -34,13 +36,14 @@ public class WorkspaceChannelServiceImpl implements WorkspaceChannelService {
     private final WorkspaceChannelRepository workspaceChannelRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final WorkspaceChannelRoleRepository workspaceChannelRoleRepository;
 
     /**
      * 1️⃣ 채널 생성
      */
     @Override
     @Transactional
-    public ResultDTO<SuccessDTO> createChannel(Long workspaceId, String channelName) {
+    public ResultDTO<SuccessDTO> createChannel(Long workspaceId, String channelName, Long roleId) {
         String userEmail = AuthUtil.getLoginUserId();
         log.info("📢 채널 생성 요청: workspaceId={}, userEmail={}, channelName={}", workspaceId, userEmail, channelName);
 
@@ -53,6 +56,8 @@ public class WorkspaceChannelServiceImpl implements WorkspaceChannelService {
         WorkspaceMemberEntity member = workspaceMemberRepository
                 .findByWorkspace_wsIdAndMember_Email(workspaceId, userEmail)
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
+
+        WorkspaceChannelRoleEntity workspaceChannelRoleEntity = workspaceChannelRoleRepository.findById(roleId).orElse(null);
 
         // 3. 채널 저장
         WorkspaceChannelEntity channel = WorkspaceChannelEntity.builder()
@@ -159,22 +164,20 @@ public class WorkspaceChannelServiceImpl implements WorkspaceChannelService {
      * 지정된 채널 역할 번호(ch_role_number)를 가진 워크스페이스 멤버들의 로그인 상태 정보를 조회합니다.
      * WorkspaceMemberEntity는 MemberEntity를 참조하는 외래키를 보유하므로, 연관된 회원의 로그인 상태를 함께 반환합니다.
      *
-     * @param chRoleNumber 워크스페이스 채널 역할 번호 (예: 1, 2, 3 등)
+     * @param wsId 워크스페이스 번호
      * @return 해당 역할을 가진 회원들의 이메일, 로그인 상태, 마지막 활동 시간 정보를 담은 DTO 리스트
      */
     @Override
-    public List<WorkspaceChannelLoginStatusDTO> getLoginStatusByRole(Long chRoleNumber) {
+    public List<WorkspaceChannelLoginStatusDTO> getLoginStatusByRole(Long wsId) {
         // 입력값 검증: chRoleNumber가 null인 경우 빈 리스트 반환
-        if (chRoleNumber == null) {
+        if (wsId == null) {
             return Collections.emptyList();
         }
 
         // chRoleNumber를 기준으로 워크스페이스 멤버 조회
         // (Repository에 아래와 같은 메서드가 정의되어 있어야 합니다.
         //  List<WorkspaceMemberEntity> findByChRoleNumber_ChRoleNumber(Long chRoleNumber);)
-        List<WorkspaceMemberEntity> workspaceMembers =
-                workspaceMemberRepository.findByChRoleNumber_ChRoleNumber(chRoleNumber);
-
+        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findAllByWorkspace_WsId(wsId);
         // 조회 결과가 없으면 빈 리스트 반환
         if (workspaceMembers == null || workspaceMembers.isEmpty()) {
             return Collections.emptyList();
