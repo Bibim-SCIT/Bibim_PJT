@@ -353,7 +353,7 @@ export default function DmPage()
     const filteredUsers = users.filter((u) => u.email !== user.email);
 
     return (
-        <MainCard title="다이렉트 메시지">
+        <MainCard>
             <div className="dm-grid-container">
                 {/* 사용자 목록 */}
                 <div className="dm-users-card">

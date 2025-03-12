@@ -1,4 +1,6 @@
-/* DM 페이지 스타일 */
+/* ===== DM 페이지 스타일 ===== */
+
+/* ===== 기본 레이아웃 ===== */
 /* 전체 컨테이너 */
 .dm-container {
     display: flex;
@@ -10,7 +12,7 @@
     overflow: hidden;
 }
 
-/* 메인 그리드 레이아웃 */
+/* 메인 그리드 레이아웃 - 사용자 목록과 채팅 영역을 나누는 컨테이너 */
 .dm-grid-container {
     display: flex;
     height: calc(100vh - 120px);
@@ -18,7 +20,8 @@
     width: 100%;
 }
 
-/* 사용자 목록 영역 */
+/* ===== 사용자 목록 영역 ===== */
+/* 사용자 목록 카드 - 왼쪽 30% 영역 차지 */
 .dm-users-card {
     width: 30%;
     border-radius: 12px;
@@ -32,6 +35,7 @@
     min-height: 0;
 }
 
+/* 사용자 목록 헤더 - "대화 목록" 타이틀 영역 */
 .dm-users-header {
     padding: 16px 20px;
     background-color: #f8f9fa;
@@ -45,6 +49,7 @@
     margin: 0;
 }
 
+/* 사용자 목록 스크롤 영역 */
 .dm-users-list {
     flex: 1;
     overflow-y: auto;
@@ -52,6 +57,7 @@
     min-height: 0;
 }
 
+/* 각 사용자 아이템 */
 .dm-user-item {
     display: flex;
     align-items: center;
@@ -62,14 +68,17 @@
     margin: 4px 8px;
 }
 
+/* 사용자 아이템 호버 효과 */
 .dm-user-item:hover {
     background-color: #f5f5f5;
 }
 
+/* 선택된 사용자 아이템 스타일 */
 .dm-user-item.selected {
     background-color: #f0f0f0;
 }
 
+/* 사용자 아바타 컨테이너 */
 .dm-user-avatar {
     width: 40px;
     height: 40px;
@@ -80,12 +89,14 @@
     flex-shrink: 0;
 }
 
+/* 사용자 아바타 이미지 */
 .dm-user-avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
+/* 기본 아바타 (이미지가 없을 때) */
 .dm-default-avatar {
     width: 100%;
     height: 100%;
@@ -98,11 +109,13 @@
     font-weight: 500;
 }
 
+/* 사용자 정보 컨테이너 */
 .dm-user-info {
     flex: 1;
     min-width: 0;
 }
 
+/* 사용자 이름 */
 .dm-user-name {
     font-size: 15px;
     font-weight: 500;
@@ -113,6 +126,7 @@
     text-overflow: ellipsis;
 }
 
+/* 사용자 이메일 */
 .dm-user-email {
     font-size: 13px;
     color: #666;
@@ -121,6 +135,7 @@
     text-overflow: ellipsis;
 }
 
+/* 사용자가 없을 때 표시되는 메시지 */
 .dm-no-users {
     display: flex;
     align-items: center;
@@ -132,7 +147,8 @@
     text-align: center;
 }
 
-/* 채팅 영역 */
+/* ===== 채팅 영역 ===== */
+/* 채팅 영역 컨테이너 - 오른쪽 70% 영역 차지 */
 .dm-chat-area {
     flex: 1;
     display: flex;
@@ -147,6 +163,7 @@
     min-height: 0;
 }
 
+/* 채팅 헤더 - 상대방 정보 표시 */
 .dm-chat-header {
     background-color: #f8f9fa;
     padding: 15px 20px;
@@ -158,6 +175,7 @@
     align-items: center;
 }
 
+/* 채팅 헤더 아바타 */
 .dm-chat-header-avatar {
     width: 36px;
     height: 36px;
@@ -167,22 +185,26 @@
     margin-right: 12px;
 }
 
+/* 채팅 헤더 정보 컨테이너 */
 .dm-chat-header-info {
     display: flex;
     flex-direction: column;
 }
 
+/* 채팅 헤더 이름 */
 .dm-chat-header-name {
     font-size: 16px;
     font-weight: 600;
     color: #333;
 }
 
+/* 채팅 헤더 이메일 */
 .dm-chat-header-email {
     font-size: 13px;
     color: #666;
 }
 
+/* 메시지 목록 영역 - 스크롤 가능 */
 .dm-chat-messages {
     flex: 1;
     overflow-y: auto;
@@ -191,6 +213,8 @@
     min-height: 0;
 }
 
+/* ===== 메시지 스타일 ===== */
+/* 개별 메시지 컨테이너 */
 .dm-message {
     display: flex;
     flex-direction: column;
@@ -210,6 +234,7 @@
     align-items: flex-start;
 }
 
+/* 발신자 정보 영역 */
 .dm-sender {
     display: flex;
     align-items: center;
@@ -219,6 +244,7 @@
     padding: 0 20px;
 }
 
+/* 발신자 아바타 */
 .dm-sender-avatar {
     width: 28px;
     height: 28px;
@@ -228,19 +254,21 @@
     flex-shrink: 0;
 }
 
+/* 발신자 이름 */
 .dm-sender-name {
     font-size: 13px;
     font-weight: 500;
     color: #333;
 }
 
+/* 메시지 시간 표시 */
 .dm-message-time {
     font-size: 12px;
     color: #999;
     margin-left: 4px;
 }
 
-/* 내가 보낸 메시지의 시간 표시 */
+/* 내가 보낸 메시지의 시간 표시 위치 조정 */
 .dm-my-message .dm-sender {
     justify-content: flex-end;
 }
@@ -250,6 +278,7 @@
     margin-right: 4px;
 }
 
+/* 메시지 내용 컨테이너 */
 .dm-message-content-container {
     display: flex;
     max-width: 100%;
@@ -257,7 +286,7 @@
     width: 100%;
 }
 
-/* 상대방이 보낸 메시지는 왼쪽 패딩 추가 */
+/* 상대방이 보낸 메시지는 왼쪽 패딩 추가 (아바타 공간 확보) */
 .dm-other-message .dm-message-content-container {
     padding-left: 56px;
     justify-content: flex-start;
@@ -268,6 +297,7 @@
     justify-content: flex-end;
 }
 
+/* 메시지 내용 버블 스타일 */
 .dm-message-content {
     padding: 8px 12px;
     font-size: 14px;
@@ -286,34 +316,40 @@
     min-width: 300px;
 }
 
+/* 내가 보낸 메시지 버블 스타일 */
 .dm-my-message .dm-message-content {
     color: #1a1a1a;
-    background-color: #E3F2FD;
+    background-color: #E3F2FD; /* 파란색 계열 */
     border-radius: 12px;
 }
 
+/* 상대방이 보낸 메시지 버블 스타일 */
 .dm-other-message .dm-message-content {
-    background-color: #F3E5F5;
+    background-color: #F3E5F5; /* 보라색 계열 */
     color: #1a1a1a;
     border-radius: 12px;
 }
 
+/* ===== 미디어 메시지 스타일 ===== */
 /* 이미지나 유튜브 영상이 있는 메시지 */
 .dm-message-content.has-media {
     padding: 8px;
     max-width: 320px;
 }
 
+/* 내가 보낸 미디어 메시지 */
 .dm-my-message .dm-message-content.has-media {
     background-color: #E3F2FD;
     border-radius: 12px;
 }
 
+/* 상대방이 보낸 미디어 메시지 */
 .dm-other-message .dm-message-content.has-media {
     background-color: #F3E5F5;
     border-radius: 12px;
 }
 
+/* 채팅 이미지 스타일 */
 .dm-chat-image {
     max-width: 300px;
     max-height: 300px;
@@ -322,6 +358,7 @@
     display: block;
 }
 
+/* 파일 메시지 스타일 */
 .dm-file-message {
     display: inline-flex;
     align-items: center;
@@ -334,6 +371,8 @@
     margin: 5px 0;
 }
 
+/* ===== 입력 영역 ===== */
+/* 채팅 입력 박스 */
 .dm-chat-input-box {
     display: flex;
     align-items: center;
@@ -343,6 +382,7 @@
     border-top: 1px solid #eaeaea;
 }
 
+/* 텍스트 입력 필드 */
 .dm-chat-input {
     flex: 1;
     padding: 12px 15px;
@@ -353,6 +393,7 @@
     transition: all 0.2s ease;
 }
 
+/* 텍스트 입력 필드 포커스 효과 */
 .dm-chat-input:focus {
     outline: none;
     border-color: #007AFF;
@@ -360,15 +401,18 @@
     box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
 }
 
+/* 파일 업로드 영역 */
 .dm-file-upload {
     display: flex;
     align-items: center;
 }
 
+/* 파일 업로드 인풋 (숨김) */
 .dm-file-upload-input {
     display: none;
 }
 
+/* 파일 업로드 버튼 */
 .dm-file-upload-label {
     display: flex;
     align-items: center;
@@ -382,10 +426,12 @@
     transition: all 0.2s ease;
 }
 
+/* 파일 업로드 버튼 호버 효과 */
 .dm-file-upload-label:hover {
     background-color: #e4e6e7;
 }
 
+/* 선택된 파일 이름 표시 */
 .dm-selected-file {
     font-size: 13px;
     color: #666;
@@ -396,6 +442,7 @@
     margin-left: 8px;
 }
 
+/* 전송 버튼 */
 .dm-send-btn {
     display: flex;
     align-items: center;
@@ -410,16 +457,20 @@
     transition: all 0.2s ease;
 }
 
+/* 전송 버튼 호버 효과 */
 .dm-send-btn:hover {
     background-color: #0056b3;
     transform: scale(1.05);
 }
 
+/* 비활성화된 전송 버튼 */
 .dm-send-btn:disabled {
     background-color: #cccccc;
     cursor: not-allowed;
 }
 
+/* ===== 채팅 없을 때 표시 ===== */
+/* 채팅 선택되지 않았을 때 표시되는 영역 */
 .dm-no-chat-selected {
     display: flex;
     flex-direction: column;
@@ -431,27 +482,32 @@
     padding: 20px;
 }
 
+/* 채팅 없을 때 아이콘 */
 .dm-no-chat-icon {
     font-size: 48px;
     color: #ccc;
     margin-bottom: 16px;
 }
 
+/* 채팅 없을 때 텍스트 */
 .dm-no-chat-text {
     font-size: 16px;
     font-weight: 500;
 }
 
+/* ===== 유튜브 영상 스타일 ===== */
+/* 유튜브 영상 컨테이너 */
 .dm-youtube-wrapper {
     position: relative;
     width: 100%;
     max-width: 300px;
     height: 0;
-    padding-bottom: 56.25%;
+    padding-bottom: 56.25%; /* 16:9 비율 유지 */
     margin: 0;
     overflow: hidden;
 }
 
+/* 유튜브 iframe */
 .dm-youtube-wrapper iframe {
     position: absolute;
     top: 0;
@@ -462,7 +518,8 @@
     border: none;
 }
 
-/* 로딩 상태 */
+/* ===== 로딩 상태 ===== */
+/* 로딩 컨테이너 */
 .dm-loading {
     display: flex;
     align-items: center;
@@ -471,6 +528,7 @@
     width: 100%;
 }
 
+/* 로딩 스피너 애니메이션 */
 .dm-loading-spinner {
     border: 3px solid #f3f3f3;
     border-top: 3px solid #007AFF;
@@ -481,6 +539,7 @@
     margin-right: 10px;
 }
 
+/* 스피너 회전 애니메이션 */
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
