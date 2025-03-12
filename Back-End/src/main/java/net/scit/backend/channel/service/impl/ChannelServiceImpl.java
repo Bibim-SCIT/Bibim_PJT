@@ -34,7 +34,7 @@ public class ChannelServiceImpl implements ChannelService {
     private static final List<String> ALLOWED_IMAGE_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif", "zip",
             "md");
 
-    // 이미지 업로드 메소드
+    // 파일 업로드 메소드
     private String uploadImage(MultipartFile file, Long channelId) {
         if (file != null && !file.isEmpty()) {
             String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
@@ -92,6 +92,7 @@ public class ChannelServiceImpl implements ChannelService {
                 .sender(sender)
                 .content(imageUrl) // 이미지 URL 저장
                 .messageOrFile(true) // 파일 여부 설정
+                .fileName(file.getOriginalFilename())
                 .build();
         messageReposittory.save(messageEntity);
 
@@ -101,6 +102,7 @@ public class ChannelServiceImpl implements ChannelService {
                 .channelNumber(channelId)
                 .sender(sender)
                 .content(imageUrl) // URL을 클라이언트에게 반환
+                .fileName(file.getOriginalFilename())
                 .build();
     }
 
@@ -120,6 +122,7 @@ public class ChannelServiceImpl implements ChannelService {
                     dto.setMessageOrFile(msg.getMessageOrFile());
                     dto.setContent(msg.getContent());
                     dto.setSendTime(msg.getSendTime());
+                    dto.setFileName(msg.getFileName());
                     return dto;
                 })
                 .collect(Collectors.toList());
