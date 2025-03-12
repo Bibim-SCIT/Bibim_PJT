@@ -24,7 +24,6 @@ import { ConfigContext } from "contexts/ConfigContext";
 import MainCard from "ui-component/cards/MainCard";
 import { fetchWorkspaceUsers } from "../../api/workspaceApi";
 import "./DmDesign.css";
-import { useSelector } from 'react-redux';
 import UserLoading from "./components/UserLoading";
 import ChatLoading from "./components/ChatLoading";
 
