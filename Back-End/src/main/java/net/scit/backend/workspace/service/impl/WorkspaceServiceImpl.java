@@ -9,8 +9,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import net.scit.backend.workspace.event.WorkspaceEvent;
 import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
@@ -18,7 +16,6 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;

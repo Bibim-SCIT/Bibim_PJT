@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import net.scit.backend.member.dto.*;
 import net.scit.backend.member.event.MemberEvent;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -28,19 +29,11 @@ import net.scit.backend.component.MailComponents;
 import net.scit.backend.component.S3Uploader;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
-import net.scit.backend.member.dto.ChangePasswordDTO;
-import net.scit.backend.member.dto.MemberDTO;
-import net.scit.backend.member.dto.MemberLoginStatusDTO;
-import net.scit.backend.member.dto.MyInfoDTO;
-import net.scit.backend.member.dto.SignupDTO;
-import net.scit.backend.member.dto.UpdateInfoDTO;
-import net.scit.backend.member.dto.VerificationDTO;
 import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.member.service.MemberService;
 import org.springframework.context.ApplicationEventPublisher;
 // import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.core.userdetails.UserDetails;
 // import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 // import org.springframework.stereotype.Service;
 // import org.springframework.util.StringUtils;
@@ -48,7 +41,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 // import java.io.IOException;
 // import java.time.LocalDateTime;
-import java.util.*;
+
 // import java.util.concurrent.TimeUnit;
 
 /**
