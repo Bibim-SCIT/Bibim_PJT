@@ -25,50 +25,45 @@ public class WorkspaceChannelEventListener {
     @EventListener
     public void handleWorkspaceChannelEvent(WorkspaceChannelEvent event) {
         String notificationMessage = event.getNotificationContent();
-        Long wsId = event.getWorkspace().getWsId();
+        Long workspaceId = event.getWorkspace().getWsId();
         Long channelNumber = event.getChannelNumber() != null ? event.getChannelNumber() : 0L; // 0L if null
 
         log.info("📢 워크스페이스 채널 이벤트 감지: {} | 워크스페이스 ID: {} | 메시지: {}",
-                event.getEventType(), wsId, notificationMessage);
+                event.getEventType(), workspaceId, notificationMessage);
 
         final String baseUrl = "http://localhost:8080/workspace";
-        String notificationUrl;
-        switch (event.getEventType()) {
-            case "create":
-            case "update":
-                notificationUrl = String.format("%s/%d", baseUrl, wsId);
-                break;
-            case "delete":
-                notificationUrl = String.format("%s", baseUrl);
-                break;
-            default:
-                notificationUrl = baseUrl;
-        }
+        String notificationUrl = switch (event.getEventType()) {
+            case "create", "update" -> String.format("%s/%d", baseUrl, workspaceId);
+            case "delete" -> baseUrl;
+            default -> baseUrl;
+        };
 
-        List<WorkspaceMemberEntity> workspaceMembers =
-                workspaceMemberRepository.findMembersByWorkspaceIdNative(wsId);
+        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findMembersByWorkspaceIdNative(workspaceId);
 
-        for (WorkspaceMemberEntity member : workspaceMembers) {
-            NotificationEntity notification = new NotificationEntity();
-            notification.setWsId(wsId);
-            notification.setSenderEmail(event.getSenderEmail());
-            notification.setSenderNickname(event.getSenderNickname());
-            notification.setReceiverEmail(member.getMember().getEmail());
-            notification.setReceiverNickname(member.getNickname());
-            notification.setNotificationName(event.getNotificationName());
-            notification.setNotificationType(event.getNotificationType());
-            notification.setNotificationContent(notificationMessage);
-            notification.setNotificationStatus(false);
-            notification.setNotificationDate(LocalDateTime.now());
-            notification.setNotificationUrl(notificationUrl);
-
-            // ✅ 저장 후 즉시 반영되도록 수정
+        workspaceMembers.forEach(member -> {
+            NotificationEntity notification = buildNotificationEntity(event, member, workspaceId, notificationMessage, notificationUrl);
             NotificationResponseDTO response = notificationService.createAndSendNotification(notification);
-
             log.info("📢 알림 전송 및 저장 완료 - NotificationNumber: {}", response.getNotificationNumber());
-            if (response.getNotificationNumber() == null) {
-                log.error("❌ 알림이 DB에 저장되지 않았습니다! 확인 필요.");
-            }
-        }
+        });
+    }
+
+    /**
+     * 🔹 개별 NotificationEntity 객체를 생성하는 메서드 (중복 코드 제거)
+     */
+    private NotificationEntity buildNotificationEntity(WorkspaceChannelEvent event, WorkspaceMemberEntity member,
+                                                       Long workspaceId, String notificationMessage, String notificationUrl) {
+        NotificationEntity notification = new NotificationEntity();
+        notification.setWsId(workspaceId);
+        notification.setSenderEmail(event.getSenderEmail());
+        notification.setSenderNickname(event.getSenderNickname());
+        notification.setReceiverEmail(member.getMember().getEmail());
+        notification.setReceiverNickname(member.getNickname());
+        notification.setNotificationName(event.getNotificationName());
+        notification.setNotificationType(event.getNotificationType());
+        notification.setNotificationContent(notificationMessage);
+        notification.setNotificationStatus(false);
+        notification.setNotificationDate(LocalDateTime.now());
+        notification.setNotificationUrl(notificationUrl);
+        return notification;
     }
 }

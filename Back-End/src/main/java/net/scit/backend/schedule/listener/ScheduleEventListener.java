@@ -31,44 +31,43 @@ public class ScheduleEventListener {
         log.info("📢 Schedule 이벤트 감지: {} | 워크스페이스 ID: {} | 메시지: {}",
                 event.getEventType(), workspaceId, notificationMessage);
 
-        // 기본 주소 + 컨트롤러 매핑 적용 (예: http://localhost:8080/schedule)
         final String baseUrl = "http://localhost:8080/schedule";
-        String notificationUrl;
-        switch (event.getEventType()) {
-            case "create":
-            case "assignee_update":
-            case "info_update":
-            case "status_update":
-                notificationUrl = String.format("%s/%d", baseUrl, scheduleId);
-                break;
-            case "delete":
-                // 삭제 시에는 목록 페이지로 이동
-                notificationUrl = baseUrl;
-                break;
-            default:
-                notificationUrl = baseUrl;
-        }
+        String notificationUrl = switch (event.getEventType()) {
+            case "create", "assignee_update", "info_update", "status_update" -> String.format("%s/%d", baseUrl, scheduleId);
+            case "delete" -> baseUrl;
+            default -> baseUrl;
+        };
 
-        // 특정 워크스페이스의 모든 멤버 조회 (네이티브 쿼리 사용)
+        // 특정 워크스페이스의 모든 멤버 조회
         List<WorkspaceMemberEntity> workspaceMembers =
                 workspaceMemberRepository.findMembersByWorkspaceIdNative(workspaceId);
 
-        for (WorkspaceMemberEntity member : workspaceMembers) {
-            NotificationEntity notification = new NotificationEntity();
-            notification.setWsId(workspaceId);
-            notification.setSenderEmail(event.getSenderEmail());
-            notification.setSenderNickname(event.getSenderNickname());
-            notification.setReceiverEmail(member.getMember().getEmail());
-            notification.setReceiverNickname(member.getNickname());
-            notification.setNotificationName(event.getNotificationName());
-            notification.setNotificationType(event.getNotificationType());
-            notification.setNotificationContent(notificationMessage);
-            notification.setNotificationStatus(false);
-            notification.setNotificationDate(LocalDateTime.now());
-            notification.setNotificationUrl(notificationUrl); // URL 추가
-
+        // ✅ 코드 최적화: 개별 NotificationEntity 생성 메서드 활용
+        workspaceMembers.forEach(member -> {
+            NotificationEntity notification = buildNotificationEntity(event, member, workspaceId, notificationMessage, notificationUrl);
             NotificationResponseDTO response = notificationService.createAndSendNotification(notification);
             log.info("📢 알림 전송 및 저장 완료 - NotificationNumber: {}", response.getNotificationNumber());
-        }
+        });
+    }
+
+    /**
+     * 🔹 개별 NotificationEntity 객체를 생성하는 메서드 (중복 코드 제거)
+     */
+    private NotificationEntity buildNotificationEntity(ScheduleEvent event, WorkspaceMemberEntity member,
+                                                       Long workspaceId, String notificationMessage, String notificationUrl) {
+        NotificationEntity notification = new NotificationEntity();
+        notification.setWsId(workspaceId);
+        notification.setSenderEmail(event.getSenderEmail());
+        notification.setSenderNickname(event.getSenderNickname());
+        notification.setReceiverEmail(member.getMember().getEmail());
+        notification.setReceiverNickname(member.getNickname());
+        notification.setNotificationName(event.getNotificationName());
+        notification.setNotificationType(event.getNotificationType());
+        notification.setNotificationContent(notificationMessage);
+        notification.setNotificationStatus(false);
+        notification.setNotificationDate(LocalDateTime.now());
+        notification.setNotificationUrl(notificationUrl);
+        return notification;
     }
 }
+
