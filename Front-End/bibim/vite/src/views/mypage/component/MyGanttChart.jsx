@@ -19,7 +19,7 @@ const CustomTooltip = ({ task }) => {
   const taskStatus = statusMapping[task.status] || { label: "알 수 없음" };
 
   return (
-    <div style={{ background: "#222", color: "#fff", padding: "5px", borderRadius: "5px" }}>
+    <div style={{ background: "#222", color: "#fff", padding: "5px", borderRadius: "0" }}>
       <p><strong>{task.name}</strong></p>
       <p>시작: {formatDate(task.start)}</p>
       <p>종료: {formatDate(task.end)}</p>
@@ -124,7 +124,7 @@ const MyGanttChart = ({ tasks, onTaskClick }) => {
             tasks={tasks}
             viewMode={viewMode}
             columnWidth={80}
-            barCornerRadius={5}
+            barCornerRadius={0}
             fontSize={12}
             locale="ko"
             TooltipContent={CustomTooltip}

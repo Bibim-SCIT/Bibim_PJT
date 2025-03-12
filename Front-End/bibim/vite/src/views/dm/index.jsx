@@ -297,57 +297,59 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                 </div>
             </div>
             {/* 메시지 목록 */}
-            {loading ? (  // ✅ 로딩 중에는 로딩 화면 표시
-                <div style={{ textAlign: "center", padding: "20px" }}>
-                    <ChatLoading />
-                </div>
-            ) : (
-                <div className="dm-chat-messages">
-                    {messages.map((msg, index) => (
-                        <div key={index} className={`dm-message ${msg.sender === senderId ? "dm-my-message" : "dm-other-message"}`}>
-                            {/* 발신자 정보 */}
-                            <div className="dm-sender">
-                                {msg.sender !== senderId && (
-                                    <>
-                                        <div className="dm-sender-avatar">
-                                            {msg.profileImage ? (
-                                                <Avatar
-                                                    src={msg.profileImage}
-                                                    alt={msg.sender}
-                                                    sx={{ width: 28, height: 28 }}
-                                                />
-                                            ) : (
-                                                <Avatar
-                                                    sx={{
-                                                        width: 28,
-                                                        height: 28,
-                                                        bgcolor: '#007AFF',
-                                                        fontSize: '14px'
-                                                    }}
-                                                >
-                                                    {msg.sender.charAt(0).toUpperCase()}
-                                                </Avatar>
-                                            )}
-                                        </div>
-                                        <span className="dm-sender-name">
-                                            {msg.sender.split('@')[0]}
-                                        </span>
-                                    </>
-                                )}
-                                <span className="dm-message-time">
-                                    {formatToKoreanTime(msg.sendTime)}
-                                </span>
-                            </div>
-                            <div className="dm-message-content-container">
-                                <div className={`dm-message-content ${(msg.file && isImage(msg.fileName)) || isYouTubeLink(msg.dmContent) ? "has-media" : ""}`}>
-                                    {renderMessageContent(msg)}
+            <div className="dm-chat-messages">
+                {loading ? (  // ✅ 로딩 중에는 로딩 화면 표시
+                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+                        <ChatLoading />
+                    </div>
+                ) : (
+                    <>
+                        {messages.map((msg, index) => (
+                            <div key={index} className={`dm-message ${msg.sender === senderId ? "dm-my-message" : "dm-other-message"}`}>
+                                {/* 발신자 정보 */}
+                                <div className="dm-sender">
+                                    {msg.sender !== senderId && (
+                                        <>
+                                            <div className="dm-sender-avatar">
+                                                {msg.profileImage ? (
+                                                    <Avatar
+                                                        src={msg.profileImage}
+                                                        alt={msg.sender}
+                                                        sx={{ width: 28, height: 28 }}
+                                                    />
+                                                ) : (
+                                                    <Avatar
+                                                        sx={{
+                                                            width: 28,
+                                                            height: 28,
+                                                            bgcolor: '#007AFF',
+                                                            fontSize: '14px'
+                                                        }}
+                                                    >
+                                                        {msg.sender.charAt(0).toUpperCase()}
+                                                    </Avatar>
+                                                )}
+                                            </div>
+                                            <span className="dm-sender-name">
+                                                {msg.sender.split('@')[0]}
+                                            </span>
+                                        </>
+                                    )}
+                                    <span className="dm-message-time">
+                                        {formatToKoreanTime(msg.sendTime)}
+                                    </span>
+                                </div>
+                                <div className="dm-message-content-container">
+                                    <div className={`dm-message-content ${(msg.file && isImage(msg.fileName)) || isYouTubeLink(msg.dmContent) ? "has-media" : ""}`}>
+                                        {renderMessageContent(msg)}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                    <div ref={messagesEndRef} />
-                </div>
-            )}
+                        ))}
+                        <div ref={messagesEndRef} />
+                    </>
+                )}
+            </div>
 
             {/* 입력 영역 */}
             <div className="dm-chat-input-box">
