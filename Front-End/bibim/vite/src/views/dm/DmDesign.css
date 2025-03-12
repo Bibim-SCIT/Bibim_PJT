@@ -194,10 +194,20 @@
 .dm-message {
     display: flex;
     flex-direction: column;
-    padding: 2px 20px;
+    padding: 2px 0;
     width: 100%;
     min-width: 0;
     margin-bottom: 16px;
+}
+
+/* 내가 보낸 메시지는 오른쪽 정렬 */
+.dm-my-message {
+    align-items: flex-end;
+}
+
+/* 상대방이 보낸 메시지는 왼쪽 정렬 */
+.dm-other-message {
+    align-items: flex-start;
 }
 
 .dm-sender {
@@ -205,6 +215,8 @@
     align-items: center;
     gap: 8px;
     margin-bottom: 4px;
+    max-width: 80%;
+    padding: 0 20px;
 }
 
 .dm-sender-avatar {
@@ -228,18 +240,39 @@
     margin-left: 4px;
 }
 
+/* 내가 보낸 메시지의 시간 표시 */
+.dm-my-message .dm-sender {
+    justify-content: flex-end;
+}
+
+.dm-my-message .dm-message-time {
+    margin-left: 0;
+    margin-right: 4px;
+}
+
 .dm-message-content-container {
     display: flex;
-    padding-left: 36px;
-    margin-top: -4px;
     max-width: 100%;
+    padding: 0 20px;
+    width: 100%;
+}
+
+/* 상대방이 보낸 메시지는 왼쪽 패딩 추가 */
+.dm-other-message .dm-message-content-container {
+    padding-left: 56px;
+    justify-content: flex-start;
+}
+
+/* 내가 보낸 메시지는 오른쪽 정렬 */
+.dm-my-message .dm-message-content-container {
+    justify-content: flex-end;
 }
 
 .dm-message-content {
     padding: 8px 12px;
     font-size: 14px;
     line-height: 1.4;
-    max-width: 60%;
+    max-width: 80%;
     border-radius: 12px;
     word-wrap: break-word;
     word-break: break-word;
@@ -256,13 +289,13 @@
 .dm-my-message .dm-message-content {
     color: #1a1a1a;
     background-color: #E3F2FD;
-    border-bottom-left-radius: 4px;
+    border-radius: 12px;
 }
 
 .dm-other-message .dm-message-content {
     background-color: #F3E5F5;
     color: #1a1a1a;
-    border-bottom-left-radius: 4px;
+    border-radius: 12px;
 }
 
 /* 이미지나 유튜브 영상이 있는 메시지 */
@@ -273,10 +306,12 @@
 
 .dm-my-message .dm-message-content.has-media {
     background-color: #E3F2FD;
+    border-radius: 12px;
 }
 
 .dm-other-message .dm-message-content.has-media {
     background-color: #F3E5F5;
+    border-radius: 12px;
 }
 
 .dm-chat-image {

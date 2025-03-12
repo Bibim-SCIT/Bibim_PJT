@@ -1,32 +1,17 @@
 /* eslint-disable prettier/prettier */
-import React, { useEffect, useState, useContext, useRef } from "react";
-import SockJS from "sockjs-client";
-import { Client } from "@stomp/stompjs";
-import axios from "axios";
-import {
-    TextField,
-    Button,
-    Card,
-    CardContent,
-    Typography,
-    List,
-    ListItem,
-    ListItemText,
-    ListItemAvatar,
-    Avatar,
-    Grid,
-    Divider,
-    Box,
-    Input,
-} from "@mui/material";
-import MainCard from "ui-component/cards/MainCard";
-import { ConfigContext } from "contexts/ConfigContext";
-import { fetchWorkspaceUsers } from "../../api/workspaceApi";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useSelector } from 'react-redux';
-import UserLoading from "./components/UserLoading";
-import { FaPaperPlane, FaFileUpload } from "react-icons/fa";
-import PersonIcon from '@mui/icons-material/Person';
+import axios from "axios";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+import {
+    Divider,
+} from "@mui/material";
 import MessageIcon from '@mui/icons-material/Message';
+import { FaPlus, FaPaperPlane } from "react-icons/fa";
+import { ConfigContext } from "contexts/ConfigContext";
+import MainCard from "ui-component/cards/MainCard";
+import { fetchWorkspaceUsers } from "../../api/workspaceApi";
 import "./DmDesign.css";
 
 const API_BASE_URL = "http://localhost:8080/api";
@@ -244,15 +229,24 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
             <div className="dm-chat-messages">
                 {messages.map((msg, index) => (
                     <div key={index} className={`dm-message ${msg.sender === senderId ? "dm-my-message" : "dm-other-message"}`}>
+                        {/* 발신자 정보 */}
                         <div className="dm-sender">
-                            <div className="dm-sender-avatar">
-                                <div className="dm-default-avatar">
-                                    {msg.sender.charAt(0).toUpperCase()}
-                                </div>
-                            </div>
-                            <span className="dm-sender-name">
-                                {msg.sender === senderId ? "나" : msg.sender.split('@')[0]}
-                            </span>
+                            {msg.sender !== senderId && (
+                                <>
+                                    <div className="dm-sender-avatar">
+                                        {msg.profileImage ? (
+                                            <img src={msg.profileImage} alt={msg.sender} />
+                                        ) : (
+                                            <div className="dm-default-avatar">
+                                                {msg.sender.charAt(0).toUpperCase()}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <span className="dm-sender-name">
+                                        {msg.sender.split('@')[0]}
+                                    </span>
+                                </>
+                            )}
                             <span className="dm-message-time">
                                 {new Date(msg.sendTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
@@ -277,7 +271,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                         onChange={(e) => setFile(e.target.files[0])} 
                     />
                     <label htmlFor="dm-file-upload" className="dm-file-upload-label">
-                        <FaFileUpload />
+                        <FaPlus />
                     </label>
                     {file && <span className="dm-selected-file">{file.name}</span>}
                 </div>
