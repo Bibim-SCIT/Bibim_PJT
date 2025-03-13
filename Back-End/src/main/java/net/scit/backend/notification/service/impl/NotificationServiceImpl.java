@@ -10,13 +10,15 @@ import net.scit.backend.notification.dto.NotificationResponseDTO;
 import net.scit.backend.notification.entity.NotificationEntity;
 import net.scit.backend.notification.repository.NotificationRepository;
 import net.scit.backend.notification.service.NotificationService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
 
 @Service
 @RequiredArgsConstructor
@@ -27,20 +29,13 @@ public class NotificationServiceImpl implements NotificationService {
     // 사용자 이메일을 키로, SseEmitter를 값으로 가지는 맵
     private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
 
-    
-    /**
-     * SSE 구독 (로그인 시 호출)
-     * - 예: 24시간(24 * 60 * 60 * 1000L) 동안 연결 유지
-     */
     @Override
     public SseEmitter subscribe(String receiverEmail) {
-        SseEmitter emitter = new SseEmitter(24 * 60 * 60 * 1000L);  // 24시간
+        SseEmitter emitter = new SseEmitter(24 * 60 * 60 * 1000L); // 24시간 유지
         emitters.put(receiverEmail, emitter);
-
         emitter.onCompletion(() -> emitters.remove(receiverEmail));
         emitter.onTimeout(() -> emitters.remove(receiverEmail));
         emitter.onError(e -> emitters.remove(receiverEmail));
-
         try {
             emitter.send(SseEmitter.event().name("INIT").data("SSE 연결 완료"));
         } catch (IOException e) {
@@ -49,10 +44,6 @@ public class NotificationServiceImpl implements NotificationService {
         return emitter;
     }
 
-    
-    /**
-     * SSE 구독 해제 (로그아웃 시 호출)
-     */
     @Override
     public void unsubscribe(String receiverEmail) {
         SseEmitter emitter = emitters.remove(receiverEmail);
@@ -61,30 +52,15 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
-
-    /**
-     * 알림 생성 & 전송
-     * @param notification
-     * @return
-     */
     @Transactional
     @Override
     public NotificationResponseDTO createAndSendNotification(NotificationEntity notification) {
-        // 즉시 DB에 반영하여 자동 생성된 ID를 확인
         NotificationEntity savedNotification = notificationRepository.saveAndFlush(notification);
         log.info("Notification created with ID: {}", savedNotification.getNotificationNumber());
-
-        // 알림 전송
         sendNotification(savedNotification);
-
-        // DTO 변환 후 반환
         return convertToResponseDTO(savedNotification);
     }
-    /**
-     * ResponseDTO로 변환
-     * @param notification
-     * @return
-     */
+
     private NotificationResponseDTO convertToResponseDTO(NotificationEntity notification) {
         return new NotificationResponseDTO(
                 notification.getNotificationNumber(),
@@ -96,18 +72,12 @@ public class NotificationServiceImpl implements NotificationService {
                 notification.getNotificationName(),
                 notification.getNotificationType(),
                 notification.getNotificationContent(),
-                notification.getNotificationUrl()  // URL 포함 (필요 시)
+                notification.getNotificationUrl()
         );
     }
 
-    /**
-     * 알림 전송
-     * @param notification
-     * @return
-     */
     @Override
     public NotificationEntity sendNotification(NotificationEntity notification) {
-        // Map의 entrySet을 순회하여 각 SseEmitter에 알림 전송
         for (Map.Entry<String, SseEmitter> entry : emitters.entrySet()) {
             String key = entry.getKey();
             SseEmitter emitter = entry.getValue();
@@ -121,21 +91,16 @@ public class NotificationServiceImpl implements NotificationService {
         return notification;
     }
 
-    /**
-     * 안 읽은 알림 전체 조회
-     * @param receiverEmail
-     * @return
-     */
     @Override
-    public List<NotificationEntity> getUnreadNotifications(String receiverEmail) {
-        return notificationRepository.findByReceiverEmailAndNotificationStatusFalseOrderByNotificationDateDesc(receiverEmail);
+    public Page<NotificationEntity> getUnreadNotifications(String receiverEmail, Pageable pageable) {
+        return notificationRepository.findByReceiverEmailAndNotificationStatusFalseOrderByNotificationDateDesc(receiverEmail, pageable);
     }
 
-    /**
-     * 개별 알림 읽음
-     * @param notificationNumber
-     * @return
-     */
+    @Override
+    public Page<NotificationEntity> getReadNotifications(String receiverEmail, Pageable pageable) {
+        return notificationRepository.findByReceiverEmailAndNotificationStatusTrueOrderByNotificationDateDesc(receiverEmail, pageable);
+    }
+
     @Override
     public boolean markAsRead(Long notificationNumber) {
         return notificationRepository.findById(notificationNumber).map(notification -> {
@@ -145,30 +110,13 @@ public class NotificationServiceImpl implements NotificationService {
         }).orElse(false);
     }
 
-    /**
-     * 알림 전체 읽음
-     * @param receiverEmail
-     * @return
-     */
+    @Transactional
     @Override
     public boolean markAllAsRead(String receiverEmail) {
-        List<NotificationEntity> unreadNotifications = notificationRepository
-                .findByReceiverEmailAndNotificationStatusFalseOrderByNotificationDateDesc(receiverEmail);
-
-        if (unreadNotifications.isEmpty()) {
-            return false;
-        }
-
-        unreadNotifications.forEach(notification -> notification.setNotificationStatus(true));
-        notificationRepository.saveAll(unreadNotifications);
-        return true;
+        int updatedCount = notificationRepository.bulkMarkAllAsRead(receiverEmail);
+        return updatedCount > 0;
     }
 
-    /**
-     * 알림 삭제
-     * @param notificationNumber
-     * @return
-     */
     @Override
     public boolean deleteNotification(Long notificationNumber) {
         if (notificationRepository.existsById(notificationNumber)) {
@@ -178,31 +126,18 @@ public class NotificationServiceImpl implements NotificationService {
         return false;
     }
 
-    /**
-     * 알림 url 접속
-     * @param notificationId
-     * @return
-     */
     @Override
     public String getNotificationUrl(Long notificationId) {
-        // 현재 로그인한 사용자 이메일 가져오기
         String currentUserEmail = AuthUtil.getLoginUserId();
-
-        // 알림 조회
         NotificationEntity notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOTIFICATION_NOT_FOUND));
-
-        // 알림을 받을 권한이 있는지 확인 (알림 수신자와 현재 로그인한 사용자 비교)
         if (!notification.getReceiverEmail().equals(currentUserEmail)) {
             throw new CustomException(ErrorCode.UNAUTHORIZED_ACCESS);
         }
-
-        // URL이 null이거나 빈 문자열인 경우 예외 처리
         String notificationUrl = notification.getNotificationUrl();
         if (notificationUrl == null || notificationUrl.isEmpty()) {
             throw new CustomException(ErrorCode.INVALID_NOTIFICATION_URL);
         }
-
         log.info("notificationUrl : {}", notificationUrl);
         return notificationUrl;
     }
