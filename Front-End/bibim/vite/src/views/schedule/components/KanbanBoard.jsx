@@ -11,12 +11,20 @@ const KanbanWrapper = styled(Box)({
   boxShadow: "0 0 10px rgba(0,0,0,0.1)",
 });
 
-// ✅ 백엔드에서 사용하는 상태 코드 매핑
+// ✅ 백엔드 상태 코드 매핑
 const statusMapping = {
   unassigned: "1",  // 할 일
   inProgress: "2",  // 진행 중
   completed: "3",   // 완료
   backlog: "4"      // 보류
+};
+
+// ✅ 상태 코드 역매핑 (백엔드 → 프론트)
+const statusMappingReverse = {
+  "1": "unassigned",
+  "2": "inProgress",
+  "3": "completed",
+  "4": "backlog"
 };
 
 // ✅ 프론트에서 보이는 칸반 보드 컬럼
@@ -31,45 +39,49 @@ const KanbanBoard = ({ wsId }) => {
   const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
-    const loadTasks = async () => {
-      try {
-        const data = await fetchKanbanTasks(wsId);
-        console.log("📌 변환된 칸반 보드 데이터:", data);
-        setTasks(data);
-      } catch (error) {
-        console.error("❌ 칸반 보드 데이터 로드 실패:", error);
-      }
-    };
+  const loadTasks = async () => {
+    try {
+      const data = await fetchKanbanTasks(wsId);
+      console.log("📌 원본 API 응답 데이터:", data); // 🟢 API 데이터 그대로 출력
 
-    loadTasks();
-  }, [wsId]);
+      // ✅ 불필요한 상태 변환 제거 (그대로 사용)
+      setTasks(data);
 
- const onDragEnd = async (result) => {
-  if (!result.destination) return;
-
-  const newTasks = [...tasks];
-  const [movedTask] = newTasks.splice(result.source.index, 1);
-  const newStatusKey = result.destination.droppableId; // ✅ 'inProgress' 등 문자열로 받아옴
-
-  try {
-    // ✅ 담당자가 없고, "진행중 (inProgress)"으로 이동하는 경우, 먼저 assignSchedule 실행
-    if (movedTask.status === "unassigned" && newStatusKey === "inProgress") {
-      await assignSchedule(movedTask.id);
+      console.log("✅ 최종적으로 적용된 tasks:", data);
+    } catch (error) {
+      console.error("❌ 칸반 보드 데이터 로드 실패:", error);
     }
+  };
 
-    // ✅ 상태 변경 API 요청
-    await updateKanbanTaskStatus(movedTask.id, newStatusKey); // ✅ 문자열(`inProgress`)로 전달
-    
-    // ✅ UI 업데이트
-    movedTask.status = newStatusKey;
-    newTasks.splice(result.destination.index, 0, movedTask);
-    setTasks(newTasks);
+  loadTasks();
+}, [wsId]);
 
-    console.log(`✅ ${movedTask.id} 상태 변경 완료 (${newStatusKey})`);
-  } catch (error) {
-    console.error(`❌ 상태 변경 실패 (${movedTask.id} → ${newStatusKey}):`, error);
-  }
-};
+  const onDragEnd = async (result) => {
+    if (!result.destination) return;
+
+    const newTasks = [...tasks];
+    const [movedTask] = newTasks.splice(result.source.index, 1);
+    const newStatusKey = result.destination.droppableId; // ✅ 'inProgress' 등 문자열로 받아옴
+
+    try {
+      // ✅ 담당자가 없고, "진행중 (inProgress)"으로 이동하는 경우, 먼저 assignSchedule 실행
+      if (movedTask.status === "unassigned" && newStatusKey === "inProgress") {
+        await assignSchedule(movedTask.id);
+      }
+
+      // ✅ 상태 변경 API 요청
+      await updateKanbanTaskStatus(movedTask.id, newStatusKey); // ✅ 문자열(`inProgress`)로 전달
+
+      // ✅ UI 업데이트
+      movedTask.status = newStatusKey;
+      newTasks.splice(result.destination.index, 0, movedTask);
+      setTasks(newTasks);
+
+      console.log(`✅ ${movedTask.id} 상태 변경 완료 (${newStatusKey})`);
+    } catch (error) {
+      console.error(`❌ 상태 변경 실패 (${movedTask.id} → ${newStatusKey}):`, error);
+    }
+  };
 
   return (
     <KanbanWrapper>
@@ -93,20 +105,25 @@ const KanbanBoard = ({ wsId }) => {
                   <Typography variant="h6" align="center" gutterBottom>
                     {columnTitle}
                   </Typography>
-                  {tasks.filter((task) => task.status === columnId).map((task, taskIndex) => (
-                    <Draggable key={task.id} draggableId={task.id.toString()} index={taskIndex}>
-                      {(provided) => (
-                        <Card
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          sx={{ marginBottom: "10px", padding: "10px" }}
-                        >
-                          <Typography>{task.title}</Typography>
-                        </Card>
-                      )}
-                    </Draggable>
-                  ))}
+                  {tasks
+  .filter((task) => {
+    console.log(`🧐 필터링: task.status = "${task.status}", columnId = "${columnId}"`);
+    return task.status.trim() === columnId.trim();
+  })
+  .map((task, taskIndex) => (
+    <Draggable key={task.id} draggableId={task.id.toString()} index={taskIndex}>
+      {(provided) => (
+        <Card
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          sx={{ marginBottom: "10px", padding: "10px" }}
+        >
+          <Typography>{task.title}</Typography>
+        </Card>
+      )}
+    </Draggable>
+  ))}
                   {provided.placeholder}
                 </Box>
               )}

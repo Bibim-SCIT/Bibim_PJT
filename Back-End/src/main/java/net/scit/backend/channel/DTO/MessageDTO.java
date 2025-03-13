@@ -1,5 +1,7 @@
 package net.scit.backend.channel.DTO;
 
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -40,5 +42,9 @@ public class MessageDTO
      * - 1 : 파일
      */
     private Boolean messageOrFile;
+
+    private LocalDateTime sendTime;
+
+    private String fileName;
 }
 

@@ -10,12 +10,15 @@ import net.scit.backend.notification.dto.NotificationResponseDTO;
 import net.scit.backend.notification.entity.NotificationEntity;
 import net.scit.backend.notification.repository.NotificationRepository;
 import net.scit.backend.notification.service.NotificationService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 
 @Service
 @RequiredArgsConstructor
@@ -23,44 +26,38 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
-    private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
+    // 사용자 이메일을 키로, SseEmitter를 값으로 가지는 맵
+    private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
 
+    @Override
+    public SseEmitter subscribe(String receiverEmail) {
+        SseEmitter emitter = new SseEmitter(24 * 60 * 60 * 1000L); // 24시간 유지
+        emitters.put(receiverEmail, emitter);
+        emitter.onCompletion(() -> emitters.remove(receiverEmail));
+        emitter.onTimeout(() -> emitters.remove(receiverEmail));
+        emitter.onError(e -> emitters.remove(receiverEmail));
+        try {
+            emitter.send(SseEmitter.event().name("INIT").data("SSE 연결 완료"));
+        } catch (IOException e) {
+            emitter.completeWithError(e);
+        }
+        return emitter;
+    }
 
-//    @Override
-//    public void createNotification(String senderEmail, String senderNickname,
-//                                   String receiverEmail, String receiverNickname,
-//                                   Long workspaceId, Long scheduleNumber, Long recordNumber, Long workdataNumber,
-//                                   String notificationName, String notificationType, String notificationContent) {
-//        NotificationEntity notification = new NotificationEntity();
-//        notification.setSenderEmail(senderEmail);
-//        notification.setSenderNickname(senderNickname);
-//        notification.setReceiverEmail(receiverEmail);
-//        notification.setReceiverNickname(receiverNickname);
-//        notification.setWsId(workspaceId);  // workspaceId 설정
-//        notification.setNotificationName(notificationName);
-//        notification.setNotificationType(notificationType);
-//        notification.setNotificationContent(notificationContent);
-//        notification.setNotificationStatus(false);
-//        notification.setNotificationDate(LocalDateTime.now());
-//
-//        // 변경: saveAndFlush() 사용하여 즉시 DB에 반영 및 자동 생성된 notificationNumber 확인
-//        notificationRepository.saveAndFlush(notification); // 변경된 부분
-//        log.info("Notification created with ID: {}", notification.getNotificationNumber()); // 변경 로그
-//
-//        sendNotification(notification);
-//    }
+    @Override
+    public void unsubscribe(String receiverEmail) {
+        SseEmitter emitter = emitters.remove(receiverEmail);
+        if (emitter != null) {
+            emitter.complete();
+        }
+    }
 
     @Transactional
     @Override
     public NotificationResponseDTO createAndSendNotification(NotificationEntity notification) {
-        // 즉시 DB에 반영하여 자동 생성된 ID를 확인
         NotificationEntity savedNotification = notificationRepository.saveAndFlush(notification);
         log.info("Notification created with ID: {}", savedNotification.getNotificationNumber());
-
-        // 알림 전송
         sendNotification(savedNotification);
-
-        // DTO 변환 후 반환
         return convertToResponseDTO(savedNotification);
     }
 
@@ -75,44 +72,33 @@ public class NotificationServiceImpl implements NotificationService {
                 notification.getNotificationName(),
                 notification.getNotificationType(),
                 notification.getNotificationContent(),
-                notification.getNotificationUrl()  // URL 포함 (필요 시)
+                notification.getNotificationUrl()
         );
-    }
-
-
-    @Override
-    public SseEmitter subscribe(String receiverEmail) {
-        SseEmitter emitter = new SseEmitter(60 * 1000L);
-        emitters.add(emitter);
-
-        emitter.onCompletion(() -> emitters.remove(emitter));
-        emitter.onTimeout(() -> emitters.remove(emitter));
-        emitter.onError(e -> emitters.remove(emitter));
-
-        try {
-            emitter.send(SseEmitter.event().name("INIT").data("SSE 연결 완료"));
-        } catch (IOException e) {
-            emitter.completeWithError(e);
-        }
-        return emitter;
     }
 
     @Override
     public NotificationEntity sendNotification(NotificationEntity notification) {
-        for (SseEmitter emitter : emitters) {
+        for (Map.Entry<String, SseEmitter> entry : emitters.entrySet()) {
+            String key = entry.getKey();
+            SseEmitter emitter = entry.getValue();
             try {
                 emitter.send(SseEmitter.event().name("notification").data(notification));
             } catch (IOException e) {
                 emitter.completeWithError(e);
-                emitters.remove(emitter);
+                emitters.remove(key);
             }
         }
         return notification;
     }
 
     @Override
-    public List<NotificationEntity> getUnreadNotifications(String receiverEmail) {
-        return notificationRepository.findByReceiverEmailAndNotificationStatusFalseOrderByNotificationDateDesc(receiverEmail);
+    public Page<NotificationEntity> getUnreadNotifications(String receiverEmail, Pageable pageable) {
+        return notificationRepository.findByReceiverEmailAndNotificationStatusFalseOrderByNotificationDateDesc(receiverEmail, pageable);
+    }
+
+    @Override
+    public Page<NotificationEntity> getReadNotifications(String receiverEmail, Pageable pageable) {
+        return notificationRepository.findByReceiverEmailAndNotificationStatusTrueOrderByNotificationDateDesc(receiverEmail, pageable);
     }
 
     @Override
@@ -124,18 +110,11 @@ public class NotificationServiceImpl implements NotificationService {
         }).orElse(false);
     }
 
+    @Transactional
     @Override
     public boolean markAllAsRead(String receiverEmail) {
-        List<NotificationEntity> unreadNotifications = notificationRepository
-                .findByReceiverEmailAndNotificationStatusFalseOrderByNotificationDateDesc(receiverEmail);
-
-        if (unreadNotifications.isEmpty()) {
-            return false;
-        }
-
-        unreadNotifications.forEach(notification -> notification.setNotificationStatus(true));
-        notificationRepository.saveAll(unreadNotifications);
-        return true;
+        int updatedCount = notificationRepository.bulkMarkAllAsRead(receiverEmail);
+        return updatedCount > 0;
     }
 
     @Override
@@ -147,29 +126,19 @@ public class NotificationServiceImpl implements NotificationService {
         return false;
     }
 
-
     @Override
     public String getNotificationUrl(Long notificationId) {
-        // 현재 로그인한 사용자 이메일 가져오기
         String currentUserEmail = AuthUtil.getLoginUserId();
-
-        // 알림 조회
         NotificationEntity notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOTIFICATION_NOT_FOUND));
-
-        // 🛑 알림을 받을 권한이 있는지 확인 (알림 수신자와 현재 로그인한 사용자 비교)
         if (!notification.getReceiverEmail().equals(currentUserEmail)) {
             throw new CustomException(ErrorCode.UNAUTHORIZED_ACCESS);
         }
-
-        // 🛑 URL이 null이거나 빈 문자열인 경우 예외 처리
         String notificationUrl = notification.getNotificationUrl();
         if (notificationUrl == null || notificationUrl.isEmpty()) {
             throw new CustomException(ErrorCode.INVALID_NOTIFICATION_URL);
         }
-
-        // ✅ 정상적인 경우 알림 URL 반환
+        log.info("notificationUrl : {}", notificationUrl);
         return notificationUrl;
     }
-
 }

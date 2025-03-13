@@ -13,6 +13,10 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty'; // 미배정
+import PlayCircleIcon from '@mui/icons-material/PlayCircle'; // 진행 중
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'; // 완료
+import PauseCircleIcon from '@mui/icons-material/PauseCircle'; // 보류
 import { styled } from '@mui/material/styles';
 import ScheduleEditModal from './ScheduleEditModal';
 
@@ -36,13 +40,30 @@ const InfoBox = styled(Box)(({ theme }) => ({
   marginBottom: '12px',
 }));
 
+// const statusMapping = {
+//   UNASSIGNED: "미배정",
+//   IN_PROGRESS: "진행 중",
+//   COMPLETED: "완료",
+//   ON_HOLD: "보류",
+// };
+
+const statusMapping = {
+  UNASSIGNED: { label: "미배정", icon: <HourglassEmptyIcon />, color: "default" },
+  IN_PROGRESS: { label: "진행 중", icon: <PlayCircleIcon />, color: "primary" },
+  COMPLETED: { label: "완료", icon: <CheckCircleIcon />, color: "success" },
+  ON_HOLD: { label: "보류", icon: <PauseCircleIcon />, color: "warning" },
+};
+
 const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate }) => {
   const [editModalOpen, setEditModalOpen] = React.useState(false);
   const [localSchedule, setLocalSchedule] = React.useState(schedule);
+  console.log("스케줄 디테일 정보", localSchedule);
 
   React.useEffect(() => {
     setLocalSchedule(schedule);
   }, [schedule]);
+
+  console.log("현재정보", schedule);
 
   if (!localSchedule) return null;
 
@@ -67,6 +88,8 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate }) => {
     setEditModalOpen(false);
   };
 
+  const scheduleStatus = statusMapping[localSchedule.scheduleStatus] || { label: "알 수 없음", icon: null, color: "default" };
+
   return (
     <>
       <StyledDialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -82,7 +105,7 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate }) => {
 
         {/* 스케줄 정보 */}
         <DialogContent>
-          <Typography color="textSecondary" sx={{ mb: 2, fontSize: '14px' }}>
+          <Typography color="textSecondary" sx={{ mb: 2, fontSize: '12px' }}>
             마지막 수정: {formatDate(localSchedule.scheduleModifytime)}
           </Typography>
 
@@ -95,13 +118,24 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate }) => {
           <Paper elevation={2} sx={{ p: 2, mb: 2, borderRadius: '8px', display: 'flex', alignItems: 'center', gap: 2 }}>
             {localSchedule.nickname ? (
               <>
-                <Avatar src={localSchedule.userProfileImage} sx={{ width: 40, height: 40 }} />
+                <Avatar src={localSchedule.profileImage} sx={{ width: 40, height: 40 }} />
                 <Typography fontWeight="500">{localSchedule.nickname}</Typography>
               </>
             ) : (
               <Typography color="text.secondary">담당자가 지정되지 않았습니다</Typography>
             )}
           </Paper>
+
+          {/* 상태 값 표시 (아이콘 + 텍스트) */}
+          <InfoBox>
+            <Typography fontWeight="600"> 상태:</Typography>
+            <Chip
+              icon={scheduleStatus.icon}
+              label={scheduleStatus.label}
+              color={scheduleStatus.color}
+              variant="outlined"
+            />
+          </InfoBox>
 
           <InfoBox>
             <Typography fontWeight="600">🗓 시작일:</Typography>

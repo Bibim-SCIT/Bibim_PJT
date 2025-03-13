@@ -40,9 +40,6 @@ public class WorkspaceEntity
     @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WorkspaceChannelEntity> channels = new ArrayList<>();
 
-    @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<WorkspaceChannelRoleEntity> roles = new ArrayList<>();
-
 //    @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
 //    private List<DmMessageEntity> messages = new ArrayList<>();
 

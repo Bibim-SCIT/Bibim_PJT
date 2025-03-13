@@ -2,13 +2,31 @@
 import React, { useEffect, useState, useRef, useContext, useCallback } from "react";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
-import { ConfigContext } from "../../contexts/ConfigContext";
-import { FaPaperPlane, FaFileUpload } from "react-icons/fa";
+import { ConfigContext } from "../../../contexts/ConfigContext";
+import { FaPaperPlane, FaPlus } from "react-icons/fa";
 import TagIcon from '@mui/icons-material/Tag';
-import AddIcon from '@mui/icons-material/Add';
 import PersonIcon from '@mui/icons-material/Person';
-import { fetchWorkspaceUsers } from "../../api/workspaceApi";
+import { fetchWorkspaceUsers } from "../../../api/workspaceApi";
 import "./ChatComponent.css";
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+/**
+ * LocalDateTime을 Asia/Seoul 시간대로 변환하고 포맷팅하는 함수
+ * @param {string} timestamp - 서버에서 전달된 LocalDateTime
+ * @returns {string} - 변환된 시간 
+ */
+const formatToKoreanTime = (timestamp) => {
+    dayjs.extend(utc);
+    dayjs.extend(timezone);
+
+    if (!timestamp) return '';
+    // 서버에서 localdatetime으로 전달되므로 UTC로 변환 후 서울로 변환
+    // 위 방법 대로 했음에도 불구하고 09시간 오차가 계속 발생 하여 강제로 9시간 추가
+    return dayjs(timestamp).add(9, 'hour').format('MM-DD HH:mm');
+};
+
 
 /**
  * 채팅 컴포넌트
@@ -32,6 +50,68 @@ function ChatComponent({ channelId, workspaceId }) {
 
     // WebSocket 클라이언트 참조
     const stompClientRef = useRef(null);
+    // 메시지 컨테이너 참조 추가
+    const messagesEndRef = useRef(null);
+
+    /**
+     * 스크롤을 맨 아래로 이동시키는 함수
+     */
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    };
+
+    /**
+     * YouTube 링크 여부 확인 함수
+     * @param {string} url - 메시지 내용
+     * @returns {boolean} YouTube 링크인지 여부
+     */
+    const isYouTubeLink = (url) => {
+        return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/.test(url);
+    };
+
+    /**
+     * YouTube Embed URL 생성 함수
+     * @param {string} url - YouTube URL
+     * @returns {string} 임베드 URL
+     */
+    const getYouTubeEmbedUrl = (url) => {
+        const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
+        return videoIdMatch ? `https://www.youtube.com/embed/${videoIdMatch[1]}` : null;
+    };
+
+    /**
+     * 메시지 내용 렌더링 함수
+     */
+    const renderMessageContent = (msg) => {
+        if (msg.messageOrFile && msg.content) {
+            return isImageFile(msg.content) ? (
+                <img src={msg.content} alt="파일 미리보기" className="chat-image" />
+            ) : (
+                <a href={msg.content} target="_blank" rel="noopener noreferrer" className="file-message" download={msg.fileName}>
+                    📎 파일 다운로드 : {msg.fileName}
+                </a>
+            );
+        } else if (isYouTubeLink(msg.content)) {
+            const embedUrl = getYouTubeEmbedUrl(msg.content);
+            return embedUrl ? (
+                <div className="youtube-wrapper">
+                    <iframe
+                        src={embedUrl}
+                        title="YouTube video player"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                    ></iframe>
+                </div>
+            ) : (
+                <div>{msg.content}</div>
+            );
+        } else {
+            return <div>{msg.content}</div>;
+        }
+    };
+
+
 
     /**
      * 과거 메시지 가져오기 함수
@@ -46,6 +126,12 @@ function ChatComponent({ channelId, workspaceId }) {
 
             const data = await response.json();
             setMessages(data); // 기존 메시지 상태에 추가
+
+
+            // 메시지 로드 후 약간의 지연을 두고 스크롤 이동
+            setTimeout(() => {
+                scrollToBottom();
+            }, 100);
         } catch (error) {
             console.error("❌ 메시지 조회 오류:", error);
         }
@@ -93,7 +179,7 @@ function ChatComponent({ channelId, workspaceId }) {
      */
     const sendMessage = useCallback(async () => {
         if ((!input.trim() && !file) || !stompClientRef.current) return;
-
+        const currentTime = new Date().toISOString();
         // 파일 전송 처리
         if (file) {
             setIsUploading(true);
@@ -107,6 +193,8 @@ function ChatComponent({ channelId, workspaceId }) {
                     sender: user?.email || "Unknown Sender",
                     messageOrFile: true,
                     fileUrl: fileUrl,
+                    fileName: file.name,
+                    sendTime: currentTime,
                 };
                 stompClientRef.current.publish({
                     destination: `/app/chat.sendMessage.${channelId}`,
@@ -122,6 +210,7 @@ function ChatComponent({ channelId, workspaceId }) {
                 content: input,
                 sender: user?.email || "Unknown Sender",
                 messageOrFile: false,
+                sendTime: currentTime,
             };
             stompClientRef.current.publish({
                 destination: `/app/chat.sendMessage.${channelId}`,
@@ -203,6 +292,28 @@ function ChatComponent({ channelId, workspaceId }) {
         }
     };
 
+    /**
+     * 메시지 상태가 변경될 때마다 스크롤을 맨 아래로 이동
+     */
+
+    useEffect(() => {
+        if (messages.length > 0) {
+            scrollToBottom();
+        }
+    }, [messages]);
+
+    /**
+     * 컴포넌트 마운트 시 한 번 스크롤 이동
+     */
+    useEffect(() => {
+        // 컴포넌트가 마운트된 후 약간의 지연을 두고 스크롤 이동
+        const timer = setTimeout(() => {
+            scrollToBottom();
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, []);
+
     return (
         <div className="chat-container">
             {/* 채널 헤더 */}
@@ -264,57 +375,63 @@ function ChatComponent({ channelId, workspaceId }) {
                                 )}
                             </div>
                             <span className="sender-name">{msg.sender}</span>
-                            <span className="message-time">10:15</span>
+                            <span className="message-time">
+                                {formatToKoreanTime(msg.sendTime)}
+                            </span>
                         </div>
 
                         {/* 메시지 내용 */}
                         <div className="message-content-container">
-                            {msg.messageOrFile && msg.content ? (
-                                isImageFile(msg.content) ? (
-                                    // 이미지 파일인 경우
-                                    <div className="message-content has-image">
-                                        <img src={msg.content} alt="파일 미리보기" className="chat-image" />
-                                    </div>
-                                ) : (
-                                    // 일반 파일인 경우
-                                    <a href={msg.content} target="_blank" rel="noopener noreferrer" className="file-message">
-                                        📎 파일 다운로드
-                                    </a>
-                                )
-                            ) : (
-                                // 텍스트 메시지인 경우
-                                <div className="message-content">{msg.content}</div>
-                            )}
+                            {renderMessageContent(msg)}
                         </div>
                     </div>
                 ))}
+                {/* 스크롤 위치 참조를 위한 빈 div 추가 */}
+                <div ref={messagesEndRef} />
             </div>
+
 
             {/* 메시지 입력 영역 */}
             <div className="chat-input-box">
-                {/* 파일 업로드 버튼 */}
-                <input type="file" id="file-upload" onChange={handleFileChange} hidden />
-                <label htmlFor="file-upload" className="icon-btn">
-                    <AddIcon sx={{ fontSize: 24 }} />
-                </label>
+                {/* 파일 업로드 영역 */}
+                <div className="file-upload">
+                    <input
+                        type="file"
+                        id="file-upload"
+                        onChange={handleFileChange}
+                    />
+                    <label htmlFor="file-upload" className="icon-btn">
+                        <FaPlus />
+                    </label>
+                    {file && <span className="selected-file">{file.name}</span>}
+                </div>
 
-                {/* 선택된 파일명 표시 */}
-                {file && <span className="selected-file">{file.name}</span>}
-
-                {/* 메시지 입력창 */}
-                <input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyPress}
-                    placeholder="메시지를 입력하세요..."
-                    className="chat-input"
-                    disabled={file} // 파일 선택 시 입력창 비활성화
-                />
-
-                {/* 전송 버튼 */}
-                <button onClick={sendMessage} className="send-btn" disabled={isUploading}>
-                    <FaPaperPlane size={18} />
-                </button>
+                {file ? (
+                    <button
+                        onClick={sendMessage}
+                        className="send-btn"
+                        disabled={isUploading}
+                    >
+                        <FaPaperPlane />
+                    </button>
+                ) : (
+                    <>
+                        <input
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={handleKeyPress}
+                            placeholder="메시지를 입력하세요..."
+                            className="chat-input"
+                        />
+                        <button
+                            onClick={sendMessage}
+                            className="send-btn"
+                            disabled={!input.trim()}
+                        >
+                            <FaPaperPlane />
+                        </button>
+                    </>
+                )}
             </div>
         </div>
     );

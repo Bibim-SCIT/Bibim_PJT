@@ -1,71 +1,53 @@
 package net.scit.backend.jwt;
 
+import java.security.Key;
+import java.util.Date;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 import net.scit.backend.member.dto.TokenDTO;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
-import java.security.Key;
-import java.util.Collections;
-import java.util.Date;
-
-@Component  // 스프링 컨테이너에 의해 자동으로 빈으로 등록되는 클래스
+@Component
 public class JwtTokenProvider {
 
-    // 토큰의 만료 시간을 1일(24시간)으로 설정 (밀리초 단위: 24시간 * 60분 * 60초 * 1000밀리초)
-    private final long ACCESS_TOKEN_EXPIRATION_TIME = 7200000;
-    private final long REFRESH_TOKEN_EXPIRATION_TIME = 86400000L;
+    // 토큰 만료 시간 상수
+    private static final long ACCESS_TOKEN_EXPIRATION_TIME = 7200000; // 2시간 (밀리초)
+    private static final long REFRESH_TOKEN_EXPIRATION_TIME = 86400000L; // 24시간 (밀리초)
 
+    // 토큰 서명에 사용할 Secret Key
     private final Key key;
 
-    // application.yml secret 값 가져와서 key에 저장
+    /**
+     * 생성자: Secret Key를 초기화
+     *
+     * @param secretKey application.yml에서 설정된 secret 값을 주입
+     */
     public JwtTokenProvider(@Value("${secret_key}") String secretKey) {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
     /**
-     * 사용자 이름을 기반으로 JWT 토큰을 생성하는 메소드
+     * 사용자 이름을 기반으로 AccessToken과 RefreshToken을 생성
      *
      * @param username 사용자 이름
-     * @return 생성된 JWT 토큰 문자열
+     * @return TokenDTO (AccessToken 및 RefreshToken 포함)
      */
     public TokenDTO generateToken(String username) {
-        // AccessToken 클레임 설정
-        Claims accessTokenClaims = Jwts.claims().setSubject(username);
-        accessTokenClaims.put("roles", Collections.singletonList("ROLE_USER"));
-        accessTokenClaims.put("token_type", "access");
+        String accessToken = createToken(username, ACCESS_TOKEN_EXPIRATION_TIME, "access");
+        String refreshToken = createToken(username, REFRESH_TOKEN_EXPIRATION_TIME, "refresh");
 
-        // RefreshToken 클레임 설정
-        Claims refreshTokenClaims = Jwts.claims().setSubject(username);
-        refreshTokenClaims.put("roles", Collections.singletonList("ROLE_USER"));
-        refreshTokenClaims.put("token_type", "refresh");
-
-        long now = (new Date()).getTime();
-        Date accessTokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRATION_TIME);
-        Date refreshTokenExpiresIn = new Date(now + REFRESH_TOKEN_EXPIRATION_TIME);
-
-        String accessToken = Jwts.builder()
-                .setHeaderParam("type", "JWT")
-                .setClaims(accessTokenClaims)
-                .setIssuedAt(new Date(now))
-                .setExpiration(accessTokenExpiresIn)
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
-
-        String refreshToken = Jwts.builder()
-                .setHeaderParam("type", "JWT")
-                .setClaims(refreshTokenClaims)
-                .setIssuedAt(new Date(now))
-                .setExpiration(refreshTokenExpiresIn)
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
-
+        // ✅ 빌더 패턴을 사용해 TokenDTO 생성
         return TokenDTO.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
@@ -73,72 +55,100 @@ public class JwtTokenProvider {
     }
 
     /**
-     * JWT 토큰에서 사용자 이름을 추출하는 메소드
+     * JWT 토큰 생성 메서드
      *
-     * @param token JWT 토큰
-     * @return 토큰에서 추출한 사용자 이름
+     * @param username 사용자 이름
+     * @param expirationTime 토큰 만료 시간
+     * @param tokenType 토큰 유형 (access 또는 refresh)
+     * @return 생성된 JWT 토큰 문자열
      */
-    public String getUsernameFromToken(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+    private String createToken(String username, long expirationTime, String tokenType) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + expirationTime);
+
+        return Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(now) // 생성 시간
+                .setExpiration(expiryDate) // 만료 시간
+                .claim("token_type", tokenType) // 추가 클레임 지정
+                .signWith(key, SignatureAlgorithm.HS256) // HMAC-SHA256 서명
+                .compact();
     }
 
     /**
-     * JWT 토큰의 유효성을 검사하는 메소드
+     * 요청에서 JWT 토큰을 추출
+     *
+     * @param request HTTP 요청 객체
+     * @return 추출된 JWT 토큰 또는 null
+     */
+    public String getJwtFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7); // "Bearer " 이후 토큰 값 반환
+        }
+        return null;
+    }
+
+    /**
+     * JWT 토큰에서 사용자 이름 추출
+     *
+     * @param token JWT 토큰
+     * @return 사용자 이름
+     */
+    public String getUsernameFromToken(String token) {
+        return getClaimsFromToken(token).getSubject(); // Claim에서 Subject 추출
+    }
+
+    /**
+     * 주어진 JWT 토큰이 유효한지 검사
      *
      * @param token 검사할 JWT 토큰
      * @return 토큰이 유효하면 true, 그렇지 않으면 false
      */
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(key)
-                    .build()
-                    .parseClaimsJws(token);
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token); // 토큰 파싱 및 검증
             return true;
-        } catch (Exception e) {
-            return false;
+        } catch (JwtException | IllegalArgumentException e) {
+            // JWT 관련 예외 또는 잘못된 입력 처리
+            System.out.println("❌ 유효하지 않은 JWT 토큰: " + e.getMessage());
         }
-    }
-
-    public Long getExpiration(String token) {
-        Claims claims = getClaimsFromToken(token);
-
-        Date expirationDate = claims.getExpiration();
-
-        return expirationDate.getTime();
-    }
-
-    public Claims getClaimsFromToken(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        return false;
     }
 
     /**
-     * 요청에서 JWT 토큰을 추출하는 메서드
+     * JWT 토큰의 만료 시간 가져오기
      *
-     * @param request HTTP 요청 객체
-     *               - getHeader("Authorization")로 인증 헤더 값 추출
-     *               - 헤더 형식은 "Bearer {JWT토큰}" 형태여야 함
-     *
-     * @return String JWT 토큰 문자열 또는 null
-     *         - 유효한 Bearer 토큰인 경우: JWT 토큰 문자열
-     *         - 토큰이 없거나 잘못된 형식: null
+     * @param token JWT 토큰
+     * @return 남은 토큰 유효 시간 (밀리초), 최소 0 이상의 값 반환
      */
-    public String getJwtFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization"); // 요청 헤더에서 Authorization 값 가져오기
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) { // "Bearer "로 시작하면
-            return bearerToken.substring(7); // "Bearer " 이후의 토큰 값만 추출하여 반환
-        }
-        return null; // 토큰이 없거나 잘못된 형식이면 null 반환
+    public Long getExpiration(String token) {
+        Date expiration = getClaimsFromToken(token).getExpiration();
+        long timeToExpire = expiration.getTime() - new Date().getTime();
+        // 음수가 나오면 0을 반환
+        return Math.max(0L, timeToExpire);
     }
 
+    /**
+     * JWT 토큰에서 Claims(클레임) 추출
+     *
+     * @param token JWT 토큰
+     * @return Claims 객체
+     */
+    public Claims getClaimsFromToken(String token) {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(key) // 서명 키 설정
+                    .build()
+                    .parseClaimsJws(token) // 토큰 파싱
+                    .getBody(); // Claims 객체 반환
+        } catch (ExpiredJwtException e) {
+            System.out.println("⏰ JWT 토큰이 만료되었습니다.");
+            throw e;
+        } catch (MalformedJwtException | IllegalArgumentException e) {
+            System.out.println("❌ JWT 토큰이 잘못되었습니다.");
+            throw e;
+        }
+    }
 }
-

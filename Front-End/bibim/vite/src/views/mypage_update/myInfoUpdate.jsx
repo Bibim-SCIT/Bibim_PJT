@@ -10,7 +10,9 @@ import {
   FormControl,
   Select,
   MenuItem,
-  CircularProgress
+  CircularProgress,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import EmailIcon from '@mui/icons-material/Email';
 import Avatar from '@mui/material/Avatar';
@@ -54,6 +56,12 @@ const MyInfoUpdate = () => {
   const [previewImage, setPreviewImage] = useState(null);  // 이미지 미리보기 URL
   const [fileInputKey, setFileInputKey] = useState(Date.now());  // 파일 input 초기화용 key
   const [updating, setUpdating] = useState(false);  // 업데이트 중 상태 (저장 버튼 비활성화용)
+  // 스낵바 상태 추가
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
   const navigate = useNavigate();
 
   /**
@@ -112,15 +120,25 @@ const MyInfoUpdate = () => {
       const updatedUser = await getUserInfo();
       setUser(updatedUser); // 🔹 Context의 사용자 정보 업데이트
 
-      // 업데이트 성공 알림
-      alert("회원 정보가 수정되었습니다!");
+      // 업데이트 성공 알림 (스낵바로 변경)
+      setSnackbar({
+        open: true,
+        message: '회원 정보가 성공적으로 변경되었습니다.',
+        severity: 'success'
+      });
 
       // 프로필 페이지로 이동
       navigate('/mypage');
     } catch (error) {
       console.error("❌ 회원 정보 수정 실패:", error);
       setError("회원 정보 수정에 실패했습니다.");
-      alert("회원 정보 수정에 실패했습니다.");
+      
+      // 실패 알림 (스낵바로 변경)
+      setSnackbar({
+        open: true,
+        message: '회원 정보 변경에 실패했습니다.',
+        severity: 'error'
+      });
     } finally {
       setUpdating(false);
     }
@@ -157,6 +175,16 @@ const MyInfoUpdate = () => {
       ...formData,
       profileImage: ""
     });
+  };
+
+  /**
+   * 스낵바 닫기 핸들러
+   */
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbar(prev => ({ ...prev, open: false }));
   };
 
   // 로딩 중이면 로딩 인디케이터 표시
@@ -359,6 +387,22 @@ const MyInfoUpdate = () => {
           </Grid>
         </Grid>
       </Box>
+
+      {/* 스낵바 추가 */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </MainCard>
   );
 };

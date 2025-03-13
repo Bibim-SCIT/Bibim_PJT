@@ -29,6 +29,7 @@ public class ScheduleDTO {
     private String color;
 
     public static ScheduleDTO toDTO(ScheduleEntity scheduleEntity, String nickname, String profileImage, ScheduleTagEntity scheduleTagEntity) {
+
         String tag2 = (scheduleTagEntity.getMediumTag() != null) ? scheduleTagEntity.getMediumTag().getTagName() : null; // null 처리 추가
         String tag3 = (scheduleTagEntity.getSmallTag() != null) ? scheduleTagEntity.getSmallTag().getTagName() : null; // null 처리 추가
 

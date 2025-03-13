@@ -10,20 +10,31 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Modal,
+  Divider,
+  Snackbar,
+  Alert
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { styled } from "@mui/material/styles";
 import { updateSchedule } from "../../../api/schedule"; // ✅ 수정 API
 import { fetchLargeTags, fetchMediumTags, fetchSmallTags } from "../../../api/tag"; // ✅ 태그 API 호출
 
-const StyledDialog = styled(Dialog)(({ theme }) => ({
-  "& .MuiDialog-paper": {
-    borderRadius: "12px",
-    padding: "24px",
-    maxWidth: "500px",
-    width: "100%",
-  },
-}));
+// 모달 스타일 정의
+const style = {
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 500,
+  bgcolor: 'background.paper',
+  borderRadius: 1,
+  boxShadow: 24,
+  p: 0,
+  position: 'relative',
+  outline: 'none',
+  maxHeight: '90vh',
+  overflow: 'auto'
+};
 
 const ScheduleEditModal = ({ open, onClose, scheduleData, onUpdate }) => {
   const [formData, setFormData] = useState({
@@ -40,6 +51,13 @@ const ScheduleEditModal = ({ open, onClose, scheduleData, onUpdate }) => {
   const [largeTags, setLargeTags] = useState([]);
   const [mediumTags, setMediumTags] = useState([]);
   const [smallTags, setSmallTags] = useState([]);
+
+  // 스낵바 상태 추가
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
   useEffect(() => {
     if (scheduleData) {
@@ -62,8 +80,10 @@ const ScheduleEditModal = ({ open, onClose, scheduleData, onUpdate }) => {
         setLargeTags(tags);
         if (scheduleData.tag1) {
           const largeTag = tags.find((tag) => tag.tagName === scheduleData.tag1);
+          console.log("대분류 되나?", largeTag);
           if (largeTag) {
             fetchMediumTags(wsId, largeTag.largeTagNumber).then((medTags) => {
+              console.log("수정 중분류 태그 불러오기", medTags);
               setMediumTags(medTags);
               if (scheduleData.tag2) {
                 const mediumTag = medTags.find((tag) => tag.tagName === scheduleData.tag2);
@@ -116,6 +136,13 @@ const ScheduleEditModal = ({ open, onClose, scheduleData, onUpdate }) => {
 
       console.log("✅ 스케줄 수정 성공");
 
+      // 성공 스낵바 표시
+      setSnackbar({
+        open: true,
+        message: '일정이 성공적으로 수정되었습니다.',
+        severity: 'success'
+      });
+
       if (onUpdate) {
         onUpdate({ ...scheduleData, ...updatedData });
       }
@@ -123,109 +150,194 @@ const ScheduleEditModal = ({ open, onClose, scheduleData, onUpdate }) => {
       onClose();
     } catch (error) {
       console.error("❌ 스케줄 수정 실패:", error);
+
+      // 실패 스낵바 표시
+      setSnackbar({
+        open: true,
+        message: '일정 수정에 실패했습니다.',
+        severity: 'error'
+      });
     }
   };
 
+  // 스낵바 닫기 핸들러
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
   return (
-    <StyledDialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6" fontWeight="600">
-          팀스케줄 수정
-        </Typography>
-        <IconButton onClick={onClose} size="small">
-          <CloseIcon />
-        </IconButton>
-      </Box>
+    <>
+      <Modal open={open} onClose={onClose}>
+        <Box sx={style}>
+          {/* 헤더 영역 */}
+          <Box sx={{ p: 3, pb: 2 }}>
+            <IconButton
+              onClick={onClose}
+              sx={{
+                position: 'absolute',
+                right: 8,
+                top: 8
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
 
-      <form onSubmit={handleSubmit}>
-        {/* ✅ 제목 수정 */}
-        <TextField
-          fullWidth
-          label="스케줄 제목*"
-          value={formData.scheduleTitle}
-          onChange={(e) => setFormData({ ...formData, scheduleTitle: e.target.value })}
-          sx={{ mt: 2 }}
-        />
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 400,
+                mb: 0
+              }}
+            >
+              일정 수정
+            </Typography>
+          </Box>
 
-        {/* ✅ 내용 수정 */}
-        <TextField
-          fullWidth
-          label="스케줄 내용"
-          multiline
-          rows={4}
-          value={formData.scheduleContent}
-          onChange={(e) => setFormData({ ...formData, scheduleContent: e.target.value })}
-          sx={{ mt: 2 }}
-        />
+          <Divider sx={{ borderColor: '#e0e0e0' }} />
 
-        {/* ✅ 날짜 수정 */}
-        <Typography sx={{ mt: 2, mb: 1 }}>날짜 설정*</Typography>
-        <Box display="flex" gap={2}>
-          <TextField
-            type="date"
-            value={formData.scheduleStartDate}
-            onChange={(e) => setFormData({ ...formData, scheduleStartDate: e.target.value })}
-            sx={{ flex: 1 }}
-          />
-          <Typography>~</Typography>
-          <TextField
-            type="date"
-            value={formData.scheduleFinishDate}
-            onChange={(e) => setFormData({ ...formData, scheduleFinishDate: e.target.value })}
-            sx={{ flex: 1 }}
-          />
+          {/* 내용 영역 */}
+          <Box sx={{ p: 3 }}>
+            <form onSubmit={handleSubmit}>
+              <TextField
+                fullWidth
+                label="일정 제목"
+                value={formData.scheduleTitle}
+                onChange={(e) => setFormData({ ...formData, scheduleTitle: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+
+              <TextField
+                fullWidth
+                label="일정 내용"
+                multiline
+                rows={3}
+                value={formData.scheduleContent}
+                onChange={(e) => setFormData({ ...formData, scheduleContent: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+
+              <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+                <TextField
+                  fullWidth
+                  label="시작일"
+                  type="date"
+                  value={formData.scheduleStartDate}
+                  onChange={(e) => setFormData({ ...formData, scheduleStartDate: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
+                />
+                <TextField
+                  fullWidth
+                  label="종료일"
+                  type="date"
+                  value={formData.scheduleFinishDate}
+                  onChange={(e) => setFormData({ ...formData, scheduleFinishDate: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Box>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>대분류*</InputLabel>
+                <Select
+                  value={formData.tag1}
+                  onChange={(e) => setFormData({ ...formData, tag1: e.target.value, tag2: "", tag3: "" })}
+                >
+                  {largeTags.map((tag) => (
+                    <MenuItem key={tag.tagNumber} value={tag.tagName}>
+                      {tag.tagName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>중분류*</InputLabel>
+                <Select
+                  value={formData.tag2}
+                  onChange={(e) => setFormData({ ...formData, tag2: e.target.value, tag3: "" })}
+                  disabled={!formData.tag1}
+                >
+                  {mediumTags.map((tag) => (
+                    <MenuItem key={tag.tagNumber} value={tag.tagName}>
+                      {tag.tagName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>소분류*</InputLabel>
+                <Select
+                  value={formData.tag3}
+                  onChange={(e) => setFormData({ ...formData, tag3: e.target.value })}
+                  disabled={!formData.tag2}
+                >
+                  {smallTags.map((tag) => (
+                    <MenuItem key={tag.tagNumber} value={tag.tagName}>
+                      {tag.tagName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </form>
+          </Box>
+
+          {/* 하단 버튼 영역 */}
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 1,
+            p: 2,
+            bgcolor: '#f8f9fa',
+            borderTop: '1px solid #e0e0e0'
+          }}>
+            <Button
+              variant="outlined"
+              onClick={onClose}
+              sx={{
+                color: '#666',
+                borderColor: '#d0d0d0',
+                boxShadow: 'none'
+              }}
+            >
+              취소
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              sx={{
+                bgcolor: '#7C3AED',
+                boxShadow: 'none',
+                '&:hover': {
+                  bgcolor: '#6D28D9',
+                  boxShadow: 'none'
+                }
+              }}
+            >
+              수정하기
+            </Button>
+          </Box>
         </Box>
+      </Modal>
 
-        {/* ✅ 태그 수정 (대, 중, 소분류) */}
-        <FormControl fullWidth sx={{ mt: 2 }}>
-          <InputLabel>대분류*</InputLabel>
-          <Select
-            value={formData.tag1}
-            onChange={(e) => setFormData({ ...formData, tag1: e.target.value })}
-          >
-            {largeTags.map((tag) => (
-              <MenuItem key={tag.tagNumber} value={tag.tagName}>
-                {tag.tagName}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl fullWidth sx={{ mt: 2 }}>
-          <InputLabel>중분류*</InputLabel>
-          <Select
-            value={formData.tag2}
-            onChange={(e) => setFormData({ ...formData, tag2: e.target.value })}
-            disabled={!formData.tag1}
-          >
-            {mediumTags.map((tag) => (
-              <MenuItem key={tag.tagNumber} value={tag.tagName}>
-                {tag.tagName}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl fullWidth sx={{ mt: 2 }}>
-          <InputLabel>소분류*</InputLabel>
-          <Select
-            value={formData.tag3}
-            onChange={(e) => setFormData({ ...formData, tag3: e.target.value })}
-            disabled={!formData.tag2}
-          >
-            {smallTags.map((tag) => (
-              <MenuItem key={tag.tagNumber} value={tag.tagName}>
-                {tag.tagName}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <Button type="submit" variant="contained" sx={{ mt: 3, bgcolor: "#7C3AED" }}>
-          수정하기
-        </Button>
-      </form>
-    </StyledDialog>
+      {/* 스낵바 추가 */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </>
   );
 };
 

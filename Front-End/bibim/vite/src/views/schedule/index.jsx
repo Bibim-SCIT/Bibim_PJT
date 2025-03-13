@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Calendar from './components/Calendar.jsx';
 import { ToggleButton, ToggleButtonGroup, Box, Typography, Button } from '@mui/material';
 import { useSelector } from 'react-redux';
-import { fetchKanbanTasks } from '../../api/schedule.js';
+import { fetchKanbanTasks, fetchScheduleTasks } from '../../api/schedule.js';
 
 // 아이콘 import
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -14,12 +14,17 @@ import ScheduleCreateModal from './components/ScheduleCreateModal.jsx';
 import ScheduleEditModal from './components/ScheduleEditModal.jsx';
 import ScheduleLoading from './components/ScheduleLoading';
 import KanbanBoard from './components/KanbanBoard.jsx';
-import GanttChart from './components/GanttChart.jsx'
+import GanttChart from './components/GanttChart.jsx';
+import TagCreateModal from './components/TagCreateModal.jsx';  // ✅ 태그 생성 모달 추가
+import TagEditModal from './components/TagEditModal.jsx';  // ✅ 태그 수정 모달 추가
+
 
 const SchedulePage = () => {
   const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
   const [isModalOpen, setModalOpen] = useState(false); // 모달 상태
   const [isModalOpen2, setModalOpen2] = useState(false);
+  const [isTagCreateModalOpen, setTagCreateModalOpen] = useState(false); // ✅ 태그 생성 모달
+  const [isTagEditModalOpen, setTagEditModalOpen] = useState(false); // ✅ 태그 수정 모달
   const [view, setView] = useState("calendar"); // ✅ 현재 선택된 뷰 상태 추가
   const [tasks, setTasks] = useState([]); // ✅ 일정 데이터
   const [loading, setLoading] = useState(true); // ✅ 로딩 상태
@@ -35,7 +40,7 @@ const SchedulePage = () => {
       setError(null);
 
       try {
-        const data = await fetchKanbanTasks(wsId);
+        const data = await fetchScheduleTasks(wsId);
         console.log("📌 일정 데이터 로드 완료:", data);
         setTasks(data);
       } catch (error) {
@@ -60,7 +65,7 @@ const SchedulePage = () => {
     <MainCard title="일정 관리">
       {/* 상단 뷰 - 캘린더뷰, 간트차트뷰 토글버튼 */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
-        <Typography variant="h4" component="h1">{activeWorkspace.wsName}의 일정 관리</Typography>
+        <Typography variant="h4" component="h1">{activeWorkspace.wsName}의 일정</Typography>
         <Box sx={{ display: "flex", gap: 2 }}>
           <ToggleButtonGroup
             value={view} // ✅ 현재 선택된 뷰 유지
@@ -94,18 +99,27 @@ const SchedulePage = () => {
       </Box>
 
       {/* 스케줄 생성 버튼 추가 */}
-      <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+      <Box sx={{ display: "flex", gap: 2, mb: 2, mt: 2 }}>
         <Button variant="contained" color="primary" onClick={() => setModalOpen(true)}>
           일정 생성
         </Button>
         <Button variant="contained" color="primary" onClick={() => setModalOpen2(true)}>
           일정 수정
         </Button>
+        <Button variant="contained" color="secondary" onClick={() => setTagCreateModalOpen(true)}>
+          태그 생성
+        </Button>
+        <Button variant="contained" color="secondary" onClick={() => setTagEditModalOpen(true)}>
+          태그 수정
+        </Button>
       </Box>
       <KanbanBoard wsId={wsId} />
       {/* 일정 생성 모달 추가 */}
       <ScheduleCreateModal open={isModalOpen} onClose={() => setModalOpen(false)} />
       <ScheduleEditModal open={isModalOpen2} onClose={() => setModalOpen2(false)} />
+      {/* ✅ 태그 생성 & 수정 모달 */}
+      <TagCreateModal open={isTagCreateModalOpen} onClose={() => setTagCreateModalOpen(false)} />
+      <TagEditModal open={isTagEditModalOpen} onClose={() => setTagEditModalOpen(false)} />
     </MainCard >
   );
 };

@@ -2,245 +2,144 @@ package net.scit.backend.member.controller;
 
 import java.time.LocalDateTime;
 
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.jwt.AuthUtil;
-import net.scit.backend.member.dto.ChangePasswordDTO;
-import net.scit.backend.member.dto.LoginRequest;
-import net.scit.backend.member.dto.MemberDTO;
-import net.scit.backend.member.dto.MemberLoginStatusDTO;
-import net.scit.backend.member.dto.MyInfoDTO;
-import net.scit.backend.member.dto.SignupDTO;
-import net.scit.backend.member.dto.TokenDTO;
-import net.scit.backend.member.dto.UpdateInfoDTO;
-import net.scit.backend.member.dto.VerificationDTO;
+import net.scit.backend.member.dto.*;
 import net.scit.backend.member.service.MemberDetailsService;
 import net.scit.backend.member.service.MemberService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
- * Member 관련 업무 메소드가 지정된 Controller
+ * Member 관련 API 컨트롤러
  */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/members")
 @Slf4j
 public class MemberController {
+
     private final MemberService memberService;
     private final MemberDetailsService memberDetailsService;
 
     /**
-     * 회원가입 요청 시 동작하는 메소드
-     *
-     * @param signupDTO 회원가입 할 사용자가 입력한 정보 DTO
-     * @return 회원가입 동작 완료 후 결과 확인
+     * 회원가입
      */
     @PostMapping("/signup")
-    public ResponseEntity<ResultDTO<SuccessDTO>> signup(@RequestPart("signupDTO") SignupDTO signupDTO,
-                                                        @RequestPart(value = "file", required = false) MultipartFile file) {
+    public ResponseEntity<ResultDTO<SuccessDTO>> signup(
+            @RequestPart("signupDTO") SignupDTO signupDTO,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
 
-        // 📌 `file`이 `null`인지 먼저 체크 후 로깅 (2025.02.17 추가코드)
-        if (file == null) {
-            log.warn("파일이 제공되지 않았습니다. 기본 프로필 이미지를 사용합니다.");
-        } else if (file.isEmpty()) {
-            log.warn("파일이 비어 있습니다.");
-        }
-
-        log.info("📩 회원가입 요청 수신: {}", signupDTO);
-
-        if (file != null) {
-            log.info("📷 받은 파일 이름: {}", file.getOriginalFilename());
-            log.info("📷 파일 크기: {} bytes", file.getSize());
-        } else {
-            log.warn("⚠️ 프로필 이미지 파일이 전달되지 않음.");
-        }
+        log.info("📩 회원가입 요청: {}, 파일: {}", signupDTO, file != null ? file.getOriginalFilename() : "제공되지 않음");
 
         ResultDTO<SuccessDTO> result = memberService.signup(signupDTO, file);
         return ResponseEntity.ok(result);
     }
 
-//    /**
-//     * 아이디 중복체크 요청 시 동작하는 메소드
-//     *
-//     * @param email 회원가입 할 사용자의 아이디
-//     * @return 중복 이메일 체크 동작 완료 후 결과 확인
-//     */
-//    @GetMapping("/check-email")
-//    public ResponseEntity<ResultDTO<SuccessDTO>> checkEmail(@RequestParam String email) {
-//        return ResponseEntity.ok(memberService.checkEmail(email));
-//    }
-
     /**
-     * 이메일 인증 요청을 위한 메일을 보낼 시 동작하는 메소드
-     *
-     * @param email 이메일 인증을 위해 인증 번호를 보낼 메일
-     * @return 이메일 송신 완료 후 결과 확인
+     * 이메일 인증 요청: 인증 메일 전송
      */
     @PostMapping("/signup/mail")
     public ResponseEntity<ResultDTO<SuccessDTO>> sendMail(@RequestParam String email) {
-        log.info("✅ 이메일 인증 요청 수신: {}", email); // 로그 추가
+        log.info("✅ 이메일 인증 요청 수신: {}", email);
         return ResponseEntity.ok(memberService.signupSendMail(email));
     }
 
     /**
-     * 인증확인 요청 시 동작하는 메소드
-     * 
-     * @param email 인증 받으려는 이메일 주소
-     * @param code  사용자가 입력한 인증 코드
-     * @return 인증 동작 후 결과 확인
+     * 이메일 인증 코드 확인
      */
     @GetMapping("/signup/mail")
-    public ResponseEntity<ResultDTO<SuccessDTO>> checkMail(@RequestParam String email, @RequestParam String code) {
-        VerificationDTO verificationDTO = new VerificationDTO(email, code);
-        return ResponseEntity.ok(memberService.checkMail(verificationDTO));
+    public ResponseEntity<ResultDTO<SuccessDTO>> checkMail(
+            @RequestParam String email,
+            @RequestParam String code) {
+        log.info("✅ 이메일 인증 코드 확인: 이메일={}, 코드={}", email, code);
+        return ResponseEntity.ok(memberService.checkMail(new VerificationDTO(email, code)));
     }
-
-//    /**
-//     * 로그인 성공 시 JWT 토큰을 생성하고 반환하는 메소드
-//     *
-//     * @param userDetails Spring Security가 제공하는 인증된 사용자 정보
-//     *                    - username (이메일)
-//     *                    - authorities (권한 정보)
-//     *                    - 기타 사용자 관련 정보
-//     *
-//     * @return ResponseEntity<ResultDTO<LoginResponse>>
-//     *         - HTTP 200 OK
-//     *         - ResultDTO: 성공 메시지와 로그인 응답 정보를 포함
-//     *         - LoginResponse: 사용자 이메일과 JWT 액세스 토큰 포함
-//     */
-//    @GetMapping("/loginsuccess")
-//    public ResponseEntity<ResultDTO<TokenDTO>> loginSuccess(@AuthenticationPrincipal UserDetails userDetails) {
-//        log.info("로그인 성공: {}", userDetails.getUsername());
-//
-//        String email = AuthUtil.getLoginUserId();
-//        if (email == null || email.isEmpty()) {
-//            log.error("⚠️ 현재 로그인한 사용자의 이메일을 가져올 수 없습니다.");
-//            throw new IllegalStateException("로그인한 사용자의 이메일을 가져올 수 없습니다.");
-//        }
-//        log.info("로그인 email: {}", email);
-//
-//        // UserDetails에서 추출한 username으로 JWT 토큰 생성
-//        TokenDTO tokenDTO = jwtTokenProvider.generateToken(userDetails.getUsername());
-//
-//        // 최종 응답 생성 및 반환
-//        ResultDTO<TokenDTO> result = ResultDTO.of("로그인에 성공했습니다.", tokenDTO);
-//        return ResponseEntity.ok(result);
-//    }
 
     /**
      * 회원 정보 조회
      */
     @GetMapping("/myinfo")
     public ResponseEntity<ResultDTO<MyInfoDTO>> myInfo() {
+        log.info("🔍 회원 정보 조회 요청");
         return ResponseEntity.ok(memberService.myInfo());
     }
 
     /**
      * 회원 정보 수정
-     *
-     * @param updateInfoDTO
-     * @return 수정된 회원 정보
      */
     @PutMapping("/changeinfo")
-
     public ResponseEntity<ResultDTO<SuccessDTO>> updateInfo(
-            //인포 전송
             @RequestPart("info") UpdateInfoDTO updateInfoDTO,
-            //프로필 이미지 전송
-            @RequestPart(value = "file", required = false) MultipartFile file
-    ) {
-        //서비스 호출
-        ResultDTO<SuccessDTO> result = memberService.updateInfo(updateInfoDTO, file);
+            @RequestPart(value = "file", required = false) MultipartFile file) {
 
-        // 클라이언트에게 응답 반환
-        return ResponseEntity.ok(result);
+        log.info("✏️ 회원 정보 수정 요청: {}, 파일: {}", updateInfoDTO, file != null ? file.getOriginalFilename() : "없음");
+        return ResponseEntity.ok(memberService.updateInfo(updateInfoDTO, file));
     }
 
     /**
-     * 로그인 처리 엔드포인트
-     *
-     * @param loginRequest 로그인 요청 정보
-     * @return 로그인 응답 정보
+     * 로그인
      */
     @PostMapping("/login")
     public ResponseEntity<ResultDTO<TokenDTO>> login(@RequestBody LoginRequest loginRequest) {
+        log.info("🔐 로그인 요청: {}", loginRequest.getEmail());
+
         ResultDTO<TokenDTO> response = memberDetailsService.login(
                 loginRequest.getEmail(),
                 loginRequest.getPassword());
 
-        // 로그인 성공 후 DB 업데이트
         memberService.updateLoginStatus(loginRequest.getEmail(), true, LocalDateTime.now());
-
         return ResponseEntity.ok(response);
     }
 
     /**
      * 비밀번호 변경 메일 전송
-     *
-     * @param email
-     * @return
      */
     @PostMapping("/change-password")
     public ResponseEntity<ResultDTO<SuccessDTO>> sendChangePasswordMail(@RequestParam String email) {
-        ResultDTO<SuccessDTO> result = memberService.sendChangePasswordMail(email);
-        return ResponseEntity.ok(result);
+        log.info("🔒 비밀번호 변경 메일 요청: {}", email);
+        return ResponseEntity.ok(memberService.sendChangePasswordMail(email));
     }
 
     /**
      * 비밀번호 변경
-     *
-     * @param changePasswordDTO
-     * @return
      */
     @PutMapping("/change-password")
     public ResponseEntity<ResultDTO<SuccessDTO>> changePassword(@RequestBody ChangePasswordDTO changePasswordDTO) {
-
-        ResultDTO<SuccessDTO> result = memberService.changePassword(changePasswordDTO);
-        return ResponseEntity.ok(result);
+        log.info("🔑 비밀번호 변경 요청");
+        return ResponseEntity.ok(memberService.changePassword(changePasswordDTO));
     }
 
     /**
      * 로그아웃
-     * @return
      */
     @PostMapping("/logout")
     public ResponseEntity<ResultDTO<SuccessDTO>> logout() {
-        ResultDTO<SuccessDTO> result = memberService.logout();
-        return ResponseEntity.ok(result);
+        log.info("🚪 로그아웃 요청");
+        return ResponseEntity.ok(memberService.logout());
     }
 
     /**
      * 회원 탈퇴
-     * @param memberDTO
-     * @return
      */
     @DeleteMapping("/withdraw")
     public ResponseEntity<ResultDTO<SuccessDTO>> withdraw(@RequestBody MemberDTO memberDTO) {
-
-        ResultDTO<SuccessDTO> result = memberService.withdraw(memberDTO);
-        return ResponseEntity.ok(result);
+        log.info("💔 회원 탈퇴 요청: {}", memberDTO.getEmail());
+        return ResponseEntity.ok(memberService.withdraw(memberDTO));
     }
 
     /**
-     * 현재 사용자의 로그인 상태 조회 API(각 상태 업데이트는 로그인, 로그아웃 메서드에서 구현)
-     *     (AccessToken을 통해 AuthUtil에서 이메일을 추출하여 로그인 상태 true와 lastActiveTime 갱신)
+     * 로그인 상태 조회
      */
     @GetMapping("/login-status")
     public ResponseEntity<ResultDTO<MemberLoginStatusDTO>> getLoginStatus() {
         String email = AuthUtil.getLoginUserId();
+        log.info("🔍 로그인 상태 조회 요청: {}", email);
+
         MemberLoginStatusDTO statusDTO = memberService.getLoginStatus(email);
         return ResponseEntity.ok(ResultDTO.of("로그인 상태 조회 성공", statusDTO));
     }

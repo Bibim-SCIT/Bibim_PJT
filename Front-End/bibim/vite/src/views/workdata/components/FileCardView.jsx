@@ -24,6 +24,7 @@ import fileIcon from "assets/images/icons/file.png";
 const fileTypeIcons = {
     "pdf": pdfIcon,
     "png": imageIcon,
+    "gif": imageIcon,
     "jpg": imageIcon,
     "docx": docIcon,
     "xlsx": excelIcon,
@@ -280,17 +281,27 @@ const FileCardView = ({ files, setFiles, loading }) => {
                 <DialogContent>
                     {selectedFile && (
                         <Box>
-                            {/* 파일 아이콘 (첫 번째 파일 기준으로 보여줌) */}
+                            {/* 파일 아이콘 또는 이미지 미리보기 */}
                             <Box sx={{ textAlign: "center", marginBottom: 2 }}>
-                                <img
-                                    src={
-                                        fileTypeIcons[selectedFile.files[0].split(".").pop().toLowerCase()] ||
-                                        fileTypeIcons["default"]
-                                    }
-                                    alt={selectedFile.files[0]}
-                                    style={{ width: 80, height: 80 }}
-                                />
+                                {(() => {
+                                    const firstFileExt = selectedFile.files[0].split(".").pop().toLowerCase();
+                                    const isImageFile = ["png", "jpg", "jpeg", "gif"].includes(firstFileExt);
+                                    return isImageFile ? (
+                                        <img
+                                            src={selectedFile.fileUrls[0]} // 파일의 URL로 이미지 미리보기
+                                            alt="파일 미리보기"
+                                            style={{ width: "100%", maxWidth: "200px", height: "auto", borderRadius: "8px" }}
+                                        />
+                                    ) : (
+                                        <img
+                                            src={fileTypeIcons[firstFileExt] || fileTypeIcons["default"]}
+                                            alt={selectedFile.files[0]}
+                                            style={{ width: 80, height: 80 }}
+                                        />
+                                    );
+                                })()}
                             </Box>
+
                             {/* 항목별 2:10 Grid 레이아웃 적용 */}
                             <Box sx={{ display: "grid", gridTemplateColumns: "2fr 10fr", gap: 1, padding: 2, alignItems: "center" }}>
                                 <Typography variant="body1" sx={{ fontWeight: "bold" }}>제목:</Typography>

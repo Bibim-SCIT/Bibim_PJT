@@ -2,54 +2,32 @@ package net.scit.backend.member.service.impl;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
-
-import net.scit.backend.member.event.MemberEvent;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.scit.backend.jwt.AuthUtil;
-import net.scit.backend.jwt.JwtTokenProvider;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.component.MailComponents;
 import net.scit.backend.component.S3Uploader;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
-import net.scit.backend.member.dto.ChangePasswordDTO;
-import net.scit.backend.member.dto.MemberDTO;
-import net.scit.backend.member.dto.MemberLoginStatusDTO;
-import net.scit.backend.member.dto.MyInfoDTO;
-import net.scit.backend.member.dto.SignupDTO;
-import net.scit.backend.member.dto.UpdateInfoDTO;
-import net.scit.backend.member.dto.VerificationDTO;
+import net.scit.backend.jwt.AuthUtil;
+import net.scit.backend.jwt.JwtTokenProvider;
+import net.scit.backend.member.dto.*;
 import net.scit.backend.member.entity.MemberEntity;
+import net.scit.backend.member.event.MemberEvent;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.member.service.MemberService;
 import org.springframework.context.ApplicationEventPublisher;
-// import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.core.userdetails.UserDetails;
-// import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-// import org.springframework.stereotype.Service;
-// import org.springframework.util.StringUtils;
-// import org.springframework.web.multipart.MultipartFile;
-
-// import java.io.IOException;
-// import java.time.LocalDateTime;
-import java.util.*;
-// import java.util.concurrent.TimeUnit;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Member관련 업무를 수행하는 Service
@@ -59,7 +37,11 @@ import java.util.*;
 @Slf4j
 public class MemberServiceImpl implements MemberService {
 
-    private static final Long MAIL_EXPIRES_IN = 300000L;
+    private static final Long MAIL_EXPIRES_IN = 300000L; // 5분
+    private static final String SIGNUP_PREFIX = "signup: ";
+    private static final String PASSWORD_PREFIX = "password: ";
+    private static final List<String> ALLOWED_IMAGE_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif");
+    private static final String PROFILE_IMAGE_PATH = "profile-images";
 
     private final MemberRepository memberRepository;
     private final MailComponents mailComponents;
@@ -72,388 +54,167 @@ public class MemberServiceImpl implements MemberService {
 
     /**
      * 회원가입 처리를 수행하는 메소드
-     *
-     * @param signupDTO 회원가입 요청 정보를 담은 DTO
-     * @param file
-     * @return 회원가입 후 결과 확인
-     * @throws RuntimeException 이메일 인증이 완료되지 않은 경우
      */
     @Override
     public ResultDTO<SuccessDTO> signup(SignupDTO signupDTO, MultipartFile file) {
-        // 검증은 나중에 추가
+        validateSignup(signupDTO);
 
-        if (!signupDTO.isEmailCheck()) {
-            throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
-        }
+        String imageUrl = uploadProfileImage(file);
+        String encryptedPassword = bCryptPasswordEncoder.encode(signupDTO.getPassword());
 
-        // 검증 로그 찍어보기 (250217 추가)
-        log.info("🚀 회원가입 요청: {}", signupDTO);
-        log.info("📷 받은 파일: {}", (file != null ? file.getOriginalFilename() : "파일 없음"));
+        MemberDTO memberDTO = createMemberDTO(signupDTO, encryptedPassword, imageUrl);
+        MemberEntity memberEntity = MemberEntity.toEntity(memberDTO);
+        memberRepository.save(memberEntity);
 
-        // 프로필 이미지
-        String imageUrl = null;
-        if (file != null && !file.isEmpty()) { // ✅ file이 null인지 먼저 체크한 후 isEmpty() 확인
-            // 파일 이름에서 확장자 추출
-            String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
-            // 지원하는 이미지 파일 확장자 목록
-            List<String> allowedExtensions = Arrays.asList("jpg", "jpeg", "png", "gif");
-            // 확장자가 이미지 파일인지 확인
-            if (fileExtension != null && allowedExtensions.contains(fileExtension.toLowerCase())) {
-                try { // 이미지 업로드하고 url 가져오기
-                    imageUrl = s3Uploader.upload(file, "profile-images");
-                    log.info("✅ 업로드 완료: {}", imageUrl);
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                    log.error("❌ S3 업로드 실패: {}", e.getMessage());
-                    throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
-                }
-            } else {
-                // 이미지 파일이 아닌 경우에 대한 처리
-                log.warn("⚠️ 파일이 없으므로 기본 프로필 이미지를 사용합니다.");
-                throw new CustomException(ErrorCode.UN_SUPPORTED_IMAGE_TYPE);
-            }
-        }
-        log.info("📝 최종 저장할 이미지 URL: {}", imageUrl);
-
-        // password 암호화
-        String password = bCryptPasswordEncoder.encode(signupDTO.getPassword());
-
-        // signupDTO의 변수를 memberDTO에 복사
-        MemberDTO memberDTO = MemberDTO.builder()
-                .email(signupDTO.getEmail())
-                .password(password)
-                .name(signupDTO.getName())
-                .nationality(signupDTO.getNationality())
-                .language(signupDTO.getLanguage())
-                .socialLoginCheck("없음")
-                .profileImage(imageUrl) // ✅ imageUrl이 DTO에 저장됨
-                .build();
-        // DTO를 entity로 변경
-        MemberEntity temp = MemberEntity.toEntity(memberDTO);
-        // 디비 저장
-        memberRepository.save(temp);
-        // 성공시 DTO 저장
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
-        // 결과 반환
-        return ResultDTO.of("회원 가입에 성공했습니다.", successDTO);
+        return createSuccessResult("회원 가입에 성공했습니다.");
     }
-
-    // /**
-    // * 이메일 중복 체크 하는 메소드
-    // *
-    // * @param email 회원가입 신청한 email
-    // * @return 중복체크 후 결과 확인
-    // */
-    // @Override
-    // public ResultDTO<SuccessDTO> checkEmail(String email) {
-    // // email 중복 검사
-    // Optional<MemberEntity> byEmail = memberRepository.findByEmail(email);
-    // if (byEmail.isPresent()) {
-    // throw new CustomException(ErrorCode.EMAIL_DUPLICATE);
-    // }
-    //
-    // // 성공시 DTO 저장
-    // SuccessDTO successDTO = SuccessDTO.builder()
-    // .success(true)
-    // .build();
-    // // 결과 반환
-    // return ResultDTO.of("이메일 중복 체크에 성공했습니다.", successDTO);
-    // }
 
     /**
      * 회원가입 인증 메일 보내는 메소드
-     *
-     * @param email 회원가입 요청 후 인증 받으려는 email
-     * @return 메일 보낸 후 결과 확인
      */
     @Override
     public ResultDTO<SuccessDTO> signupSendMail(String email) {
-
-        // 이미 가입한 회원인지 확인
-        Optional<MemberEntity> byEmail = memberRepository.findByEmail(email);
-        if (byEmail.isPresent()) {
-            throw new CustomException(ErrorCode.EMAIL_DUPLICATE);
-        }
-
-        // email 양식
-        String title = "BIBIM 회원가입 인증메일";
+        validateEmailNotRegistered(email);
         String code = generateRandomUUID();
-        String message = "<h3>5분안에 인증번호를 입력해주세요</h3> <br>" +
-                "<h1>" + code + "</h1>";
 
-        // 보내기전에 기존에 보낸 코드가 있는지 확인하고 Redis에서 삭제 후 메일 전송
-        if (redisTemplate.opsForValue().get("signup: " + email) != null) {
-            redisTemplate.delete("signup: " + email);
-        }
-        // mailcomponent의 sendmail 메소드를 통해 해당 email 주소에 메일을 전송
-        mailComponents.sendMail(email, title, message);
-
-        // redis에 uuid를 임시 저장
-        // redisTemplate.opsForValue()
-        // .set("signup: " + email, code, MAIL_EXPIRES_IN, TimeUnit.MILLISECONDS);
         try {
-            redisTemplate.opsForValue()
-                    .set("signup: " + email, code, MAIL_EXPIRES_IN, TimeUnit.MILLISECONDS);
+            sendVerificationEmail(email, code, "BIBIM 회원가입 인증메일", SIGNUP_PREFIX);
+            return createSuccessResult("메일을 보내는 것을 성공했습니다.");
         } catch (Exception e) {
             log.error("❌ Redis 저장 실패: {}", e.getMessage());
             throw new CustomException(ErrorCode.REDIS_CONNECTION_FAILED);
         }
-
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
-        return ResultDTO.of("메일을 보내는 것을 성공했습니다.", successDTO);
     }
 
     /**
      * 인증 코드 확인하는 메소드
-     *
-     * @param verificationDTO 메일 체크를 위한 클래스
-     * @return 메일 체크 후 결과 확인
-     * @throws RuntimeException 인증코드 에러
      */
     @Override
     public ResultDTO<SuccessDTO> checkMail(VerificationDTO verificationDTO) {
-
-        // 서버에서 보낸 코드와 사용자가 입력한 코드를 서로 비교
-        String code = redisTemplate.opsForValue().get("signup: " + verificationDTO.getEmail());
-        if (!code.equals(verificationDTO.getCode())) {
+        String code = redisTemplate.opsForValue().get(SIGNUP_PREFIX + verificationDTO.getEmail());
+        if (!verificationDTO.getCode().equals(code)) {
             throw new CustomException(ErrorCode.INVALID_EMAIL_CODE);
         }
 
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
-        return ResultDTO.of("인증에 성공했습니다.", successDTO);
+        return createSuccessResult("인증에 성공했습니다.");
     }
 
     /**
      * 랜덤 UUID 생성을 위한 static 메소드
-     *
-     * @return 생성한 UUID를 문자열로 변경 후 반환
      */
     public static String generateRandomUUID() {
-        Random random = new Random();
-        int randomNumber = random.nextInt(900000) + 100000; // 6자리 숫자 생성 (100000부터 999999까지)
-        return String.valueOf(randomNumber);
+        return String.valueOf(new Random().nextInt(900000) + 100000);
     }
 
     /**
      * 회원 정보 조회
-     *
-     * @return 수정된 회원 정보를 ResultDTO로 반환.
      */
     @Override
     public ResultDTO<MyInfoDTO> myInfo() {
-        // 1. JWT에서 이메일 추출
         String email = AuthUtil.getLoginUserId();
+        MemberEntity member = findMemberByEmail(email);
 
-        // 2. 이메일로 회원 특정
-        MemberEntity memberEntity = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-        // 3. MyInfoDTO 객체 생성
         MyInfoDTO myInfoDTO = MyInfoDTO.builder()
                 .success(true)
-                .email(memberEntity.getEmail())
-                .name(memberEntity.getName())
-                .nationality(memberEntity.getNationality())
-                .language(memberEntity.getLanguage())
-                .profileImage(memberEntity.getProfileImage())
-                .regDate(memberEntity.getRegDate())
+                .email(member.getEmail())
+                .name(member.getName())
+                .nationality(member.getNationality())
+                .language(member.getLanguage())
+                .profileImage(member.getProfileImage())
+                .regDate(member.getRegDate())
                 .build();
 
         return ResultDTO.of("회원 정보 조회에 성공했습니다.", myInfoDTO);
     }
 
+    /**
+     * 로그아웃 처리
+     */
     @Override
     public ResultDTO<SuccessDTO> logout() {
-
-        // 로그아웃 상태 변경 관련 코드 추가
         String email = AuthUtil.getLoginUserId();
-        this.updateLoginStatus(email, false, LocalDateTime.now()); // 🔹 로그아웃 시 DB 업데이트
+        updateLoginStatus(email, false, LocalDateTime.now());
 
         String accessToken = jwtTokenProvider.getJwtFromRequest(httpServletRequest);
-
-        // 해당 accessToken 유효시간을 가지고 와서 Redis에 BlackList로 추가
-        long expiration = jwtTokenProvider.getExpiration(accessToken);
-        long now = (new Date()).getTime();
-        long accessTokenExpiresIn = expiration - now;
-        redisTemplate.opsForValue()
-                .set(accessToken, "logout", accessTokenExpiresIn, TimeUnit.MILLISECONDS);
-
-        // 해당 유저의 refreshToken 삭제
+        blacklistAccessToken(accessToken);
         redisTemplate.delete(email + ": refreshToken");
 
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
-
-        return ResultDTO.of("로그아웃에 성공했습니다.", successDTO);
+        return createSuccessResult("로그아웃에 성공했습니다.");
     }
 
     /**
      * 회원 정보를 수정하는 메소드
-     *
-     * @param updateInfoDTO 수정할 회원 정보를 담은 DTO
-     * @param file          업로드할 프로필 이미지 파일
-     * @return 수정 성공 여부를 담은 ResultDTO
      */
     @Override
     @Transactional
     public ResultDTO<SuccessDTO> updateInfo(UpdateInfoDTO updateInfoDTO, MultipartFile file) {
-
-        // 1. JWT에서 이메일 추출
         String email = AuthUtil.getLoginUserId();
+        MemberEntity member = findMemberByEmail(email);
 
-        // 2. 이메일로 회원 특정
-        MemberEntity member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-        // 업데이트할 값이 null이면 기존 값을 유지
-
-        member.setName(updateInfoDTO.getName() != null ? updateInfoDTO.getName() : member.getName());
-        member.setNationality(
-                updateInfoDTO.getNationality() != null ? updateInfoDTO.getNationality() : member.getNationality());
-        member.setLanguage(updateInfoDTO.getLanguage() != null ? updateInfoDTO.getLanguage() : member.getLanguage());
-
-        // S3 이미지 업로드
-        if (file != null && !file.isEmpty()) {
-            try {
-                // 기존 이미지가 있을 시 삭제
-                if (member.getProfileImage() != null && !member.getProfileImage().isEmpty()) {
-                    s3Uploader.deleteFile(member.getProfileImage());
-                }
-                // 업로드
-                String fileName = s3Uploader.upload(file, "profile-images");
-                member.setProfileImage(fileName);
-            } catch (IOException e) {
-                throw new CustomException(ErrorCode.IMAGE_EXCEPTION);
-            }
-        }
-
-        // 3. 변경된 정보 저장
+        updateMemberInfo(member, updateInfoDTO);
+        updateProfileImage(member, file);
         memberRepository.save(member);
 
-        // 4. 이벤트 발생 (회원 정보 수정 이벤트)
-        eventPublisher.publishEvent(new MemberEvent(member, member.getEmail(), member.getName(), "member_update"));
+        publishMemberEvent(member, "member_update");
 
-        // 5. SuccessDTO 생성 후 반환
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
-
-        return ResultDTO.of("회원 정보가 성공적으로 수정되었습니다.", successDTO);
-
+        return createSuccessResult("회원 정보가 성공적으로 수정되었습니다.");
     }
 
+    /**
+     * 비밀번호 변경 이메일 발송
+     */
     @Override
     public ResultDTO<SuccessDTO> sendChangePasswordMail(String email) {
-
-        // email 양식
-        String title = "BIBIM 비밀번호 수정 인증메일";
         String code = generateRandomUUID();
-        String message = "<h3>5분안에 인증번호를 입력해주세요</h3> <br>" +
-                "<h1>" + code + "</h1>";
-
-        // 보내기전에 기존에 보낸 코드가 있는지 확인하고 Redis에서 삭제 후 메일 전송
-        if (redisTemplate.opsForValue().get("password: " + email) != null) {
-            redisTemplate.delete("password: " + email);
-        }
-        // mailcomponent의 sendmail 메소드를 통해 해당 email 주소에 메일을 전송
-        mailComponents.sendMail(email, title, message);
-
-        // redis에 uuid를 임시 저장
-        redisTemplate.opsForValue()
-                .set("password: " + email, code, MAIL_EXPIRES_IN, TimeUnit.MILLISECONDS);
-
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
-        return ResultDTO.of("메일을 보내는 것을 성공했습니다.", successDTO);
+        sendVerificationEmail(email, code, "BIBIM 비밀번호 수정 인증메일", PASSWORD_PREFIX);
+        return createSuccessResult("메일을 보내는 것을 성공했습니다.");
     }
 
+    /**
+     * 비밀번호 변경 처리
+     */
     @Override
     public ResultDTO<SuccessDTO> changePassword(ChangePasswordDTO changePasswordDTO) {
+        MemberEntity member = findMemberByEmail(changePasswordDTO.getEmail());
+        validatePasswordCode(changePasswordDTO);
 
-        // 이메일로 회원인지 확인하기
-        Optional<MemberEntity> optionalMember = memberRepository.findByEmail(changePasswordDTO.getEmail());
-        if (optionalMember.isEmpty()) {
-            throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
-        }
-
-        // Optional에서 꺼냄
-        MemberEntity member = optionalMember.get();
-
-        // 서버에서 보낸 코드와 사용자가 입력한 코드를 서로 비교
-        String code = redisTemplate.opsForValue().get("password: " + changePasswordDTO.getEmail());
-        if (!code.equals(changePasswordDTO.getCode())) {
-            throw new CustomException(ErrorCode.INVALID_EMAIL_CODE);
-        }
-
-        // 비밀번호 암호화
         String password = bCryptPasswordEncoder.encode(changePasswordDTO.getPassword());
-
-        // 변경된 비밀번호로 사용자 비밀번호 번경 저장
         member.setPassword(password);
         memberRepository.save(member);
 
-        // 이벤트 발생 (비밀번호 변경 이벤트)
-        eventPublisher.publishEvent(new MemberEvent(member, member.getEmail(), member.getName(), "password_update"));
+        publishMemberEvent(member, "password_update");
 
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
-
-        return ResultDTO.of("비밀번호 변경에 성공했습니다.", successDTO);
+        return createSuccessResult("비밀번호 변경에 성공했습니다.");
     }
 
     /**
      * 회원 탈퇴 처리
-     * 
-     * @param memberDTO
-     * @return
      */
     @Override
     @Transactional
     public ResultDTO<SuccessDTO> withdraw(MemberDTO memberDTO) {
-
-        // 토큰으로 사용자 정보 가져오기
         String email = AuthUtil.getLoginUserId();
-        MemberEntity member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+        MemberEntity member = findMemberByEmail(email);
 
-        // 비밀번호 검증
         if (!bCryptPasswordEncoder.matches(memberDTO.getPassword(), member.getPassword())) {
             throw new CustomException(ErrorCode.INVALID_PASSWORD);
         }
 
-        // 실제 데이터 삭제 (하드 삭제)
         memberRepository.delete(member);
-
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
-
-        return ResultDTO.of("회원탈퇴가 완료되었습니다.", successDTO);
+        return createSuccessResult("회원탈퇴가 완료되었습니다.");
     }
 
     /**
      * 로그인 상태 업데이트
-     *
-     * @param userEmail
      */
     @Override
     @Transactional
     public void updateLoginStatus(String userEmail, boolean status, LocalDateTime lastActiveTime) {
-        MemberEntity member = memberRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+        MemberEntity member = findMemberByEmail(userEmail);
 
         member.setLoginStatus(status);
-        member.setLastActiveTime(lastActiveTime); // 🔹 로그인/로그아웃 시 lastActiveTime 갱신
-        memberRepository.save(member); // 🔹 DB에 저장
+        member.setLastActiveTime(lastActiveTime);
+        memberRepository.save(member);
 
         log.info("🔹 DB 업데이트 완료: userEmail={}, loginStatus={}, lastActiveTime={}",
                 userEmail, status, lastActiveTime);
@@ -461,23 +222,146 @@ public class MemberServiceImpl implements MemberService {
 
     /**
      * 로그인 상태 조회
-     *
-     * @param userEmail
-     * @return
      */
     @Override
     public MemberLoginStatusDTO getLoginStatus(String userEmail) {
         if (userEmail == null || userEmail.isEmpty()) {
-            // 토큰이 없거나 이메일이 없는 경우 false 반환 (lastActiveTime은 null로 처리)
             return new MemberLoginStatusDTO("", false, null);
         }
+
         Optional<MemberEntity> optionalMember = memberRepository.findByEmail(userEmail);
         if (optionalMember.isPresent()) {
             MemberEntity member = optionalMember.get();
             return new MemberLoginStatusDTO(member.getEmail(), member.isLoginStatus(), member.getLastActiveTime());
-        } else {
-            // 이메일이 존재하지 않는 경우에도 false 반환 (lastActiveTime은 null로 처리)
-            return new MemberLoginStatusDTO(userEmail, false, null);
+        }
+
+        return new MemberLoginStatusDTO(userEmail, false, null);
+    }
+
+    // ========================= 유틸리티 메서드 =========================
+
+    private void validateSignup(SignupDTO signupDTO) {
+        if (!signupDTO.isEmailCheck()) {
+            throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
+        }
+        log.info("🚀 회원가입 요청: {}", signupDTO);
+    }
+
+    private String uploadProfileImage(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            log.info("📷 받은 파일: 파일 없음");
+            return null;
+        }
+
+        log.info("📷 받은 파일: {}", file.getOriginalFilename());
+        String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+
+        if (fileExtension == null || !ALLOWED_IMAGE_EXTENSIONS.contains(fileExtension.toLowerCase())) {
+            log.warn("⚠️ 지원하지 않는 이미지 형식입니다.");
+            throw new CustomException(ErrorCode.UN_SUPPORTED_IMAGE_TYPE);
+        }
+
+        try {
+            String imageUrl = s3Uploader.upload(file, PROFILE_IMAGE_PATH);
+            log.info("✅ 업로드 완료: {}", imageUrl);
+            return imageUrl;
+        } catch (Exception e) {
+            log.error("❌ S3 업로드 실패: {}", e.getMessage());
+            throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
+        }
+    }
+
+    private MemberDTO createMemberDTO(SignupDTO signupDTO, String encodedPassword, String imageUrl) {
+        return MemberDTO.builder()
+                .email(signupDTO.getEmail())
+                .password(encodedPassword)
+                .name(signupDTO.getName())
+                .nationality(signupDTO.getNationality())
+                .language(signupDTO.getLanguage())
+                .socialLoginCheck("없음")
+                .profileImage(imageUrl)
+                .build();
+    }
+
+    private ResultDTO<SuccessDTO> createSuccessResult(String message) {
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+        return ResultDTO.of(message, successDTO);
+    }
+
+    private void validateEmailNotRegistered(String email) {
+        if (memberRepository.findByEmail(email).isPresent()) {
+            throw new CustomException(ErrorCode.EMAIL_DUPLICATE);
+        }
+    }
+
+    private void sendVerificationEmail(String email, String code, String title, String redisKeyPrefix) {
+        String message = "<h3>5분안에 인증번호를 입력해주세요</h3> <br>" +
+                "<h1>" + code + "</h1>";
+
+        // 기존 코드가 있다면 삭제
+        if (redisTemplate.opsForValue().get(redisKeyPrefix + email) != null) {
+            redisTemplate.delete(redisKeyPrefix + email);
+        }
+
+        // 메일 전송
+        mailComponents.sendMail(email, title, message);
+
+        // Redis에 저장
+        redisTemplate.opsForValue().set(redisKeyPrefix + email, code, MAIL_EXPIRES_IN, TimeUnit.MILLISECONDS);
+    }
+
+    private MemberEntity findMemberByEmail(String email) {
+        return memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    private void blacklistAccessToken(String accessToken) {
+        long expiration = jwtTokenProvider.getExpiration(accessToken);
+        long now = (new Date()).getTime();
+        long accessTokenExpiresIn = expiration - now;
+        redisTemplate.opsForValue()
+                .set(accessToken, "logout", accessTokenExpiresIn, TimeUnit.MILLISECONDS);
+    }
+
+    private void updateMemberInfo(MemberEntity member, UpdateInfoDTO updateInfoDTO) {
+        if (updateInfoDTO.getName() != null) {
+            member.setName(updateInfoDTO.getName());
+        }
+        if (updateInfoDTO.getNationality() != null) {
+            member.setNationality(updateInfoDTO.getNationality());
+        }
+        if (updateInfoDTO.getLanguage() != null) {
+            member.setLanguage(updateInfoDTO.getLanguage());
+        }
+    }
+
+    private void updateProfileImage(MemberEntity member, MultipartFile file) {
+        if (file != null && !file.isEmpty()) {
+            try {
+                // 기존 이미지가 있을 시 삭제
+                if (member.getProfileImage() != null && !member.getProfileImage().isEmpty()) {
+                    s3Uploader.deleteFile(member.getProfileImage());
+                }
+
+                // 새 이미지 업로드
+                String fileName = s3Uploader.upload(file, PROFILE_IMAGE_PATH);
+                member.setProfileImage(fileName);
+            } catch (IOException e) {
+                throw new CustomException(ErrorCode.IMAGE_EXCEPTION);
+            }
+        }
+    }
+
+    private void publishMemberEvent(MemberEntity member, String eventType) {
+        eventPublisher.publishEvent(new MemberEvent(member, member.getEmail(), member.getName(), eventType));
+    }
+
+    private void validatePasswordCode(ChangePasswordDTO changePasswordDTO) {
+        String storedCode = redisTemplate.opsForValue().get(PASSWORD_PREFIX + changePasswordDTO.getEmail());
+        if (!changePasswordDTO.getCode().equals(storedCode)) {
+            throw new CustomException(ErrorCode.INVALID_EMAIL_CODE);
         }
     }
 }

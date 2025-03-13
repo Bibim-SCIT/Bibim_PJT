@@ -63,9 +63,10 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 전용
                         .requestMatchers("/user/**", "/schedule/**", "/members/myinfo", "/members/changeinfo",
                                 "/members/withdraw",
-                                "/workspace/**")
+                                "/workspace/**",
+                                "/mypage/**")
                         .hasRole("USER") // 사용자 전용
-                        .requestMatchers("/notification/subscribe").permitAll() // ✅ SSE 구독 요청 허용
+                        .requestMatchers("/notification/{notificationId}", "/notification/subscribe").permitAll() // ✅ SSE 및 리다이렉트 허용
                         .requestMatchers("/notification/unread", "/notification/read-single",
                                 "/notification/read-all", "/notification/delete")
                         .authenticated() // ✅ 알림 관련 API는 인증 필요
@@ -81,7 +82,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000")); // ✅ React 허용
+        config.setAllowedOrigins(List.of("http://localhost:3000", // ✅ React 허용
+                                         "https://bibim-main.vercel.app",
+                                         "https://bibim-dev.vercel.app",
+                                         "https://bibim.shop",
+                                         "https://dev.bibim.shop"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")); // ✅ 허용할 HTTP 메소드
         config.setAllowedHeaders(List.of("*")); // ✅ 모든 헤더 허용
         config.setAllowCredentials(true);

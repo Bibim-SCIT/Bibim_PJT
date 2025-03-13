@@ -1,6 +1,8 @@
 Front-End/bibim/vite/yarn.lock
 /Front-End/bibim/vite/node_modules
 /Front-End/bibim/vite/.vite
+/Front-End/bibim/vite/.env
 .vscode/launch.json
 Front-End/bibim/vite/yarn.lock
 node_modules
+Back-End/src/main/resources/application.yml

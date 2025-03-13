@@ -159,6 +159,11 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .collect(Collectors.toMap(
                         wm -> wm.getMember().getEmail(),  // 멤버의 이메일을 ID로 사용
                         WorkspaceMemberEntity::getNickname));
+        // 워크스페이스 내 모든 멤버의 프로필 이미지 한 번에 가져오기
+        Map<String, String> memberProfileImage = workspaceMembers.stream()
+                .collect(Collectors.toMap(
+                        wm -> wm.getMember().getEmail(),  // 멤버의 이메일을 ID로 사용
+                        WorkspaceMemberEntity::getProfileImage));
 
         // 해당 워크스페이스의 전체 스케줄 정보 가져오기
         List<ScheduleEntity> schedules = scheduleRepository.findAllByWorkspace(workspace);
@@ -188,15 +193,15 @@ public class ScheduleServiceImpl implements ScheduleService {
                     String profileImage;
                     if (scheduleEntity.getMember() != null && scheduleEntity.getMember().getEmail() != null) {
                         nickname = memberNicknames.get(scheduleEntity.getMember().getEmail());
-                        profileImage = scheduleEntity.getMember().getProfileImage();
+                        profileImage = memberProfileImage.get(scheduleEntity.getMember().getEmail());
                     } else {
                         nickname = null;
                         profileImage = null;
                     }
 
-//                    ScheduleTagEntity scheduleTagEntity = scheduleTagMap.get(scheduleEntity.getScheduleNumber());
-                    ScheduleTagEntity scheduleTagEntity = (scheduleEntity.getScheduleNumber() != null)
-                            ? scheduleTagMap.get(scheduleEntity.getScheduleNumber())
+                    ScheduleTagEntity scheduleTagEntity = (scheduleEntity.getScheduleNumber() != null
+                            && scheduleEntity.getScheduleTag() != null)
+                            ? scheduleTagMap.get(scheduleEntity.getScheduleTag().getScheduleTagNumber())
                             : null;
 
                     // 태그가 있을 경우와 없을 경우 분기 처리하여 DTO 생성
@@ -233,7 +238,6 @@ public class ScheduleServiceImpl implements ScheduleService {
         workspaceMemberRepository.findByWorkspaceAndMember(workspace, member)
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
 
-
         // 담당자 찾아오기
         WorkspaceMemberEntity workspaceMemberEntity = workspaceMemberRepository.findByWorkspaceAndMember(workspace, member)
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
@@ -242,10 +246,6 @@ public class ScheduleServiceImpl implements ScheduleService {
 
 
         // 해당 스케줄의 태그 가져오기
-//        ScheduleDTO scheduleDTO = scheduleTagRepository.findBySchedule(scheduleEntity)
-//                .map(scheduleTagEntity -> ScheduleDTO.toDTO(scheduleEntity, nickname, profileImage, scheduleTagEntity))
-//                .orElseGet(() -> ScheduleDTO.toDTO(scheduleEntity, nickname, profileImage));
-
         ScheduleTagEntity scheduleTagEntity = scheduleEntity.getScheduleTag();
         ScheduleDTO scheduleDTO = scheduleTagEntity != null
                 ? ScheduleDTO.toDTO(scheduleEntity, nickname, profileImage, scheduleTagEntity)
