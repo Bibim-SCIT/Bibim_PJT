@@ -6,7 +6,7 @@ on:
       - dev  # dev 브랜치에 푸시될 때 자동 실행
     paths:
       - 'Back-End/**'  # 'Back-End/' 폴더 내의 파일들이 변경될 때만 배포 트리거
-
+      
   workflow_dispatch: # 이 부분을 추가하여 수동으로 트리거 가능하게 만듦
     inputs:
       environment:
