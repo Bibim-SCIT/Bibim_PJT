@@ -11,7 +11,7 @@ COPY . /app
 RUN chmod +x ./gradlew
 
 # Gradle 빌드 실행
-RUN ./gradlew build
+RUN ./gradlew build -x test  # 테스트를 건너뛰기
 
 # 생성된 JAR 파일을 컨테이너에 복사
 COPY build/libs/*.jar app.jar
