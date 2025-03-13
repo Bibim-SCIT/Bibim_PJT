@@ -13,7 +13,7 @@ const ChatLoading = ({ text = "채팅 불러오는중..." }) => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                height: '30vh', // 전체 화면 높이로 중앙 정렬
+                height: '100%', // 부모 컨테이너의 높이에 맞춤
             }}
         >
             <Lottie
