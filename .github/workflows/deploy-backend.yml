@@ -7,6 +7,13 @@ on:
     paths:
       - 'Back-End/**'  # 'Back-End/' 폴더 내의 파일들이 변경될 때만 배포 트리거
 
+  workflow_dispatch: # 이 부분을 추가하여 수동으로 트리거 가능하게 만듦
+    inputs:
+      environment:
+        description: '배포할 환경을 선택하세요.'
+        required: true
+        default: 'dev'
+
 jobs:
   build:
     runs-on: ubuntu-latest
