@@ -35,8 +35,8 @@ public class MyPageServiceImpl implements MyPageService {
 
     /**
      * 내 스케줄 조회
+     *
      * @return 내 스케줄 목록
-     * 
      */
     @Override
     public ResultDTO<List<MyScheduleDTO>> getSchedule() {
@@ -49,23 +49,35 @@ public class MyPageServiceImpl implements MyPageService {
         List<MyScheduleDTO> myScheduleDTOList = new ArrayList<>();
 
         for (ScheduleEntity scheduleEntity : scheduleEntityList) {
-            MyScheduleDTO myScheduleDTO = MyScheduleDTO.builder()
+
+            MyScheduleDTO.MyScheduleDTOBuilder dtoBuilder = MyScheduleDTO.builder()
                     .wsId(scheduleEntity.getWorkspace().getWsId())
                     .wsName(scheduleEntity.getWorkspace().getWsName())
                     .scheduleNumber(scheduleEntity.getScheduleNumber())
-                    .tag1(scheduleEntity.getScheduleTag().getLargeTag().getTagName())
-                    .tag2(scheduleEntity.getScheduleTag().getMediumTag().getTagName())
-                    .tag3(scheduleEntity.getScheduleTag().getSmallTag().getTagName())
                     .scheduleTitle(scheduleEntity.getScheduleTitle())
                     .scheduleContent(scheduleEntity.getScheduleContent())
                     .scheduleStatus(scheduleEntity.getScheduleStatus())
                     .scheduleStartDate(scheduleEntity.getScheduleStartdate())
                     .scheduleFinishDate(scheduleEntity.getScheduleFinishdate())
                     .scheduleModifytime(scheduleEntity.getScheduleModifytime())
-                    .color(scheduleEntity.getScheduleTag().getLargeTag().getTagColor())
-                    .build();
+                    .color("#DBE2EF"); // 기본 색상 설정
 
-            myScheduleDTOList.add(myScheduleDTO);
+            // ScheduleTag가 null이 아닌 경우에만 추가적인 태그 정보 설정
+            if (scheduleEntity.getScheduleTag() != null) {
+                dtoBuilder
+                        .tag1(scheduleEntity.getScheduleTag().getLargeTag().getTagName())
+                        .tag2(scheduleEntity.getScheduleTag().getMediumTag().getTagName())
+                        .tag3(scheduleEntity.getScheduleTag().getSmallTag().getTagName())
+                        .color(scheduleEntity.getScheduleTag().getLargeTag().getTagColor()); // 태그 색상 업데이트
+            } else {
+                dtoBuilder
+                        .tag1("")
+                        .tag2("")
+                        .tag3(""); // null인 경우 빈 문자열 처리
+            }
+
+            // DTO 빌드 및 리스트에 추가
+            myScheduleDTOList.add(dtoBuilder.build());
         }
 
         return ResultDTO.of("나의 전체 스케줄 불러오기에 성공했습니다.", myScheduleDTOList);
@@ -73,6 +85,7 @@ public class MyPageServiceImpl implements MyPageService {
 
     /**
      * 모든 워크스페이스 데이터 조회
+     *
      * @return 모든 워크스페이스 데이터 목록
      */
     @Override
