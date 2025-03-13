@@ -1,15 +1,21 @@
 package net.scit.backend.jwt;
 
-import io.jsonwebtoken.*;
+import java.security.Key;
+import java.util.Date;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 import net.scit.backend.member.dto.TokenDTO;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import java.security.Key;
-import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
@@ -115,11 +121,13 @@ public class JwtTokenProvider {
      * JWT 토큰의 만료 시간 가져오기
      *
      * @param token JWT 토큰
-     * @return 남은 토큰 유효 시간 (밀리초)
+     * @return 남은 토큰 유효 시간 (밀리초), 최소 0 이상의 값 반환
      */
     public Long getExpiration(String token) {
         Date expiration = getClaimsFromToken(token).getExpiration();
-        return expiration.getTime() - new Date().getTime();
+        long timeToExpire = expiration.getTime() - new Date().getTime();
+        // 음수가 나오면 0을 반환
+        return Math.max(0L, timeToExpire);
     }
 
     /**

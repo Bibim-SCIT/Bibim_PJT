@@ -1,5 +1,15 @@
 package net.scit.backend.oauth.service.impl;
 
+import java.time.LocalDate;
+import java.util.Date;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
 import lombok.RequiredArgsConstructor;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
@@ -11,16 +21,6 @@ import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.oauth.dto.GoogleDTO;
 import net.scit.backend.oauth.service.OAuthService;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
-import java.time.LocalDate;
-import java.util.Date;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -75,6 +75,13 @@ public class OAuthServiceImpl implements OAuthService {
 
         // 새 토큰 저장
         long refreshTokenExpiresIn = jwtTokenProvider.getExpiration(refreshToken) - new Date().getTime();
+
+        // 만료 시간이 음수인 경우 처리
+        if (refreshTokenExpiresIn <= 0) {
+            System.out.println("토큰 만료 시간이 음수입니다. 기본값 1시간으로 설정합니다. 만료 시간: " + refreshTokenExpiresIn);
+            refreshTokenExpiresIn = 3600000; // 1시간으로 기본값 설정
+        }
+
         redisTemplate.opsForValue().set(redisKey, refreshToken, refreshTokenExpiresIn, TimeUnit.MILLISECONDS);
 
         return ResultDTO.of("로그인에 성공했습니다.", tokenDTO);
