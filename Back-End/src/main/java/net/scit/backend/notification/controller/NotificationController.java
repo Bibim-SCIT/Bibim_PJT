@@ -7,6 +7,8 @@ import net.scit.backend.notification.entity.NotificationEntity;
 import net.scit.backend.notification.service.NotificationService;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,151 +20,89 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/notification") // 기본 URL 유지
-@RequiredArgsConstructor // Lombok을 이용한 생성자 자동 생성
-@Slf4j // 로깅 추가
+@RequestMapping("/notification")
+@RequiredArgsConstructor
+@Slf4j
 public class NotificationController {
 
     private final NotificationService notificationService;
     private final WorkspaceMemberRepository workspaceMemberRepository;
 
-
-    /**
-     * 로그인 후 SSE 연결 수립
-     * @param token
-     * @return
-     */
     @GetMapping("/subscribe")
-        public SseEmitter subscribe(@RequestHeader("Authorization") String token) {
-            // 현재 로그인한 사용자 이메일 가져오기
-            String email = AuthUtil.getLoginUserId();
-
-            // SSE 구독 (Service 계층 호출)
-            SseEmitter emitter = notificationService.subscribe(email);
-
-            // 미확인 알림 조회 (읽음 처리는 여기서 하지 않는다고 가정)
-            List<NotificationEntity> unreadNotifications = notificationService.getUnreadNotifications(email);
-
-            // 미확인 알림을 SSE 이벤트로 전송 (이 시점에서는 "자동 읽음" 처리 안 함)
-            unreadNotifications.forEach(notification -> {
-                try {
-                    emitter.send(
-                            SseEmitter.event()
-                                    .name("HISTORY")
-                                    .data(notification)
-                    );
-                } catch (IOException e) {
-                    emitter.completeWithError(e);
-                }
-            });
-
-            return emitter;
-        }
-
-    /**
-     * 로그아웃 시 SSE 연결 종료
-     * @param token
-     * @return
-     */
-    @PostMapping("/logout")
-        public ResponseEntity<String> logout(@RequestHeader("Authorization") String token) {
-            // 현재 로그인한 사용자 이메일
-            String email = AuthUtil.getLoginUserId();
-
-            // SSE 구독 해제
-            notificationService.unsubscribe(email);
-
-            // 여기서 세션 무효화 등의 로그아웃 처리 로직 추가 가능
-            // session.invalidate() 등
-
-            return ResponseEntity.ok("로그아웃 성공");
-        }
-
-
-    /**
-     * ✅ 특정 사용자의 읽지 않은 알림 조회 (JWT 기반)
-     * 
-     * @param token
-     * @return
-     */
-    @GetMapping("/unread")
-    public ResponseEntity<List<NotificationEntity>> getUnreadNotifications(
-            @RequestHeader("Authorization") String token) {
+    public SseEmitter subscribe(@RequestHeader("Authorization") String token) {
         String email = AuthUtil.getLoginUserId();
-        List<NotificationEntity> unreadNotifications = notificationService.getUnreadNotifications(email);
+        SseEmitter emitter = notificationService.subscribe(email);
+        // 페이지 0, 100개로 조회 (대부분의 경우 unread 알림은 많지 않으므로)
+        List<NotificationEntity> unreadNotifications = notificationService.getUnreadNotifications(email, PageRequest.of(0, 100)).getContent();
+        unreadNotifications.forEach(notification -> {
+            try {
+                emitter.send(SseEmitter.event().name("HISTORY").data(notification));
+            } catch (IOException e) {
+                emitter.completeWithError(e);
+            }
+        });
+        return emitter;
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestHeader("Authorization") String token) {
+        String email = AuthUtil.getLoginUserId();
+        notificationService.unsubscribe(email);
+        return ResponseEntity.ok("로그아웃 성공");
+    }
+
+    @GetMapping("/unread")
+    public ResponseEntity<Page<NotificationEntity>> getUnreadNotifications(
+            @RequestHeader("Authorization") String token,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        String email = AuthUtil.getLoginUserId();
+        Page<NotificationEntity> unreadNotifications = notificationService.getUnreadNotifications(email, PageRequest.of(page, size));
         return ResponseEntity.ok(unreadNotifications);
     }
 
-    /**
-     * / ✅ 알림 개별 읽음 처리 (JWT 기반)
-     * 
-     * @param token
-     * @param notificationNumber
-     * @return
-     */
-    @PostMapping("/read-single")
-    public ResponseEntity<String> markAsRead(@RequestHeader("Authorization") String token,
-            @RequestParam Long notificationNumber) {
-        boolean result = notificationService.markAsRead(notificationNumber);
-        return result
-                ? ResponseEntity.ok("해당 알림을 읽는 데 성공하였습니다")
-                : ResponseEntity.badRequest().body("해당 알림을 읽는 데 실패하였습니다");
+    @GetMapping("/read")
+    public ResponseEntity<Page<NotificationEntity>> getReadNotifications(
+            @RequestHeader("Authorization") String token,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        String email = AuthUtil.getLoginUserId();
+        Page<NotificationEntity> readNotifications = notificationService.getReadNotifications(email, PageRequest.of(page, size));
+        return ResponseEntity.ok(readNotifications);
     }
 
-    /**
-     * ✅ 알림 모두 읽음 처리 (JWT 기반)
-     * 
-     * @param token
-     * @return
-     */
+    @PostMapping("/read-single")
+    public ResponseEntity<String> markAsRead(@RequestHeader("Authorization") String token,
+                                             @RequestParam Long notificationNumber) {
+        boolean result = notificationService.markAsRead(notificationNumber);
+        return result ? ResponseEntity.ok("해당 알림을 읽는 데 성공하였습니다") : ResponseEntity.badRequest().body("해당 알림을 읽는 데 실패하였습니다");
+    }
+
     @PostMapping("/read-all")
     public ResponseEntity<String> markAllAsRead(@RequestHeader("Authorization") String token) {
         String email = AuthUtil.getLoginUserId();
         boolean result = notificationService.markAllAsRead(email);
-
-        return result
-                ? ResponseEntity.ok("모든 알림을 읽음 처리하는 데에 성공하였습니다.")
-                : ResponseEntity.ok("읽지 않은 알림이 없습니다.");
+        return result ? ResponseEntity.ok("모든 알림을 읽음 처리하는 데에 성공하였습니다.") : ResponseEntity.ok("읽지 않은 알림이 없습니다.");
     }
 
-    /**
-     * ✅ 알림 삭제 (JWT 기반 + 워크스페이스 검증 추가)
-     * 
-     * @param token
-     * @param notificationNumber
-     * @param workspaceId
-     * @return
-     */
     @DeleteMapping
     public ResponseEntity<String> deleteNotification(@RequestHeader("Authorization") String token,
-            @RequestParam Long notificationNumber,
-            @RequestParam Long workspaceId) {
+                                                     @RequestParam Long notificationNumber,
+                                                     @RequestParam Long workspaceId) {
         try {
             String email = AuthUtil.getLoginUserId();
-
-            // 워크스페이스 및 사용자 검증
-            Optional<WorkspaceMemberEntity> optionalWsMember = workspaceMemberRepository
-                    .findByWorkspace_wsIdAndMember_Email(workspaceId, email);
-
+            Optional<WorkspaceMemberEntity> optionalWsMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(workspaceId, email);
             if (optionalWsMember.isEmpty()) {
                 return ResponseEntity.badRequest().body("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.");
             }
-
             boolean result = notificationService.deleteNotification(notificationNumber);
-            return result
-                    ? ResponseEntity.ok("알림 삭제 완료")
-                    : ResponseEntity.badRequest().body("알림 삭제 실패");
+            return result ? ResponseEntity.ok("알림 삭제 완료") : ResponseEntity.badRequest().body("알림 삭제 실패");
         } catch (Exception e) {
             log.error("알림 삭제 중 오류 발생", e);
             return ResponseEntity.status(500).body("알림 삭제 중 오류 발생: " + e.getMessage());
         }
     }
 
-    /**
-     * 알림 클릭 시 해당 알림의 URL로 리다이렉트
-     * @param notificationId
-     * @return
-     */
     @GetMapping("/{notificationId}")
     public ResponseEntity<Void> redirectToNotificationUrl(@PathVariable Long notificationId) {
         String url = notificationService.getNotificationUrl(notificationId);
@@ -170,5 +110,4 @@ public class NotificationController {
         headers.add("Location", url);
         return new ResponseEntity<>(headers, HttpStatus.FOUND);
     }
-
 }
