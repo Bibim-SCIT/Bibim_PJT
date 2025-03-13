@@ -115,7 +115,7 @@ jobs:
       run: |
         # 각 IP 대역을 보안 그룹에 추가
         while IFS= read -r ip_range; do
-          aws ec2 authorize-security-group-ingress --region us-east-1 --group-id ${{ secrets.SECURITY_GROUP_ID }} --protocol tcp --port 8080 --cidr $ip_range
+          aws ec2 authorize-security-group-ingress --region ap-northeast-2 --group-id ${{ secrets.SECURITY_GROUP_ID }} --protocol tcp --port 8080 --cidr $ip_range
         done < github-actions-ips.txt
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
