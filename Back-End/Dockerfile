@@ -7,6 +7,12 @@ WORKDIR /app
 # 애플리케이션 파일을 컨테이너로 복사
 COPY . /app
 
+# 현재 작업 디렉토리 출력 (디버깅용)
+RUN pwd
+
+# 현재 디렉토리 구조 출력 (디버깅용)
+RUN ls -alh
+
 # gradlew에 실행 권한 부여
 RUN chmod +x ./gradlew
 
@@ -17,7 +23,7 @@ RUN ./gradlew build -x test  # 테스트를 건너뛰기
 RUN ls -alh build/libs
 
 # 생성된 JAR 파일을 컨테이너에 복사
-COPY ./build/libs/*.jar /app/app.jar
+COPY build/libs/*.jar /app/app.jar
 
 # 애플리케이션 포트 노출
 EXPOSE 8080
