@@ -17,7 +17,7 @@ RUN ./gradlew build -x test  # 테스트를 건너뛰기
 RUN ls -alh build/libs
 
 # 생성된 JAR 파일을 컨테이너에 복사
-COPY build/libs/*.jar app.jar
+COPY ./Back-End/build/libs/*.jar app.jar
 
 # 애플리케이션 포트 노출
 EXPOSE 8080
