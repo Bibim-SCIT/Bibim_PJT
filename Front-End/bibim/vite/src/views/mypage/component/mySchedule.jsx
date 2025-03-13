@@ -130,7 +130,7 @@ const MySchedule = () => {
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center' }}>
             <CalendarMonthIcon sx={{ mr: 1 }} />
-            내 스케줄 ver.4
+            내 일정 관리
           </Typography>
           
           <ToggleButtonGroup

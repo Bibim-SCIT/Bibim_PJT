@@ -15,7 +15,7 @@ const GanttWrapper = styled(Box)({
   background: "#fff",
   borderRadius: "10px",
   boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-  overflow: 'hidden', // 'hidden'으로 설정 (GanttChart와 동일하게)
+  overflow: 'hidden',
 });
 
 // 날짜를 'YYYY.MM.DD' 형식으로 변환하는 함수
@@ -114,22 +114,6 @@ const MyGanttChart = ({ tasks, onTaskClick }) => {
   // 간트 차트 렌더링 최적화를 위한 메모이제이션
   const memoizedTasks = useMemo(() => tasks, [tasks]);
 
-  // 간트 차트 컴포넌트 속성 메모이제이션
-  const ganttProps = useMemo(() => ({
-    tasks: memoizedTasks,
-    viewMode,
-    columnWidth: 80,
-    barCornerRadius: 5,
-    fontSize: 12,
-    locale: "ko",
-    TooltipContent: CustomTooltip,
-    preStepsCount: 5,
-    viewDate: new Date(),
-    listCellWidth: "120px",
-    TaskListHeader: CustomTaskListHeader,
-    ganttHeight: 400,
-  }), [memoizedTasks, viewMode]);
-
   return (
     <GanttWrapper>
       <Box sx={{ textAlign: "right", mb: 2 }}>
@@ -150,7 +134,17 @@ const MyGanttChart = ({ tasks, onTaskClick }) => {
 
       {memoizedTasks.length > 0 ? (
         <Gantt
-          {...ganttProps}
+          tasks={memoizedTasks}
+          viewMode={viewMode}
+          columnWidth={80}
+          barCornerRadius={5}
+          fontSize={12}
+          locale="ko"
+          TooltipContent={CustomTooltip}
+          preStepsCount={5}
+          viewDate={new Date()}
+          listCellWidth="120px"
+          TaskListHeader={CustomTaskListHeader}
           TaskListTable={(props) => <CustomTaskListTable {...props} onTaskClick={handleTaskClick} />}
         />
       ) : (
