@@ -1,23 +1,24 @@
 package net.scit.backend.member.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import net.scit.backend.common.ResultDTO;
-import net.scit.backend.member.dto.LoginMemberDetail;
-import net.scit.backend.member.entity.MemberEntity;
-import net.scit.backend.member.repository.MemberRepository;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.security.authentication.BadCredentialsException;
-import net.scit.backend.jwt.JwtTokenProvider;
-import net.scit.backend.member.dto.TokenDTO;
 
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import net.scit.backend.common.ResultDTO;
+import net.scit.backend.jwt.JwtTokenProvider;
+import net.scit.backend.member.dto.LoginMemberDetail;
+import net.scit.backend.member.dto.TokenDTO;
+import net.scit.backend.member.entity.MemberEntity;
+import net.scit.backend.member.repository.MemberRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -69,6 +70,16 @@ public class MemberDetailsService implements UserDetailsService {
         long expiration = jwtTokenProvider.getExpiration(refreshToken);
         long now = (new Date()).getTime();
         long refreshTokenExpiresIn = expiration - now;
+
+        // 만료 시간이 음수인 경우 처리
+        if (refreshTokenExpiresIn <= 0) {
+            log.warn("토큰 만료 시간이 음수입니다. 기본값 1시간으로 설정합니다. expiration: {}, now: {}, diff: {}",
+                    expiration, now, refreshTokenExpiresIn);
+            refreshTokenExpiresIn = 3600000; // 1시간으로 기본값 설정
+        } else {
+            log.info("토큰 만료 시간: {}ms", refreshTokenExpiresIn);
+        }
+
         redisTemplate.opsForValue().set(email + ": refreshToken", refreshToken, refreshTokenExpiresIn, TimeUnit.MILLISECONDS);
 
         // 토큰 발급 로깅 추가
