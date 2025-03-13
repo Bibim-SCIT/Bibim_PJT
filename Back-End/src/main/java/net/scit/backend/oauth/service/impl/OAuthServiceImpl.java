@@ -14,6 +14,7 @@ import net.scit.backend.oauth.service.OAuthService;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.util.Date;
@@ -24,7 +25,11 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class OAuthServiceImpl implements OAuthService {
-    private static final Long link_EXPIRES = 300000L;
+    private static final long LINK_EXPIRES_MILLIS = 300000L;
+    private static final String OAUTH_LINK_PREFIX = "oauth_link_";
+    private static final String REFRESH_TOKEN_SUFFIX = ": refreshToken";
+    private static final String NONE = "없음";
+    private static final String GOOGLE = "google";
 
     private final JwtTokenProvider jwtTokenProvider;
     private final MemberRepository memberRepository;
@@ -33,74 +38,68 @@ public class OAuthServiceImpl implements OAuthService {
 
     @Override
     public ResultDTO<TokenDTO> googleLogin(GoogleDTO googleDTO) {
-
-        // 기존 회원인지 확인
         String email = googleDTO.getEmail();
-        Optional<MemberEntity> existingMember = memberRepository.findByEmail(email);
+        return memberRepository.findByEmail(email)
+                .map(member -> handleExistingMember(member, googleDTO))
+                .orElseGet(() -> saveNewMember(googleDTO, GOOGLE));
+    }
 
-        if (existingMember.isPresent()) {
-            MemberEntity member = existingMember.get();
-
-            // 기존 소셜 가입 회원이면서 소셜 로그인 체크가 이미 되어 있다며, 로그인만 진행
-            if (!member.getSocialLoginCheck().equals("없음")) {
-                // JWT 토큰 생성
-                return createToken(member);
-            }
-
-            // 기존 회원이지만, 소셜 로그인 체크가 없다면 연결 동의 확인
-            String linked = redisTemplate.opsForValue().get("oauth_link_" + email);
-            if ("true".equals(linked)) {
-                // 동의 했으면 연동 후 로그인
-                redisTemplate.delete("oauth_link_" + email);
-                return updateExistingMember(member, googleDTO, "google");
-            } else {
-                // 동의 하지 않았을 시 exception
-                throw new CustomException(ErrorCode.UNLINKED_MEMBER);
-            }
+    private ResultDTO<TokenDTO> handleExistingMember(MemberEntity member, GoogleDTO googleDTO) {
+        // 소셜 로그인 체크가 이미 되어 있는 경우
+        if (!NONE.equals(member.getSocialLoginCheck())) {
+            return createToken(member);
         }
 
-        // 새로운 회원일 경우 회원가입 후 로그인
-        return saveNewMember(googleDTO, "google");
+        // 소셜 로그인 체크가 없는 경우 연결 동의 확인
+        String linked = redisTemplate.opsForValue().get(OAUTH_LINK_PREFIX + member.getEmail());
+        if ("true".equals(linked)) {
+            redisTemplate.delete(OAUTH_LINK_PREFIX + member.getEmail());
+            return updateExistingMember(member, googleDTO, GOOGLE);
+        }
+
+        // 동의하지 않은 경우
+        throw new CustomException(ErrorCode.UNLINKED_MEMBER);
     }
 
     private ResultDTO<TokenDTO> createToken(MemberEntity member) {
         String email = member.getEmail();
+        String redisKey = email + REFRESH_TOKEN_SUFFIX;
 
-        TokenDTO tokenDTO = jwtTokenProvider.generateToken(member.getEmail());
+        TokenDTO tokenDTO = jwtTokenProvider.generateToken(email);
         String refreshToken = tokenDTO.getRefreshToken();
 
-        // Redis에 refreshToken이 있는지 확인 후 있으면 삭제 후 추가
-        String existingToken = redisTemplate.opsForValue().get(email + ": refreshToken");
-        if (existingToken != null && !existingToken.isEmpty()) {
-            redisTemplate.delete(email + ": refreshToken");
+        // 기존 토큰이 있으면 삭제
+        if (StringUtils.hasText(redisTemplate.opsForValue().get(redisKey))) {
+            redisTemplate.delete(redisKey);
         }
 
-        long expiration = jwtTokenProvider.getExpiration(refreshToken);
-        long now = (new Date()).getTime();
-        long refreshTokenExpiresIn = expiration - now;
-        redisTemplate.opsForValue().set(email + ": refreshToken", refreshToken, refreshTokenExpiresIn, TimeUnit.MILLISECONDS);
+        // 새 토큰 저장
+        long refreshTokenExpiresIn = jwtTokenProvider.getExpiration(refreshToken) - new Date().getTime();
+        redisTemplate.opsForValue().set(redisKey, refreshToken, refreshTokenExpiresIn, TimeUnit.MILLISECONDS);
 
         return ResultDTO.of("로그인에 성공했습니다.", tokenDTO);
     }
 
     private ResultDTO<TokenDTO> updateExistingMember(MemberEntity member, GoogleDTO googleDTO, String snsName) {
-        MemberEntity updateMember = member.toBuilder()
+        // 회원 정보 업데이트
+        MemberEntity updatedMember = member.toBuilder()
                 .name(googleDTO.getName())
                 .socialLoginCheck(snsName)
                 .build();
-        memberRepository.save(updateMember);
 
-        return createToken(updateMember);
+        memberRepository.save(updatedMember);
+        return createToken(updatedMember);
     }
 
     private ResultDTO<TokenDTO> saveNewMember(GoogleDTO googleDTO, String snsName) {
-        // 랜덤한 비밀번호 생성
-        String randomPassword = UUID.randomUUID().toString().replace("-", "");
-        String password = bCryptPasswordEncoder.encode(randomPassword);
+        // 랜덤 비밀번호 생성 및 암호화
+        String encodedPassword = bCryptPasswordEncoder.encode(
+                UUID.randomUUID().toString().replace("-", ""));
 
+        // 신규 회원 생성
         MemberEntity newMember = MemberEntity.builder()
                 .email(googleDTO.getEmail())
-                .password(password)
+                .password(encodedPassword)
                 .name(googleDTO.getName())
                 .nationality("KR")
                 .language("ko")
@@ -108,28 +107,31 @@ public class OAuthServiceImpl implements OAuthService {
                 .socialLoginCheck(snsName)
                 .regDate(LocalDate.now())
                 .build();
-        memberRepository.save(newMember);
 
+        memberRepository.save(newMember);
         return createToken(newMember);
     }
 
     @Override
     public ResultDTO<SuccessDTO> linkAccount(String email, boolean linkYn) {
-
+        // 회원 존재 여부 확인
         MemberEntity member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        if (!member.getSocialLoginCheck().equals("없음")) {
+        // 이미 소셜 로그인과 연결되어 있는지 확인
+        if (!NONE.equals(member.getSocialLoginCheck())) {
             throw new CustomException(ErrorCode.OAUTH_ALREADY_LINKED);
         }
 
-        redisTemplate.opsForValue().set("oauth_link_" + email, String.valueOf(linkYn), link_EXPIRES,
-                TimeUnit.MILLISECONDS);
+        // Redis에 연동 정보 저장
+        redisTemplate.opsForValue().set(
+                OAUTH_LINK_PREFIX + email,
+                String.valueOf(linkYn),
+                LINK_EXPIRES_MILLIS,
+                TimeUnit.MILLISECONDS
+        );
 
-        SuccessDTO successDTO = SuccessDTO.builder()
-                .success(true)
-                .build();
-
-        return ResultDTO.of("연동 요청에 성공했습니다.", successDTO);
+        return ResultDTO.of("연동 요청에 성공했습니다.",
+                SuccessDTO.builder().success(true).build());
     }
 }
