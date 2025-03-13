@@ -11,6 +11,8 @@ import "./ChatComponent.css";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import { Drawer, List, ListItem, ListItemText, Button } from "@mui/material";
+import { getWorkspaceChannels } from "../../../api/channel";
 
 /**
  * LocalDateTime을 Asia/Seoul 시간대로 변환하고 포맷팅하는 함수
@@ -35,7 +37,7 @@ const formatToKoreanTime = (timestamp) => {
  * @param {string} channelId - 채팅 채널 ID
  * @param {string} workspaceId - 워크스페이스 ID
  */
-function ChatComponent({ channelId, workspaceId }) {
+function ChatComponent({ channelId, workspaceId, channelName }) {
     // Context에서 현재 사용자 정보 가져오기
     const { user } = useContext(ConfigContext);
 
@@ -47,6 +49,9 @@ function ChatComponent({ channelId, workspaceId }) {
     const [activeUsers, setActiveUsers] = useState([]); // 접속 중인 사용자 목록
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [channels, setChannels] = useState([]);
 
     // WebSocket 클라이언트 참조
     const stompClientRef = useRef(null);
@@ -314,13 +319,29 @@ function ChatComponent({ channelId, workspaceId }) {
         return () => clearTimeout(timer);
     }, []);
 
+    useEffect(() => {
+        if (workspaceId) {
+            getWorkspaceChannels(workspaceId).then(setChannels).catch(console.error);
+        }
+    }, [workspaceId]);
+
+    console.log("채널 id와 채널명", channelId, channelName);
+
     return (
         <div className="chat-container">
             {/* 채널 헤더 */}
             <div className="chat-header">
                 <div className="channel-info">
                     <TagIcon sx={{ color: '#6b7280', fontSize: 20 }} />
-                    <span>채널 {channelId}</span>
+                    <span>{channelName} (채널 {channelId})</span>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        sx={{ marginLeft: "10px" }}
+                        onClick={() => setDrawerOpen(true)}
+                    >
+                        채널 변경
+                    </Button>
                 </div>
                 <div className="active-users">
                     <PersonIcon sx={{ color: '#6b7280', fontSize: 20 }} />
@@ -433,6 +454,26 @@ function ChatComponent({ channelId, workspaceId }) {
                     </>
                 )}
             </div>
+
+            {/* Drawer - 채널 목록 */}
+            <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+                <div style={{ width: 300, padding: "16px" }}>
+                    <h3>채널 선택</h3>
+                    <List>
+                        {channels.map((channel) => (
+                            <ListItem button key={channel.channelId} onClick={() => {
+                                setChannel(channel.channelId, channel.channelName);
+                                setDrawerOpen(false);
+                            }}>
+                                <ListItemText primary={`# ${channel.channelName}`} />
+                            </ListItem>
+                        ))}
+                    </List>
+                    <Button variant="contained" color="primary" fullWidth sx={{ marginTop: "16px" }}>
+                        + 채널 생성
+                    </Button>
+                </div>
+            </Drawer>
         </div>
     );
 }

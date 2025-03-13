@@ -3,11 +3,11 @@ name: Build and Deploy Docker Image
 on:
   push:
     branches:
-      - dev  # dev 브랜치에 푸시될 때 자동 실행
+      - dev
     paths:
-      - 'Back-End/**'  # 'Back-End/' 폴더 내의 파일들이 변경될 때만 배포 트리거
-      
-  workflow_dispatch: # 이 부분을 추가하여 수동으로 트리거 가능하게 만듦
+      - 'Back-End/**'
+
+  workflow_dispatch:
     inputs:
       environment:
         description: '배포할 환경을 선택하세요.'
@@ -54,11 +54,11 @@ jobs:
                 dialect: org.hibernate.dialect.MySQL8Dialect
           servlet:
             multipart:
-              enabled: true  # Multipart 파일 업로드 활성화
-              max-file-size: 100MB  # 업로드 가능한 최대 파일 크기 설정
-              max-request-size: 2MB  # 요청의 최대 크기 설정
+              enabled: true
+              max-file-size: 100MB
+              max-request-size: 2MB
           cache:
-            type: caffeine #  워크스페이스 멤버 접속 조회 시 사용
+            type: caffeine
           mail:
             host: smtp.gmail.com
             port: 587
@@ -85,11 +85,9 @@ jobs:
               auto: false
             s3:
               bucket: bibim
-
         logging:
           level:
             org.springframework.security: DEBUG
-
         secret_key: ${SECRET_KEY}
         EOL
 
@@ -101,28 +99,12 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build  # 'build' 작업이 성공해야 'deploy' 작업이 실행됨
+    needs: build
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    # - name: Get GitHub Actions IP ranges
-    #   run: |
-    #     curl -s https://api.github.com/meta | jq -r '.actions[]' > github-actions-ips.txt
-
-    # - name: Add GitHub Actions IP ranges to EC2 security group
-    #   run: |
-    #     # 각 IP 대역을 보안 그룹에 추가
-    #     while IFS= read -r ip_range; do
-    #       aws ec2 authorize-security-group-ingress --region ap-northeast-2 --group-id ${{ secrets.SECURITY_GROUP_ID }} --protocol tcp --port 8080 --cidr $ip_range
-    #     done < github-actions-ips.txt
-    #   env:
-    #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    #     AWS_DEFAULT_REGION: "ap-northeast-2"
-
-    # SSH 키 권한 설정
     - name: Setup SSH Key with proper permissions
       run: |
         mkdir -p ~/.ssh
@@ -138,9 +120,6 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
         script: |
-          # Pull the new Docker image
           docker pull ${{ secrets.DOCKER_USERNAME }}/bibim:dev
-          # Stop and remove the running container (if any)
           docker stop bibim || true && docker rm bibim || true
-          # Run the new Docker container
           docker run -d --name bibim -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/bibim:dev
