@@ -24,6 +24,7 @@ import fileIcon from "assets/images/icons/file.png";
 const fileTypeIcons = {
     "pdf": pdfIcon,
     "png": imageIcon,
+    "gif": imageIcon,
     "jpg": imageIcon,
     "docx": docIcon,
     "xlsx": excelIcon,

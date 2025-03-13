@@ -1,9 +1,10 @@
-const translateText = async (text, targetLang = "en") => {
-    const apiKey = process.env.REACT_APP_GOOGLE_TRANSLATE_API_KEY;
-    const url = `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`;
+const API_KEY = import.meta.env.VITE_GOOGLE_TRANSLATE_API_KEY;
+console.log("구글키", API_KEY);
+const TRANSLATE_URL = `https://translation.googleapis.com/language/translate/v2?key=${API_KEY}`;
 
+export const translateText = async (text, targetLang = "en") => {
     try {
-        const response = await fetch(url, {
+        const response = await fetch(TRANSLATE_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -16,7 +17,7 @@ const translateText = async (text, targetLang = "en") => {
         const data = await response.json();
         return data.data.translations[0].translatedText;
     } catch (error) {
-        console.error("번역 오류:", error);
+        console.error("번역 실패:", error);
         return null;
     }
 };
