@@ -346,15 +346,6 @@ export default function NotificationSection() {
                           </Button>
                         </Box>
                       </Grid>
-                      {hasMore && (
-                        <Grid item xs={12}>
-                          <Box sx={{ textAlign: 'center', pb: 2 }}>
-                            <Button size="small" onClick={fetchNotifications}>
-                              더 보기
-                            </Button>
-                          </Box>
-                        </Grid>
-                      )}
                     </Grid>
                   </MainCard>
                 )}
