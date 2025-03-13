@@ -119,6 +119,7 @@ export default function NotificationList({ notifications, onNotificationClick, o
           No notifications
         </Typography>
       )}
+
     </List>
   );
 }
