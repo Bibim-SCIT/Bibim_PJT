@@ -100,8 +100,9 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Get GitHub Actions runner IP
-      run: curl ifconfig.me
+    - name: Get GitHub Actions IP ranges
+      run: |
+          curl -s https://api.github.com/meta | jq -r '.actions[]'
 
     - name: SSH into EC2 and deploy Docker container
       uses: appleboy/ssh-action@v0.1.0
