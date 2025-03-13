@@ -115,42 +115,23 @@ export default function WorkDataPage() {
             }
 
             if (Array.isArray(listData)) {
-                // 각 항목에 대해 상세 조회 API 호출
-                const detailedData = await Promise.all(
-                    listData.map(async (item) => {
-                        try {
-                            const detail = await getWorkdataDetail(wsId, item.dataNumber);
-                            return {
-                                ...item,
-                                content: detail.content,
-                                fileNames2: detail.fileNames,
-                                fileUrls: detail.fileUrls
-                            };
-                        } catch (error) {
-                            console.error("상세 조회 실패:", item.dataNumber, error);
-                            return { ...item, content: "" };
-                        }
-                    })
-                );
-
-                // 화면 구성을 위한 데이터 포맷팅
-                const formattedData = detailedData.map((item) => ({
+                // ✅ 상세 조회 없이 바로 리스트 저장
+                const formattedData = listData.map((item) => ({
                     id: item.dataNumber,
                     title: item.title,
-                    files: item.fileNames2 || ["파일 없음"],
+                    files: item.fileNames || ["파일 없음"],
                     date: item.regDate.split("T")[0],
                     uploader: item.nickname,
                     writer: item.writer,
                     avatar: item.profileImage || "/avatars/default.png",
                     wsId: wsId,
-                    content: item.content,
+                    content: item.content,   // 🔥 상세조회 없이 바로 content 사용
                     fileUrls: item.fileUrls,
                     tags: item.tags || []
                 }));
                 setFiles(formattedData);
             } else {
                 console.error("API로부터 받은 데이터가 배열이 아님:", listData);
-                // console.log("검색확인", listData.data);
                 setFiles([]);
             }
         } catch (error) {

@@ -9,8 +9,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import net.scit.backend.workspace.event.WorkspaceEvent;
 import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
@@ -18,7 +16,6 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -40,14 +37,12 @@ import net.scit.backend.workspace.dto.UpdateWorkspaceMemberDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
 import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
-import net.scit.backend.workspace.entity.WorkspaceChannelRoleEntity;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 // import net.scit.backend.workspace.event.WorkspaceUpdatedEvent;
 // import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
 
 
-import net.scit.backend.workspace.repository.WorkspaceChannelRoleRepository;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import net.scit.backend.workspace.repository.WorkspaceRepository;
 import net.scit.backend.workspace.service.WorkspaceService;
@@ -61,7 +56,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final MemberRepository memberRepository;
-    private final WorkspaceChannelRoleRepository workspaceRoleRepository;
     private final WorkspaceChannelRepository workspaceChannelRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -75,7 +69,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     private static final String DEFAULT_ROLE = "None";
     private static final String OWNER_ROLE = "owner";
     private static final String USER_ROLE = "user";
-    private final WorkspaceChannelRoleRepository workspaceChannelRoleRepository;
 
     // 이미지 업로드 메소드
     private String uploadImage(MultipartFile file) {
@@ -181,8 +174,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         WorkspaceEntity workspaceEntity = workspaceRepository.saveAndFlush(
                 WorkspaceEntity.builder().wsName(workspaceDTO.getWsName()).wsImg(imageUrl).build());
 
-        workspaceRoleRepository.saveAndFlush(
-                WorkspaceChannelRoleEntity.builder().workspace(workspaceEntity).build());
 
         MemberEntity memberEntity = getMemberEntity(AuthUtil.getLoginUserId());
 
@@ -376,8 +367,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     public ResultDTO<SuccessDTO> workspaceRightCreate(Long wsId, String newRole) {
         WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
 
-        workspaceRoleRepository.save(
-                WorkspaceChannelRoleEntity.builder().workspace(workspaceEntity).chRole(newRole).build());
 
         return ResultDTO.of("워크스페이스 채널 권한 생성에 성공했습니다.", SuccessDTO.builder().success(true).build());
     }
@@ -394,10 +383,10 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 .findByWorkspace_wsIdAndMember_Email(wsId, email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        // 대상 멤버의 역할 정보 업데이트
-        member.setChRoleNumber(workspaceRoleRepository.findById(chRole)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_HAVE_NOT_ROLE)));
-        workspaceMemberRepository.save(member);
+//        // 대상 멤버의 역할 정보 업데이트
+//        member.setChRoleNumber(workspaceRoleRepository.findById(chRole)
+//                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_HAVE_NOT_ROLE)));
+//        workspaceMemberRepository.save(member);
 
         // 워크스페이스 엔티티 조회
         WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
@@ -431,7 +420,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     @Transactional
     public ResultDTO<SuccessDTO> workspaceRightDelete(Long wsId, Long chRole) {
         checkOwnerRole(wsId, AuthUtil.getLoginUserId());
-        workspaceRoleRepository.deleteById(chRole);
 
         return ResultDTO.of("워크스페이스 채널 권한 삭제에 성공했습니다.", SuccessDTO.builder().success(true).build());
     }
@@ -497,7 +485,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                         .workspace(workspaceEntity)
                         .member(memberEntity)
                         .wsRole(USER_ROLE)
-                        .chRoleNumber(null)
+//                        .chRoleNumber(null)
                         .nickname(memberEntity.getName())
                         .profileImage(memberEntity.getProfileImage())
                         .build());
@@ -521,6 +509,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
      * @return 워크스페이스 나의 회원 정보
      */
     @Override
+    @Transactional
     public ResultDTO<WorkspaceMemberDTO> getWorkspaceMemberInfo(Long wsId) {
         // JWT에서 로그인한 유저 이메일 가져오기
         String email = AuthUtil.getLoginUserId();

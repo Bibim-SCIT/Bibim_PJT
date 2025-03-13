@@ -28,7 +28,6 @@
 // import net.scit.backend.workspace.dto.InvateWorkspaceDTO;
 // import net.scit.backend.workspace.dto.WorkspaceDTO;
 // import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
-// import net.scit.backend.workspace.entity.WorkspaceChannelRoleEntity;
 // import net.scit.backend.workspace.entity.WorkspaceEntity;
 // import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 // import net.scit.backend.workspace.repository.WorkspaceChannelRepository;

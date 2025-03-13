@@ -24,21 +24,26 @@ public class WorkspaceEventListener {
         String notificationContent = event.getNotificationContent();
 
         // 이벤트 유형에 따라 URL 결정
-        String notificationUrl;
-        if ("delete".equals(event.getEventType()) || "withdraw".equals(event.getEventType())) {
-            notificationUrl = "http://localhost:8080/workspace";
-        } else {
-            notificationUrl = String.format("http://localhost:8080/workspace/%d", event.getWsId());
-        }
+        String notificationUrl = switch (event.getEventType()) {
+            case "delete", "withdraw" -> "http://localhost:8080/workspace";
+            default -> String.format("http://localhost:8080/workspace/%d", event.getWsId());
+        };
 
         log.info("📢 이벤트 감지: {} | 대상자: {} | 내용: {} | URL: {}",
                 event.getEventType(), event.getReceiverEmail(), notificationContent, notificationUrl);
 
+        // ✅ 코드 최적화: 개별 NotificationEntity 생성 메서드 활용
+        NotificationEntity notification = buildNotificationEntity(event, notificationName, notificationContent, notificationUrl);
+        NotificationResponseDTO response = notificationService.createAndSendNotification(notification);
+        log.info("📢 알림 전송 및 저장 완료 - NotificationNumber: {}", response.getNotificationNumber());
+    }
+
+    /**
+     * 🔹 개별 NotificationEntity 객체를 생성하는 메서드 (중복 코드 제거)
+     */
+    private NotificationEntity buildNotificationEntity(WorkspaceEvent event, String notificationName, String notificationContent, String notificationUrl) {
         NotificationEntity notification = new NotificationEntity();
-
-        // ✅ wsName 필드가 없으므로 직접 notificationName, notificationContent에서 활용
         notification.setWsId(event.getWsId());
-
         notification.setSenderEmail(event.getSenderEmail());
         notification.setSenderNickname(event.getSenderNickname());
         notification.setReceiverEmail(event.getReceiverEmail());
@@ -49,9 +54,6 @@ public class WorkspaceEventListener {
         notification.setNotificationStatus(false);
         notification.setNotificationDate(LocalDateTime.now());
         notification.setNotificationUrl(notificationUrl);
-
-        NotificationResponseDTO response = notificationService.createAndSendNotification(notification);
-        log.info("📢 알림 전송 및 저장 완료 - NotificationNumber: {}", response.getNotificationNumber());
+        return notification;
     }
-
 }

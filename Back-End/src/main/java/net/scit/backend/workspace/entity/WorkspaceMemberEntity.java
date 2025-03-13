@@ -30,11 +30,6 @@
         @JoinColumn(name = "email", nullable = false)
         private MemberEntity member;
 
-        // 워크스페이스 내부 자체 권한
-        @ManyToOne
-        @JoinColumn(name = "ch_role_number")
-        private WorkspaceChannelRoleEntity chRoleNumber;
-
         // 워크스페이스 사용 권한
         @Builder.Default
         private String wsRole = "owner";

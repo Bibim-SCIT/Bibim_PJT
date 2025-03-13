@@ -9,7 +9,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.scit.backend.jwt.AuthUtil;
 import net.scit.backend.channel.DTO.MessageDTO;
 import net.scit.backend.channel.entity.MessageEntity;
 import net.scit.backend.channel.repository.MessageReposittory;
@@ -31,24 +30,20 @@ public class ChannelServiceImpl implements ChannelService {
     // s3업로더
     private final S3Uploader s3Uploader;
 
-    // 상수 선언
-    private static final List<String> ALLOWED_IMAGE_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif", "zip",
-            "md");
-
-    // 이미지 업로드 메소드
+    // 파일 업로드 메소드
     private String uploadImage(MultipartFile file, Long channelId) {
         if (file != null && !file.isEmpty()) {
             String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
-            if (fileExtension != null && ALLOWED_IMAGE_EXTENSIONS.contains(fileExtension.toLowerCase())) {
-                try {
-                    return s3Uploader.upload(file, "workspace-channel/" + channelId);
-                } catch (Exception e) {
-                    log.error("❌ S3 업로드 실패: {}", e.getMessage(), e);
-                    throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
-                }
-            } else {
-                throw new CustomException(ErrorCode.UN_SUPPORTED_IMAGE_TYPE);
+            try
+            {
+                return s3Uploader.upload(file, "workspace-channel/" + channelId);
             }
+            catch (Exception e)
+            {
+               log.error("❌ S3 업로드 실패: {}", e.getMessage(), e);
+               throw new CustomException(ErrorCode.FAILED_IMAGE_SAVE);
+            }
+
         }
         return null;
     }
@@ -93,6 +88,7 @@ public class ChannelServiceImpl implements ChannelService {
                 .sender(sender)
                 .content(imageUrl) // 이미지 URL 저장
                 .messageOrFile(true) // 파일 여부 설정
+                .fileName(file.getOriginalFilename())
                 .build();
         messageReposittory.save(messageEntity);
 
@@ -102,6 +98,7 @@ public class ChannelServiceImpl implements ChannelService {
                 .channelNumber(channelId)
                 .sender(sender)
                 .content(imageUrl) // URL을 클라이언트에게 반환
+                .fileName(file.getOriginalFilename())
                 .build();
     }
 
@@ -120,6 +117,8 @@ public class ChannelServiceImpl implements ChannelService {
                     dto.setSender(msg.getSender());
                     dto.setMessageOrFile(msg.getMessageOrFile());
                     dto.setContent(msg.getContent());
+                    dto.setSendTime(msg.getSendTime());
+                    dto.setFileName(msg.getFileName());
                     return dto;
                 })
                 .collect(Collectors.toList());

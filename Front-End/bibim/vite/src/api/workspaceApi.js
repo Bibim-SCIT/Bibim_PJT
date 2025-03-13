@@ -182,18 +182,21 @@ export const kickUserFromWorkspace = async (wsId, email) => {
 // 워크스페이스 내 모든 멤버 조회 API 호출 함수
 export const fetchWorkspaceUsers = async (workspaceId) => {
     try {
-        console.log("🔍 API 호출 시작 - workspaceId:", workspaceId);
-        const response = await api.get(`${API_BASE_URL}/${workspaceId}/members`);
-        console.log('🔍 API 응답:', response);
+        // workspaceId가 없으면 API 호출하지 않음
+        if (!workspaceId) {
+            console.error("🚨 workspaceId가 없어 API 호출을 중단합니다.");
+            return [];
+        }
+        
+        const response = await api.get(`${API_BASE_URL}/${workspaceId}/members`, {
+            headers: getAuthHeaders(),
+            withCredentials: true
+        });
+        
         return response.data;
     } catch (error) {
         console.error('워크스페이스 멤버 조회 실패:', error);
-        console.error('에러 상세:', {
-            status: error.response?.status,
-            data: error.response?.data,
-            message: error.message
-        });
-        throw error;
+        return []; // 오류 발생 시 빈 배열 반환
     }
 };
 
@@ -214,6 +217,43 @@ export const updateUserRole = async (wsId, email, newRole) => {
     } catch (error) {
         console.error('권한 변경 API 에러:', error);
         throw error.response?.data || "권한 변경에 실패했습니다.";
+    }
+};
+
+// 워크스페이스 멤버 접속 현황 조회 API
+export const fetchWorkspaceMembersStatus = async (workspaceId) => {
+    try {
+        if (!workspaceId) {
+            console.error("🚨 workspaceId가 없어 API 호출을 중단합니다.");
+            return [];
+        }
+        
+        const response = await axios.get(`${API_BASE_URL}/${workspaceId}/members/status`, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            withCredentials: true,
+        });
+        
+        if (!response.data || !response.data.data) {
+            console.error("🚨 API 응답에 data 필드가 없습니다");
+            return [];
+        }
+        
+        // 응답 데이터 형식 확인
+        const statusData = response.data.data;
+        
+        // 데이터 형식 변환 (loginStatus -> status)
+        const formattedData = statusData.map(item => ({
+            email: item.email,
+            status: item.loginStatus ? 'online' : 'offline',
+            lastActiveTime: item.lastActiveTime
+        }));
+        
+        return formattedData;
+    } catch (error) {
+        console.error("🚨 워크스페이스 멤버 접속 현황 조회 실패:", error);
+        return [];
     }
 };
 
