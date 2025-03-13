@@ -7,5 +7,4 @@ import lombok.Setter;
 @Setter
 public class ChannelUpdateRequest {
     private String channelName;
-    private Long workspaceRole;
 }
