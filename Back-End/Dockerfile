@@ -1,14 +1,14 @@
-# Use an official Java runtime as a parent image
+# 1️⃣ Base image로 OpenJDK 17 사용
 FROM openjdk:17-jdk-slim
 
-# Set the working directory in the container
+# 2️⃣ 작업 디렉토리 설정
 WORKDIR /app
 
-# Copy the JAR file into the container at /app
-COPY target/*.jar app.jar
+# 3️⃣ 빌드된 JAR 파일 복사
+COPY build/libs/*.jar app.jar
 
-# Make port 8080 available to the world outside the container
+# 4️⃣ 포트 8080 개방
 EXPOSE 8080
 
-# Run the application
+# 5️⃣ 애플리케이션 실행
 ENTRYPOINT ["java", "-jar", "app.jar"]
