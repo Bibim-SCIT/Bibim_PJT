@@ -21,7 +21,8 @@ const WsSelectPage = Loadable(lazy(() => import('views/ws-select')));
 const WsSettingPage = Loadable(lazy(() => import('views/ws-setting')));
 const MyPage = Loadable(lazy(() => import('views/mypage')));
 const MyPageUpdatePage = Loadable(lazy(() => import('views/mypage_update')));
-const Channel = Loadable(lazy(() => import('views/ws-channel/ChatComponent')));
+// const Channel = Loadable(lazy(() => import('views/ws-channel/ChatComponent')));
+const ChannelPage = Loadable(lazy(() => import('views/ws-channel')));
 const WsRoleSetting = Loadable(lazy(() => import('views/ws-role/WsRoleSetting')));
 
 // ==============================|| MAIN ROUTING ||============================== //
@@ -77,7 +78,7 @@ const MainRoutes = {
     },
     {
       path: '/channel',
-      element: <Channel channelId={11} />
+      element: <ChannelPage />
     },
     {
       path: '/ws-select',
