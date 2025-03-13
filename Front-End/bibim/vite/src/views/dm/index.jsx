@@ -31,6 +31,8 @@ import { styled } from '@mui/system';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import { translateText } from "../../api/translate";
+import TranslateIcon from '@mui/icons-material/Translate'; // 번역 아이콘 추가
 
 // ✅ API 기본 URL 설정
 const API_BASE_URL = "http://localhost:8080/api";
@@ -71,7 +73,10 @@ const formatToKoreanTime = (timestamp) => {
 };
 
 // ✅ 메시지 내용을 렌더링하는 함수
-const renderMessageContent = (msg) => {
+const renderMessageContent = (msg, handleTranslate, translatedMessage) => {
+    // console.log("찍어보기", msg);
+
+    // ✅ 유튜브 링크인 경우
     if (!msg.isFile && !msg.file && isYouTubeLink(msg.dmContent)) {
         const embedUrl = getYouTubeEmbedUrl(msg.dmContent);
         return embedUrl ? (
@@ -81,13 +86,64 @@ const renderMessageContent = (msg) => {
         ) : (
             <div>{msg.dmContent}</div>
         );
-    } else if (msg.file && isImage(msg.fileName)) {
-        return <img src={msg.dmContent} alt="파일 미리보기" className="dm-chat-image" onError={(e) => console.error("🚨 이미지 로드 실패:", e.target.src)} />;
-    } else if (msg.file && !isImage(msg.fileName)) {
-        return <a href={msg.dmContent} target="_blank" rel="noopener noreferrer" className="dm-file-message" download={msg.fileName}>📎 {msg.fileName}</a>;
-    } else {
-        return <div>{msg.dmContent}</div>;
     }
+
+    // ✅ 이미지 파일인 경우
+    if (msg.file && isImage(msg.fileName)) {
+        return <img src={msg.dmContent} alt="파일 미리보기" className="dm-chat-image" onError={(e) => console.error("🚨 이미지 로드 실패:", e.target.src)} />;
+    }
+
+    // ✅ 일반 파일 (이미지가 아닌 파일)인 경우
+    if (msg.file && !isImage(msg.fileName)) {
+        return <a href={msg.dmContent} target="_blank" rel="noopener noreferrer" className="dm-file-message" download={msg.fileName}>📎 {msg.fileName}</a>;
+    }
+
+    // ✅ 일반 채팅인 경우 (위 조건을 모두 통과한 경우)
+    return (
+        <div className="dm-message-wrapper">
+            {/* ✅ 원문 메시지 */}
+            <div className="dm-message-content">
+                {msg.dmContent}
+                {/* ✅ 번역된 메시지 표시 (해당 메시지에만 표시됨) */}
+                {translatedMessage && (
+                    <div className="dm-translated-message">
+                        {/* <small>{translatedMessage}</small> */}
+                        <Typography variant="body1" color="textSecondary">
+                            {translatedMessage}
+                        </Typography>
+                    </div>
+                )}
+            </div>
+
+            {/* ✅ 번역 버튼 */}
+            {/* <button
+                onClick={() => handleTranslate(msg.dmNumber, msg.dmContent)}
+                className="dm-translate-button"
+            >
+                <TranslateIcon fontSize="small" />
+            </button> */}
+            <Button
+                variant="contained"
+                size="small"
+                color="primary"
+                startIcon={<TranslateIcon />}
+                onClick={() => handleTranslate(msg.dmNumber, msg.dmContent)}
+                sx={{
+                    textTransform: "none",  // 대문자 변환 방지
+                    fontSize: "0.8rem",
+                    padding: "5px 10px",
+                    borderRadius: "8px",
+                    backgroundColor: "#007BFF",
+                    "&:hover": {
+                        backgroundColor: "#0056b3"
+                    }
+                }}
+            >
+                번역
+            </Button>
+
+        </div>
+    );
 };
 
 const StyledBadge = styled(Badge)(({ theme, status }) => ({
@@ -127,6 +183,15 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
     const token = localStorage.getItem("token");
     const messagesEndRef = useRef(null); // 메시지 목록 끝 위치를 참조
     const [loading, setLoading] = useState(false); // 메시지 로딩 상태 관리
+
+    // ✅ ConfigContext에서 현재 로그인한 사용자 정보 가져오기
+    const { user } = useContext(ConfigContext);
+
+    // ✅ 번역된 메시지를 저장하는 상태 (각 메시지 ID별로 관리)
+    const [translatedMessages, setTranslatedMessages] = useState({});
+
+    console.log("번역메시지", translatedMessages);
+
 
     // ✅ 메시지 목록 스크롤을 맨 아래로 이동
     const scrollToBottom = () => {
@@ -263,6 +328,45 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
         }
     };
 
+    // ✅ 번역 기능 함수 (번역된 메시지 상태를 개별적으로 저장)
+    const handleTranslate = async (msgId, text) => {
+        console.log("번역 실행?", msgId, text);
+
+        if (!msgId) {
+            console.error("🚨 msgId가 undefined입니다. 번역을 실행할 수 없습니다.");
+            return;
+        }
+
+        console.log("번역 실행 시작!");
+
+        setTranslatedMessages({}); // 기존 번역 메시지 초기화
+
+        // ✅ 언어 코드 맵핑 설정
+        const langMap = {
+            ko: "ko",
+            en: "en",
+            jp: "ja",  // ✅ 'jp'를 'ja'로 변환
+        };
+
+        // ✅ 현재 로그인한 사용자의 언어 설정 가져오기
+        const targetLang = langMap[user.language] || "en";  // 기본값은 영어(en)
+        const translated = await translateText(text, targetLang);
+
+        console.log("번역시키기", translated);
+        console.log("번역할 언어:", targetLang);
+
+        setTranslatedMessages((prev) => ({
+            ...prev,
+            [msgId]: translated, // ✅ msgId가 undefined가 아닌 값이 되도록 보장
+        }));
+    };
+
+
+    const getMessageKey = (msg, index) => {
+        return msg.dmNumber || `message-${index}`;  // ✅ dmNumber 사용, 없을 경우 index 사용
+    };
+
+
 
     return (
         <div className="dm-chat-area" style={{ width: "100%" }}>
@@ -303,48 +407,60 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                 </div>
             ) : (
                 <div className="dm-chat-messages">
-                    {messages.map((msg, index) => (
-                        <div key={index} className={`dm-message ${msg.sender === senderId ? "dm-my-message" : "dm-other-message"}`}>
-                            {/* 발신자 정보 */}
-                            <div className="dm-sender">
-                                {msg.sender !== senderId && (
-                                    <>
-                                        <div className="dm-sender-avatar">
-                                            {msg.profileImage ? (
-                                                <Avatar
-                                                    src={msg.profileImage}
-                                                    alt={msg.sender}
-                                                    sx={{ width: 28, height: 28 }}
-                                                />
-                                            ) : (
-                                                <Avatar
-                                                    sx={{
-                                                        width: 28,
-                                                        height: 28,
-                                                        bgcolor: '#007AFF',
-                                                        fontSize: '14px'
-                                                    }}
-                                                >
-                                                    {msg.sender.charAt(0).toUpperCase()}
-                                                </Avatar>
-                                            )}
-                                        </div>
-                                        <span className="dm-sender-name">
-                                            {msg.sender.split('@')[0]}
-                                        </span>
-                                    </>
-                                )}
-                                <span className="dm-message-time">
-                                    {formatToKoreanTime(msg.sendTime)}
-                                </span>
-                            </div>
-                            <div className="dm-message-content-container">
-                                <div className={`dm-message-content ${(msg.file && isImage(msg.fileName)) || isYouTubeLink(msg.dmContent) ? "has-media" : ""}`}>
-                                    {renderMessageContent(msg)}
+                    {messages.map((msg, index) => {
+                        const messageKey = getMessageKey(msg, index); // ✅ 고유 key 생성
+                        // console.log("메시지키 확인", messageKey);
+                        return (
+                            <div
+                                // key={index}
+                                // key={msg.id || `message-${index}`}  // ✅ msg.id가 없으면 index 사용
+                                key={messageKey} // ✅ key 값을 msg.id 또는 index 기반으로 설정
+                                className={`dm-message ${msg.sender === senderId ? "dm-my-message" : "dm-other-message"}`}
+                            >
+                                {/* 발신자 정보 */}
+                                <div className="dm-sender">
+                                    {msg.sender !== senderId && (
+                                        <>
+                                            <div className="dm-sender-avatar">
+                                                {msg.profileImage ? (
+                                                    <Avatar
+                                                        src={msg.profileImage}
+                                                        alt={msg.sender}
+                                                        sx={{ width: 28, height: 28 }}
+                                                    />
+                                                ) : (
+                                                    <Avatar
+                                                        sx={{
+                                                            width: 28,
+                                                            height: 28,
+                                                            bgcolor: '#007AFF',
+                                                            fontSize: '14px'
+                                                        }}
+                                                    >
+                                                        {msg.sender.charAt(0).toUpperCase()}
+                                                    </Avatar>
+                                                )}
+                                            </div>
+                                            <span className="dm-sender-name">
+                                                {msg.sender.split('@')[0]}
+                                            </span>
+                                        </>
+                                    )}
+                                    <span className="dm-message-time">
+                                        {formatToKoreanTime(msg.sendTime)}
+                                    </span>
+                                </div>
+                                <div className="dm-message-content-container">
+                                    <div key={messageKey} className={`dm-message-content ${(msg.file && isImage(msg.fileName)) || isYouTubeLink(msg.dmContent) ? "has-media" : ""}`}>
+                                        {/* {renderMessageContent(msg, handleTranslate, translatedMessages)} */}
+                                        {/* 메시지 렌더링 */}
+                                        {renderMessageContent(msg, handleTranslate, translatedMessages[messageKey])}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        )
+                    }
+                    )}
                     <div ref={messagesEndRef} />
                 </div>
             )}

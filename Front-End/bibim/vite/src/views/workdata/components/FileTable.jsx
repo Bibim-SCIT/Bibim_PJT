@@ -146,14 +146,38 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
     };
 
     // 파일 다운로드 위한 함수 설정
-    const handleDownload = (url, fileName) => {
-        const link = document.createElement("a");
-        link.href = url;
-        link.setAttribute("download", fileName);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
+    // const handleDownload = (url, fileName) => {
+    //     const link = document.createElement("a");
+    //     link.href = url;
+    //     link.setAttribute("download", fileName);
+    //     document.body.appendChild(link);
+    //     link.click();
+    //     document.body.removeChild(link);
+    // };
+
+    // const handleDownload = async (url, fileName) => {
+    //     try {
+    //         const response = await fetch(url, { mode: 'cors' }); // CORS 허용 필요
+    //         if (!response.ok) throw new Error("파일 다운로드 실패");
+
+    //         const blob = await response.blob();
+    //         const blobUrl = window.URL.createObjectURL(blob);
+
+    //         const link = document.createElement("a");
+    //         link.href = blobUrl;
+    //         link.download = fileName; // 다운로드할 파일명
+    //         document.body.appendChild(link);
+    //         link.click();
+
+    //         document.body.removeChild(link);
+    //         window.URL.revokeObjectURL(blobUrl); // 메모리 해제
+    //     } catch (error) {
+    //         console.error("다운로드 실패:", error);
+    //         alert("파일 다운로드에 실패했습니다.");
+    //     }
+    // };
+
+
 
     // TableCell 영역에서 엔터하면 Popover를 열고, 리브하면 일정 시간 후 닫기
     const handleCellMouseEnter = (event, fileName, fileUrls) => {
@@ -579,6 +603,7 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                 onClick={() => {
                                     if (downloadFile.fileUrls && downloadFile.fileUrls[idx]) {
                                         window.open(downloadFile.fileUrls[idx], '_blank');
+                                        // handleDownload(downloadFile.fileUrls[idx], fileName);
                                     } else {
                                         alert("다운로드 URL이 없습니다.");
                                     }

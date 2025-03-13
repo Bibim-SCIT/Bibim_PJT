@@ -99,15 +99,18 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background-color: #bdbdbd; /* 기본 오프라인 색상 */
+    background-color: #bdbdbd;
+    /* 기본 오프라인 색상 */
     border: 2px solid #ffffff;
-    z-index: 1; /* MUI Avatar 위에 표시되도록 z-index 추가 */
+    z-index: 1;
+    /* MUI Avatar 위에 표시되도록 z-index 추가 */
 }
 
 /* 온라인 상태 표시 */
 .dm-user-avatar.online::after,
 .dm-chat-header-avatar.online::after {
-    background-color: #44b700; /* 온라인 색상 */
+    background-color: #44b700;
+    /* 온라인 색상 */
     box-shadow: 0 0 0 2px #ffffff;
     animation: pulse 1.5s infinite;
 }
@@ -115,7 +118,8 @@
 /* 오프라인 상태 표시 */
 .dm-user-avatar.offline::after,
 .dm-chat-header-avatar.offline::after {
-    background-color: #bdbdbd; /* 오프라인 색상 */
+    background-color: #bdbdbd;
+    /* 오프라인 색상 */
 }
 
 /* 펄스 애니메이션 */
@@ -124,12 +128,12 @@
         transform: scale(0.95);
         box-shadow: 0 0 0 0 rgba(68, 183, 0, 0.7);
     }
-    
+
     70% {
         transform: scale(1);
         box-shadow: 0 0 0 5px rgba(68, 183, 0, 0);
     }
-    
+
     100% {
         transform: scale(0.95);
         box-shadow: 0 0 0 0 rgba(68, 183, 0, 0);
@@ -349,13 +353,15 @@
 /* 내가 보낸 메시지 버블 스타일 */
 .dm-my-message .dm-message-content {
     color: #1a1a1a;
-    background-color: #E3F2FD; /* 파란색 계열 */
+    background-color: #E3F2FD;
+    /* 파란색 계열 */
     border-radius: 12px;
 }
 
 /* 상대방이 보낸 메시지 버블 스타일 */
 .dm-other-message .dm-message-content {
-    background-color: #F3E5F5; /* 보라색 계열 */
+    background-color: #F3E5F5;
+    /* 보라색 계열 */
     color: #1a1a1a;
     border-radius: 12px;
 }
@@ -532,7 +538,8 @@
     width: 100%;
     max-width: 300px;
     height: 0;
-    padding-bottom: 56.25%; /* 16:9 비율 유지 */
+    padding-bottom: 56.25%;
+    /* 16:9 비율 유지 */
     margin: 0;
     overflow: hidden;
 }
@@ -571,9 +578,14 @@
 
 /* 스피너 회전 애니메이션 */
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-} 
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
 
 .dm-user-status {
     font-size: 12px;
@@ -649,4 +661,41 @@
 .dm-no-messages-text {
     font-size: 16px;
     font-weight: 500;
+}
+
+/* ✅ 메시지 전체 감싸는 컨테이너 */
+.dm-message-wrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+/* ✅ 번역 버튼 (채팅 버블 바깥쪽 우측) */
+.dm-translate-button {
+    background: #f1f1f1;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-left: 8px;
+    /* 채팅 버블과 간격 */
+    transition: 0.3s;
+}
+
+.dm-translate-button:hover {
+    background: #ddd;
+}
+
+/* ✅ 번역된 메시지 스타일 */
+.dm-translated-message {
+    margin-top: 5px;
+    /* ✅ 원문과 번역문 사이 여백 추가 */
+    font-size: 0.9em;
+    /* ✅ 번역문은 조금 작게 */
+    color: gray;
+    /* ✅ 번역문 색상을 연하게 */
 }
