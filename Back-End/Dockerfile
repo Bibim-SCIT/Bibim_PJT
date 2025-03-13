@@ -13,6 +13,9 @@ RUN chmod +x ./gradlew
 # Gradle 빌드 실행
 RUN ./gradlew build -x test  # 테스트를 건너뛰기
 
+# 빌드된 JAR 파일이 build/libs에 있는지 확인 (디버깅용)
+RUN ls -alh build/libs
+
 # 생성된 JAR 파일을 컨테이너에 복사
 COPY build/libs/*.jar app.jar
 
