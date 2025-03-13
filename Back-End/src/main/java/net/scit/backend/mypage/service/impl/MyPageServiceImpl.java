@@ -21,8 +21,13 @@ import net.scit.backend.schedule.repository.ScheduleRepository;
 import net.scit.backend.workdata.entity.WorkdataEntity;
 import net.scit.backend.workdata.repository.WorkdataRepository;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
-import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
+
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,7 +45,6 @@ public class MyPageServiceImpl implements MyPageService {
      */
     @Override
     public ResultDTO<List<MyScheduleDTO>> getSchedule() {
-
         String email = AuthUtil.getLoginUserId();
         MemberEntity member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -79,7 +83,6 @@ public class MyPageServiceImpl implements MyPageService {
             // DTO 빌드 및 리스트에 추가
             myScheduleDTOList.add(dtoBuilder.build());
         }
-
         return ResultDTO.of("나의 전체 스케줄 불러오기에 성공했습니다.", myScheduleDTOList);
     }
 
@@ -90,26 +93,25 @@ public class MyPageServiceImpl implements MyPageService {
      */
     @Override
     public ResultDTO<List<AllWorkspaceDataDTO>> getWorkData() {
-
         String email = AuthUtil.getLoginUserId();
         MemberEntity member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 내가 속한 워크스페이스 받아오기
-        List<WorkspaceMemberEntity> workspaceMemberEntities = workspaceMemberRepository.findByMember(member);
-        List<WorkspaceEntity> workspaceEntities = workspaceMemberEntities.stream()
-                .map(WorkspaceMemberEntity::getWorkspace).collect(Collectors.toList());
+        List<WorkspaceEntity> workspaceEntities = workspaceMemberRepository.findByMember(member).stream()
+                .map(workspaceMember -> workspaceMember.getWorkspace())
+                .collect(Collectors.toList());
 
         // 워크스페이스 목록을 기반으로 해당 워크스페이스의 자료실 데이터 가져오기
         List<WorkdataEntity> workDataEntities = workdataRepository.findAllByWorkspaceIn(workspaceEntities);
 
-        if (workDataEntities == null || workDataEntities.isEmpty()) {
+        if (CollectionUtils.isEmpty(workDataEntities)) {
             return ResultDTO.of("등록 된 자료실 정보가 없습니다.", null);
         }
 
         List<AllWorkspaceDataDTO> allWorkspaceDataDTOList = workDataEntities.stream()
                 .map(AllWorkspaceDataDTO::toDTO)
-                .toList();
+                .collect(Collectors.toList());
 
         return ResultDTO.of("내가 가입한 모든 워크스페이스의 자료실 정보 가져오기에 성공했습니다.", allWorkspaceDataDTOList);
     }
