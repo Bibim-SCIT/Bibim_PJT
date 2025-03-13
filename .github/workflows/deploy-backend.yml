@@ -107,20 +107,20 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Get GitHub Actions IP ranges
-      run: |
-        curl -s https://api.github.com/meta | jq -r '.actions[]' > github-actions-ips.txt
+    # - name: Get GitHub Actions IP ranges
+    #   run: |
+    #     curl -s https://api.github.com/meta | jq -r '.actions[]' > github-actions-ips.txt
 
-    - name: Add GitHub Actions IP ranges to EC2 security group
-      run: |
-        # 각 IP 대역을 보안 그룹에 추가
-        while IFS= read -r ip_range; do
-          aws ec2 authorize-security-group-ingress --region ap-northeast-2 --group-id ${{ secrets.SECURITY_GROUP_ID }} --protocol tcp --port 8080 --cidr $ip_range
-        done < github-actions-ips.txt
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_DEFAULT_REGION: "ap-northeast-2"
+    # - name: Add GitHub Actions IP ranges to EC2 security group
+    #   run: |
+    #     # 각 IP 대역을 보안 그룹에 추가
+    #     while IFS= read -r ip_range; do
+    #       aws ec2 authorize-security-group-ingress --region ap-northeast-2 --group-id ${{ secrets.SECURITY_GROUP_ID }} --protocol tcp --port 8080 --cidr $ip_range
+    #     done < github-actions-ips.txt
+    #   env:
+    #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #     AWS_DEFAULT_REGION: "ap-northeast-2"
 
     - name: SSH into EC2 and deploy Docker container
       uses: appleboy/ssh-action@v0.1.0
