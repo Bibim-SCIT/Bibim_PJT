@@ -11,14 +11,16 @@ import "./ChatComponent.css";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { Drawer, List, ListItem, ListItemText, Button, IconButton } from "@mui/material";
+import { Drawer, List, ListItem, ListItemText, Button, IconButton, Typography } from "@mui/material";
 import SettingsIcon from '@mui/icons-material/Settings';
 import { getWorkspaceChannels } from "../../../api/channel";
 import { useSelector } from 'react-redux';
 import ChannelEditModal from "./ChannelEditModal";
 import ChannelCreateModal from "./ChannelCreateModal";
-import ChannelLoading from "./ChannelLoading"; // ✅ 로딩 컴포넌트 추가
 import ChannelLoading2 from "./ChannelLoading2"; // ✅ 로딩 컴포넌트 추가
+// 번역관련 api 호출
+import { translateText } from "../../../api/translate";
+import TranslateIcon from '@mui/icons-material/Translate'; // 번역 아이콘 추가
 
 /**
  * LocalDateTime을 Asia/Seoul 시간대로 변환하고 포맷팅하는 함수
@@ -67,6 +69,11 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [selectedChannel, setSelectedChannel] = useState(null);
 
+    // ✅ 번역된 메시지를 저장하는 상태 (각 메시지 ID별로 관리)
+    const [translatedMessages, setTranslatedMessages] = useState({});
+
+    console.log("번역메시지", translatedMessages);
+
     // WebSocket 클라이언트 참조
     const stompClientRef = useRef(null);
     // 메시지 컨테이너 참조 추가
@@ -101,7 +108,9 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
     /**
      * 메시지 내용 렌더링 함수
      */
-    const renderMessageContent = (msg) => {
+    const renderMessageContent = (msg, handleTranslate, messageIndex, translatedMessage) => {
+        console.log("찍어보기", msg);
+        console.log("인덱스", messageIndex);
         if (msg.messageOrFile && msg.content) {
             return isImageFile(msg.content) ? (
                 <img src={msg.content} alt="파일 미리보기" className="chat-image" />
@@ -126,7 +135,47 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                 <div>{msg.content}</div>
             );
         } else {
-            return <div>{msg.content}</div>;
+            // return <div>{msg.content}</div>;
+            return (
+                <div className="channel-message-wrapper">
+                    {/* ✅ 원문 메시지 */}
+                    <div className="channel-message-content">
+                        {msg.content}
+                        {/* ✅ 번역된 메시지 표시 (해당 메시지에만 표시됨) */}
+                        {translatedMessage && (
+                            <div className="channel-translated-message">
+                                {/* <small>{translatedMessage}</small> */}
+                                <Typography variant="body1" color="textSecondary">
+                                    {translatedMessage}
+                                </Typography>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ✅ 번역 버튼 */}
+                    <Button
+                        variant="contained"
+                        size="small"
+                        color="primary"
+                        startIcon={<TranslateIcon />}
+                        onClick={() => handleTranslate(messageIndex, msg.content)}
+                        sx={{
+                            textTransform: "none",  // 대문자 변환 방지
+                            fontSize: "0.8rem",
+                            padding: "5px 10px",
+                            borderRadius: "8px",
+                            marginLeft: "5px",
+                            backgroundColor: "#007BFF",
+                            "&:hover": {
+                                backgroundColor: "#0056b3"
+                            }
+                        }}
+                    >
+                        번역
+                    </Button>
+
+                </div>
+            );
         }
     };
 
@@ -366,16 +415,61 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
         setEditModalOpen(false); // ✅ 수정 완료 시 모달 닫기
     };
 
-
-    const handleChannelCreated = (id, name) => {
+    const handleChannelCreated = async (id, name) => {
         console.log(`🔄 새 채널로 이동: ${id} - ${name}`);
 
-        // ✅ 채널 목록에 추가
-        setChannels([...channels, { channelId: id, channelName: name }]);
-        setChannel(id, name); // ✅ 새 채널로 즉시 변경
-        setMessages([{ sender: "System", content: "채널이 생성되었습니다! 채팅을 입력해보세요!" }]);
-        setCreateModalOpen(false); // ✅ 생성 완료 후 모달 닫기
+        try {
+            // ✅ 채널 목록을 다시 불러오기 (채널 생성 후 변경사항 반영)
+            const updatedChannels = await getWorkspaceChannels(WSID);
+            setChannels(updatedChannels);
+
+            // ✅ 새 채널로 이동
+            setChannel(id, name);
+            setMessages([{ sender: "System", content: "채널이 생성되었습니다! 채팅을 입력해보세요!" }]);
+
+            // ✅ 모달 닫기 (setTimeout으로 상태 변경 반영을 보장)
+            setTimeout(() => {
+                setCreateModalOpen(false);
+            }, 200);
+        } catch (error) {
+            console.error("❌ 채널 목록 갱신 실패:", error);
+        }
     };
+
+    // ✅ 번역 기능 함수 (번역된 메시지 상태를 개별적으로 저장)
+    const handleTranslate = async (msgId, text) => {
+        console.log("번역 실행?", msgId, text);
+
+        if (!msgId) {
+            console.error("🚨 msgId가 undefined입니다. 번역을 실행할 수 없습니다.");
+            return;
+        }
+
+        console.log("번역 실행 시작!");
+
+        setTranslatedMessages({}); // 기존 번역 메시지 초기화
+
+        // ✅ 언어 코드 맵핑 설정
+        const langMap = {
+            ko: "ko",
+            en: "en",
+            jp: "ja",  // ✅ 'jp'를 'ja'로 변환
+        };
+
+        // ✅ 현재 로그인한 사용자의 언어 설정 가져오기
+        const targetLang = langMap[user.language] || "en";  // 기본값은 영어(en)
+        const translated = await translateText(text, targetLang);
+
+        console.log("번역시키기", translated);
+        console.log("번역할 언어:", targetLang);
+
+        setTranslatedMessages((prev) => ({
+            ...prev,
+            [msgId]: translated, // ✅ msgId가 undefined가 아닌 값이 되도록 보장
+        }));
+    };
+
+
 
     // ✅ 채널 삭제 핸들러 추가
     const handleChannelDelete = (deletedChannelId) => {
@@ -414,6 +508,9 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
         fetchMessages();
     }, [channelId, user]);
 
+    const getMessageKey = (msg, index) => {
+        return msg.Number || `message-${index}`;  // ✅ dmNumber 사용, 없을 경우 index 사용
+    };
 
     console.log(channels);
     console.log("채널 id와 채널명", channelId, channelName);
@@ -476,32 +573,39 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                 {isChatLoading ? (
                     <ChannelLoading2 /> // ✅ 로딩 화면 추가
                 ) : messages.length === 0 ? (
-                    <div className="empty-chat-message">채널이 생성되었습니다! 채팅을 쳐보세요.</div> // ✅ 안내 메시지 표시
-                ) : (messages.map((msg, index) => (
-                    <div key={index} className={`message ${msg.sender === user?.email ? "my-message" : "other-message"}`}>
-                        {/* 발신자 정보 */}
-                        <div className="sender">
-                            <div className="sender-avatar">
-                                {msg.profileImage ? (
-                                    <img src={msg.profileImage} alt={msg.sender} />
-                                ) : (
-                                    <div className="default-avatar">
-                                        {msg.sender.charAt(0).toUpperCase()}
-                                    </div>
-                                )}
+                    <div className="empty-chat-message">채널이 생성되었습니다! 채팅을 입력해보세요!</div> // ✅ 안내 메시지 표시
+                ) : (messages.map((msg, index) => {
+                    const messageKey = getMessageKey(msg, index); // ✅ 고유 key 생성
+                    console.log("메시지키 확인", messageKey);
+                    return (
+                        <div
+                            // key={index}
+                            key={messageKey} // ✅ key 값을 msg.id 또는 index 기반으로 설정
+                            className={`message ${msg.sender === user?.email ? "my-message" : "other-message"}`}>
+                            {/* 발신자 정보 */}
+                            <div className="sender">
+                                <div className="sender-avatar">
+                                    {msg.profileImage ? (
+                                        <img src={msg.profileImage} alt={msg.sender} />
+                                    ) : (
+                                        <div className="default-avatar">
+                                            {msg.sender.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                </div>
+                                <span className="sender-name">{msg.sender}</span>
+                                <span className="message-time">
+                                    {formatToKoreanTime(msg.sendTime)}
+                                </span>
                             </div>
-                            <span className="sender-name">{msg.sender}</span>
-                            <span className="message-time">
-                                {formatToKoreanTime(msg.sendTime)}
-                            </span>
-                        </div>
 
-                        {/* 메시지 내용 */}
-                        <div className="message-content-container">
-                            {renderMessageContent(msg)}
+                            {/* 메시지 내용 */}
+                            <div key={messageKey} className="message-content-container">
+                                {renderMessageContent(msg, handleTranslate, messageKey, translatedMessages[messageKey])}
+                            </div>
                         </div>
-                    </div>
-                ))
+                    )
+                })
                 )}
                 {/* 스크롤 위치 참조를 위한 빈 div 추가 */}
                 <div ref={messagesEndRef} />

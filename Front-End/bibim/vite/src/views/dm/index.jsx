@@ -74,7 +74,7 @@ const formatToKoreanTime = (timestamp) => {
 
 // ✅ 메시지 내용을 렌더링하는 함수
 const renderMessageContent = (msg, handleTranslate, translatedMessage) => {
-    // console.log("찍어보기", msg);
+    console.log("찍어보기", msg);
 
     // ✅ 유튜브 링크인 경우
     if (!msg.isFile && !msg.file && isYouTubeLink(msg.dmContent)) {
@@ -116,12 +116,6 @@ const renderMessageContent = (msg, handleTranslate, translatedMessage) => {
             </div>
 
             {/* ✅ 번역 버튼 */}
-            {/* <button
-                onClick={() => handleTranslate(msg.dmNumber, msg.dmContent)}
-                className="dm-translate-button"
-            >
-                <TranslateIcon fontSize="small" />
-            </button> */}
             <Button
                 variant="contained"
                 size="small"

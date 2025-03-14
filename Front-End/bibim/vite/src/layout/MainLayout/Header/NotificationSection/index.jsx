@@ -235,7 +235,7 @@ export default function NotificationSection() {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       {/* ✅ 알림 아이콘을 감싸는 박스 (위치 조정) */}
-      <Box sx={{ position: 'relative', mr: 2 }}>
+      <Box sx={{ position: 'relative', mr: 2, cursor: "pointer" }}>
         {/* ✅ 알림 아이콘 */}
         <Avatar
           variant="rounded"
