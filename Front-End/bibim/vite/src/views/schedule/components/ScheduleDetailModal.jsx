@@ -18,6 +18,7 @@ import PlayCircleIcon from '@mui/icons-material/PlayCircle'; // 진행 중
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'; // 완료
 import PauseCircleIcon from '@mui/icons-material/PauseCircle'; // 보류
 import { styled } from '@mui/material/styles';
+import { getSchedule } from '../../../api/schedule';  // ✅ 최신 스케줄 가져오는 함수 추가
 import ScheduleEditModal from './ScheduleEditModal';
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
@@ -62,8 +63,24 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate }) => {
   React.useEffect(() => {
     setLocalSchedule(schedule);
   }, [schedule]);
+  
+// ✅ 모달이 열릴 때마다 최신 데이터를 가져옴 (새로 추가된 부분)
+   React.useEffect(() => {
+    if (open && schedule?.scheduleNumber) {
+      console.log(`📌 최신 스케줄 데이터 다시 불러오기: scheduleNumber=${schedule.scheduleNumber}`);
 
-  console.log("현재정보", schedule);
+      getSchedule(schedule.scheduleNumber)
+        .then((updatedSchedule) => {
+          console.log("✅ 최신 스케줄 데이터 가져옴:", updatedSchedule);
+          
+          // 🔥 `updatedSchedule.data`를 사용해야 최신 스케줄 정보만 반영됨!
+          setLocalSchedule(updatedSchedule.data);  
+        })
+        .catch((error) => {
+          console.error("❌ 스케줄 데이터를 불러오지 못함:", error);
+        });
+    }
+  }, [open]);
 
   if (!localSchedule) return null;
 

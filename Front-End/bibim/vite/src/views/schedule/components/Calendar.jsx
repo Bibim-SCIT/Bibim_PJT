@@ -189,4 +189,3 @@ const Calendar = ({ tasks }) => {
   );
 };
 export default Calendar;
-
