@@ -40,7 +40,7 @@ public class MemberEventListener {
         notification.setNotificationStatus(false);
         notification.setNotificationDate(LocalDateTime.now());
         // 모든 회원 관련 알림은 회원정보 페이지로 이동하도록 고정
-        notification.setNotificationUrl("http://localhost:8080/members/myInfo");
+        notification.setNotificationUrl("http://http://localhost:3000/mypage");
 
         // 2) 저장 + 실시간 전송 (Map 기반 SSE)
         //    NotificationServiceImpl 내 createAndSendNotification()에서

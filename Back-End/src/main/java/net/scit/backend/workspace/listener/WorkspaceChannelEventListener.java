@@ -31,14 +31,12 @@ public class WorkspaceChannelEventListener {
         log.info("📢 워크스페이스 채널 이벤트 감지: {} | 워크스페이스 ID: {} | 메시지: {}",
                 event.getEventType(), workspaceId, notificationMessage);
 
-        final String baseUrl = "http://localhost:8080/workspace";
-        String notificationUrl = switch (event.getEventType()) {
-            case "create", "update" -> String.format("%s/%d", baseUrl, workspaceId);
-            case "delete" -> baseUrl;
-            default -> baseUrl;
-        };
+        // 모든 경우에 대해 동일한 URL로 리다이렉트: http://localhost:3000/channel
+        final String baseUrl = "http://localhost:3000/channel";
+        String notificationUrl = baseUrl;
 
-        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findMembersByWorkspaceIdNative(workspaceId);
+        List<WorkspaceMemberEntity> workspaceMembers =
+                workspaceMemberRepository.findMembersByWorkspaceIdNative(workspaceId);
 
         workspaceMembers.forEach(member -> {
             NotificationEntity notification = buildNotificationEntity(event, member, workspaceId, notificationMessage, notificationUrl);
@@ -48,7 +46,7 @@ public class WorkspaceChannelEventListener {
     }
 
     /**
-     * 🔹 개별 NotificationEntity 객체를 생성하는 메서드 (중복 코드 제거)
+     * 개별 NotificationEntity 객체를 생성하는 메서드 (중복 코드 제거)
      */
     private NotificationEntity buildNotificationEntity(WorkspaceChannelEvent event, WorkspaceMemberEntity member,
                                                        Long workspaceId, String notificationMessage, String notificationUrl) {
