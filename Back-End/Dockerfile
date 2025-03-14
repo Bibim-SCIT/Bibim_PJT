@@ -13,7 +13,7 @@ FROM amazoncorretto:17.0.7-alpine
 WORKDIR /app
 
 # 3. JAR 파일 복사 (경로 명확하게)
-COPY ./Back-End/build/libs/server-0.0.1-SNAPSHOT.jar /app/bibim.jar
+COPY ./Back-End/build/libs/Back-End-0.0.1-SNAPSHOT.jar /app/bibim.jar
 
 # 4. Timezone 설정
 ENV TZ=Asia/Seoul
