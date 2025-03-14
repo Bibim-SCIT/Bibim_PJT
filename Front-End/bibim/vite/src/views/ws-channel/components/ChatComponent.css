@@ -63,6 +63,7 @@
         opacity: 0;
         transform: translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -209,12 +210,15 @@
 
 /* 발신자 아바타 */
 .sender-avatar {
-    width: 28px;  /* 크기 조정 */
-    height: 28px; /* 크기 조정 */
+    width: 28px;
+    /* 크기 조정 */
+    height: 28px;
+    /* 크기 조정 */
     border-radius: 50%;
     background-color: #e0e0e0;
     overflow: hidden;
-    flex-shrink: 0;  /* 크기 고정 */
+    flex-shrink: 0;
+    /* 크기 고정 */
 }
 
 /* 발신자 이름 */
@@ -226,15 +230,17 @@
 
 /* 메시지 시간 */
 .message-time {
-    font-size: 12px ;
+    font-size: 12px;
     color: #999;
 }
 
 /* 메시지 내용 컨테이너 */
 .message-content-container {
     display: flex;
-    padding-left: 36px;  /* 프로필 사진 너비 + 여백 */
-    margin-top: -4px;   /* 간격 조정 */
+    padding-left: 36px;
+    /* 프로필 사진 너비 + 여백 */
+    margin-top: -4px;
+    /* 간격 조정 */
 }
 
 /* 메시지 내용 */
@@ -252,8 +258,10 @@
 
 /* 이미지가 있는 메시지의 경우 패딩 조정 */
 .message-content.has-image {
-    padding: 8px;  /* 이미지가 있을 때는 패딩을 좀 더 작게 */
-    background-color: #ffffff;  /* 이미지 메시지의 배경색 */
+    padding: 8px;
+    /* 이미지가 있을 때는 패딩을 좀 더 작게 */
+    background-color: #ffffff;
+    /* 이미지 메시지의 배경색 */
 }
 
 /* 내 메시지 스타일 */
@@ -263,7 +271,8 @@
 
 .my-message .message-content {
     color: #1a1a1a;
-    background-color: #E3F2FD;  /* 파스텔 블루 */
+    background-color: #E3F2FD;
+    /* 파스텔 블루 */
     border-bottom-left-radius: 4px;
 }
 
@@ -281,7 +290,8 @@
 }
 
 .other-message .message-content {
-    background-color: #F3E5F5;  /* 파스텔 퍼플 */
+    background-color: #F3E5F5;
+    /* 파스텔 퍼플 */
     color: #1a1a1a;
     border-bottom-left-radius: 4px;
 }
@@ -303,8 +313,8 @@
 .chat-image {
     max-width: 300px;
     max-height: 300px;
-    border-radius: 8px;  
-    margin: 0;      
+    border-radius: 8px;
+    margin: 0;
 }
 
 .file-message {
@@ -418,9 +428,11 @@
 .youtube-wrapper {
     position: relative;
     width: 100%;
-    max-width: 560px;  /* 최대 너비를 560px로 제한 */
+    max-width: 560px;
+    /* 최대 너비를 560px로 제한 */
     height: 0;
-    padding-bottom: 56.25%; /* 16:9 비율 유지 */
+    padding-bottom: 56.25%;
+    /* 16:9 비율 유지 */
     margin: 10px 0;
 }
 
@@ -431,5 +443,14 @@
     left: 0;
     width: 100%;
     height: 100%;
-    border-radius: 8px; /* 둥근 테두리 */
+    border-radius: 8px;
+    /* 둥근 테두리 */
+}
+
+/* 비어있을시 */
+.empty-chat-message {
+    text-align: center;
+    color: #6b7280;
+    font-size: 16px;
+    margin-top: 20px;
 }

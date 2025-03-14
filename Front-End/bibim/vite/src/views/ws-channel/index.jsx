@@ -4,13 +4,14 @@ import { useContext } from 'react';
 import { ConfigContext } from '../../contexts/ConfigContext';
 import ChatComponent from './components/ChatComponent';
 import { getWorkspaceChannels } from '../../api/channel';
+import ChannelLoading from './components/ChannelLoading';
 
 // ==============================|| Chatting PAGE ||============================== //
 
 export default function ChannelPage() {
     const { user } = useContext(ConfigContext); // ✅ Context에서 로그인 유저 정보 가져오기
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
-    console.log("몇번", activeWorkspace)
+
     const WSID = activeWorkspace.wsId
     const [channelId, setChannelId] = useState(null); // 선택된 채널 ID
     const [channelName, setChannelName] = useState(null); // 선택된 채널 이름
@@ -41,7 +42,7 @@ export default function ChannelPage() {
         setChannelName(name);
     };
 
-    if (!channelId) return <div>채널을 불러오는 중...</div>;
+    if (!channelId) return <ChannelLoading />;
 
     return (
         // <ChatComponent channelId={11} />
@@ -49,7 +50,7 @@ export default function ChannelPage() {
             channelId={channelId}
             workspaceId={activeWorkspace?.id}
             channelName={channelName}
-            setChannel={handleChannelChange}
+            setChannel={handleChannelChange} // ✅ ChatComponent에 전달
         />
     );
 }
