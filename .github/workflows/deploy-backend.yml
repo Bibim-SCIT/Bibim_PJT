@@ -30,6 +30,9 @@ jobs:
           mkdir -p ./src/main/resources/
           echo ${{ env.APPLICATION_PROD }} | base64 --decode > ./src/main/resources/application-prod.yml
 
+      - name: Check current directory
+        run: pwd
+
       # Gradle 실행권한 부여
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
