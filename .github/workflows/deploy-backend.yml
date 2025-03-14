@@ -33,6 +33,10 @@ jobs:
           mkdir -p ./Back-End/src/main/resources/
           echo ${{ env.APPLICATION_PROD }} | base64 --decode > ./Back-End/src/main/resources/application-prod.yml
 
+      # yml 파일 확인
+      - name: Check application-prod.yml
+        run: cat ./Back-End/src/main/resources/application-prod.yml
+
       - name: Check current directory
         run: pwd
       - name: current files
