@@ -31,7 +31,7 @@ jobs:
       - name: application yml setting
         run: |
           mkdir -p ./Back-End/src/main/resources/
-          echo ${{ env.APPLICATION_PROD }} | base64 --decode > ./src/main/resources/application-prod.yml
+          echo ${{ env.APPLICATION_PROD }} | base64 --decode > ./Back-End/src/main/resources/application-prod.yml
 
       - name: Check current directory
         run: pwd
