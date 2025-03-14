@@ -43,8 +43,11 @@ jobs:
         run: chmod +x ./Back-End/gradlew
 
       # Spring boot application 빌드
+      - name: Change directory to Back-End
+        run: cd ./Back-End
+
       - name: Build with gradle
-        run: ./Back-End/gradlew clean build
+        run: ./gradlew clean build
 
       # DockerHub에 로그인
       - name: Login to DockerHub
