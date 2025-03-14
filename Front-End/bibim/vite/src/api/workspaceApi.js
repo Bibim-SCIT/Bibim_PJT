@@ -263,13 +263,7 @@ export const fetchWorkspaceMembersStatus = async (workspaceId) => {
  * @returns {Promise<Object>} 탈퇴 결과
  */
 export const leaveWorkspace = async (wsId) => {
-  console.log('워크스페이스 탈퇴 함수 호출됨, wsId:', wsId);  // 함수 호출 확인
-  
   try {
-    console.log('워크스페이스 탈퇴 요청 파라미터:', { wsId });  // 요청 파라미터 확인
-    
-    // 백엔드 코드에서 확인한 정확한 엔드포인트 사용
-    // WorkspaceController.java에서 @DeleteMapping("/withdrawal")으로 정의됨
     const response = await api.delete('/workspace/withdrawal', {
       params: { wsId }
     });
