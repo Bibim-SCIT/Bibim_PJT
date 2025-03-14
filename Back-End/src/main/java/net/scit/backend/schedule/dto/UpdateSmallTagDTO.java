@@ -7,6 +7,7 @@ import lombok.Setter;
 @Setter
 public class UpdateSmallTagDTO {
     private Long mediumTagNumber;
+    private Long smallTagNumber;
     private String tagName;
     private String newTagName;
 }
