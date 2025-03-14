@@ -129,8 +129,14 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
         script: |
+          # 기존 이미지 제거
+          docker rmi ${{ secrets.DOCKER_USERNAME }}/bibim:dev || true
+          
+          # 기존 컨테이너 제거
+          # docker stop bibim || true && docker rm bibim || true
+
+          # 새 이미지 다운로드 및 실행
           docker pull ${{ secrets.DOCKER_USERNAME }}/bibim:dev
-          docker stop bibim || true && docker rm bibim || true
           docker run -d --name bibim -p 8080:8080 \
           -e DB_URL=${{ secrets.DB_URL }} \
           -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
