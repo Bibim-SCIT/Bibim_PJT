@@ -182,8 +182,7 @@ export default function NotificationSection() {
   // 개별 알림 삭제 API
   const deleteNotification = async (notificationId) => {
     try {
-      // workspaceId는 예시로 1 사용 (실제 값 적용 필요)
-      const response = await fetch(`${API_BASE_URL}/notification?notificationNumber=${notificationId}&workspaceId=1`, {
+      const response = await fetch(`${API_BASE_URL}/notification?notificationNumber=${notificationId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

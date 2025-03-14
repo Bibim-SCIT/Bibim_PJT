@@ -87,14 +87,8 @@ public class NotificationController {
 
     @DeleteMapping
     public ResponseEntity<String> deleteNotification(@RequestHeader("Authorization") String token,
-                                                     @RequestParam Long notificationNumber,
-                                                     @RequestParam Long workspaceId) {
+                                                     @RequestParam Long notificationNumber) {
         try {
-            String email = AuthUtil.getLoginUserId();
-            Optional<WorkspaceMemberEntity> optionalWsMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(workspaceId, email);
-            if (optionalWsMember.isEmpty()) {
-                return ResponseEntity.badRequest().body("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.");
-            }
             boolean result = notificationService.deleteNotification(notificationNumber);
             return result ? ResponseEntity.ok("알림 삭제 완료") : ResponseEntity.badRequest().body("알림 삭제 실패");
         } catch (Exception e) {
@@ -102,6 +96,7 @@ public class NotificationController {
             return ResponseEntity.status(500).body("알림 삭제 중 오류 발생: " + e.getMessage());
         }
     }
+
 
 
     @GetMapping("/{notificationId}")
