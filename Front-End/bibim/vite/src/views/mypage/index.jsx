@@ -6,7 +6,7 @@ import MyWorkspaces from './component/MyWorkspaces';
 
 const MyPage = () => {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.8 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <MyInfo />
       <MySchedule />
       <MyWorkspaces />

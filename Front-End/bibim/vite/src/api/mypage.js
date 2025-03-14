@@ -94,3 +94,17 @@ export const convertToCalendarFormat = (scheduleList) => {
     }
   }));
 };
+
+/**
+ * 내가 속한 모든 워크스페이스 목록 조회 API
+ * @returns {Promise<Object>} 워크스페이스 목록 데이터
+ */
+export const getMyWorkspaces = async () => {
+  try {
+    const response = await api.get('/workspace');
+    return response.data;
+  } catch (error) {
+    console.error('워크스페이스 목록 조회 중 오류 발생:', error);
+    throw error;
+  }
+};
