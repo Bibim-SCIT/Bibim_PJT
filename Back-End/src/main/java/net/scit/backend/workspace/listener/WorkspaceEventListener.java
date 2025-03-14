@@ -25,21 +25,22 @@ public class WorkspaceEventListener {
 
         // 이벤트 유형에 따라 URL 결정
         String notificationUrl = switch (event.getEventType()) {
-            case "delete", "withdraw" -> "http://localhost:8080/workspace";
-            default -> String.format("http://localhost:8080/workspace/%d", event.getWsId());
+            case "grant", "role_update" -> "http://localhost:3000/ws-setting";
+            case "create", "delete", "update", "invite", "join", "member_update", "withdraw" -> "http://localhost:3000/ws-select";
+            default -> "http://localhost:3000/ws-select";
         };
 
         log.info("📢 이벤트 감지: {} | 대상자: {} | 내용: {} | URL: {}",
                 event.getEventType(), event.getReceiverEmail(), notificationContent, notificationUrl);
 
-        // ✅ 코드 최적화: 개별 NotificationEntity 생성 메서드 활용
+        // NotificationEntity 생성 및 알림 전송
         NotificationEntity notification = buildNotificationEntity(event, notificationName, notificationContent, notificationUrl);
         NotificationResponseDTO response = notificationService.createAndSendNotification(notification);
         log.info("📢 알림 전송 및 저장 완료 - NotificationNumber: {}", response.getNotificationNumber());
     }
 
     /**
-     * 🔹 개별 NotificationEntity 객체를 생성하는 메서드 (중복 코드 제거)
+     * 개별 NotificationEntity 객체를 생성하는 메서드 (중복 코드 제거)
      */
     private NotificationEntity buildNotificationEntity(WorkspaceEvent event, String notificationName, String notificationContent, String notificationUrl) {
         NotificationEntity notification = new NotificationEntity();

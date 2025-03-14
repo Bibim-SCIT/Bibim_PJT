@@ -31,18 +31,15 @@ public class ScheduleEventListener {
         log.info("📢 Schedule 이벤트 감지: {} | 워크스페이스 ID: {} | 메시지: {}",
                 event.getEventType(), workspaceId, notificationMessage);
 
-        final String baseUrl = "http://localhost:8080/schedule";
-        String notificationUrl = switch (event.getEventType()) {
-            case "create", "assignee_update", "info_update", "status_update" -> String.format("%s/%d", baseUrl, scheduleId);
-            case "delete" -> baseUrl;
-            default -> baseUrl;
-        };
+        // 모든 경우에 동일한 URL 설정
+        final String baseUrl = "http://localhost:3000/schedule";
+        String notificationUrl = baseUrl;
 
         // 특정 워크스페이스의 모든 멤버 조회
         List<WorkspaceMemberEntity> workspaceMembers =
                 workspaceMemberRepository.findMembersByWorkspaceIdNative(workspaceId);
 
-        // ✅ 코드 최적화: 개별 NotificationEntity 생성 메서드 활용
+        // 각 워크스페이스 멤버에게 알림 전송
         workspaceMembers.forEach(member -> {
             NotificationEntity notification = buildNotificationEntity(event, member, workspaceId, notificationMessage, notificationUrl);
             NotificationResponseDTO response = notificationService.createAndSendNotification(notification);
@@ -51,7 +48,7 @@ public class ScheduleEventListener {
     }
 
     /**
-     * 🔹 개별 NotificationEntity 객체를 생성하는 메서드 (중복 코드 제거)
+     * 개별 NotificationEntity 객체를 생성하는 메서드 (중복 코드 제거)
      */
     private NotificationEntity buildNotificationEntity(ScheduleEvent event, WorkspaceMemberEntity member,
                                                        Long workspaceId, String notificationMessage, String notificationUrl) {
@@ -70,4 +67,3 @@ public class ScheduleEventListener {
         return notification;
     }
 }
-
