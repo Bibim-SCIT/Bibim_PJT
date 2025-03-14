@@ -30,6 +30,8 @@
 # JDK Image Start
 FROM openjdk:17
 
+COPY . .  # 현재 디렉토리의 모든 파일을 복사
+
 RUN chmod +x ./gradlew
 RUN ./gradlew build -x test
 
