@@ -141,6 +141,7 @@ public class NotificationServiceImpl implements NotificationService {
         return false;
     }
 
+
     @Override
     public String getNotificationUrl(Long notificationId) {
         String currentUserEmail = AuthUtil.getLoginUserId();
