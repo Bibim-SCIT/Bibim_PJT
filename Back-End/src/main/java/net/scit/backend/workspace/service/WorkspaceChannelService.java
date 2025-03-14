@@ -13,7 +13,7 @@ import java.util.List;
 @Service
 public interface WorkspaceChannelService {
     // 1. 채널 생성
-    ResultDTO<SuccessDTO> createChannel(Long workspaceId, String channelName, Long roleId);
+    ChannelDTO createChannel(Long workspaceId, String channelName);
 
     // 2. 채널 삭제
     ResultDTO<SuccessDTO> deleteChannel(Long channelNumber);
