@@ -114,39 +114,21 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Setup SSH Key with EC2
+    - name: Setup SSH Key with proper permissions
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-    - name: Deploy to EC2
+    - name: SSH into EC2 and deploy Docker container
       uses: appleboy/ssh-action@v0.1.0
       with:
         host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
+        username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
         script: |
           docker pull ${{ secrets.DOCKER_USERNAME }}/bibim:dev
-          docker stop bibim || true
-          docker rm bibim || true
-          docker run -d --name bibim -p 8080:8080 \
-            -e DB_URL="${{ secrets.DB_URL }}" \
-            -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
-            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            -e SECRET_KEY="${{ secrets.SECRET_KEY }}" \
-            -e AWS_ACCESS_KEY="${{ secrets.S3_ACCESS_KEY }}" \
-            -e AWS_SECRET_KEY="${{ secrets.S3_SECRET_KEY }}" \
-            --restart always \
-            -v /path/to/logs:/app/logs \
-            --network host \
-            --env-file .env \
-            ${{ secrets.DOCKER_USERNAME }}/bibim:dev
-    - name: Cleanup old containers
-      run: |
-        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-        docker system prune -f
-        docker image prune -f
-        EOF
-      shell: bash
+          docker stop bibim || true && docker rm bibim || true
+          docker run -d --name bibim -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/bibim:dev
