@@ -28,7 +28,7 @@ function ChannelCreateModal({ open, onClose, workspaceId, onChannelCreated }) {
             console.log("새로운 채널 생성 완료:", newChannel);
 
             // ✅ 채널 생성 후 부모 컴포넌트에서 상태 업데이트
-            // onChannelCreated(newChannel.channelId, newChannel.channelName);
+            onChannelCreated(newChannel.channelId, newChannel.channelName);
 
             // ✅ 모달 닫기 전에 입력 필드 초기화
             setTimeout(() => {

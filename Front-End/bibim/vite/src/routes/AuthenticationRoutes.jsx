@@ -7,6 +7,7 @@ import MinimalLayout from 'layout/MinimalLayout';
 // maintenance routing
 const LoginPage = Loadable(lazy(() => import('views/pages/authentication/Login')));
 const RegisterPage = Loadable(lazy(() => import('views/pages/authentication/Register')));
+const LandingPage = Loadable(lazy(() => import('views/landing')));
 
 // ==============================|| AUTHENTICATION ROUTING ||============================== //
 
@@ -21,6 +22,10 @@ const AuthenticationRoutes = {
     {
       path: '/pages/register',
       element: <RegisterPage />
+    },
+    {
+      path: '/landing',
+      element: <LandingPage />
     }
   ]
 };
