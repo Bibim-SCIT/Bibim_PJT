@@ -18,6 +18,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      DB_URL: ${{ secrets.DB_URL }}
+      DB_USERNAME: ${{ secrets.DB_USERNAME }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+      MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+      S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
+      S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -39,9 +49,9 @@ jobs:
           application:
             name: Back-End
           datasource:
-            url: ${DB_URL}
-            username: ${{ secrets.DB_USERNAME }}
-            password: ${{ secrets.DB_PASSWORD }}
+            url: $DB_URL
+            username: $DB_USERNAME
+            password: $DB_PASSWORD
             driver-class-name: com.mysql.cj.jdbc.Driver
           jpa:
             hibernate:
@@ -62,8 +72,8 @@ jobs:
           mail:
             host: smtp.gmail.com
             port: 587
-            username: ${{ secrets.MAIL_USERNAME }}
-            password: ${{ secrets.MAIL_PASSWORD }}
+            username: $MAIL_USERNAME
+            password: $MAIL_PASSWORD
             properties:
               mail:
                 smtp:
@@ -77,8 +87,8 @@ jobs:
           cloud:
             aws:
               credentials:
-                access-key: ${{ secrets.S3_ACCESS_KEY }}
-                secret-key: ${{ secrets.S3_SECRET_KEY }}
+                access-key: $S3_ACCESS_KEY
+                secret-key: $S3_SECRET_KEY
             region:
               static: us-east-1
             stack:
@@ -88,38 +98,55 @@ jobs:
         logging:
           level:
             org.springframework.security: DEBUG
-        secret_key: ${SECRET_KEY}
+        secret_key: $SECRET_KEY
         EOL
 
-    - name: Build Docker image
-      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/bibim:dev ./Back-End
-
-    - name: Push Docker image
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/bibim:dev
+    - name: Build and push Docker image
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/bibim:dev ./Back-End
+        echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+        docker push ${{ secrets.DOCKER_USERNAME }}/bibim:dev
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build
-
+    needs: [deploy]
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Setup SSH Key with proper permissions
+    - name: Setup SSH Key with EC2
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-    - name: SSH into EC2 and deploy Docker container
+    - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.0
       with:
         host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
+        username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        port: 22
         script: |
           docker pull ${{ secrets.DOCKER_USERNAME }}/bibim:dev
-          docker stop bibim || true && docker rm bibim || true
-          docker run -d --name bibim -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/bibim:dev
+          docker stop bibim || true
+          docker rm bibim || true
+          docker run -d --name bibim -p 8080:8080 \
+            -e DB_URL="${{ secrets.DB_URL }}" \
+            -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e SECRET_KEY="${{ secrets.SECRET_KEY }}" \
+            -e AWS_ACCESS_KEY="${{ secrets.S3_ACCESS_KEY }}" \
+            -e AWS_SECRET_KEY="${{ secrets.S3_SECRET_KEY }}" \
+            --restart always \
+            -v /path/to/logs:/app/logs \
+            --network host \
+            --env-file .env \
+            ${{ secrets.DOCKER_USERNAME }}/bibim:dev
+    - name: Cleanup old containers
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+        docker system prune -f
+        docker image prune -f
+        EOF
+      shell: bash
