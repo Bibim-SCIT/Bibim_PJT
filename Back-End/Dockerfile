@@ -15,7 +15,7 @@ RUN ./gradlew build -x test
 RUN ls -alh build/libs
 
 # 6️⃣ 실행 환경용 이미지
-# FROM eclipse-temurin:17-jdk AS runtime
+FROM eclipse-temurin:17-jdk AS runtime
 
 # 7️⃣ 이전 단계에서 빌드한 JAR 복사
 WORKDIR /app
