@@ -127,7 +127,6 @@ jobs:
           username: ubuntu
           host: ${{ secrets.SERVER_DOMAIN }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          script_stop: true
           script: |
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:prod
             sudo docker-compose -f docker-compose.yml up -d ${{ env.TARGET_UPSTREAM }}
@@ -144,7 +143,6 @@ jobs:
           username: ubuntu
           host: ${{ secrets.SERVER_DOMAIN }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          script_stop: true
           script: |
             sudo docker exec -i nginxserver bash -c 'echo "set \$service_url ${{ env.TARGET_UPSTREAM }};" > /etc/nginx/conf.d/service-env.inc && nginx -s reload' 
       - name: Stop current server
