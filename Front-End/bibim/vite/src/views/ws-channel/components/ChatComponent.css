@@ -454,3 +454,69 @@
     font-size: 16px;
     margin-top: 20px;
 }
+
+/* ✅ 메시지 전체 감싸는 컨테이너 */
+.channel-message-wrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+/* ✅ 번역 버튼 (채팅 버블 바깥쪽 우측) */
+.channel-translate-button {
+    background: #f1f1f1;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-left: 8px;
+    /* 채팅 버블과 간격 */
+    transition: 0.3s;
+}
+
+.channel-translate-button:hover {
+    background: #ddd;
+}
+
+/* ✅ 번역된 메시지 스타일 */
+.channel-translated-message {
+    margin-top: 5px;
+    /* ✅ 원문과 번역문 사이 여백 추가 */
+    font-size: 0.9em;
+    /* ✅ 번역문은 조금 작게 */
+    color: gray;
+    /* ✅ 번역문 색상을 연하게 */
+}
+
+/* 메시지 내용 버블 스타일 */
+.channel-message-content {
+    padding: 8px 12px;
+    font-size: 14px;
+    line-height: 1.4;
+    max-width: 80%;
+    border-radius: 12px;
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+/* 내가 보낸 메시지 버블 스타일 */
+.my-message .channel-message-content {
+    color: #1a1a1a;
+    background-color: #E3F2FD;
+    /* 파란색 계열 */
+    border-radius: 12px;
+}
+
+/* 상대방이 보낸 메시지 버블 스타일 */
+.other-message .channel-message-content {
+    background-color: #F3E5F5;
+    /* 보라색 계열 */
+    color: #1a1a1a;
+    border-radius: 12px;
+}
