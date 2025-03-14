@@ -2,8 +2,6 @@ package net.scit.backend.notification.service;
 
 import net.scit.backend.notification.dto.NotificationResponseDTO;
 import net.scit.backend.notification.entity.NotificationEntity;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.util.List;
 
@@ -15,6 +13,9 @@ public interface NotificationService {
     // SSE 구독(Emitter 생성)
     SseEmitter subscribe(String receiverEmail);
 
+    // SSE Emitter 제거
+    void removeEmitter(String email);
+
     // SSE 구독 해제(Emitter 제거)
     void unsubscribe(String receiverEmail);
 
@@ -22,10 +23,11 @@ public interface NotificationService {
     NotificationEntity sendNotification(NotificationEntity notification);
 
     // 읽지 않은 알림 조회 (페이징)
-    Page<NotificationEntity> getUnreadNotifications(String receiverEmail, Pageable pageable);
+    List<NotificationEntity> getUnreadNotifications(String receiverEmail);
 
     // 읽은 알림 조회 (페이징)
-    Page<NotificationEntity> getReadNotifications(String receiverEmail, Pageable pageable);
+    List<NotificationEntity> getReadNotifications(String receiverEmail);
+
 
     boolean markAsRead(Long notificationNumber);
 

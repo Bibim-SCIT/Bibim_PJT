@@ -10,12 +10,11 @@ import net.scit.backend.notification.dto.NotificationResponseDTO;
 import net.scit.backend.notification.entity.NotificationEntity;
 import net.scit.backend.notification.repository.NotificationRepository;
 import net.scit.backend.notification.service.NotificationService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -30,18 +29,27 @@ public class NotificationServiceImpl implements NotificationService {
     private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
 
     @Override
-    public SseEmitter subscribe(String receiverEmail) {
-        SseEmitter emitter = new SseEmitter(24 * 60 * 60 * 1000L); // 24시간 유지
-        emitters.put(receiverEmail, emitter);
-        emitter.onCompletion(() -> emitters.remove(receiverEmail));
-        emitter.onTimeout(() -> emitters.remove(receiverEmail));
-        emitter.onError(e -> emitters.remove(receiverEmail));
-        try {
-            emitter.send(SseEmitter.event().name("INIT").data("SSE 연결 완료"));
-        } catch (IOException e) {
-            emitter.completeWithError(e);
-        }
+    public SseEmitter subscribe(String email) {
+        // SSE 연결 유지 시간을 10분(600,000ms)으로 설정
+        SseEmitter emitter = new SseEmitter(600_000L);
+
+        // 🔹 기존 연결이 있다면 제거 후 새 연결 추가
+        removeEmitter(email);
+        emitters.put(email, emitter);
+
+        // 🔹 클라이언트가 연결을 닫거나 타임아웃 시 Emitter 제거
+        emitter.onCompletion(() -> removeEmitter(email));
+        emitter.onTimeout(() -> removeEmitter(email));
+
         return emitter;
+    }
+
+    @Override
+    public void removeEmitter(String email) {
+        SseEmitter emitter = emitters.remove(email);
+        if (emitter != null) {
+            emitter.complete();
+        }
     }
 
     @Override
@@ -92,14 +100,21 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public Page<NotificationEntity> getUnreadNotifications(String receiverEmail, Pageable pageable) {
-        return notificationRepository.findByReceiverEmailAndNotificationStatusFalseOrderByNotificationDateDesc(receiverEmail, pageable);
+    public List<NotificationEntity> getUnreadNotifications(String receiverEmail) {
+        List<NotificationEntity> result = notificationRepository.findByReceiverEmailAndNotificationStatusFalseOrderByNotificationDateDesc(receiverEmail);
+        log.info("✅ [백엔드] 조회된 알림 개수: {}", result.size());
+        return result;
     }
 
+
     @Override
-    public Page<NotificationEntity> getReadNotifications(String receiverEmail, Pageable pageable) {
-        return notificationRepository.findByReceiverEmailAndNotificationStatusTrueOrderByNotificationDateDesc(receiverEmail, pageable);
+    public List<NotificationEntity> getReadNotifications(String receiverEmail) {
+        List<NotificationEntity> result = notificationRepository
+                .findByReceiverEmailAndNotificationStatusTrueOrderByNotificationDateDesc(receiverEmail);
+        log.info("✅ [백엔드] 조회된 읽은 알림 개수: {}", result.size());
+        return result;
     }
+
 
     @Override
     public boolean markAsRead(Long notificationNumber) {
