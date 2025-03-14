@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState, useCallback } from "react";
 import { useSelector } from 'react-redux';
 import axios from "axios";
 import { Client } from "@stomp/stompjs";
@@ -188,9 +188,9 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
 
 
     // ✅ 메시지 목록 스크롤을 맨 아래로 이동
-    const scrollToBottom = () => {
+    const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
+    },[]);
 
     // ✅ 파일 업로드 함수
     const uploadFile = async () => {
@@ -308,8 +308,13 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
             body: JSON.stringify(messageDTO),
             headers: { Authorization: `Bearer ${token}` },
         });
+        
+        // ✅ setMessages 제거하여 중복 메시지 방지
+        setMessage("");
 
-        setMessages((prev) => [...prev, messageDTO]);
+        // 이게 있으면 바로 올라오는데, 문제는 메세지가 두번 올라오는 문제가 발생함
+        // 느리더라도 메세지가 한번만 올라오게 하는 방법임
+        // setMessages((prev) => [...prev, messageDTO]);
         setMessage("");
         setTimeout(scrollToBottom, 100);
     };
