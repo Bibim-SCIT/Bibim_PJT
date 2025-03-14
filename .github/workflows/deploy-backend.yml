@@ -87,26 +87,25 @@ jobs:
           #   echo "TARGET_UPSTREAM=blue" >> $GITHUB_ENV
           # fi
           
-          # Health check 호출 (서버가 실행 중인지 확인)
-          HEALTH_RESPONSE=$(curl -s --max-time 30 --write-out "%{http_code}" "http://***/actuator/health")
-          HTTP_STATUS=$?
+          # Health check 호출
+          HEALTH_RESPONSE=$(curl -s "http://***/actuator/health")
+          echo "Health Response: $HEALTH_RESPONSE"  # 응답 내용을 출력하여 확인
           
-          # 상태 확인 (응답이 없거나 200 상태가 아닌 경우 오류 처리)
-          if [ $HTTP_STATUS -ne 0 ]; then
-            echo "Error: curl failed with status $HTTP_STATUS"
-            CURRENT_UPSTREAM="green"
+          # 상태 확인 (응답 바디에서 "status" 값 확인)
+          STATUS=$(echo "$HEALTH_RESPONSE" | jq -r '.status')
+          echo "Status: $STATUS"  # 상태 값을 출력하여 확인
+          
+          # 상태가 "UP"인 경우에만 정상적인 health 정보를 가져옴
+          if [ "$STATUS" = "UP" ]; then
+            # 실행 중인 Docker 컨테이너 이름 가져오기 (docker ps로 실행 중인 컨테이너 목록에서 'name' 추출)
+            CURRENT_UPSTREAM=$(docker ps --filter "status=running" --format "{{.Names}}" | grep -E 'blue|green')
           else
-            # 상태가 "UP"인 경우에만 정상적인 health 정보를 가져옴
-            STATUS=$(echo "$HEALTH_RESPONSE" | jq -r '.status')
-            
-            if [ "$STATUS" = "UP" ]; then
-              # 실행 중인 Docker 컨테이너 이름 가져오기
-              CURRENT_UPSTREAM=$(docker ps --filter "status=running" --format "{{.Names}}" | grep -E 'blue|green')
-            else
-              CURRENT_UPSTREAM="green"
-            fi
+            CURRENT_UPSTREAM="green"
           fi
-                    
+          
+          # 상태 출력
+          echo "CURRENT_UPSTREAM=$CURRENT_UPSTREAM"
+          
           # 현재 실행 중인 컨테이너가 blue일 경우, green을 타겟으로 설정
           if [ "$CURRENT_UPSTREAM" = "blue" ]; then
             echo "CURRENT_PORT=8080" >> $GITHUB_ENV
