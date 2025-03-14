@@ -54,13 +54,23 @@ public class WorkspaceEvent implements BasedUpdatedEvent {
 
     @Override
     public Long getEntityId() {
-        return "delete".equals(eventType) ? wsId : workspace.getWsId();
+        // delete, withdraw 이벤트 또는 workspace가 null인 경우 wsId 사용
+        if ("delete".equals(eventType) || "withdraw".equals(eventType) || workspace == null) {
+            return wsId;
+        }
+        return workspace.getWsId();
     }
 
     @Override
     public String getNotificationName() {
-        // delete 이벤트의 경우 wsName을, 그 외에는 workspace.getWsName()을 사용
-        String name = "delete".equals(eventType) ? wsName : workspace.getWsName();
+        // delete, withdraw 이벤트 또는 workspace가 null인 경우 wsName 사용
+        String name;
+        if ("delete".equals(eventType) || "withdraw".equals(eventType) || workspace == null) {
+            name = wsName;
+        } else {
+            name = workspace.getWsName();
+        }
+        
         switch (eventType) {
             case "create":
                 return String.format("%s님이 %s 워크스페이스를 생성하였습니다", senderNickname, name);
