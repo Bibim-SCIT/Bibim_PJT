@@ -88,10 +88,12 @@ jobs:
           # fi
           
           # Health check 호출
-          HEALTH_RESPONSE=$(curl -s "http://***/actuator/health")
+          HEALTH_RESPONSE=$(curl "http://***/actuator/health")
+          echo "Health Response: $HEALTH_RESPONSE"  # 응답 내용을 출력하여 확인
           
           # 상태 확인 (응답 바디에서 "status" 값 확인)
           STATUS=$(echo "$HEALTH_RESPONSE" | jq -r '.status')
+          echo "Status: $STATUS"  # 상태 값을 출력하여 확인
           
           # 상태가 "UP"인 경우에만 정상적인 health 정보를 가져옴
           if [ "$STATUS" = "UP" ]; then
