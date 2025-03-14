@@ -15,4 +15,6 @@ public interface WorkspaceChannelRepository extends JpaRepository<WorkspaceChann
 
     // 워크스페이스 ID로 채널 전체 검색
     List<WorkspaceChannelEntity> findAllByWorkspace_WsId(Long wsId);
+
+    WorkspaceChannelEntity findByWorkspace_wsIdAndChannelName(Long workspaceId, String channelName);
 }

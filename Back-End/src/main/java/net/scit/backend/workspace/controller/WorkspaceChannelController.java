@@ -28,16 +28,14 @@ public class WorkspaceChannelController {
      * 1. 채널 생성
      */
     @PostMapping("/{ws_id}/channel")
-    public ResponseEntity<ResultDTO<SuccessDTO>> createChannel(@PathVariable("ws_id") Long workspaceId,
+    public ChannelDTO createChannel(@PathVariable("ws_id") Long workspaceId,
             @RequestBody Map<String, String> request) {
 
         String channelName = request.get("channelName");
-        Long roleId = Long.parseLong(request.get("roleId"));
-
         // 서비스 호출
-        ResultDTO<SuccessDTO> result = workspaceChannelService.createChannel(workspaceId, channelName, roleId);
+        ChannelDTO result = workspaceChannelService.createChannel(workspaceId, channelName);
 
-        return ResponseEntity.ok(result);
+        return result;
     }
 
     /**
