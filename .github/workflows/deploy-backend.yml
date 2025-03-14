@@ -45,62 +45,62 @@ jobs:
       run: |
         mkdir -p src/main/resources
         cat <<EOL > src/main/resources/application.yml
-spring:
-  application:
-    name: Back-End
-  datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update
-    generate-ddl: true
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.MySQL8Dialect
-  servlet:
-    multipart:
-      enabled: true
-      max-file-size: 100MB
-      max-request-size: 2MB
-  cache:
-    type: caffeine
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-  data:
-    redis:
-      host: localhost
-      port: 6379
-  cloud:
-    aws:
-      credentials:
-        access-key: ${S3_ACCESS_KEY}
-        secret-key: ${S3_SECRET_KEY}
-    region:
-      static: us-east-1
-    stack:
-      auto: false
-    s3:
-      bucket: bibim
-logging:
-  level:
-    org.springframework.security: DEBUG
-secret_key: ${SECRET_KEY}
-EOL
-
+        spring:
+          application:
+            name: Back-End
+          datasource:
+            url: ${DB_URL}
+            username: ${DB_USERNAME}
+            password: ${DB_PASSWORD}
+            driver-class-name: com.mysql.cj.jdbc.Driver
+          jpa:
+            hibernate:
+              ddl-auto: update
+            generate-ddl: true
+            show-sql: true
+            properties:
+              hibernate:
+                format_sql: true
+                dialect: org.hibernate.dialect.MySQL8Dialect
+          servlet:
+            multipart:
+              enabled: true
+              max-file-size: 100MB
+              max-request-size: 2MB
+          cache:
+            type: caffeine
+          mail:
+            host: smtp.gmail.com
+            port: 587
+            username: ${MAIL_USERNAME}
+            password: ${MAIL_PASSWORD}
+            properties:
+              mail:
+                smtp:
+                  auth: true
+                  starttls:
+                    enable: true
+          data:
+            redis:
+              host: localhost
+              port: 6379
+          cloud:
+            aws:
+              credentials:
+                access-key: ${S3_ACCESS_KEY}
+                secret-key: ${S3_SECRET_KEY}
+            region:
+              static: us-east-1
+            stack:
+              auto: false
+            s3:
+              bucket: bibim
+        logging:
+          level:
+            org.springframework.security: DEBUG
+        secret_key: ${SECRET_KEY}
+        EOL
+        
     - name: Build and push Docker image
       run: |
         docker build -t ${{ secrets.DOCKER_USERNAME }}/bibim:dev ./Back-End
