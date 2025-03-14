@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.member.dto.WorkspaceChannelLoginStatusDTO;
+import net.scit.backend.workspace.dto.ChannelDTO;
 import net.scit.backend.workspace.dto.ChannelUpdateRequest;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import net.scit.backend.workspace.service.WorkspaceChannelService;
@@ -27,8 +28,8 @@ public class WorkspaceChannelController {
      * 1. 채널 생성
      */
     @PostMapping("/{ws_id}/channel")
-    public ResponseEntity<ResultDTO<SuccessDTO>> createChannel( @PathVariable("ws_id") Long workspaceId,
-                                                                @RequestBody Map<String, String> request) {
+    public ResponseEntity<ResultDTO<SuccessDTO>> createChannel(@PathVariable("ws_id") Long workspaceId,
+            @RequestBody Map<String, String> request) {
 
         String channelName = request.get("channelName");
         Long roleId = Long.parseLong(request.get("roleId"));
@@ -54,14 +55,13 @@ public class WorkspaceChannelController {
      * 3. 채널 수정(역할, 이름만)
      */
     @PutMapping("/{ws_id}/channel/{channel_number}")
-    public ResponseEntity<ResultDTO<SuccessDTO>> updateChannel( @PathVariable("channel_number") Long channelNumber,
-                                                                @RequestBody ChannelUpdateRequest request) {
-        log.info("채널 수정 요청: channelNumber={}, channelName={}, workspaceRole={}", channelNumber, request.getChannelName(), request.getWorkspaceRole());
+    public ResponseEntity<ResultDTO<SuccessDTO>> updateChannel(@PathVariable("channel_number") Long channelNumber,
+            @RequestBody ChannelUpdateRequest request) {
+        log.info("채널 수정 요청: channelNumber={}, channelName={}", channelNumber, request.getChannelName());
 
         ResultDTO<SuccessDTO> result = workspaceChannelService.updateChannel(channelNumber, request);
         return ResponseEntity.ok(result);
     }
-
 
     /**
      * 특정 채널 역할 번호를 가진 멤버들의 로그인 상태를 조회하는 API
@@ -77,5 +77,22 @@ public class WorkspaceChannelController {
 
         return ResponseEntity.ok(ResultDTO.of("로그인 상태 조회 성공", statusList));
     }
-    
+
+    /**
+     * 지정된 워크스페이스와 연관된 모든 채널 목록을 조회합니다.
+     *
+     * @param ws_Id 채널 목록을 조회할 워크스페이스의 ID입니다.
+     * @return 지정된 워크스페이스의 채널을 나타내는 ChannelDTO 객체 리스트입니다.
+     */
+    @GetMapping("/{ws_id}/channel")
+    public List<ChannelDTO> getChannelList(@PathVariable("ws_id") Long workspaceId) {
+        return workspaceChannelService.getChannelList(workspaceId);
+    }
+
+    // @GetMapping("/{ws_id}/channel")
+    // public List<ChannelDTO> getChannelList(@PathVariable Long ws_Id)
+    // {
+    // return workspaceChannelService.getChannelList(ws_Id);
+    // }
+
 }

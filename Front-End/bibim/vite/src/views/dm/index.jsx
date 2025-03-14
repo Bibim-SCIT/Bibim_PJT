@@ -402,7 +402,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
             </div>
             {/* 메시지 목록 */}
             {loading ? (  // ✅ 로딩 중에는 로딩 화면 표시
-                <div style={{ textAlign: "center", padding: "20px" }}>
+                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
                     <ChatLoading />
                 </div>
             ) : (

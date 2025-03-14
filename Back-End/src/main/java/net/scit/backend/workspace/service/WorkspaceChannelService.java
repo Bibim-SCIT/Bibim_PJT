@@ -4,6 +4,7 @@ import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import net.scit.backend.member.dto.WorkspaceChannelLoginStatusDTO;
+import net.scit.backend.workspace.dto.ChannelDTO;
 import net.scit.backend.workspace.dto.ChannelUpdateRequest;
 import org.springframework.stereotype.Service;
 
@@ -21,4 +22,6 @@ public interface WorkspaceChannelService {
     ResultDTO<SuccessDTO> updateChannel(Long channelNumber, ChannelUpdateRequest request);
 
     List<WorkspaceChannelLoginStatusDTO> getLoginStatusByRole(Long chRoleNumber);
+
+    List<ChannelDTO> getChannelList(Long wsId);
 }

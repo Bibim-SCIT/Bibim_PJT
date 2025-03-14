@@ -3,9 +3,16 @@ name: Build and Deploy Docker Image
 on:
   push:
     branches:
-      - dev  # dev 브랜치에 푸시될 때 자동 실행
+      - dev
     paths:
-      - 'Back-End/**'  # 'Back-End/' 폴더 내의 파일들이 변경될 때만 배포 트리거
+      - 'Back-End/**'
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: '배포할 환경을 선택하세요.'
+        required: true
+        default: 'dev'
 
 jobs:
   build:
@@ -33,8 +40,8 @@ jobs:
             name: Back-End
           datasource:
             url: ${DB_URL}
-            username: ${DB_USERNAME}
-            password: ${DB_PASSWORD}
+            username: ${{ secrets.DB_USERNAME }}
+            password: ${{ secrets.DB_PASSWORD }}
             driver-class-name: com.mysql.cj.jdbc.Driver
           jpa:
             hibernate:
@@ -47,16 +54,16 @@ jobs:
                 dialect: org.hibernate.dialect.MySQL8Dialect
           servlet:
             multipart:
-              enabled: true  # Multipart 파일 업로드 활성화
-              max-file-size: 100MB  # 업로드 가능한 최대 파일 크기 설정
-              max-request-size: 2MB  # 요청의 최대 크기 설정
+              enabled: true
+              max-file-size: 100MB
+              max-request-size: 2MB
           cache:
-            type: caffeine #  워크스페이스 멤버 접속 조회 시 사용
+            type: caffeine
           mail:
             host: smtp.gmail.com
             port: 587
-            username: ${MAIL_USERNAME}
-            password: ${MAIL_PASSWORD}
+            username: ${{ secrets.MAIL_USERNAME }}
+            password: ${{ secrets.MAIL_PASSWORD }}
             properties:
               mail:
                 smtp:
@@ -70,19 +77,17 @@ jobs:
           cloud:
             aws:
               credentials:
-                access-key: ${S3_ACCESS_KEY}
-                secret-key: ${S3_SECRET_KEY}
+                access-key: ${{ secrets.S3_ACCESS_KEY }}
+                secret-key: ${{ secrets.S3_SECRET_KEY }}
             region:
               static: us-east-1
             stack:
               auto: false
             s3:
               bucket: bibim
-
         logging:
           level:
             org.springframework.security: DEBUG
-
         secret_key: ${SECRET_KEY}
         EOL
 
@@ -94,11 +99,18 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build  # 'build' 작업이 성공해야 'deploy' 작업이 실행됨
+    needs: build
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+
+    - name: Setup SSH Key with proper permissions
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
     - name: SSH into EC2 and deploy Docker container
       uses: appleboy/ssh-action@v0.1.0
@@ -108,9 +120,6 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
         script: |
-          # Pull the new Docker image
           docker pull ${{ secrets.DOCKER_USERNAME }}/bibim:dev
-          # Stop and remove the running container (if any)
           docker stop bibim || true && docker rm bibim || true
-          # Run the new Docker container
           docker run -d --name bibim -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/bibim:dev

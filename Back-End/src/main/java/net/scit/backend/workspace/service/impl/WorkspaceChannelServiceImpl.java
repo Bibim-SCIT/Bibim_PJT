@@ -9,6 +9,7 @@ import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.member.dto.WorkspaceChannelLoginStatusDTO;
 import net.scit.backend.member.entity.MemberEntity;
+import net.scit.backend.workspace.dto.ChannelDTO;
 import net.scit.backend.workspace.dto.ChannelUpdateRequest;
 import net.scit.backend.workspace.entity.WorkspaceChannelEntity;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
@@ -34,6 +35,7 @@ public class WorkspaceChannelServiceImpl implements WorkspaceChannelService {
     private final WorkspaceChannelRepository channelRepository;
     private final WorkspaceMemberRepository memberRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final WorkspaceChannelRepository workspaceChannelRepository;
 
     private WorkspaceMemberEntity getMember(Long wsId, String email) {
         return memberRepository.findByWorkspace_wsIdAndMember_Email(wsId, email)
@@ -119,5 +121,21 @@ public class WorkspaceChannelServiceImpl implements WorkspaceChannelService {
                         member.getMember().getProfileImage()
                 ))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ChannelDTO> getChannelList(Long wsId) {
+        List<ChannelDTO> channelList = new ArrayList<>();
+        List<WorkspaceChannelEntity> entities = workspaceChannelRepository.findAllByWorkspace_WsId(wsId);
+        entities.forEach(
+                entity ->
+                        channelList.add(
+                            ChannelDTO.builder()
+                                    .channelId(entity.getChannelNumber())
+                                    .channelName(entity.getChannelName())
+                                    .build()
+                )
+        );
+        return channelList;
     }
 }
