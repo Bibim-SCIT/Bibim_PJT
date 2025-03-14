@@ -30,15 +30,17 @@
 # JDK Image Start
 FROM openjdk:17
 
+# Gradle 빌드를 위해 필요한 파일 복사
 COPY . .  # 현재 디렉토리의 모든 파일을 복사
 
+# gradlew 파일 실행 권한 부여 및 빌드
 RUN chmod +x ./gradlew
 RUN ./gradlew build -x test
 
-# 인자 설정 - JAR_File
+# JAR 파일 경로 설정
 ARG JAR_FILE=build/libs/*.jar
 
-# jar 파일 복제
+# 빌드된 JAR 파일을 이미지에 복사
 COPY ${JAR_FILE} bibim.jar
 
 # 실행 명령어
