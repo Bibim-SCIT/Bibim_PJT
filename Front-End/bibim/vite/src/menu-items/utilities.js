@@ -44,28 +44,6 @@ const utilities = {
         }
       ]
     },
-    // {
-    //   id: 'channel',
-    //   title: '채널',
-    //   type: 'collapse',
-    //   icon: icons.IconBrandHipchat,
-    //   children: [
-    //     {
-    //       id: 'channel01',
-    //       title: '채널1',
-    //       type: 'item',
-    //       url: '/channel/01',
-    //       target: false
-    //     },
-    //     {
-    //       id: 'channel02',
-    //       title: '채널2',
-    //       type: 'item',
-    //       url: '/channel/02',
-    //       target: false
-    //     }
-    //   ]
-    // },
     {
       id: 'channel',
       title: '채널',
