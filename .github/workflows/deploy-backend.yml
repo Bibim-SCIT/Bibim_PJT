@@ -88,24 +88,25 @@ jobs:
           # fi
           
           # Health check 호출 (서버가 실행 중인지 확인)
-          HEALTH_RESPONSE=$(curl -s --max-time 10 "http://api.bibim.shop/actuator/health")
+          HEALTH_RESPONSE=$(curl -s --max-time 30 --write-out "%{http_code}" "http://***/actuator/health")
+          HTTP_STATUS=$?
           
           # 상태 확인 (응답이 없거나 200 상태가 아닌 경우 오류 처리)
-          if [ $? -ne 0 ]; then
-            echo "Server is not running, setting CURRENT_UPSTREAM to 'green'."
+          if [ $HTTP_STATUS -ne 0 ]; then
+            echo "Error: curl failed with status $HTTP_STATUS"
             CURRENT_UPSTREAM="green"
           else
             # 상태가 "UP"인 경우에만 정상적인 health 정보를 가져옴
             STATUS=$(echo "$HEALTH_RESPONSE" | jq -r '.status')
             
             if [ "$STATUS" = "UP" ]; then
-              # 실행 중인 Docker 컨테이너 이름 가져오기 (docker ps로 실행 중인 컨테이너 목록에서 'name' 추출)
+              # 실행 중인 Docker 컨테이너 이름 가져오기
               CURRENT_UPSTREAM=$(docker ps --filter "status=running" --format "{{.Names}}" | grep -E 'blue|green')
             else
               CURRENT_UPSTREAM="green"
             fi
           fi
-          
+                    
           # 현재 실행 중인 컨테이너가 blue일 경우, green을 타겟으로 설정
           if [ "$CURRENT_UPSTREAM" = "blue" ]; then
             echo "CURRENT_PORT=8080" >> $GITHUB_ENV
