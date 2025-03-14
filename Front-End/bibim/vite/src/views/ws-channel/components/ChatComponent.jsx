@@ -11,6 +11,14 @@ import "./ChatComponent.css";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import { Drawer, List, ListItem, ListItemText, Button, IconButton } from "@mui/material";
+import SettingsIcon from '@mui/icons-material/Settings';
+import { getWorkspaceChannels } from "../../../api/channel";
+import { useSelector } from 'react-redux';
+import ChannelEditModal from "./ChannelEditModal";
+import ChannelCreateModal from "./ChannelCreateModal";
+import ChannelLoading from "./ChannelLoading"; // ✅ 로딩 컴포넌트 추가
+import ChannelLoading2 from "./ChannelLoading2"; // ✅ 로딩 컴포넌트 추가
 
 /**
  * LocalDateTime을 Asia/Seoul 시간대로 변환하고 포맷팅하는 함수
@@ -35,7 +43,7 @@ const formatToKoreanTime = (timestamp) => {
  * @param {string} channelId - 채팅 채널 ID
  * @param {string} workspaceId - 워크스페이스 ID
  */
-function ChatComponent({ channelId, workspaceId }) {
+function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
     // Context에서 현재 사용자 정보 가져오기
     const { user } = useContext(ConfigContext);
 
@@ -47,6 +55,17 @@ function ChatComponent({ channelId, workspaceId }) {
     const [activeUsers, setActiveUsers] = useState([]); // 접속 중인 사용자 목록
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isChatLoading, setIsChatLoading] = useState(false); // ✅ 채팅 로딩 상태 추가
+
+    const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
+    console.log("몇번", activeWorkspace)
+    const WSID = activeWorkspace.wsId;
+
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [channels, setChannels] = useState([]);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [createModalOpen, setCreateModalOpen] = useState(false);
+    const [selectedChannel, setSelectedChannel] = useState(null);
 
     // WebSocket 클라이언트 참조
     const stompClientRef = useRef(null);
@@ -117,6 +136,8 @@ function ChatComponent({ channelId, workspaceId }) {
      * 과거 메시지 가져오기 함수
      */
     const fetchMessages = async () => {
+        setIsChatLoading(true); // ✅ 로딩 시작
+        setMessages([]); // ✅ 기존 메시지 비우기
         const token = localStorage.getItem("token");
         try {
             const response = await fetch(`http://localhost:8080/api/chat/messages/${channelId}`, {
@@ -134,6 +155,8 @@ function ChatComponent({ channelId, workspaceId }) {
             }, 100);
         } catch (error) {
             console.error("❌ 메시지 조회 오류:", error);
+        } finally {
+            setIsChatLoading(false); // ✅ 로딩 종료
         }
     };
 
@@ -314,13 +337,102 @@ function ChatComponent({ channelId, workspaceId }) {
         return () => clearTimeout(timer);
     }, []);
 
+    useEffect(() => {
+        console.log("현재 웤스 잘받냐", WSID);
+        if (WSID) {
+            getWorkspaceChannels(WSID).then(setChannels).catch(console.error);
+        }
+    }, [WSID]);
+
+    const handleChannelEdit = (channel) => {
+        setSelectedChannel(channel);
+        setEditModalOpen(true);
+    };
+
+    // const handleChannelUpdate = (id, newName) => {
+    //     setChannels(channels.map(channel => channel.channelId === id ? { ...channel, channelName: newName } : channel));
+    // };
+
+    // 채널 수정시 채팅 헤더에도 즉시 반영
+    const handleChannelUpdate = (id, newName) => {
+        setChannels(channels.map(channel =>
+            channel.channelId === id ? { ...channel, channelName: newName } : channel
+        ));
+        if (channelId === id) {
+            setChannelId(id);
+            setChannelName(newName); // ✅ 채팅 헤더에도 즉시 반영
+            setChannel(id, newName); // ✅ 채팅 헤더에도 즉시 반영
+        }
+        setEditModalOpen(false); // ✅ 수정 완료 시 모달 닫기
+    };
+
+
+    const handleChannelCreated = (id, name) => {
+        console.log(`🔄 새 채널로 이동: ${id} - ${name}`);
+
+        // ✅ 채널 목록에 추가
+        setChannels([...channels, { channelId: id, channelName: name }]);
+        setChannel(id, name); // ✅ 새 채널로 즉시 변경
+        setMessages([{ sender: "System", content: "채널이 생성되었습니다! 채팅을 입력해보세요!" }]);
+        setCreateModalOpen(false); // ✅ 생성 완료 후 모달 닫기
+    };
+
+    // ✅ 채널 삭제 핸들러 추가
+    const handleChannelDelete = (deletedChannelId) => {
+        console.log(`🗑 채널 삭제됨: ${deletedChannelId}`);
+
+        // ✅ 삭제된 채널 목록에서 제거
+        setChannels(channels.filter(channel => channel.channelId !== deletedChannelId));
+
+        // ✅ 현재 보고 있는 채널이 삭제된 경우 첫 번째 채널로 이동
+        if (channelId === deletedChannelId) {
+            if (channels.length > 1) {
+                const newChannel = channels.find(channel => channel.channelId !== deletedChannelId);
+                if (newChannel) {
+                    setChannel(newChannel.channelId, newChannel.channelName);
+                }
+            } else {
+                setChannel(null, ""); // ✅ 모든 채널이 삭제되었을 경우 초기화
+            }
+        }
+    };
+
+    // 채널 선택
+    const handleChannelSelect = (id, name) => {
+        setIsChatLoading(true); // ✅ 채널 변경 시 로딩 화면 표시
+        setMessages([]); // ✅ 기존 채팅 내역 제거
+        setChannel(id, name); // ✅ index.jsx의 상태 변경
+        setDrawerOpen(false); // ✅ 채널 선택 후 Drawer 닫기
+    };
+
+    // 채널 변경 감지 (2025.03.14 추가)
+    useEffect(() => {
+        if (!channelId || !user) return;
+
+        console.log(`🟢 채널 변경 감지: ${channelId}`);
+
+        fetchMessages();
+    }, [channelId, user]);
+
+
+    console.log(channels);
+    console.log("채널 id와 채널명", channelId, channelName);
+
     return (
         <div className="chat-container">
             {/* 채널 헤더 */}
             <div className="chat-header">
                 <div className="channel-info">
                     <TagIcon sx={{ color: '#6b7280', fontSize: 20 }} />
-                    <span>채널 {channelId}</span>
+                    <span>{channelName} (채널 {channelId})</span>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        sx={{ marginLeft: "10px" }}
+                        onClick={() => setDrawerOpen(true)}
+                    >
+                        채널 변경
+                    </Button>
                 </div>
                 <div className="active-users">
                     <PersonIcon sx={{ color: '#6b7280', fontSize: 20 }} />
@@ -361,7 +473,11 @@ function ChatComponent({ channelId, workspaceId }) {
 
             {/* 메시지 목록 */}
             <div className="chat-messages">
-                {messages.map((msg, index) => (
+                {isChatLoading ? (
+                    <ChannelLoading2 /> // ✅ 로딩 화면 추가
+                ) : messages.length === 0 ? (
+                    <div className="empty-chat-message">채널이 생성되었습니다! 채팅을 쳐보세요.</div> // ✅ 안내 메시지 표시
+                ) : (messages.map((msg, index) => (
                     <div key={index} className={`message ${msg.sender === user?.email ? "my-message" : "other-message"}`}>
                         {/* 발신자 정보 */}
                         <div className="sender">
@@ -385,7 +501,8 @@ function ChatComponent({ channelId, workspaceId }) {
                             {renderMessageContent(msg)}
                         </div>
                     </div>
-                ))}
+                ))
+                )}
                 {/* 스크롤 위치 참조를 위한 빈 div 추가 */}
                 <div ref={messagesEndRef} />
             </div>
@@ -433,6 +550,61 @@ function ChatComponent({ channelId, workspaceId }) {
                     </>
                 )}
             </div>
+
+            {/* Drawer - 채널 목록 */}
+            <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+                <div style={{ width: 300, padding: "16px" }}>
+                    <h3>채널 선택</h3>
+                    <List>
+                        {channels.map((channel) => (
+                            <ListItem
+                                button
+                                key={channel.channelId}
+                                sx={{ cursor: "pointer" }}
+                                onClick={() => {
+                                    handleChannelSelect(channel.channelId, channel.channelName);
+                                    setSelectedChannel(channel);
+                                    setDrawerOpen(false);
+                                }}
+                            >
+                                <ListItemText primary={`# ${channel.channelName}`} />
+                                <IconButton onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleChannelEdit(channel);
+                                }}>
+                                    <SettingsIcon />
+                                </IconButton>
+                            </ListItem>
+                        ))}
+                    </List>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        fullWidth
+                        sx={{ marginTop: "16px" }}
+                        onClick={() => setCreateModalOpen(true)}
+                    >
+                        + 채널 생성
+                    </Button>
+                </div>
+            </Drawer>
+
+            <ChannelEditModal
+                open={editModalOpen}
+                onClose={() => setEditModalOpen(false)}
+                workspaceId={workspaceId}
+                channelId={selectedChannel?.channelId}
+                currentName={selectedChannel?.channelName}
+                onUpdate={handleChannelUpdate}
+                onDelete={handleChannelDelete} // ✅ 삭제 핸들러 추가
+            />
+
+            <ChannelCreateModal
+                open={createModalOpen}
+                onClose={() => setCreateModalOpen(false)}
+                workspaceId={workspaceId}
+                onChannelCreated={handleChannelCreated}
+            />
         </div>
     );
 }

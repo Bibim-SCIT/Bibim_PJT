@@ -8,7 +8,6 @@ import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
-import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid2';
 import Paper from '@mui/material/Paper';
 import Popper from '@mui/material/Popper';
@@ -16,14 +15,13 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import { IconBell } from '@tabler/icons-react';
+
 
 // Custom components
 import MainCard from 'ui-component/cards/MainCard';
 import Transitions from 'ui-component/extended/Transitions';
 import NotificationList from './NotificationList';
-
-// Assets
-import { IconBell } from '@tabler/icons-react';
 
 // API Base URL (백엔드 주소에 맞게 수정)
 const API_BASE_URL = 'http://localhost:8080';
@@ -56,6 +54,9 @@ export default function NotificationSection() {
   const anchorRef = useRef(null);
   const eventSourceRef = useRef(null);
 
+  // 읽지 않은 알림 개수를 관리하는 상태 추가
+  const [unreadCount, setUnreadCount] = useState(0);
+
   const handleToggle = () => setOpen((prev) => !prev);
   const handleClose = (event) => {
     if (anchorRef.current && anchorRef.current.contains(event.target)) return;
@@ -81,43 +82,65 @@ export default function NotificationSection() {
     }
   };
 
-  // 페이징된 알림 조회 API 호출
+  // ✅ [2] fetchNotifications 함수 
   const fetchNotifications = async () => {
     try {
       const endpoint = filterValue === 'unread' ? '/notification/unread' : '/notification/read';
-      const response = await fetch(`${API_BASE_URL}${endpoint}?page=${page}&size=${size}`, {
+      const url = `${API_BASE_URL}${endpoint}`;
+      console.log("📤 요청한 URL:", url);
+
+      const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications((prev) => [...prev, ...data.content]);
-        setHasMore(!data.last);
-        setPage((prev) => prev + 1);
-      } else {
-        console.error('Failed to fetch notifications', response.status);
+
+      if (!response.ok) {
+        throw new Error(`🚨 API 요청 실패: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log("✅ 응답 받은 데이터:", data);
+
+      // 전체 데이터를 state에 저장
+      setNotifications(data);
+      if (filterValue === 'unread') {
+        setUnreadCount(data.length);
       }
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error("🚨 Error fetching notifications:", error);
     }
   };
+
 
   // 초기에 필터 값에 따라 데이터 로드
   useEffect(() => {
     fetchNotifications();
   }, [filterValue]);
 
-  // SSE 구독 (실시간 업데이트, "안 읽은 알림" 필터 시만 적용)
+
+  // ✅ [5] SSE 이벤트 수정 (새로운 알림 수신 시 unreadCount 증가)
   useEffect(() => {
     if (token && filterValue === 'unread') {
       let sse = new EventSource(`${API_BASE_URL}/notification/subscribe?token=${token}`);
+      console.log("📡 SSE 연결 요청 보냄:", `${API_BASE_URL}/notification/subscribe?token=${token}`);
+
       sse.addEventListener('notification', (event) => {
         try {
           const newNotification = JSON.parse(event.data);
-          setNotifications((prev) => [newNotification, ...prev]);
+
+          setNotifications((prev) => {
+            // 기존 알림 리스트에서 동일한 notificationNumber가 있는지 확인
+            if (prev.some((n) => n.notificationNumber === newNotification.notificationNumber)) {
+              return prev; // 중복이면 기존 리스트 그대로 반환 (추가하지 않음)
+            }
+            return [newNotification, ...prev]; // 중복이 아니면 추가
+          });
+
+          setUnreadCount((prevCount) => prevCount + 1);
         } catch (err) {
           console.error('Error parsing SSE notification:', err);
         }
       });
+
       sse.onerror = () => {
         console.error('SSE error: reconnecting in 5s');
         sse.close();
@@ -125,6 +148,7 @@ export default function NotificationSection() {
           sse = new EventSource(`${API_BASE_URL}/notification/subscribe?token=${token}`);
         }, 5000);
       };
+
       eventSourceRef.current = sse;
       return () => {
         sse.close();
@@ -132,19 +156,23 @@ export default function NotificationSection() {
     }
   }, [token, filterValue]);
 
-  // 개별 알림 읽기 API
+  // ✅ [3] 개별 알림 읽음 처리 시 unreadCount 즉시 감소
   const markNotificationAsRead = async (notificationId) => {
     try {
       const response = await fetch(`${API_BASE_URL}/notification/read-single?notificationNumber=${notificationId}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
+
       if (response.ok) {
         setNotifications((prev) =>
           prev.map((n) =>
             (n.notificationNumber || n.id) === notificationId ? { ...n, notificationStatus: true } : n
           )
         );
+
+        // ✅ 읽지 않은 개수 즉시 감소
+        setUnreadCount((prevCount) => Math.max(prevCount - 1, 0));
       }
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -171,21 +199,21 @@ export default function NotificationSection() {
     }
   };
 
-  // 전체 알림 읽기 API (bulk update)
+  // ✅ [4] 전체 읽기 시 unreadCount 즉시 0으로 변경
   const markAllNotificationsAsRead = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/notification/read-all`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
+
       if (response.ok) {
-        // 전체 읽음 처리 후, 필터에 따라 최신 데이터를 다시 불러옴
-        setNotifications([]);
-        setPage(0);
-        setHasMore(false);
-        fetchNotifications();
-      } else {
-        console.error('Failed to mark all notifications as read', response.status);
+        setNotifications((prev) =>
+          prev.map((n) => ({ ...n, notificationStatus: true }))
+        );
+
+        // ✅ 전체 읽기 버튼 클릭 시 unreadCount 즉시 0으로 설정
+        setUnreadCount(0);
       }
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
@@ -217,35 +245,53 @@ export default function NotificationSection() {
     }
   };
 
-  // Unread count is always total unread in current notifications list
-  const unreadCount = notifications.filter((n) => !n.notificationStatus).length;
-
   return (
-    <>
-      <Box sx={{ ml: 2 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      {/* ✅ 알림 아이콘을 감싸는 박스 (위치 조정) */}
+      <Box sx={{ position: 'relative', mr: 2 }}>
+        {/* ✅ 알림 아이콘 */}
         <Avatar
           variant="rounded"
           sx={{
-            ...theme.typography.commonAvatar,
-            ...theme.typography.mediumAvatar,
             transition: 'all .2s ease-in-out',
             bgcolor: 'secondary.light',
             color: 'secondary.dark',
-            '&[aria-controls="menu-list-grow"],&:hover': {
-              bgcolor: 'secondary.dark',
-              color: 'secondary.light'
-            }
+            '&:hover': { bgcolor: 'secondary.dark', color: 'secondary.light' }
           }}
           ref={anchorRef}
           aria-controls={open ? 'menu-list-grow' : undefined}
           aria-haspopup="true"
           onClick={handleToggle}
-          color="inherit"
         >
           <IconBell stroke={1.5} size="20px" />
         </Avatar>
+
+        {/* ✅ 읽지 않은 알림 개수 표시 */}
+        {unreadCount > 0 && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: 18,
+              height: 18,
+              bgcolor: 'error.main', // 빨간색 배경
+              color: 'white', // 하얀색 숫자
+              fontSize: '12px',
+              fontWeight: 'bold',
+              borderRadius: '50%', // 원형 모양
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transform: 'translate(50%, -50%)' // 위치 미세 조정
+            }}
+          >
+            {unreadCount}
+          </Box>
+        )}
       </Box>
 
+      {/* ✅ Popper (알림 목록 팝업) */}
       <Popper
         placement={downMD ? 'bottom' : 'bottom-end'}
         open={open}
@@ -253,14 +299,12 @@ export default function NotificationSection() {
         role={undefined}
         transition
         disablePortal
-        modifiers={[
-          { name: 'offset', options: { offset: [downMD ? 5 : 0, 20] } }
-        ]}
+        modifiers={[{ name: 'offset', options: { offset: [downMD ? 5 : 0, 20] } }]}
       >
         {({ TransitionProps }) => (
           <ClickAwayListener onClickAway={handleClose}>
             <Transitions position={downMD ? 'top' : 'top-right'} in={open} {...TransitionProps}>
-              <Paper sx={{ width: '60vw', height: '50vh' }}>
+              <Paper sx={{ width: '50vw', height: '50vh' }}>
                 {open && (
                   <MainCard border={false} elevation={16} content={false} boxShadow shadow={theme.shadows[16]}>
                     <Grid container direction="column" spacing={2}>
@@ -294,8 +338,6 @@ export default function NotificationSection() {
                           </TextField>
                         </Box>
                       </Grid>
-
-                      {/* Notification List (scrollable area) */}
                       <Grid item xs={12}>
                         <Box sx={{ height: '30vh', overflowY: 'auto' }}>
                           <NotificationList
@@ -315,15 +357,6 @@ export default function NotificationSection() {
                           </Button>
                         </Box>
                       </Grid>
-                      {hasMore && (
-                        <Grid item xs={12}>
-                          <Box sx={{ textAlign: 'center', pb: 2 }}>
-                            <Button size="small" onClick={fetchNotifications}>
-                              더 보기
-                            </Button>
-                          </Box>
-                        </Grid>
-                      )}
                     </Grid>
                   </MainCard>
                 )}
@@ -332,6 +365,6 @@ export default function NotificationSection() {
           </ClickAwayListener>
         )}
       </Popper>
-    </>
+    </Box>
   );
 }

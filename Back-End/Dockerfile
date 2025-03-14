@@ -14,8 +14,8 @@ RUN ./gradlew build -x test
 # 5️⃣ build/libs 디렉토리 확인 (디버깅용, 필요 없으면 삭제 가능)
 RUN ls -alh build/libs
 
-# 6️⃣ 실행 환경용 이미지
-FROM eclipse-temurin:17-jdk AS runtime
+# # 6️⃣ 실행 환경용 이미지
+# FROM eclipse-temurin:17-jdk AS runtime
 
 # 7️⃣ 이전 단계에서 빌드한 JAR 복사
 WORKDIR /app
@@ -26,4 +26,3 @@ EXPOSE 8080
 
 # 9️⃣ JAR 실행
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
-
