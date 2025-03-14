@@ -87,12 +87,14 @@ jobs:
           #   echo "TARGET_UPSTREAM=blue" >> $GITHUB_ENV
           # fi
           
-          # 현재 실행 중인 컨테이너의 상태를 확인하고, 컨테이너 이름을 추출
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://${{ secrets.SERVER_DOMAIN }}/actuator/health")
-          echo "Health check status: $STATUS"
+          # Health check 호출
+          HEALTH_RESPONSE=$(curl -s "http://***/actuator/health")
           
-          # 상태가 200인 경우에만 정상적인 health 정보를 가져오고, 그렇지 않으면 기본값을 설정
-          if [ "$STATUS" = "200" ]; then
+          # 상태 확인 (응답 바디에서 "status" 값 확인)
+          STATUS=$(echo "$HEALTH_RESPONSE" | jq -r '.status')
+          
+          # 상태가 "UP"인 경우에만 정상적인 health 정보를 가져옴
+          if [ "$STATUS" = "UP" ]; then
             # 실행 중인 Docker 컨테이너 이름 가져오기 (docker ps로 실행 중인 컨테이너 목록에서 'name' 추출)
             CURRENT_UPSTREAM=$(docker ps --filter "status=running" --format "{{.Names}}" | grep -E 'blue|green')
           else
@@ -113,6 +115,7 @@ jobs:
           # 컨테이너 상태 출력
           echo "CURRENT_UPSTREAM=$CURRENT_UPSTREAM"
           echo "TARGET_UPSTREAM=$TARGET_UPSTREAM"
+          
       - name: Docker compose
         uses: appleboy/ssh-action@master
         with:
