@@ -54,7 +54,7 @@ export default function NotificationSection() {
   const anchorRef = useRef(null);
   const eventSourceRef = useRef(null);
 
-  // ✅ [1] 읽지 않은 알림 개수를 관리하는 상태 추가
+  // 읽지 않은 알림 개수를 관리하는 상태 추가
   const [unreadCount, setUnreadCount] = useState(0);
 
   const handleToggle = () => setOpen((prev) => !prev);
@@ -82,46 +82,59 @@ export default function NotificationSection() {
     }
   };
 
-  // ✅ [2] fetchNotifications 함수 수정 (알림 데이터 가져올 때 unreadCount 업데이트)
+  // ✅ [2] fetchNotifications 함수 
   const fetchNotifications = async () => {
     try {
       const endpoint = filterValue === 'unread' ? '/notification/unread' : '/notification/read';
-      const response = await fetch(`${API_BASE_URL}${endpoint}?page=${page}&size=${size}`, {
+      const url = `${API_BASE_URL}${endpoint}`;
+      console.log("📤 요청한 URL:", url);
+
+      const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications((prev) => [...prev, ...data.content]);
-        setHasMore(!data.last);
-        setPage((prev) => prev + 1);
+      if (!response.ok) {
+        throw new Error(`🚨 API 요청 실패: ${response.status} ${response.statusText}`);
+      }
 
-        // ✅ 읽지 않은 알림 개수를 업데이트
-        if (filterValue === 'unread') {
-          setUnreadCount(data.totalElements); // 백엔드에서 전체 개수를 반환한다고 가정
-        }
+      const data = await response.json();
+      console.log("✅ 응답 받은 데이터:", data);
+
+      // 전체 데이터를 state에 저장
+      setNotifications(data);
+      if (filterValue === 'unread') {
+        setUnreadCount(data.length);
       }
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error("🚨 Error fetching notifications:", error);
     }
   };
+
 
   // 초기에 필터 값에 따라 데이터 로드
   useEffect(() => {
     fetchNotifications();
   }, [filterValue]);
 
+
   // ✅ [5] SSE 이벤트 수정 (새로운 알림 수신 시 unreadCount 증가)
   useEffect(() => {
     if (token && filterValue === 'unread') {
       let sse = new EventSource(`${API_BASE_URL}/notification/subscribe?token=${token}`);
+      console.log("📡 SSE 연결 요청 보냄:", `${API_BASE_URL}/notification/subscribe?token=${token}`);
 
       sse.addEventListener('notification', (event) => {
         try {
           const newNotification = JSON.parse(event.data);
-          setNotifications((prev) => [newNotification, ...prev]);
 
-          // ✅ 실시간 알림 도착 시 unreadCount 즉시 증가
+          setNotifications((prev) => {
+            // 기존 알림 리스트에서 동일한 notificationNumber가 있는지 확인
+            if (prev.some((n) => n.notificationNumber === newNotification.notificationNumber)) {
+              return prev; // 중복이면 기존 리스트 그대로 반환 (추가하지 않음)
+            }
+            return [newNotification, ...prev]; // 중복이 아니면 추가
+          });
+
           setUnreadCount((prevCount) => prevCount + 1);
         } catch (err) {
           console.error('Error parsing SSE notification:', err);
@@ -325,8 +338,6 @@ export default function NotificationSection() {
                           </TextField>
                         </Box>
                       </Grid>
-
-                      {/* Notification List (scrollable area) */}
                       <Grid item xs={12}>
                         <Box sx={{ height: '30vh', overflowY: 'auto' }}>
                           <NotificationList
@@ -346,15 +357,6 @@ export default function NotificationSection() {
                           </Button>
                         </Box>
                       </Grid>
-                      {hasMore && (
-                        <Grid item xs={12}>
-                          <Box sx={{ textAlign: 'center', pb: 2 }}>
-                            <Button size="small" onClick={fetchNotifications}>
-                              더 보기
-                            </Button>
-                          </Box>
-                        </Grid>
-                      )}
                     </Grid>
                   </MainCard>
                 )}
