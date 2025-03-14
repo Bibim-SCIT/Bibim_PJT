@@ -22,7 +22,10 @@ const MySchedule = () => {
       setError(null);
       try {
         const result = await getMySchedule();
-        if (result.success && result.data) {
+        console.log('스케줄 데이터 응답:', result); // 응답 데이터 확인용 로그
+        
+        // 응답 형식 확인 및 데이터 처리
+        if (result && result.data && Array.isArray(result.data)) {
           // 간트차트 형식으로 변환
           const ganttData = convertToGanttFormat(result.data);
           setGanttTasks(ganttData);
