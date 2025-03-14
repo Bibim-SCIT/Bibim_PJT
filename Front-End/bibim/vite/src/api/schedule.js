@@ -37,8 +37,9 @@ export const fetchKanbanTasks = async (wsId) => {
   try {
     console.log(`📌 fetchKanbanTasks(${wsId}) API 요청 시작...`);
 
+    // ✅ 캐시 문제 해결: 항상 새로운 요청으로 인식되게 변경
     const response = await api.get("/schedule", {
-      params: { wsId },
+      params: { wsId, t: Date.now() }, // ⬅️ 여기서 캐시 우회
       ...getAxiosConfig(),
     });
 
@@ -55,7 +56,13 @@ export const fetchKanbanTasks = async (wsId) => {
       const statusKey = task.scheduleStatus?.toUpperCase(); // ✅ 대문자로 변환 후 매핑
       const mappedStatus = statusMappingReverse[statusKey] || "unassigned"; // ✅ 변환 후 상태 확인
 
-      console.log(`🔄 변환 과정: 원본 상태="${task.scheduleStatus}", 변환된 상태="${statusKey}", 최종 매핑 결과="${mappedStatus}"`); // 👈 매핑 확인
+       // ✅ 상태 변환 검토 추가
+      console.log(`
+    🔄 상태 변환 과정 확인:
+    - 원본 상태: ${task.scheduleStatus}
+    - 변환된 상태: ${statusKey}
+    - 최종 매핑 결과: ${mappedStatus}
+      `);
 
       return {
         id: task.scheduleNumber,

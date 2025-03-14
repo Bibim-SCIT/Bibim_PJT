@@ -27,6 +27,8 @@ const SchedulePage = () => {
   const [isTagEditModalOpen, setTagEditModalOpen] = useState(false); // ✅ 태그 수정 모달
   const [view, setView] = useState("calendar"); // ✅ 현재 선택된 뷰 상태 추가
   const [tasks, setTasks] = useState([]); // ✅ 일정 데이터
+  const [schedules, setSchedules] = useState([]); // ✅ 캘린더 데이터 상태 추가
+  const [ganttTasks, setGanttTasks] = useState([]); // ✅ 간트차트 데이터 상태 추가
   const [loading, setLoading] = useState(true); // ✅ 로딩 상태
   const [error, setError] = useState(null); // ✅ 에러 상태
   const wsId = activeWorkspace?.wsId;
@@ -43,6 +45,8 @@ const SchedulePage = () => {
         const data = await fetchScheduleTasks(wsId);
         console.log("📌 일정 데이터 로드 완료:", data);
         setTasks(data);
+        setSchedules(data);  // ✅ 캘린더 데이터 상태 업데이트
+        setGanttTasks(data); // ✅ 간트차트 데이터 상태 업데이트
       } catch (error) {
         console.error("❌ 일정 데이터 로드 실패:", error);
         setError(error);
@@ -94,7 +98,7 @@ const SchedulePage = () => {
         {loading ? (
           <ScheduleLoading />
         ) : (
-          view === "calendar" ? <Calendar tasks={tasks} /> : <GanttChart tasks={tasks} />
+          view === "calendar" ? <Calendar tasks={schedules} /> : <GanttChart tasks={ganttTasks} />
         )}
       </Box>
 
@@ -113,7 +117,8 @@ const SchedulePage = () => {
           태그 수정
         </Button>
       </Box>
-      <KanbanBoard wsId={wsId} />
+      {/* ✅ setSchedules, setGanttTasks를 KanbanBoard에 전달 */}
+      <KanbanBoard wsId={wsId} setSchedules={setSchedules} setGanttTasks={setGanttTasks} />
       {/* 일정 생성 모달 추가 */}
       <ScheduleCreateModal open={isModalOpen} onClose={() => setModalOpen(false)} />
       <ScheduleEditModal open={isModalOpen2} onClose={() => setModalOpen2(false)} />

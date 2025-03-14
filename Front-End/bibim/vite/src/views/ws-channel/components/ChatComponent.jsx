@@ -536,8 +536,6 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel })
         return () => clearTimeout(timer);
     }, []);
 
-
-
     /**
      * ✅ 5. 워크스페이스 ID 변경 시 채널 목록 가져오기
      */
