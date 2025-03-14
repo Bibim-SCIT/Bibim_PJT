@@ -7,33 +7,44 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/grid';
 import { getMyWorkspaces } from '../../../api/mypage';
+import CreateWorkspaceModal from '../../../views/ws-select/components/CreateWorkspaceModal';
 
-const MyWorkspaces = () => {
-  const [workspaces, setWorkspaces] = useState([
-    { id: 1, name: '프로젝트 A', role: '프로젝트 매니저', image: 'https://via.placeholder.com/56' },
-    { id: 2, name: '디자인팀', role: 'UI/UX 디자이너', image: 'https://via.placeholder.com/56' },
-    { id: 3, name: '마케팅팀', role: '마케팅 스페셜리스트', image: 'https://via.placeholder.com/56' },
-    { id: 4, name: '개발팀', role: '프론트엔드 개발자', image: 'https://via.placeholder.com/56' },
-    { id: 5, name: '운영팀', role: '운영 매니저', image: 'https://via.placeholder.com/56' },
-    { id: 6, name: '인사팀', role: 'HR 매니저', image: 'https://via.placeholder.com/56' }
-  ]);
+const MyWorkspaces = ({ onLeaveWorkspace }) => {
+  const [workspaces, setWorkspaces] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
-    // API 호출 부분을 주석 처리하여 더미 데이터만 사용
-    /*
     const fetchWorkspaces = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const data = await getMyWorkspaces();
-        setWorkspaces(data);
-      } catch (error) {
-        console.error('워크스페이스 목록을 불러오는데 실패했습니다:', error);
+        const result = await getMyWorkspaces();
+        console.log('API 응답 데이터:', result); // 데이터 구조 확인용 로그
+        
+        // 배열 형태로 직접 받아오는 경우
+        if (Array.isArray(result)) {
+          setWorkspaces(result);
+        }
+        // data 속성 내에 배열이 있는 경우
+        else if (result && result.data && Array.isArray(result.data)) {
+          setWorkspaces(result.data);
+        } 
+        // 데이터가 없는 경우
+        else {
+          console.warn('워크스페이스 데이터가 없거나 형식이 올바르지 않습니다:', result);
+          setError('워크스페이스 목록 조회 중 오류 발생');
+        }
+      } catch (err) {
+        console.error('워크스페이스 목록을 불러오는데 실패했습니다:', err);
+        setError('워크스페이스 목록 조회 중 오류 발생');
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchWorkspaces();
-    */
-    // 더미 데이터가 이미 useState에 설정되어 있으므로 추가 작업 필요 없음
-    console.log('더미 데이터 사용 중:', workspaces);
   }, []);
 
   const onSelect = (ws) => {
@@ -49,111 +60,160 @@ const MyWorkspaces = () => {
         borderRadius: 3,
         boxShadow: 1
       }}>
-        <Typography variant="h4" sx={{ mb: 2 }}>
-          참여중인 워크스페이스
-        </Typography>
-        <Divider sx={{ my: 2 }} />
-        <Box sx={{ position: 'relative', mt: 2, px: 8 }}>
-          {/* 화살표와 카드 영역을 감싸는 컨테이너 - 좌우 여백 추가 */}
-          <Swiper
-            modules={[Navigation, Pagination]}
-            navigation={{
-              nextEl: '.swiper-button-next',
-              prevEl: '.swiper-button-prev',
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h4">
+            참여중인 워크스페이스
+          </Typography>
+          <Button
+            variant="outlined"
+            onClick={() => setModalOpen(true)}
+            sx={{
+              borderColor: '#1976d2',
+              color: '#1976d2',
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: '#1565c0',
+                backgroundColor: 'rgba(25, 118, 210, 0.04)'
+              }
             }}
-            pagination={{ 
-              clickable: true,
-              el: '.swiper-pagination'
-            }}
-            spaceBetween={10}
-            slidesPerView={3}
-            style={{ paddingBottom: '40px' }}
           >
-            {workspaces.map((workspace) => (
-              <SwiperSlide key={workspace.id}>
-                <Card sx={{ 
-                  maxWidth: '100%', 
-                  border: '1px solid #1976d2', 
-                  borderRadius: 2,
-                  position: 'relative',
-                  height: '90px',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                  '&:hover': {
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-                  }
-                }}>
-                  <Stack direction="row" spacing={2} alignItems="center" sx={{ padding: 2 }}>
-                    <Avatar alt={workspace.name} src={workspace.image} sx={{ width: 56, height: 56 }} variant="rounded" />
-                    <Box sx={{ flexGrow: 1 }}>
-                      <Typography variant="subtitle1" component="div">
-                        {workspace.name}
-                      </Typography>
-                    </Box>
-                    <Button variant="outlined" color="error" onClick={() => onSelect(workspace)} sx={{ whiteSpace: 'nowrap', minWidth: 'auto' }}>
-                      나가기
-                    </Button>
-                  </Stack>
-                </Card>
-              </SwiperSlide>
-            ))}
-          </Swiper>
-          
-          {/* 화살표 버튼 - 왼쪽 */}
-          <Box 
-            className="swiper-button-prev" 
-            sx={{ 
-              position: 'absolute', 
-              left: 0, 
-              top: '50%', 
-              transform: 'translateY(-50%)', 
-              zIndex: 10,
-              width: '40px',
-              height: '80px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#1976d2',
-              cursor: 'pointer',
-              backgroundColor: 'white'
-            }}
-          />
-          
-          {/* 화살표 버튼 - 오른쪽 */}
-          <Box 
-            className="swiper-button-next" 
-            sx={{ 
-              position: 'absolute', 
-              right: 0, 
-              top: '50%', 
-              transform: 'translateY(-50%)', 
-              zIndex: 10,
-              width: '40px',
-              height: '80px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#1976d2',
-              cursor: 'pointer',
-              backgroundColor: 'white'
-            }}
-          />
-          
-          {/* 페이지네이션 표시 영역 */}
-          <Box 
-            className="swiper-pagination" 
-            sx={{ 
-              position: 'absolute', 
-              bottom: 0, 
-              left: '50%', 
-              transform: 'translateX(-50%)', 
-              zIndex: 10,
-              display: 'flex',
-              justifyContent: 'center',
-              width: '100%'
-            }}
-          />
+            워크스페이스 생성하기
+          </Button>
         </Box>
+        <Divider sx={{ my: 2 }} />
+        
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+            <Typography>로딩 중...</Typography>
+          </Box>
+        ) : error ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3, color: 'error.main' }}>
+            <Typography>{error}</Typography>
+          </Box>
+        ) : (
+          <Box sx={{ position: 'relative', mt: 2, px: 8 }}>
+            {/* 화살표와 카드 영역을 감싸는 컨테이너 - 좌우 여백 추가 */}
+            <Swiper
+              modules={[Navigation, Pagination]}
+              navigation={{
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+              }}
+              pagination={{ 
+                clickable: true,
+                el: '.swiper-pagination'
+              }}
+              spaceBetween={10}
+              slidesPerView={3}
+              style={{ paddingBottom: '40px', paddingTop: '10px' }}
+            >
+              {workspaces.map((workspace) => (
+                <SwiperSlide key={workspace.wsId} style={{ padding: '5px 0' }}>
+                  <Card 
+                    sx={{ 
+                      maxWidth: '100%', 
+                      border: '1.5px solid #bdbdbd', 
+                      borderRadius: 2,
+                      position: 'relative',
+                      height: '90px',
+                      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                        transform: 'translateY(-3px)'
+                      }
+                    }}
+                    onClick={() => onSelect(workspace)}
+                  >
+                    <Stack direction="row" spacing={2} alignItems="center" sx={{ padding: 2 }}>
+                      <Avatar alt={workspace.wsName} src={workspace.wsImg} sx={{ width: 56, height: 56 }} variant="rounded" />
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant="subtitle1" component="div">
+                          {workspace.wsName}
+                        </Typography>
+                      </Box>
+                      <Button variant="outlined" color="error" onClick={(e) => {
+                        e.stopPropagation(); // 이벤트 버블링 방지
+                        onLeaveWorkspace && onLeaveWorkspace(workspace);
+                      }} sx={{ whiteSpace: 'nowrap', minWidth: 'auto' }}>
+                        나가기
+                      </Button>
+                    </Stack>
+                  </Card>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+            
+            {/* 화살표 버튼 - 왼쪽 */}
+            <Box 
+              className="swiper-button-prev" 
+              sx={{ 
+                position: 'absolute', 
+                left: 0, 
+                top: '50%', 
+                transform: 'translateY(-50%)', 
+                zIndex: 10,
+                width: '40px',
+                height: '80px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#1976d2',
+                cursor: 'pointer',
+                backgroundColor: 'white',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  color: '#1565c0',
+                  backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }
+              }}
+            />
+            
+            {/* 화살표 버튼 - 오른쪽 */}
+            <Box 
+              className="swiper-button-next" 
+              sx={{ 
+                position: 'absolute', 
+                right: 0, 
+                top: '50%', 
+                transform: 'translateY(-50%)', 
+                zIndex: 10,
+                width: '40px',
+                height: '80px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#1976d2',
+                cursor: 'pointer',
+                backgroundColor: 'white',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  color: '#1565c0',
+                  backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }
+              }}
+            />
+            
+            {/* 페이지네이션 표시 영역 */}
+            <Box 
+              className="swiper-pagination" 
+              sx={{ 
+                position: 'absolute', 
+                bottom: 0, 
+                left: '50%', 
+                transform: 'translateX(-50%)', 
+                zIndex: 10,
+                display: 'flex',
+                justifyContent: 'center',
+                width: '100%'
+              }}
+            />
+          </Box>
+        )}
       </Box>
+      <CreateWorkspaceModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </Box>
   );
 };
