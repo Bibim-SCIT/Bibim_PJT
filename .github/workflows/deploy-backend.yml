@@ -30,7 +30,7 @@ jobs:
       # 설정 파일 생성
       - name: application yml setting
         run: |
-          mkdir -p ./src/main/resources/
+          mkdir -p ./Back-End/src/main/resources/
           echo ${{ env.APPLICATION_PROD }} | base64 --decode > ./src/main/resources/application-prod.yml
 
       - name: Check current directory
@@ -40,7 +40,7 @@ jobs:
 
       # Gradle 실행권한 부여
       - name: Grant execute permission to gradlew
-        run: chmod +x ./gradlew
+        run: chmod +x ./Back-End/gradlew
 
       # Spring boot application 빌드
       - name: Build with gradle
