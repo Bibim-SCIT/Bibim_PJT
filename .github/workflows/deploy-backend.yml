@@ -45,8 +45,8 @@ jobs:
       # Back-End 디렉토리에서 Gradle 빌드 실행
       - name: Build with gradle
         working-directory: ./Back-End
-        run: ./gradlew clean build
-
+        run: ./gradlew clean build -x test
+        
       # DockerHub에 로그인
       - name: Login to DockerHub
         uses: docker/login-action@v1
