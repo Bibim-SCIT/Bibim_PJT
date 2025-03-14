@@ -24,3 +24,4 @@ ENV ENV=${ENV}
 
 # 6. 실행 명령
 ENTRYPOINT ["java", "-Dspring.profiles.active=prod", "-Dserver.env=${ENV}", "-jar", "/app/bibim.jar"]
+
