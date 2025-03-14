@@ -32,14 +32,11 @@ public class MemberEvent implements BasedUpdatedEvent {
 
     @Override
     public String getNotificationName() {
-        switch (eventType) {
-            case "member_update":
-                return String.format("%s님, 회원 정보가 수정되었습니다.", senderName);
-            case "password_update":
-                return String.format("%s님, 비밀번호가 변경되었습니다.", senderName);
-            default:
-                return "회원 관련 이벤트";
-        }
+        return switch (eventType) {
+            case "member_update" -> "회원 정보 수정";
+            case "password_update" -> "비밀번호 변경";
+            default -> "회원 관련 이벤트";
+        };
     }
 
     @Override
