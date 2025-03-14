@@ -42,6 +42,10 @@ jobs:
       - name: Grant execute permission to gradlew
         run: chmod +x ./Back-End/gradlew
 
+      # JAR 파일 확인
+      - name: List build directory (Check JAR)
+        run: ls -lh ./Back-End/build/libs/
+        
       # Back-End 디렉토리에서 Gradle 빌드 실행
       - name: Build with gradle
         working-directory: ./Back-End
