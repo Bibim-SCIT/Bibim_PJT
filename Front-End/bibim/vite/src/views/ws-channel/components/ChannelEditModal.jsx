@@ -3,16 +3,22 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, T
 import { updateChannelName, deleteChannel } from "../../../api/channel";
 
 function ChannelEditModal({ open, onClose, workspaceId, channelId, currentName, onUpdate, onDelete }) {
-    const [newName, setNewName] = useState(currentName);
+    const [newName, setNewName] = useState("");
+    const [isChanging, setIsChanging] = useState(false); // ✅ 변경 진행 여부 상태 추가
     const [isDeleting, setIsDeleting] = useState(false); // ✅ 삭제 진행 여부 상태 추가
 
     const handleSave = async () => {
+
+        setIsChanging(true);
         try {
             await updateChannelName(workspaceId, channelId, newName);
             onUpdate(channelId, newName);
+
             onClose();
         } catch (error) {
             console.error("채널 수정 오류:", error);
+        } finally {
+            setIsChanging(false);
         }
     };
 
@@ -57,7 +63,9 @@ function ChannelEditModal({ open, onClose, workspaceId, channelId, currentName, 
             </DialogContent>
             <DialogActions sx={{ padding: "16px" }}>
                 <Button onClick={onClose} variant="outlined">취소</Button>
-                <Button onClick={handleSave} color="primary" variant="contained">저장</Button>
+                <Button onClick={handleSave} color="primary" variant="contained" disabled={isChanging}>
+                    {isChanging ? "저장중..." : "저장"}
+                </Button>
                 <Button onClick={handleDelete} color="error" variant="contained" disabled={isDeleting}>
                     {isDeleting ? "채널 삭제 중..." : "채널 삭제"}
                 </Button>

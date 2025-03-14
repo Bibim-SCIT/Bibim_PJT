@@ -43,16 +43,30 @@ ListItemWrapper.propTypes = {
  */
 function formatTimeDifference(dateString) {
   if (!dateString) return '';
+
   const now = new Date();
   const date = new Date(dateString);
-  const diffMs = now - date;
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 10) return '방금 전';
-  if (diffMin < 60) return `${diffMin}분 전`;
-  const diffHours = Math.floor(diffMin / 60);
-  if (diffHours < 24) return `${diffHours}시간 전`;
-  return '하루 전';
+
+  // 오늘(자정 기준)과의 차이 계산
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // 오늘 00:00
+  const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate()); // 알림 날짜 00:00
+
+  const diffDays = Math.floor((today - targetDate) / (1000 * 60 * 60 * 24)); // 일 단위 차이
+
+  if (diffDays === 0) {
+    const diffMs = now - date;
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 10) return '방금 전';
+    if (diffMin < 60) return `${diffMin}분 전`;
+    const diffHours = Math.floor(diffMin / 60);
+    return `${diffHours}시간 전`;
+  } else if (diffDays === 1) {
+    return '어제';
+  } else {
+    return `${diffDays}일 전`;
+  }
 }
+
 
 /**
  * NotificationList component

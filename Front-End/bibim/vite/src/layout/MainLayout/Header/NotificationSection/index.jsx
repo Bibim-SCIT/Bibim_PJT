@@ -182,8 +182,7 @@ export default function NotificationSection() {
   // 개별 알림 삭제 API
   const deleteNotification = async (notificationId) => {
     try {
-      // workspaceId는 예시로 1 사용 (실제 값 적용 필요)
-      const response = await fetch(`${API_BASE_URL}/notification?notificationNumber=${notificationId}&workspaceId=1`, {
+      const response = await fetch(`${API_BASE_URL}/notification?notificationNumber=${notificationId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -248,7 +247,7 @@ export default function NotificationSection() {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       {/* ✅ 알림 아이콘을 감싸는 박스 (위치 조정) */}
-      <Box sx={{ position: 'relative', mr: 2 }}>
+      <Box sx={{ position: 'relative', mr: 2, cursor: "pointer" }}>
         {/* ✅ 알림 아이콘 */}
         <Avatar
           variant="rounded"
