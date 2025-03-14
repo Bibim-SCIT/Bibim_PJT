@@ -61,33 +61,35 @@ public class WorkspaceEvent implements BasedUpdatedEvent {
     public String getNotificationName() {
         // delete 이벤트의 경우 wsName을, 그 외에는 workspace.getWsName()을 사용
         String name = "delete".equals(eventType) ? wsName : workspace.getWsName();
-        switch (eventType) {
-            case "create":
-                return String.format("%s님이 %s 워크스페이스를 생성하였습니다", senderNickname, name);
-            case "delete":
-                return String.format("%s님이 %s 워크스페이스를 삭제하였습니다", senderNickname, name);
-            case "update":
-                return String.format("%s님이 %s 워크스페이스를 수정하였습니다", senderNickname, name);
-            case "grant":
-                return String.format("%s님이 %s님에게 %s의 권한을 부여하였습니다", senderNickname, receiverNickname, name);
-            case "invite":
-                return String.format("%s님이 %s님을 %s 워크스페이스에 초대하였습니다", senderNickname, receiverNickname, name);
-            case "join":
-                return String.format("%s님이 %s 워크스페이스에 가입하였습니다", receiverNickname, name);
-            case "member_update":
-                return String.format("%s님의 %s 워크스페이스 내 회원 정보가 수정되었습니다", senderNickname, name);
-            case "role_update":
-                return String.format("%s님이 %s님의 %s 워크스페이스 역할을 변경하였습니다", senderNickname, receiverNickname, name);
-            case "withdraw":
-                return String.format("%s님이 %s 워크스페이스를 탈퇴하였습니다", receiverNickname, name);
-            default:
-                return "워크스페이스 이벤트";
-        }
+        return switch (eventType) {
+            case "create" -> "워크스페이스 생성";
+            case "delete" -> "워크스페이스 삭제";
+            case "update" -> "워크스페이스 수정";
+            case "grant" -> "워크스페이스 내 권한 부여";
+            case "invite" -> "워크스페이스 초대";
+            case "join" -> "워크스페이스 가입";
+            case "member_update" -> "워크스페이스 내 회원 정보 수정";
+            case "role_update" -> "워크스페이스 역할 변경";
+            case "withdraw" -> "워크스페이스 탈퇴";
+            default -> "워크스페이스 이벤트";
+        };
     }
 
     @Override
     public String getNotificationContent() {
-        return getNotificationName();
+        String name = "delete".equals(eventType) ? wsName : workspace.getWsName();
+        return switch (eventType) {
+            case "create" -> String.format("%s 워크스페이스가 생성되었습니다.", name);
+            case "update" -> String.format("%s 워크스페이스가 수정되었습니다.", name);
+            case "delete" -> String.format("%s 워크스페이스가 삭제되었습니다.", name);
+            case "grant" -> String.format("%s님이 %s님에게 %s 워크스페이스의 권한을 부여하였습니다.", senderNickname, receiverNickname, name);
+            case "invite" -> String.format("%s님이 %s님을 %s 워크스페이스에 초대하였습니다.", senderNickname, receiverNickname, name);
+            case "join" -> String.format("%s님이 %s 워크스페이스에 가입하였습니다.", receiverNickname, name);
+            case "member_update" -> String.format("%s님의 %s 워크스페이스 내 회원 정보가 수정되었습니다.", senderNickname, name);
+            case "role_update" -> String.format("%s님이 %s님의 %s 워크스페이스 역할을 변경하였습니다.", senderNickname, receiverNickname, name);
+            case "withdraw" -> String.format("%s님이 %s 워크스페이스를 탈퇴하였습니다.", receiverNickname, name);
+            default -> "워크스페이스 관련 이벤트가 발생하였습니다.";
+        };
     }
 
     @Override
