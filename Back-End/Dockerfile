@@ -5,4 +5,3 @@ ENV TZ Asia/Seoul
 ARG ENV
 
 ENTRYPOINT ["java", "-jar","-Dspring.profiles.active=prod", "-Dserver.env=${ENV}", "bibim.jar"]
-
