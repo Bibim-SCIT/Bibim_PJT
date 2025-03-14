@@ -257,6 +257,26 @@ export const fetchWorkspaceMembersStatus = async (workspaceId) => {
     }
 };
 
+/**
+ * 워크스페이스 탈퇴 API
+ * @param {number} wsId - 탈퇴할 워크스페이스 ID
+ * @returns {Promise<Object>} 탈퇴 결과
+ */
+export const leaveWorkspace = async (wsId) => {
+  try {
+    const response = await api.delete('/workspace/withdrawal', {
+      params: { wsId }
+    });
+    
+    console.log('워크스페이스 탈퇴 응답:', response.data);  // 응답 확인
+    return response.data;
+  } catch (error) {
+    console.error('워크스페이스 탈퇴 중 오류 발생:', error);
+    console.error('오류 응답:', error.response?.data);  // 오류 응답 데이터 확인
+    throw error.response?.data || "워크스페이스 탈퇴에 실패했습니다.";
+  }
+};
+
 export default {
     getWorkspaces,
     createWorkspace,
