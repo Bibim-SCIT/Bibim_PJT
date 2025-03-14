@@ -1,47 +1,62 @@
 import React, { useState } from 'react';
-import { Modal, Box, Typography, TextField, Button, Avatar, IconButton } from '@mui/material';
+import { 
+    Modal, 
+    Box, 
+    Typography, 
+    TextField, 
+    Button, 
+    Avatar, 
+    IconButton,
+    Divider,
+    Stack
+} from '@mui/material';
 import { useDispatch } from 'react-redux';
 import { createWorkspace } from '../../../api/workspaceApi';
 import { loadWorkspace } from '../../../store/workspaceRedux';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import DeleteIcon from '@mui/icons-material/Delete';
+import CloseIcon from '@mui/icons-material/Close';
 
-// ✅ 모달창 스타일
+// 모달창 스타일
 const modalStyle = {
-    position: 'absolute',
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    width: 400,
+    width: 450,
     bgcolor: 'background.paper',
+    borderRadius: 1,
     boxShadow: 24,
-    p: 4,
-    borderRadius: 2
+    p: 0,
+    position: 'relative',
+    outline: 'none'
 };
 
-const CreateWorkspaceModal = ({ open, onClose }) => {
+const CreateWorkspaceModal = ({ open, onClose, onSuccess }) => {
     const dispatch = useDispatch();
     const [workspaceName, setWorkspaceName] = useState('');
     const [workspaceImage, setWorkspaceImage] = useState(null);
-    const [previewImage, setPreviewImage] = useState(null); // 🔥 이미지 미리보기 URL
+    const [previewImage, setPreviewImage] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // ✅ 이미지 선택 핸들러
+    // 이미지 선택 핸들러
     const handleImageChange = (event) => {
         const file = event.target.files[0];
         if (file) {
             setWorkspaceImage(file);
-            setPreviewImage(URL.createObjectURL(file)); // 🔥 미리보기 URL 생성
+            setPreviewImage(URL.createObjectURL(file));
         }
     };
 
-    // ✅ 이미지 제거 핸들러
+    // 이미지 제거 핸들러
     const handleRemoveImage = () => {
         setWorkspaceImage(null);
         setPreviewImage(null);
     };
 
-    // ✅ 워크스페이스 생성 요청
+    // 워크스페이스 생성 요청
     const handleCreate = async () => {
+        if (!workspaceName.trim()) return;
+        
         const token = localStorage.getItem("token");
         if (!token) {
             alert("로그인이 필요합니다. 다시 로그인 후 시도해주세요.");
@@ -49,67 +64,184 @@ const CreateWorkspaceModal = ({ open, onClose }) => {
         }
 
         try {
+            setIsSubmitting(true);
             await createWorkspace(workspaceName, workspaceImage);
-            await dispatch(loadWorkspace()); // ✅ Redux 비동기 호출 시 `await` 사용
+            await dispatch(loadWorkspace());
+            
+            // 성공 콜백이 있으면 호출
+            if (onSuccess && typeof onSuccess === 'function') {
+                onSuccess();
+            }
+            
             onClose();
         } catch (error) {
             console.error("워크스페이스 생성 실패:", error);
+        } finally {
+            setIsSubmitting(false);
         }
     };
-
-    // console.log("현재 JWT 토큰:", localStorage.getItem("token")); // ✅ auth.js에서 저장한 토큰 키 사용
 
     return (
         <Modal open={open} onClose={onClose}>
             <Box sx={modalStyle}>
-                <Typography variant="h6" mb={2}>
-                    워크스페이스 생성
-                </Typography>
-
-                {/* 워크스페이스 이름 입력 필드 */}
-                <TextField
-                    fullWidth
-                    label="워크스페이스 이름"
-                    variant="outlined"
-                    value={workspaceName}
-                    onChange={(e) => setWorkspaceName(e.target.value)}
-                    sx={{ mb: 2 }}
-                />
-
-                {/* ✅ 아바타 + 사진 업로드 & 제거 버튼 */}
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', mb: 2 }}>
-                    <Avatar
-                        src={previewImage || ''}
-                        sx={{ width: 80, height: 80, mb: 1, bgcolor: '#ccc' }}
+                {/* 헤더 영역 */}
+                <Box sx={{ p: 3, pb: 2 }}>
+                    <IconButton
+                        onClick={onClose}
+                        sx={{
+                            position: 'absolute',
+                            right: 8,
+                            top: 8
+                        }}
                     >
-                        {!previewImage && <PhotoCameraIcon />}
-                    </Avatar>
+                        <CloseIcon />
+                    </IconButton>
 
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                        {/* 파일 업로드 버튼 */}
-                        <Button variant="outlined" component="label">
-                            사진 업로드
-                            <input type="file" accept="image/*" hidden onChange={handleImageChange} />
-                        </Button>
+                    <Typography
+                        variant="h4"
+                        sx={{
+                            fontWeight: 400,
+                            mb: 0
+                        }}
+                    >
+                        워크스페이스 생성
+                    </Typography>
+                </Box>
 
-                        {/* 사진 제거 버튼 (이미지가 있을 때만 보이도록) */}
-                        {previewImage && (
-                            <IconButton onClick={handleRemoveImage} color="error">
-                                <DeleteIcon />
-                            </IconButton>
-                        )}
+                <Divider sx={{ borderColor: '#e0e0e0' }} />
+
+                {/* 내용 영역 */}
+                <Box sx={{ p: 3 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <Box sx={{ 
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            mb: 3
+                        }}>
+                            <Box
+                                sx={{
+                                    width: 120,
+                                    height: 120,
+                                    bgcolor: '#f5f5f5',
+                                    borderRadius: 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    overflow: 'hidden',
+                                    border: '1px solid #e0e0e0',
+                                    mb: 2,
+                                    cursor: 'pointer'
+                                }}
+                                onClick={() => document.getElementById('workspace-image-input').click()}
+                            >
+                                {previewImage ? (
+                                    <img 
+                                        src={previewImage} 
+                                        alt="워크스페이스 이미지"
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    />
+                                ) : (
+                                    <PhotoCameraIcon sx={{ color: '#999', fontSize: 40 }} />
+                                )}
+                            </Box>
+                            <Stack sx={{ 
+                                flexDirection: 'row',
+                                gap: 1.5,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '100%'
+                            }}>
+                                <Button
+                                    variant="outlined"
+                                    onClick={handleRemoveImage}
+                                    size="small"
+                                    disabled={!previewImage}
+                                    sx={{ 
+                                        color: '#666',
+                                        borderColor: '#d0d0d0',
+                                        boxShadow: 'none'
+                                    }}
+                                >
+                                    이미지 삭제
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    component="label"
+                                    size="small"
+                                    sx={{ 
+                                        bgcolor: '#4a6cc7',
+                                        boxShadow: 'none',
+                                        '&:hover': { 
+                                            bgcolor: '#3f5ba9',
+                                            boxShadow: 'none'
+                                        }
+                                    }}
+                                >
+                                    이미지 설정
+                                    <input
+                                        type="file"
+                                        id="workspace-image-input"
+                                        hidden
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                    />
+                                </Button>
+                            </Stack>
+                        </Box>
+
+                        <Box sx={{ width: '100%', mb: 2 }}>
+                            <Typography variant="subtitle1" sx={{ mb: 1, textAlign: 'left' }}>
+                                워크스페이스 이름
+                            </Typography>
+                            <TextField
+                                fullWidth
+                                variant="outlined"
+                                value={workspaceName}
+                                onChange={(e) => setWorkspaceName(e.target.value)}
+                                placeholder="워크스페이스 이름을 입력하세요"
+                            />
+                        </Box>
                     </Box>
                 </Box>
 
-                {/* ✅ 생성하기 버튼 */}
-                <Button
-                    variant="contained"
-                    fullWidth
-                    onClick={handleCreate}
-                    disabled={!workspaceName.trim()}
-                >
-                    생성하기
-                </Button>
+                {/* 하단 버튼 영역 */}
+                <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: 1.5,
+                    p: 2,
+                    bgcolor: '#f8f9fa',
+                    borderTop: '1px solid #e0e0e0'
+                }}>
+                    <Button
+                        variant="outlined"
+                        onClick={onClose}
+                        disabled={isSubmitting}
+                        sx={{
+                            color: '#666',
+                            borderColor: '#d0d0d0',
+                            boxShadow: 'none'
+                        }}
+                    >
+                        취소
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleCreate}
+                        disabled={isSubmitting || !workspaceName.trim()}
+                        sx={{
+                            bgcolor: '#4a6cc7',
+                            boxShadow: 'none',
+                            '&:hover': { 
+                                bgcolor: '#3f5ba9',
+                                boxShadow: 'none'
+                            }
+                        }}
+                    >
+                        {isSubmitting ? '생성 중...' : '생성하기'}
+                    </Button>
+                </Box>
             </Box>
         </Modal>
     );

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Card, Avatar, Typography, Button, Box, Stack, Divider } from '@mui/material';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Grid } from 'swiper/modules';
@@ -15,40 +15,52 @@ const MyWorkspaces = ({ onLeaveWorkspace }) => {
   const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchWorkspaces = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const result = await getMyWorkspaces();
-        console.log('API 응답 데이터:', result); // 데이터 구조 확인용 로그
-        
-        // 배열 형태로 직접 받아오는 경우
-        if (Array.isArray(result)) {
-          setWorkspaces(result);
-        }
-        // data 속성 내에 배열이 있는 경우
-        else if (result && result.data && Array.isArray(result.data)) {
-          setWorkspaces(result.data);
-        } 
-        // 데이터가 없는 경우
-        else {
-          console.warn('워크스페이스 데이터가 없거나 형식이 올바르지 않습니다:', result);
-          setError('워크스페이스 목록 조회 중 오류 발생');
-        }
-      } catch (err) {
-        console.error('워크스페이스 목록을 불러오는데 실패했습니다:', err);
-        setError('워크스페이스 목록 조회 중 오류 발생');
-      } finally {
-        setLoading(false);
+  // fetchWorkspaces 함수를 useCallback으로 감싸서 재사용 가능하게 만듭니다
+  const fetchWorkspaces = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await getMyWorkspaces();
+      console.log('API 응답 데이터:', result); // 데이터 구조 확인용 로그
+      
+      // 배열 형태로 직접 받아오는 경우
+      if (Array.isArray(result)) {
+        setWorkspaces(result);
       }
-    };
-
-    fetchWorkspaces();
+      // data 속성 내에 배열이 있는 경우
+      else if (result && result.data && Array.isArray(result.data)) {
+        setWorkspaces(result.data);
+      } 
+      // 데이터가 없는 경우
+      else {
+        console.warn('워크스페이스 데이터가 없거나 형식이 올바르지 않습니다:', result);
+        setError('워크스페이스 목록 조회 중 오류 발생');
+      }
+    } catch (err) {
+      console.error('워크스페이스 목록을 불러오는데 실패했습니다:', err);
+      setError('워크스페이스 목록 조회 중 오류 발생');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchWorkspaces();
+  }, [fetchWorkspaces]);
 
   const onSelect = (ws) => {
     console.log('선택된 워크스페이스:', ws);
+  };
+
+  // 모달이 닫힐 때 워크스페이스 목록을 새로 조회합니다
+  const handleModalClose = () => {
+    setModalOpen(false);
+  };
+
+  // 워크스페이스 생성 성공 시 호출될 콜백 함수
+  const handleCreateSuccess = () => {
+    console.log('워크스페이스 생성 성공, 목록 새로고침');
+    fetchWorkspaces(); // 워크스페이스 생성 성공 시 목록 새로고침
   };
 
   return (
@@ -213,7 +225,11 @@ const MyWorkspaces = ({ onLeaveWorkspace }) => {
           </Box>
         )}
       </Box>
-      <CreateWorkspaceModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <CreateWorkspaceModal 
+        open={modalOpen} 
+        onClose={handleModalClose} 
+        onSuccess={handleCreateSuccess} 
+      />
     </Box>
   );
 };
