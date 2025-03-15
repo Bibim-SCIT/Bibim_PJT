@@ -31,9 +31,8 @@ public class WorkdataEventListener {
         log.info("📢 Workdata 이벤트 감지: {} | 워크스페이스 ID: {} | 메시지: {}",
                 event.getEventType(), workspaceId, notificationMessage);
 
-        final String baseUrl = "http://localhost:3000/workdata";
-        // 모든 이벤트에 대해 동일한 URL로 리다이렉트
-        String notificationUrl = baseUrl;
+        final String notificationUrl = "http://localhost:3000/workdata";
+
 
         // 특정 워크스페이스의 모든 멤버 조회
         List<WorkspaceMemberEntity> workspaceMembers =

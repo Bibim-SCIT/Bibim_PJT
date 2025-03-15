@@ -229,20 +229,10 @@ export default function NotificationSection() {
     if (!notification.notificationStatus) {
       await markNotificationAsRead(notificationId);
     }
-    try {
-      const response = await fetch(`${API_BASE_URL}/notification/${notificationId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const url = await response.text();
-        window.location.href = url;
-      } else {
-        console.error('Failed to retrieve notification URL', response.status);
-      }
-    } catch (error) {
-      console.error('Error fetching notification URL:', error);
-    }
+    // fetch 대신, 브라우저 네비게이션을 사용해 /notification/{notificationId} 엔드포인트로 이동
+    window.location.href = `${API_BASE_URL}/notification/${notificationId}`;
   };
+
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
