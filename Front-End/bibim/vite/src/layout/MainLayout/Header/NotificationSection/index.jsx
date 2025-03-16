@@ -55,29 +55,31 @@ export default function NotificationSection() {
   const [hasMore, setHasMore] = useState(true);
 
   // fetchNotifications 함수 
-  const fetchNotifications = async () => {
+  // fetchNotifications 함수 (수정 후) - 인자로 전달된 값을 사용함
+  const fetchNotifications = async (currentFilter = filterValue) => {
     try {
-      const endpoint = filterValue === 'unread' ? '/notification/unread' : '/notification/read';
+      const endpoint = currentFilter === 'unread' ? '/notification/unread' : '/notification/read';
       const url = `${API_BASE_URL}${endpoint}`;
-
       const token = localStorage.getItem("token")?.trim();
       const response = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!response.ok) {
+        throw new Error(`🚨 API 요청 실패: ${response.status} ${response.statusText}`);
+      }
       const data = await response.json();
-
       setNotifications(data);
 
-      // 항상 unreadCount를 업데이트
-      if (filterValue === 'unread') {
-        setUnreadCount(data.length);
-      } else {
-        setUnreadCount(0);
+      // unreadCount는 항상 "안 읽은" API 호출 결과로 업데이트
+      const unreadResponse = await fetch(`${API_BASE_URL}/notification/unread`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (unreadResponse.ok) {
+        const unreadData = await unreadResponse.json();
+        setUnreadCount(unreadData.length);
       }
     } catch (error) {
       console.error("🚨 Error fetching notifications:", error);
     }
   };
-
-
 
   // 개별 알림 읽음 처리 시 unreadCount 즉시 감소
   const markNotificationAsRead = async (notificationId) => {
@@ -219,14 +221,15 @@ export default function NotificationSection() {
     }
   };
 
-  // 🔹 필터 변경 핸들러
+  // 필터 변경 핸들러 (수정 후)
   const handleChange = (event) => {
     if (event?.target.value) {
-      setFilterValue(event.target.value);
+      const newFilter = event.target.value;
+      setFilterValue(newFilter);
       setPage(0);
       setNotifications([]);
       setHasMore(true);
-      fetchNotifications(); // ✅ 함수가 정상적으로 호출됨
+      fetchNotifications(newFilter); // 새 필터 값을 인자로 전달하여 즉시 적용
     }
   };
 
