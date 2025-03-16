@@ -1,11 +1,12 @@
 // material-ui
 import Typography from '@mui/material/Typography';
-import { Box, Button, Container, Grid, Stack, useTheme } from '@mui/material';
+import { Box, Button, Container, Grid, Stack, useTheme, AppBar, Toolbar } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
 import { useNavigate } from 'react-router-dom';
+import LandingHeader from './components/LandingHeader';
 import LogoSection from 'layout/MainLayout/LogoSection';
 import ProfileSection from 'layout/MainLayout/Header/ProfileSection';
 import NotificationSection from 'layout/MainLayout/Header/NotificationSection';
@@ -31,11 +32,24 @@ const HeroSection = styled(Box)(({ theme }) => ({
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    padding: theme.spacing(8, 0),
+    padding: theme.spacing(12, 0),
     position: 'relative',
     overflow: 'hidden',
-    backgroundImage: 'linear-gradient(300deg, #FFFACD 20%, #3F72AF 70%)',
-    borderRadius: theme.spacing(2)
+    backgroundImage: 'url("https://images.unsplash.com/photo-1531403009284-440f080d1e12?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80")',
+    backgroundSize: 'cover',
+    filter: 'grayscale(30%) brightness(140%)',
+    backgroundPosition: 'center',
+    borderRadius: theme.spacing(2),
+    '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        zIndex: 0
+    }
 }));
 
 const FeatureCard = styled(Box)(({ theme }) => ({
@@ -61,6 +75,16 @@ export default function LandingPage1() {
         navigate("/");
     };
 
+    // 워크스페이스 선택 페이지로 이동
+    const moveToWorkspace = () => {
+        navigate("/ws-select");
+    };
+
+    // 로그인 페이지로 이동
+    const moveToLogin = () => {
+        navigate("/login");
+    };
+
     // 랜딩 페이지 선택으로 돌아가기
     const backToLandingSelect = () => {
         navigate("/landing");
@@ -69,31 +93,16 @@ export default function LandingPage1() {
     return (
         <Box sx={{ bgcolor: theme.palette.background.default }}>
             {/* 헤더 */}
-            <HeaderSection>
-                <Container>
-                    <HeaderNav>
-                        <Box sx={{ width: 228, display: 'flex' }}>
-                            <Box component="span" sx={{ flexGrow: 1 }}>
-                                <LogoSection />
-                            </Box>
-                        </Box>
-
-                        <Box sx={{ flexGrow: 1 }} />
-                        <Box sx={{ flexGrow: 1 }} />
-
-                        {/* notification */}
-                        <NotificationSection />
-
-                        {/* profile */}
-                        <ProfileSection />
-                    </HeaderNav>
-                </Container>
-            </HeaderSection>
+            <AppBar enableColorOnDark position="fixed" color="inherit" elevation={0} sx={{ bgcolor: 'background.default' }}>
+                <Toolbar sx={{ p: 2 }}>
+                    <LandingHeader />
+                </Toolbar>
+            </AppBar>
             
-            <Container maxWidth="xl" sx={{ py: 4 }}>
+            <Container maxWidth="xl" sx={{ py: 8, mt: 8 }}>
                 <HeroSection>
-                    <Container>
-                        <Grid container spacing={4} alignItems="center">
+                    <Container sx={{ position: 'relative', zIndex: 1 }}>
+                        <Grid container spacing={6} alignItems="center">
                             <Grid item xs={12} md={6}>
                                 <Typography 
                                     variant="h1" 
@@ -116,11 +125,11 @@ export default function LandingPage1() {
                                 >
                                     당신의 꿈을 현실로 만들어 보세요
                                 </Typography>
-                                <Stack direction="row" spacing={2}>
+                                <Stack direction="row" spacing={3}>
                                     <Button 
                                         size="large" 
                                         variant="contained" 
-                                        onClick={moveMain}
+                                        onClick={moveToWorkspace}
                                         sx={{ 
                                             bgcolor: '#fff', 
                                             color: theme.palette.primary.main,
@@ -130,11 +139,12 @@ export default function LandingPage1() {
                                             }
                                         }}
                                     >
-                                        시작하기
+                                        지금 시작하기
                                     </Button>
                                     <Button 
                                         size="large" 
                                         variant="outlined" 
+                                        onClick={moveToLogin}
                                         sx={{ 
                                             borderColor: '#fff', 
                                             color: '#fff',
@@ -144,7 +154,7 @@ export default function LandingPage1() {
                                             }
                                         }}
                                     >
-                                        더 알아보기
+                                        로그인
                                     </Button>
                                 </Stack>
                             </Grid>
@@ -169,7 +179,7 @@ export default function LandingPage1() {
                     </Container>
                 </HeroSection>
 
-                <Box sx={{ py: 8 }}>
+                <Box sx={{ py: 16, mt: 8 }}>
                     <Typography 
                         variant="h2" 
                         align="center" 
@@ -191,7 +201,7 @@ export default function LandingPage1() {
                         주요 기능
                     </Typography>
                     
-                    <Grid container spacing={4}>
+                    <Grid container spacing={6}>
                         {[
                             { title: '혁신적인 디자인', desc: '최신 트렌드를 반영한 모던한 UI/UX를 경험해보세요.' },
                             { title: '강력한 성능', desc: '빠른 속도와 안정적인 서비스를 제공합니다.' },
@@ -211,39 +221,47 @@ export default function LandingPage1() {
                     </Grid>
                 </Box>
 
-                <Box sx={{ py: 6, textAlign: 'center' }}>
-                    <Typography variant="h3" sx={{ mb: 3 }}>
+                <Box sx={{ py: 12, mt: 8, textAlign: 'center' }}>
+                    <Typography variant="h3" sx={{ mb: 5 }}>
                         지금 바로 시작하세요
                     </Typography>
-                    <Stack direction="row" spacing={2} justifyContent="center">
+                    <Stack direction="column" spacing={3} alignItems="center">
                         <Button 
                             size="large" 
                             variant="contained" 
                             color="primary" 
-                            onClick={moveMain}
+                            onClick={moveToWorkspace}
                             sx={{ 
-                                px: 4, 
+                                px: 6, 
                                 py: 1.5,
                                 fontWeight: 600,
-                                fontSize: '1.1rem'
+                                fontSize: '1.1rem',
+                                borderRadius: '50px',
+                                minWidth: '240px'
                             }}
                         >
-                            메인으로 이동
+                            지금 시작하기
                         </Button>
-                        <Button 
-                            size="large" 
-                            variant="outlined" 
-                            color="primary" 
-                            onClick={backToLandingSelect}
-                            sx={{ 
-                                px: 4, 
-                                py: 1.5,
-                                fontWeight: 600,
-                                fontSize: '1.1rem'
-                            }}
-                        >
-                            랜딩 선택으로 돌아가기
-                        </Button>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                            <Typography variant="body1" sx={{ mr: 1, color: theme.palette.text.secondary }}>
+                                이미 계정이 있으신가요?
+                            </Typography>
+                            <Button 
+                                variant="text" 
+                                color="primary"
+                                onClick={moveToLogin}
+                                sx={{ 
+                                    fontWeight: 600,
+                                    fontSize: '1rem',
+                                    '&:hover': {
+                                        backgroundColor: 'transparent',
+                                        textDecoration: 'underline'
+                                    }
+                                }}
+                            >
+                                로그인
+                            </Button>
+                        </Box>
                     </Stack>
                 </Box>
             </Container>

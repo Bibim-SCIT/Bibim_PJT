@@ -1,11 +1,12 @@
 // material-ui
 import Typography from '@mui/material/Typography';
-import { Box, Button, Container, Grid, Stack, useTheme, Paper, Divider, IconButton } from '@mui/material';
+import { Box, Button, Container, Grid, Stack, useTheme, Paper, Divider, IconButton, AppBar, Toolbar } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 
 // project imports
 import LogoSection from 'layout/MainLayout/LogoSection';
+import LandingHeader from './components/LandingHeader';
 import ProfileSection from 'layout/MainLayout/Header/ProfileSection';
 import NotificationSection from 'layout/MainLayout/Header/NotificationSection';
 
@@ -16,7 +17,8 @@ const HeaderSection = styled(Box)(({ theme }) => ({
   borderBottom: `1px solid ${theme.palette.divider}`,
   position: 'sticky',
   top: 0,
-  zIndex: 100
+  zIndex: 100,
+  marginBottom: theme.spacing(20)
 }));
 
 const HeaderNav = styled(Box)(({ theme }) => ({
@@ -78,9 +80,26 @@ export default function LandingPage3() {
     navigate("/");
   };
 
+  // 워크스페이스 선택 페이지로 이동
+  const moveToWorkspace = () => {
+    navigate("/ws-select");
+  };
+
   // 랜딩 페이지 선택으로 돌아가기
   const backToLandingSelect = () => {
     navigate("/landing");
+  };
+
+  // 대시보드 섹션으로 스크롤
+  const scrollToDashboard = () => {
+    const dashboardSection = document.getElementById('dashboard-section');
+    const offset = 100; // 헤더 높이 등을 고려한 오프셋
+    const targetPosition = dashboardSection.getBoundingClientRect().top + window.pageYOffset - offset;
+    
+    window.scrollTo({
+      top: targetPosition,
+      behavior: 'smooth'
+    });
   };
 
   const features = [
@@ -110,37 +129,28 @@ export default function LandingPage3() {
     <Box sx={{ 
       bgcolor: '#FAFAFA', 
       minHeight: '100vh',
+      height: '100%',
       position: 'relative',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+      pb: 0
     }}>
       {/* 헤더 */}
-      <HeaderSection>
-        <Container>
-          <HeaderNav>
-            <Box sx={{ width: 228, display: 'flex' }}>
-              <Box component="span" sx={{ flexGrow: 1 }}>
-                <LogoSection />
-              </Box>
-            </Box>
-
-            <Box sx={{ flexGrow: 1 }} />
-            <Box sx={{ flexGrow: 1 }} />
-
-            {/* notification */}
-            <NotificationSection />
-
-            {/* profile */}
-            <ProfileSection />
-          </HeaderNav>
-        </Container>
-      </HeaderSection>
+      <AppBar enableColorOnDark position="fixed" color="inherit" elevation={0} sx={{ bgcolor: 'background.default' }}>
+        <Toolbar sx={{ p: 2 }}>
+          <LandingHeader />
+        </Toolbar>
+      </AppBar>
       
-      <CircleDecoration position={{ top: '-150px', right: '-150px' }} />
-      <CircleDecoration position={{ bottom: '-150px', left: '-150px' }} />
+      <Box sx={{ mt: 8 }}>
+        <CircleDecoration position={{ top: '-150px', right: '-150px' }} />
+        <CircleDecoration position={{ bottom: '-150px', left: '-150px' }} />
+      </Box>
       
       {/* 헤더 섹션 */}
-      <Container maxWidth="lg" sx={{ pt: 8, pb: 15 }}>
-        <Box sx={{ textAlign: 'center', mb: 10, position: 'relative', zIndex: 2 }}>
+      <Container maxWidth="lg" sx={{ pt: 16, pb: 15 }}>
+        <Box sx={{ textAlign: 'center', mb: 20, position: 'relative', zIndex: 2 }}>
           <Typography 
             variant="h1" 
             sx={{ 
@@ -176,7 +186,7 @@ export default function LandingPage3() {
             <Button 
               variant="contained" 
               size="large"
-              onClick={moveMain}
+              onClick={moveToWorkspace}
               sx={{ 
                 bgcolor: '#111', 
                 color: '#fff',
@@ -190,11 +200,12 @@ export default function LandingPage3() {
                 }
               }}
             >
-              지금 시작하기
+              워크스페이스 선택하기
             </Button>
             <Button 
               variant="outlined" 
               size="large"
+              onClick={scrollToDashboard}
               sx={{ 
                 borderColor: '#111',
                 color: '#111',
@@ -216,6 +227,7 @@ export default function LandingPage3() {
         
         {/* 이미지 섹션 */}
         <Box 
+          id="dashboard-section"
           sx={{ 
             width: '100%',
             height: { xs: '300px', md: '500px' },
@@ -287,7 +299,8 @@ export default function LandingPage3() {
         sx={{ 
           py: 15, 
           textAlign: 'center',
-          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)'
+          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+          marginTop: 'auto'
         }}
       >
         <Container maxWidth="md">
@@ -321,7 +334,7 @@ export default function LandingPage3() {
             <Button 
               variant="contained" 
               size="large"
-              onClick={moveMain}
+              onClick={moveToWorkspace}
               sx={{ 
                 bgcolor: '#111', 
                 color: '#fff',
@@ -335,27 +348,7 @@ export default function LandingPage3() {
                 }
               }}
             >
-              메인으로 이동
-            </Button>
-            <Button 
-              variant="outlined" 
-              size="large"
-              onClick={backToLandingSelect}
-              sx={{ 
-                borderColor: '#111',
-                color: '#111',
-                px: 4,
-                py: 1.5,
-                borderRadius: '50px',
-                fontSize: '1.1rem',
-                fontWeight: 600,
-                '&:hover': {
-                  bgcolor: 'rgba(0,0,0,0.05)',
-                  borderColor: '#000'
-                }
-              }}
-            >
-              랜딩 선택으로 돌아가기
+              워크스페이스 선택하기
             </Button>
           </Stack>
         </Container>
