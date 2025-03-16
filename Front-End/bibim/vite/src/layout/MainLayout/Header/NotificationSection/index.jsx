@@ -46,161 +46,92 @@ export default function NotificationSection() {
   const [filterValue, setFilterValue] = useState('unread');
   // 알림 목록 (페이지 단위로 추가)
   const [notifications, setNotifications] = useState([]);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const size = 10; // 한 페이지당 알림 수
-
-  const token = localStorage.getItem('token');
-  const anchorRef = useRef(null);
-  const eventSourceRef = useRef(null);
-
   // 읽지 않은 알림 개수를 관리하는 상태 추가
   const [unreadCount, setUnreadCount] = useState(0);
+  // const token = localStorage.getItem('token');
+  const anchorRef = useRef(null);
+  const eventSourceRef = useRef(null);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
 
-  const handleToggle = () => setOpen((prev) => !prev);
-  const handleClose = (event) => {
-    if (anchorRef.current && anchorRef.current.contains(event.target)) return;
-    setOpen(false);
-  };
-
-  // 모달 닫힌 후 앵커 포커스 복원
-  const prevOpen = useRef(open);
-  useEffect(() => {
-    if (prevOpen.current === true && open === false) {
-      anchorRef.current.focus();
-    }
-    prevOpen.current = open;
-  }, [open]);
-
-  // 필터 선택 변경 시: 페이지 초기화 후 데이터 다시 로드
-  const handleChange = (event) => {
-    if (event?.target.value) {
-      setFilterValue(event.target.value);
-      setPage(0);
-      setNotifications([]);
-      setHasMore(true);
-    }
-  };
-
-  // ✅ [2] fetchNotifications 함수 
-  const fetchNotifications = async () => {
+  // fetchNotifications 함수 
+  // fetchNotifications 함수 (수정 후) - 인자로 전달된 값을 사용함
+  const fetchNotifications = async (currentFilter = filterValue) => {
     try {
-      const endpoint = filterValue === 'unread' ? '/notification/unread' : '/notification/read';
+      const endpoint = currentFilter === 'unread' ? '/notification/unread' : '/notification/read';
       const url = `${API_BASE_URL}${endpoint}`;
-      console.log("📤 요청한 URL:", url);
-
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
+      const token = localStorage.getItem("token")?.trim();
+      const response = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
       if (!response.ok) {
         throw new Error(`🚨 API 요청 실패: ${response.status} ${response.statusText}`);
       }
-
       const data = await response.json();
-      console.log("✅ 응답 받은 데이터:", data);
-
-      // 전체 데이터를 state에 저장
       setNotifications(data);
-      if (filterValue === 'unread') {
-        setUnreadCount(data.length);
+
+      // unreadCount는 항상 "안 읽은" API 호출 결과로 업데이트
+      const unreadResponse = await fetch(`${API_BASE_URL}/notification/unread`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (unreadResponse.ok) {
+        const unreadData = await unreadResponse.json();
+        setUnreadCount(unreadData.length);
       }
     } catch (error) {
       console.error("🚨 Error fetching notifications:", error);
     }
   };
 
-
-  // 초기에 필터 값에 따라 데이터 로드
-  useEffect(() => {
-    fetchNotifications();
-  }, [filterValue]);
-
-
-  // ✅ [5] SSE 이벤트 수정 (새로운 알림 수신 시 unreadCount 증가)
-  useEffect(() => {
-    if (token && filterValue === 'unread') {
-      let sse = new EventSource(`${API_BASE_URL}/notification/subscribe?token=${token}`);
-      console.log("📡 SSE 연결 요청 보냄:", `${API_BASE_URL}/notification/subscribe?token=${token}`);
-
-      sse.addEventListener('notification', (event) => {
-        try {
-          const newNotification = JSON.parse(event.data);
-
-          setNotifications((prev) => {
-            // 기존 알림 리스트에서 동일한 notificationNumber가 있는지 확인
-            if (prev.some((n) => n.notificationNumber === newNotification.notificationNumber)) {
-              return prev; // 중복이면 기존 리스트 그대로 반환 (추가하지 않음)
-            }
-            return [newNotification, ...prev]; // 중복이 아니면 추가
-          });
-
-          setUnreadCount((prevCount) => prevCount + 1);
-        } catch (err) {
-          console.error('Error parsing SSE notification:', err);
-        }
-      });
-
-      sse.onerror = () => {
-        console.error('SSE error: reconnecting in 5s');
-        sse.close();
-        setTimeout(() => {
-          sse = new EventSource(`${API_BASE_URL}/notification/subscribe?token=${token}`);
-        }, 5000);
-      };
-
-      eventSourceRef.current = sse;
-      return () => {
-        sse.close();
-      };
-    }
-  }, [token, filterValue]);
-
-  // ✅ [3] 개별 알림 읽음 처리 시 unreadCount 즉시 감소
+  // 개별 알림 읽음 처리 시 unreadCount 즉시 감소
   const markNotificationAsRead = async (notificationId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/notification/read-single?notificationNumber=${notificationId}`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${API_BASE_URL}/notification/read-single?notificationNumber=${notificationId}`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      );
       if (response.ok) {
+        // 읽음 처리 성공 시, 목록에서 제거
         setNotifications((prev) =>
-          prev.map((n) =>
-            (n.notificationNumber || n.id) === notificationId ? { ...n, notificationStatus: true } : n
-          )
+          prev.filter((n) => n.notificationNumber !== notificationId)
         );
-
-        // ✅ 읽지 않은 개수 즉시 감소
         setUnreadCount((prevCount) => Math.max(prevCount - 1, 0));
+      } else {
+        console.error('❌ 알림 읽음 처리 실패:', response.status);
       }
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error('❌ 알림 읽음 처리 중 오류 발생:', error);
     }
   };
+
 
   // 개별 알림 삭제 API
   const deleteNotification = async (notificationId) => {
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE_URL}/notification?notificationNumber=${notificationId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
         setNotifications((prev) =>
-          prev.filter((n) => (n.notificationNumber || n.id) !== notificationId)
+          prev.filter((n) => n.notificationNumber !== notificationId)
         );
       } else {
-        console.error('Failed to delete notification', response.status);
+        console.error('❌ 알림 삭제 실패:', response.status);
       }
     } catch (error) {
-      console.error('Error deleting notification:', error);
+      console.error('❌ 알림 삭제 중 오류 발생:', error);
     }
   };
 
-  // ✅ [4] 전체 읽기 시 unreadCount 즉시 0으로 변경
+
+  // 전체 읽기 시 unreadCount 즉시 0으로 변경
   const markAllNotificationsAsRead = async () => {
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE_URL}/notification/read-all`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -210,14 +141,111 @@ export default function NotificationSection() {
         setNotifications((prev) =>
           prev.map((n) => ({ ...n, notificationStatus: true }))
         );
-
-        // ✅ 전체 읽기 버튼 클릭 시 unreadCount 즉시 0으로 설정
         setUnreadCount(0);
       }
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      console.error('❌ 전체 알림 읽음 처리 중 오류 발생:', error);
     }
   };
+
+
+
+  // SSE 연결을 위한 재연결 함수
+  const reconnectSSE = () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.warn("❗ SSE 연결 중단: 토큰 없음");
+      return;
+    }
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
+    // SSE 요청 시 토큰을 쿼리 파라미터로 포함
+    const newSSE = new EventSource(`${API_BASE_URL}/notification/subscribe?token=${token}`);
+    console.log("📡 SSE 연결 요청:", `${API_BASE_URL}/notification/subscribe?token=${token}`);
+
+    newSSE.addEventListener('notification', (event) => {
+      try {
+        const newNotification = JSON.parse(event.data);
+        console.log("📩 새 알림 수신:", newNotification);
+
+        setNotifications((prev) => {
+          if (!prev.some((n) => n.notificationNumber === newNotification.notificationNumber)) {
+            return [newNotification, ...prev];
+          }
+          return prev;
+        });
+
+        // unreadCount는 오직 "안 읽은" 필터에서만 증가
+        if (filterValue === "unread" && !newNotification.notificationStatus) {
+          setUnreadCount((prevCount) => prevCount + 1);
+        }
+      } catch (err) {
+        console.error('❌ SSE 데이터 처리 중 오류 발생:', err);
+      }
+    });
+
+    newSSE.onerror = () => {
+      console.error('🚨 SSE 연결 오류: 5초 후 재연결 시도');
+      newSSE.close();
+      setTimeout(reconnectSSE, 5000);
+    };
+
+    eventSourceRef.current = newSSE;
+  };
+
+
+
+  // 최초 마운트 시 실행
+  useEffect(() => {
+    fetchNotifications();
+    reconnectSSE();
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+    };
+  }, []);
+
+  // 필터 변경 시 실행
+  useEffect(() => {
+    fetchNotifications();
+  }, [filterValue]);
+
+  // 🔹 알림 팝업 관련 핸들러
+  const handleToggle = () => {
+    setOpen((prev) => !prev);
+    if (!open) {
+      setFilterValue('unread'); // 기본 필터값 강제 설정
+      fetchNotifications();
+    }
+  };
+
+  // 필터 변경 핸들러 (수정 후)
+  const handleChange = (event) => {
+    if (event?.target.value) {
+      const newFilter = event.target.value;
+      setFilterValue(newFilter);
+      setPage(0);
+      setNotifications([]);
+      setHasMore(true);
+      fetchNotifications(newFilter); // 새 필터 값을 인자로 전달하여 즉시 적용
+    }
+  };
+
+  const handleClose = (event) => {
+    if (anchorRef.current && anchorRef.current.contains(event.target)) return;
+    setOpen(false);
+  };
+
+  // 🔹 모달 닫힌 후 앵커 포커스 복원
+  const prevOpen = useRef(open);
+  useEffect(() => {
+    if (prevOpen.current === true && open === false) {
+      anchorRef.current.focus();
+    }
+    prevOpen.current = open;
+  }, [open]);
 
   // 알림 클릭 시 읽음 처리 후 URL 리다이렉트
   const handleNotificationClick = async (notification) => {
@@ -229,25 +257,15 @@ export default function NotificationSection() {
     if (!notification.notificationStatus) {
       await markNotificationAsRead(notificationId);
     }
-    try {
-      const response = await fetch(`${API_BASE_URL}/notification/${notificationId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const url = await response.text();
-        window.location.href = url;
-      } else {
-        console.error('Failed to retrieve notification URL', response.status);
-      }
-    } catch (error) {
-      console.error('Error fetching notification URL:', error);
-    }
+    // fetch 대신, 브라우저 네비게이션을 사용해 /notification/{notificationId} 엔드포인트로 이동
+    window.location.href = `${API_BASE_URL}/notification/${notificationId}`;
   };
+
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       {/* ✅ 알림 아이콘을 감싸는 박스 (위치 조정) */}
-      <Box sx={{ position: 'relative', mr: 2, cursor: "pointer" }}>
+      <Box sx={{ position: 'relative', mr: 2 }}>
         {/* ✅ 알림 아이콘 */}
         <Avatar
           variant="rounded"
@@ -326,7 +344,7 @@ export default function NotificationSection() {
                             select
                             fullWidth
                             value={filterValue}
-                            onChange={handleChange}
+                            onChange={handleChange} // ✅ handleChange로 변경
                             slotProps={{ select: { native: true } }}
                           >
                             {statusOptions.map((option) => (
@@ -335,6 +353,7 @@ export default function NotificationSection() {
                               </option>
                             ))}
                           </TextField>
+
                         </Box>
                       </Grid>
                       <Grid item xs={12}>
@@ -367,3 +386,4 @@ export default function NotificationSection() {
     </Box>
   );
 }
+
