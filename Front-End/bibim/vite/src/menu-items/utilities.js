@@ -21,29 +21,37 @@ const utilities = {
   type: 'group',
   children: [
     {
-      id: 'schedules',
+      id: 'schedule',
       title: '일정 관리',
-      type: 'collapse',
+      type: 'item',
+      url: '/schedule',
       icon: icons.IconCalendar,
-      children: [
-        {
-          id: 'calendarView',
-          title: '캘린더로 보기',
-          type: 'item',
-          url: '/schedule',
-          target: false,
-          breadcrumbs: false
-        },
-        {
-          id: 'overallView',
-          title: '전체로 보기',
-          type: 'item',
-          url: '/schedule/overall',
-          target: false,
-          breadcrumbs: false
-        }
-      ]
+      breadcrumbs: false
     },
+    // {
+    //   id: 'schedules',
+    //   title: '일정 관리',
+    //   type: 'collapse',
+    //   icon: icons.IconCalendar,
+    //   children: [
+    //     {
+    //       id: 'calendarView',
+    //       title: '캘린더로 보기',
+    //       type: 'item',
+    //       url: '/schedule',
+    //       target: false,
+    //       breadcrumbs: false
+    //     },
+    //     {
+    //       id: 'overallView',
+    //       title: '전체로 보기',
+    //       type: 'item',
+    //       url: '/schedule/overall',
+    //       target: false,
+    //       breadcrumbs: false
+    //     }
+    //   ]
+    // },
     {
       id: 'channel',
       title: '채널',

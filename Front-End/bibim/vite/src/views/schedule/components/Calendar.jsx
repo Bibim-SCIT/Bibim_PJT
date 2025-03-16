@@ -7,21 +7,21 @@ import styled from '@emotion/styled';
 import ScheduleDetailModal from './ScheduleDetailModal';
 import ScheduleEditModal from './ScheduleEditModal';
 
-const CalendarWrapper = styled(Box)({
-  padding: '20px',
-  '& .calendar-container': {
-    padding: '20px',
-    background: '#fff',
-    borderRadius: '10px',
-    boxShadow: '0 0 10px rgba(0,0,0,0.1)'
-  },
-  '& .fc': {
-    maxWidth: '1200px',
-    margin: '0 auto'
-  },
-});
+// const CalendarWrapper = styled(Box)({
+//   padding: '20px',
+//   '& .calendar-container': {
+//     padding: '20px',
+//     background: '#fff',
+//     borderRadius: '10px',
+//     boxShadow: '0 0 10px rgba(0,0,0,0.1)'
+//   },
+//   '& .fc': {
+//     maxWidth: '1200px',
+//     margin: '0 auto'
+//   },
+// });
 
-const Calendar = ({ tasks }) => {
+const Calendar = ({ tasks, onDeleteSuccess }) => {
   const [schedules, setSchedules] = useState(tasks);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
@@ -32,6 +32,18 @@ const Calendar = ({ tasks }) => {
   // ✅ 새로운 일정이 추가될 때 스케줄 상태 업데이트
   const handleScheduleAdded = (newSchedule) => {
     setSchedules((prevSchedules) => [...prevSchedules, newSchedule]);
+  };
+
+  // ✅ tasks가 변경될 때마다 일정 상태 업데이트
+  useEffect(() => {
+    setSchedules(tasks);
+  }, [tasks]);
+
+  // ✅ 스케줄 삭제 시 전체 데이터 다시 불러오기
+  const handleScheduleDeleted = () => {
+    if (onDeleteSuccess) {
+      onDeleteSuccess(); // 부모 컴포넌트(SchedulePage)에서 전체 일정 다시 불러오기
+    }
   };
 
 
@@ -82,6 +94,8 @@ const Calendar = ({ tasks }) => {
         width: '100%',
         maxWidth: '1200px',
         margin: '0 auto',
+        boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+        borderRadius: '10px',
         '& .calendar-container': {
           padding: 2,
           background: '#fff',
@@ -175,6 +189,7 @@ const Calendar = ({ tasks }) => {
           }}
           schedule={selectedSchedule}
           onUpdate={handleScheduleUpdate}
+          onDeleteSuccess={handleScheduleDeleted} // ✅ 삭제 후 전체 일정 다시 불러오기
         />
         {isEditModalOpen && selectedEvent && (
           <ScheduleEditModal
