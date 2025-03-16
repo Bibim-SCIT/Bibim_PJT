@@ -54,106 +54,23 @@ export default function NotificationSection() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
-
-  // SSE 연결을 위한 재연결 함수
-  const reconnectSSE = () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.warn("❗ SSE 연결 중단: 토큰 없음");
-      return;
-    }
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-    }
-    // SSE 요청 시 토큰을 쿼리 파라미터로 포함
-    const newSSE = new EventSource(`${API_BASE_URL}/notification/subscribe?token=${token}`);
-    console.log("📡 SSE 연결 요청:", `${API_BASE_URL}/notification/subscribe?token=${token}`);
-
-    newSSE.addEventListener('notification', (event) => {
-      try {
-        const newNotification = JSON.parse(event.data);
-        console.log("📩 새 알림 수신:", newNotification);
-
-        setNotifications((prev) => {
-          if (!prev.some((n) => n.notificationNumber === newNotification.notificationNumber)) {
-            return [newNotification, ...prev];
-          }
-          return prev;
-        });
-
-        // unreadCount는 오직 "안 읽은" 필터에서만 증가
-        if (filterValue === "unread" && !newNotification.notificationStatus) {
-          setUnreadCount((prevCount) => prevCount + 1);
-        }
-      } catch (err) {
-        console.error('❌ SSE 데이터 처리 중 오류 발생:', err);
-      }
-    });
-
-    newSSE.onerror = () => {
-      console.error('🚨 SSE 연결 오류: 5초 후 재연결 시도');
-      newSSE.close();
-      setTimeout(reconnectSSE, 5000);
-    };
-
-    eventSourceRef.current = newSSE;
-  };
-
-  useEffect(() => {
-    reconnectSSE();
-    return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
-    };
-  }, []);
-
-  // 🔹 알림 팝업 관련 핸들러
-  const handleToggle = () => setOpen((prev) => !prev);
-  const handleClose = (event) => {
-    if (anchorRef.current && anchorRef.current.contains(event.target)) return;
-    setOpen(false);
-  };
-
-  // 🔹 모달 닫힌 후 앵커 포커스 복원
-  const prevOpen = useRef(open);
-  useEffect(() => {
-    if (prevOpen.current === true && open === false) {
-      anchorRef.current.focus();
-    }
-    prevOpen.current = open;
-  }, [open]);
-
-  // 🔹 필터 변경 시 즉시 데이터 다시 불러오기
-  const handleChange = (event) => {
-    if (event?.target.value) {
-      setFilterValue(event.target.value);
-      setPage(0);
-      setNotifications([]);
-      setHasMore(true);
-      fetchNotifications(); // ✅ 필터 변경 시 즉시 반영
-    }
-  };
-
-  // ✅ [2] fetchNotifications 함수 
+  // fetchNotifications 함수 
   const fetchNotifications = async () => {
     try {
-      // 필터가 'unread'이면 안 읽은 알림, 'read'이면 읽은 알림을 가져옴
       const endpoint = filterValue === 'unread' ? '/notification/unread' : '/notification/read';
       const url = `${API_BASE_URL}${endpoint}`;
-      console.log("📤 요청한 URL:", url);
-      const token = localStorage.getItem("token");
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!response.ok) {
-        throw new Error(`🚨 API 요청 실패: ${response.status} ${response.statusText}`);
-      }
+
+      const token = localStorage.getItem("token")?.trim();
+      const response = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
       const data = await response.json();
-      console.log("✅ 응답 받은 데이터:", data);
+
       setNotifications(data);
+
+      // 항상 unreadCount를 업데이트
       if (filterValue === 'unread') {
         setUnreadCount(data.length);
+      } else {
+        setUnreadCount(0);
       }
     } catch (error) {
       console.error("🚨 Error fetching notifications:", error);
@@ -161,7 +78,8 @@ export default function NotificationSection() {
   };
 
 
-  // ✅ [3] 개별 알림 읽음 처리 시 unreadCount 즉시 감소
+
+  // 개별 알림 읽음 처리 시 unreadCount 즉시 감소
   const markNotificationAsRead = async (notificationId) => {
     try {
       const token = localStorage.getItem("token");
@@ -208,7 +126,7 @@ export default function NotificationSection() {
   };
 
 
-  // ✅ [4] 전체 읽기 시 unreadCount 즉시 0으로 변경
+  // 전체 읽기 시 unreadCount 즉시 0으로 변경
   const markAllNotificationsAsRead = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -228,6 +146,103 @@ export default function NotificationSection() {
     }
   };
 
+
+
+  // SSE 연결을 위한 재연결 함수
+  const reconnectSSE = () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.warn("❗ SSE 연결 중단: 토큰 없음");
+      return;
+    }
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
+    // SSE 요청 시 토큰을 쿼리 파라미터로 포함
+    const newSSE = new EventSource(`${API_BASE_URL}/notification/subscribe?token=${token}`);
+    console.log("📡 SSE 연결 요청:", `${API_BASE_URL}/notification/subscribe?token=${token}`);
+
+    newSSE.addEventListener('notification', (event) => {
+      try {
+        const newNotification = JSON.parse(event.data);
+        console.log("📩 새 알림 수신:", newNotification);
+
+        setNotifications((prev) => {
+          if (!prev.some((n) => n.notificationNumber === newNotification.notificationNumber)) {
+            return [newNotification, ...prev];
+          }
+          return prev;
+        });
+
+        // unreadCount는 오직 "안 읽은" 필터에서만 증가
+        if (filterValue === "unread" && !newNotification.notificationStatus) {
+          setUnreadCount((prevCount) => prevCount + 1);
+        }
+      } catch (err) {
+        console.error('❌ SSE 데이터 처리 중 오류 발생:', err);
+      }
+    });
+
+    newSSE.onerror = () => {
+      console.error('🚨 SSE 연결 오류: 5초 후 재연결 시도');
+      newSSE.close();
+      setTimeout(reconnectSSE, 5000);
+    };
+
+    eventSourceRef.current = newSSE;
+  };
+
+
+
+  // 최초 마운트 시 실행
+  useEffect(() => {
+    fetchNotifications();
+    reconnectSSE();
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+    };
+  }, []);
+
+  // 필터 변경 시 실행
+  useEffect(() => {
+    fetchNotifications();
+  }, [filterValue]);
+
+  // 🔹 알림 팝업 관련 핸들러
+  const handleToggle = () => {
+    setOpen((prev) => !prev);
+    if (!open) {
+      setFilterValue('unread'); // 기본 필터값 강제 설정
+      fetchNotifications();
+    }
+  };
+
+  // 🔹 필터 변경 핸들러
+  const handleChange = (event) => {
+    if (event?.target.value) {
+      setFilterValue(event.target.value);
+      setPage(0);
+      setNotifications([]);
+      setHasMore(true);
+      fetchNotifications(); // ✅ 함수가 정상적으로 호출됨
+    }
+  };
+
+  const handleClose = (event) => {
+    if (anchorRef.current && anchorRef.current.contains(event.target)) return;
+    setOpen(false);
+  };
+
+  // 🔹 모달 닫힌 후 앵커 포커스 복원
+  const prevOpen = useRef(open);
+  useEffect(() => {
+    if (prevOpen.current === true && open === false) {
+      anchorRef.current.focus();
+    }
+    prevOpen.current = open;
+  }, [open]);
 
   // 알림 클릭 시 읽음 처리 후 URL 리다이렉트
   const handleNotificationClick = async (notification) => {
@@ -368,3 +383,4 @@ export default function NotificationSection() {
     </Box>
   );
 }
+
