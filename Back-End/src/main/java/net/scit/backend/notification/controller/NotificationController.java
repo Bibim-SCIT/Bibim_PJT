@@ -26,7 +26,6 @@ import java.util.Optional;
 public class NotificationController {
 
     private final NotificationService notificationService;
-    private final WorkspaceMemberRepository workspaceMemberRepository;
     private final JwtTokenProvider jwtTokenProvider;
 
 
@@ -35,14 +34,12 @@ public class NotificationController {
         if (!jwtTokenProvider.validateToken(token)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
         }
-
         String email = jwtTokenProvider.getEmailFromToken(token);
         if (email == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized user");
         }
 
         SseEmitter emitter = notificationService.subscribe(email);
-
         List<NotificationEntity> unreadNotifications = notificationService.getUnreadNotifications(email);
         try {
             emitter.send(SseEmitter.event().name("HISTORY").data(unreadNotifications));
@@ -51,8 +48,6 @@ public class NotificationController {
         }
         return emitter;
     }
-
-
 
 
     @PostMapping("/logout")
@@ -100,14 +95,19 @@ public class NotificationController {
     public ResponseEntity<String> deleteNotification(@RequestHeader("Authorization") String token,
                                                      @RequestParam Long notificationNumber) {
         try {
+            // 토큰 접두사 제거
+            if(token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+            String email = jwtTokenProvider.getEmailFromToken(token);
             boolean result = notificationService.deleteNotification(notificationNumber);
             return result ? ResponseEntity.ok("알림 삭제 완료") : ResponseEntity.badRequest().body("알림 삭제 실패");
         } catch (Exception e) {
             log.error("알림 삭제 중 오류 발생", e);
-            return ResponseEntity.status(500).body("알림 삭제 중 오류 발생: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("알림 삭제 중 오류 발생: " + e.getMessage());
         }
     }
-
 
 
     @GetMapping("/{notificationId}")
