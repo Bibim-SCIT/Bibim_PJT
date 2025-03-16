@@ -34,6 +34,7 @@ const LeaveWorkspaceModal = ({ open, onClose, workspace, onConfirm }) => {
             onClose(); // 모달 닫기
         } catch (error) {
             console.error('워크스페이스 탈퇴 오류:', error);
+            // 오류 발생 시에도 모달은 닫지 않고 오류 메시지만 표시
         } finally {
             setLoading(false);
         }

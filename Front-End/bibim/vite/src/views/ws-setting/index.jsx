@@ -114,11 +114,8 @@ const WsSettingPage = () => {
                 severity: 'success'
             });
             
-            // 탈퇴 후 페이지 이동 또는 다른 처리
-            // 예: 워크스페이스 선택 페이지로 이동
-            setTimeout(() => {
-                navigate('/workspace');
-            }, 1500);
+            // 탈퇴 성공 시 즉시 워크스페이스 선택 페이지로 이동
+            navigate('/workspace');
             
             return Promise.resolve();
         } catch (error) {
