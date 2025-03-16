@@ -3,6 +3,7 @@ package net.scit.backend.notification.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.jwt.AuthUtil;
+import net.scit.backend.jwt.JwtTokenProvider;
 import net.scit.backend.notification.entity.NotificationEntity;
 import net.scit.backend.notification.service.NotificationService;
 import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
@@ -11,6 +12,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
@@ -25,23 +27,32 @@ public class NotificationController {
 
     private final NotificationService notificationService;
     private final WorkspaceMemberRepository workspaceMemberRepository;
+    private final JwtTokenProvider jwtTokenProvider;
 
 
     @GetMapping("/subscribe")
-    public SseEmitter subscribe(@RequestHeader("Authorization") String token) {
-        String email = AuthUtil.getLoginUserId();
-        SseEmitter emitter = notificationService.subscribe(email);  // ✅ 이제 정상적으로 호출 가능!
+    public SseEmitter subscribe(@RequestParam("token") String token) {
+        if (!jwtTokenProvider.validateToken(token)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
+        }
 
-        // 기존 읽지 않은 알림 전송
+        String email = jwtTokenProvider.getEmailFromToken(token);
+        if (email == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized user");
+        }
+
+        SseEmitter emitter = notificationService.subscribe(email);
+
         List<NotificationEntity> unreadNotifications = notificationService.getUnreadNotifications(email);
         try {
             emitter.send(SseEmitter.event().name("HISTORY").data(unreadNotifications));
         } catch (IOException e) {
             emitter.completeWithError(e);
         }
-
         return emitter;
     }
+
+
 
 
     @PostMapping("/logout")
