@@ -86,16 +86,16 @@ export default function NotificationSection() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${API_BASE_URL}/notification/read-single?notificationNumber=${notificationId}`,
-        {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` }
-        }
+          `${API_BASE_URL}/notification/read-single?notificationNumber=${notificationId}`,
+          {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          }
       );
       if (response.ok) {
         // 읽음 처리 성공 시, 목록에서 제거
         setNotifications((prev) =>
-          prev.filter((n) => n.notificationNumber !== notificationId)
+            prev.filter((n) => n.notificationNumber !== notificationId)
         );
         setUnreadCount((prevCount) => Math.max(prevCount - 1, 0));
       } else {
@@ -117,7 +117,7 @@ export default function NotificationSection() {
       });
       if (response.ok) {
         setNotifications((prev) =>
-          prev.filter((n) => n.notificationNumber !== notificationId)
+            prev.filter((n) => n.notificationNumber !== notificationId)
         );
       } else {
         console.error('❌ 알림 삭제 실패:', response.status);
@@ -139,7 +139,7 @@ export default function NotificationSection() {
 
       if (response.ok) {
         setNotifications((prev) =>
-          prev.map((n) => ({ ...n, notificationStatus: true }))
+            prev.map((n) => ({ ...n, notificationStatus: true }))
         );
         setUnreadCount(0);
       }
@@ -263,127 +263,127 @@ export default function NotificationSection() {
 
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-      {/* ✅ 알림 아이콘을 감싸는 박스 (위치 조정) */}
-      <Box sx={{ position: 'relative', mr: 2 }}>
-        {/* ✅ 알림 아이콘 */}
-        <Avatar
-          variant="rounded"
-          sx={{
-            transition: 'all .2s ease-in-out',
-            bgcolor: 'secondary.light',
-            color: 'secondary.dark',
-            '&:hover': { bgcolor: 'secondary.dark', color: 'secondary.light' }
-          }}
-          ref={anchorRef}
-          aria-controls={open ? 'menu-list-grow' : undefined}
-          aria-haspopup="true"
-          onClick={handleToggle}
-        >
-          <IconBell stroke={1.5} size="20px" />
-        </Avatar>
-
-        {/* ✅ 읽지 않은 알림 개수 표시 */}
-        {unreadCount > 0 && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              width: 18,
-              height: 18,
-              bgcolor: 'error.main', // 빨간색 배경
-              color: 'white', // 하얀색 숫자
-              fontSize: '12px',
-              fontWeight: 'bold',
-              borderRadius: '50%', // 원형 모양
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transform: 'translate(50%, -50%)' // 위치 미세 조정
-            }}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        {/* ✅ 알림 아이콘을 감싸는 박스 (위치 조정) */}
+        <Box sx={{ position: 'relative', mr: 2 }}>
+          {/* ✅ 알림 아이콘 */}
+          <Avatar
+              variant="rounded"
+              sx={{
+                transition: 'all .2s ease-in-out',
+                bgcolor: 'secondary.light',
+                color: 'secondary.dark',
+                '&:hover': { bgcolor: 'secondary.dark', color: 'secondary.light' }
+              }}
+              ref={anchorRef}
+              aria-controls={open ? 'menu-list-grow' : undefined}
+              aria-haspopup="true"
+              onClick={handleToggle}
           >
-            {unreadCount}
-          </Box>
-        )}
-      </Box>
+            <IconBell stroke={1.5} size="20px" />
+          </Avatar>
 
-      {/* ✅ Popper (알림 목록 팝업) */}
-      <Popper
-        placement={downMD ? 'bottom' : 'bottom-end'}
-        open={open}
-        anchorEl={anchorRef.current}
-        role={undefined}
-        transition
-        disablePortal
-        modifiers={[{ name: 'offset', options: { offset: [downMD ? 5 : 0, 20] } }]}
-      >
-        {({ TransitionProps }) => (
-          <ClickAwayListener onClickAway={handleClose}>
-            <Transitions position={downMD ? 'top' : 'top-right'} in={open} {...TransitionProps}>
-              <Paper sx={{ width: '50vw', height: '50vh' }}>
-                {open && (
-                  <MainCard border={false} elevation={16} content={false} boxShadow shadow={theme.shadows[16]}>
-                    <Grid container direction="column" spacing={2}>
-                      {/* Header: "내 알림" & unread count */}
-                      <Grid item xs={12}>
-                        <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between', pt: 2, px: 2 }}>
-                          <Grid item>
-                            <Stack direction="row" spacing={2}>
-                              <Typography variant="subtitle1">내 알림</Typography>
-                              <Chip size="small" label={unreadCount} sx={{ color: 'background.default', bgcolor: 'warning.dark' }} />
-                            </Stack>
+          {/* ✅ 읽지 않은 알림 개수 표시 */}
+          {unreadCount > 0 && (
+              <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    width: 18,
+                    height: 18,
+                    bgcolor: 'error.main', // 빨간색 배경
+                    color: 'white', // 하얀색 숫자
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    borderRadius: '50%', // 원형 모양
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transform: 'translate(50%, -50%)' // 위치 미세 조정
+                  }}
+              >
+                {unreadCount}
+              </Box>
+          )}
+        </Box>
+
+        {/* ✅ Popper (알림 목록 팝업) */}
+        <Popper
+            placement={downMD ? 'bottom' : 'bottom-end'}
+            open={open}
+            anchorEl={anchorRef.current}
+            role={undefined}
+            transition
+            disablePortal
+            modifiers={[{ name: 'offset', options: { offset: [downMD ? 5 : 0, 20] } }]}
+        >
+          {({ TransitionProps }) => (
+              <ClickAwayListener onClickAway={handleClose}>
+                <Transitions position={downMD ? 'top' : 'top-right'} in={open} {...TransitionProps}>
+                  <Paper sx={{ width: '50vw', height: '50vh' }}>
+                    {open && (
+                        <MainCard border={false} elevation={16} content={false} boxShadow shadow={theme.shadows[16]}>
+                          <Grid container direction="column" spacing={2}>
+                            {/* Header: "내 알림" & unread count */}
+                            <Grid item xs={12}>
+                              <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between', pt: 2, px: 2 }}>
+                                <Grid item>
+                                  <Stack direction="row" spacing={2}>
+                                    <Typography variant="subtitle1">내 알림</Typography>
+                                    <Chip size="small" label={unreadCount} sx={{ color: 'background.default', bgcolor: 'warning.dark' }} />
+                                  </Stack>
+                                </Grid>
+                              </Grid>
+                            </Grid>
+
+                            {/* Filter Select */}
+                            <Grid item xs={12}>
+                              <Box sx={{ px: 2, pt: 0.25 }}>
+                                <TextField
+                                    select
+                                    fullWidth
+                                    value={filterValue}
+                                    onChange={handleChange} // ✅ handleChange로 변경
+                                    slotProps={{ select: { native: true } }}
+                                >
+                                  {statusOptions.map((option) => (
+                                      <option key={option.value} value={option.value}>
+                                        {option.label}
+                                      </option>
+                                  ))}
+                                </TextField>
+
+                              </Box>
+                            </Grid>
+                            <Grid item xs={12}>
+                              <Box sx={{ height: '30vh', overflowY: 'auto' }}>
+                                <NotificationList
+                                    notifications={notifications}
+                                    onNotificationClick={handleNotificationClick}
+                                    onMarkAsRead={markNotificationAsRead}
+                                    onDeleteNotification={deleteNotification}
+                                />
+                              </Box>
+                            </Grid>
+
+                            {/* Bottom: 전체 알림 읽기 & Load More */}
+                            <Grid item xs={12}>
+                              <Box sx={{ textAlign: 'center', pb: 1 }}>
+                                <Button size="small" disableElevation onClick={markAllNotificationsAsRead}>
+                                  전체 알림 읽기
+                                </Button>
+                              </Box>
+                            </Grid>
                           </Grid>
-                        </Grid>
-                      </Grid>
-
-                      {/* Filter Select */}
-                      <Grid item xs={12}>
-                        <Box sx={{ px: 2, pt: 0.25 }}>
-                          <TextField
-                            select
-                            fullWidth
-                            value={filterValue}
-                            onChange={handleChange} // ✅ handleChange로 변경
-                            slotProps={{ select: { native: true } }}
-                          >
-                            {statusOptions.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </TextField>
-
-                        </Box>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Box sx={{ height: '30vh', overflowY: 'auto' }}>
-                          <NotificationList
-                            notifications={notifications}
-                            onNotificationClick={handleNotificationClick}
-                            onMarkAsRead={markNotificationAsRead}
-                            onDeleteNotification={deleteNotification}
-                          />
-                        </Box>
-                      </Grid>
-
-                      {/* Bottom: 전체 알림 읽기 & Load More */}
-                      <Grid item xs={12}>
-                        <Box sx={{ textAlign: 'center', pb: 1 }}>
-                          <Button size="small" disableElevation onClick={markAllNotificationsAsRead}>
-                            전체 알림 읽기
-                          </Button>
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </MainCard>
-                )}
-              </Paper>
-            </Transitions>
-          </ClickAwayListener>
-        )}
-      </Popper>
-    </Box>
+                        </MainCard>
+                    )}
+                  </Paper>
+                </Transitions>
+              </ClickAwayListener>
+          )}
+        </Popper>
+      </Box>
   );
 }
 
