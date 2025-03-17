@@ -242,7 +242,7 @@ export default function LandingPage() {
             <Button 
               variant="contained" 
               size="large"
-              onClick={moveToWorkspace}
+              onClick={moveToSignup}
               sx={{ 
                 bgcolor: '#111', 
                 color: '#fff',
@@ -256,7 +256,7 @@ export default function LandingPage() {
                 }
               }}
             >
-              워크스페이스 선택하기
+              지금 시작하기
             </Button>
             <Button 
               variant="outlined" 
@@ -327,7 +327,7 @@ export default function LandingPage() {
                 </Button>
                 <Button 
                   variant="outlined" 
-                  onClick={scrollToPlatform}
+                  onClick={moveToWorkspace}
                   sx={{
                     borderColor: '#111',
                     color: '#111',
@@ -337,7 +337,7 @@ export default function LandingPage() {
                     }
                   }}
                 >
-                  더 알아보기
+                  워크스페이스 선택하기
                 </Button>
               </Stack>
             </Grid>
@@ -450,7 +450,7 @@ export default function LandingPage() {
             <Button 
               variant="contained" 
               size="large"
-              onClick={moveToWorkspace}
+              onClick={moveToSignup}
               sx={{ 
                 bgcolor: '#111', 
                 color: '#fff',
@@ -465,43 +465,26 @@ export default function LandingPage() {
                 }
               }}
             >
-              워크스페이스 선택하기
+              지금 시작하기
             </Button>
           </Stack>
           
-          {/* 랜딩 페이지 이동 버튼 */}
-          <Box sx={{ mt: 2, pb: 2, display: 'flex', justifyContent: 'center', gap: 1 }}>
+          <Box sx={{ mt: 3, mb: 5 }}>
+            <Typography variant="body1" sx={{ color: 'text.secondary', mb: 1 }}>
+              이미 계정이 있으신가요?
+            </Typography>
             <Button 
-              variant="outlined" 
-              size="small"
-              onClick={() => moveLandingPage(1)}
-              sx={{ minWidth: '40px', fontSize: '0.75rem' }}
+              variant="text" 
+              onClick={moveToLogin}
+              sx={{ 
+                color: theme.palette.primary.main,
+                fontWeight: 500,
+                '&:hover': {
+                  bgcolor: 'rgba(0,0,0,0.05)'
+                }
+              }}
             >
-              랜딩1
-            </Button>
-            <Button 
-              variant="outlined" 
-              size="small"
-              onClick={() => moveLandingPage(2)}
-              sx={{ minWidth: '40px', fontSize: '0.75rem' }}
-            >
-              랜딩2
-            </Button>
-            <Button 
-              variant="outlined" 
-              size="small"
-              onClick={() => moveLandingPage(3)}
-              sx={{ minWidth: '40px', fontSize: '0.75rem' }}
-            >
-              랜딩3
-            </Button>
-            <Button 
-              variant="outlined" 
-              size="small"
-              onClick={() => moveLandingPage(4)}
-              sx={{ minWidth: '40px', fontSize: '0.75rem' }}
-            >
-              랜딩4
+              로그인하기
             </Button>
           </Box>
         </Container>
