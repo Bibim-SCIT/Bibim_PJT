@@ -13,7 +13,8 @@ import {
     Snackbar,
     Alert,
     Modal,
-    Divider
+    Divider,
+    CircularProgress
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { styled } from "@mui/material/styles";
@@ -39,7 +40,7 @@ const style = {
     overflow: 'auto'
 };
 
-const ScheduleCreateModal = ({ open, onClose }) => {
+const ScheduleCreateModal = ({ open, onClose, onCreateSuccess }) => {
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ 현재 워크스페이스 가져오기
 
     const [formData, setFormData] = useState({
@@ -52,6 +53,8 @@ const ScheduleCreateModal = ({ open, onClose }) => {
         scheduleStartDate: "",
         scheduleFinishDate: "",
     });
+
+    const [isCreating, setIsCreating] = useState(false); // ✅ 생성 중 상태 추가
 
     useEffect(() => {
         if (open) {
@@ -140,6 +143,8 @@ const ScheduleCreateModal = ({ open, onClose }) => {
         }
 
         try {
+            setIsCreating(true); // ✅ 생성 중 상태 활성화
+
             const requestData = {
                 wsId: activeWorkspace.wsId, // ✅ 워크스페이스 ID 추가
                 scheduleTitle: formData.scheduleTitle,
@@ -153,7 +158,9 @@ const ScheduleCreateModal = ({ open, onClose }) => {
 
             console.log("📌 일정 생성 요청 데이터:", requestData);
 
-            await createSchedule(requestData);
+            // await createSchedule(requestData);
+            const newSchedule = await createSchedule(requestData); // ✅ 생성된 일정 반환
+            console.log("새스케줄", newSchedule);
 
             // alert("일정이 생성되었습니다.");
             setSnackbar({
@@ -163,6 +170,12 @@ const ScheduleCreateModal = ({ open, onClose }) => {
             });
             onClose(); // 모달 닫기
             // window.location.reload(); // 페이지 새로고침하여 캘린더 반영
+
+            // ✅ 방법 2: 전체 일정 다시 불러오기 (fetch 요청)
+            if (onCreateSuccess) {
+                onCreateSuccess(); // SchedulePage에서 fetchScheduleTasks(wsId) 호출
+            }
+
         } catch (error) {
             console.error("❌ 일정 생성 실패:", error);
             // alert("일정 생성 중 오류가 발생했습니다.");
@@ -171,6 +184,8 @@ const ScheduleCreateModal = ({ open, onClose }) => {
                 message: '일정 생성에 실패했습니다.',
                 severity: 'error'
             });
+        } finally {
+            setIsCreating(false); // ✅ 생성 완료 후 버튼 다시 활성화
         }
     };
 
@@ -321,6 +336,7 @@ const ScheduleCreateModal = ({ open, onClose }) => {
                         <Button
                             variant="contained"
                             onClick={handleSubmit}
+                            disabled={isCreating} // ✅ 생성 중 비활성화
                             sx={{
                                 bgcolor: '#7C3AED',
                                 boxShadow: 'none',
@@ -330,7 +346,12 @@ const ScheduleCreateModal = ({ open, onClose }) => {
                                 }
                             }}
                         >
-                            생성하기
+                            {isCreating ? (
+                                <>
+                                    <CircularProgress size={24} color="inherit" sx={{ mr: 1 }} />
+                                    생성 중...
+                                </>
+                            ) : "생성하기"}
                         </Button>
                     </Box>
                 </Box>

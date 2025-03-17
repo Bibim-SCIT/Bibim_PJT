@@ -37,16 +37,12 @@ public class WorkspaceChannelEvent implements BasedUpdatedEvent {
     @Override
     public String getNotificationName() {
         String wsName = workspace.getWsName();
-        switch (eventType) {
-            case "create":
-                return String.format("%s님이 %s 워크스페이스의 %s 채널을 생성하였습니다.", senderNickname, wsName, channelName);
-            case "update":
-                return String.format("%s님이 %s 워크스페이스의 %s 채널을 수정하였습니다.", senderNickname, wsName, channelName);
-            case "delete":
-                return String.format("%s님이 %s 워크스페이스의 %s 채널을 삭제하였습니다.", senderNickname, wsName, channelName);
-            default:
-                return "워크스페이스 채널 이벤트";
-        }
+        return switch (eventType) {
+            case "create" -> "워크스페이스 채널 생성";
+            case "update" -> "워크스페이스 채널 수정";
+            case "delete" -> "워크스페이스 채널 삭제";
+            default -> "워크스페이스 채널 이벤트";
+        };
     }
 
     @Override
@@ -57,15 +53,11 @@ public class WorkspaceChannelEvent implements BasedUpdatedEvent {
     @Override
     public String getNotificationContent() {
         String wsName = workspace.getWsName();
-        switch (eventType) {
-            case "create":
-                return String.format("%s 워크스페이스에서 %s 채널이 생성되었습니다.", wsName, channelName);
-            case "update":
-                return String.format("%s 워크스페이스에서 %s 채널이 수정되었습니다.", wsName, channelName);
-            case "delete":
-                return String.format("%s 워크스페이스에서 %s 채널이 삭제되었습니다.", wsName, channelName);
-            default:
-                return "워크스페이스 채널 관련 이벤트가 발생하였습니다.";
-        }
+        return switch (eventType) {
+            case "create" -> String.format("%s 워크스페이스에서 %s 채널이 생성되었습니다.", wsName, channelName);
+            case "update" -> String.format("%s 워크스페이스에서 %s 채널이 수정되었습니다.", wsName, channelName);
+            case "delete" -> String.format("%s 워크스페이스에서 %s 채널이 삭제되었습니다.", wsName, channelName);
+            default -> "워크스페이스 채널 관련 이벤트가 발생하였습니다.";
+        };
     }
 }

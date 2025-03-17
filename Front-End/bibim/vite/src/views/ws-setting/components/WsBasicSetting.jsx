@@ -7,7 +7,7 @@ import WsSettingModal from './WsSettingModal';
 import WsInviteModal from './WsInviteModal';
 import { getWorkspaces } from '../../../api/workspaceApi';
 
-const WsBasicSetting = () => {
+const WsBasicSetting = ({ workspace: propWorkspace }) => {
     const [openModal, setOpenModal] = useState(false);
     const [inviteModalOpen, setInviteModalOpen] = useState(false);
     const [workspaceInfo, setWorkspaceInfo] = useState(null);
@@ -16,12 +16,14 @@ const WsBasicSetting = () => {
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace);
     const loading = useSelector((state) => state.workspace.loading);
 
-    // 활성화된 워크스페이스 정보 설정
+    // props로 전달받은 워크스페이스 정보 또는 Redux의 활성화된 워크스페이스 정보 설정
     useEffect(() => {
-        if (activeWorkspace) {
+        if (propWorkspace) {
+            setWorkspaceInfo(propWorkspace);
+        } else if (activeWorkspace) {
             setWorkspaceInfo(activeWorkspace);
         }
-    }, [activeWorkspace]);
+    }, [propWorkspace, activeWorkspace]);
 
     // 모달 열기 핸들러
     const handleOpenModal = () => {
@@ -47,7 +49,7 @@ const WsBasicSetting = () => {
         }
     };
 
-    if (loading) {
+    if (loading && !workspaceInfo) {
         return (
             <Box sx={{ p: 4, textAlign: 'center' }}>
                 <Typography>로딩 중...</Typography>

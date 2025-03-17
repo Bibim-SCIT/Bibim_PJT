@@ -109,45 +109,135 @@ export const createTag = async (wsId, tagData) => {
   }
 };
 
-// ✅ 태그 삭제 API
-export const deleteTag = async (tagType, tagId) => {
-  if (!tagId || !tagType) {
-    console.warn("🚨 deleteTag: 필요한 데이터가 없습니다.");
+// ✅ 대분류 태그 삭제 API
+export const deleteLargeTag = async (largeTagNumber) => {
+  if (!largeTagNumber) {
+    console.warn("🚨 deleteLargeTag: 필요한 데이터가 없습니다.");
     return;
   }
 
   try {
-    console.log(`📌 deleteTag(${tagType}, ${tagId}) 요청`);
-    const endpoint = `/schedule/tag/${tagType}?${tagType}TagNumber=${tagId}`;
-
-    await api.delete(endpoint, getAxiosConfig());
-
-    console.log(`✅ 태그 삭제 성공 (ID: ${tagId})`);
+    console.log(`📌 deleteLargeTag 요청: ID(${largeTagNumber})`);
+    await api.delete(`/schedule/tag/large`, {
+      params: { largeTagNumber },
+      ...getAxiosConfig(),
+    });
+    console.log(`✅ 대분류 태그 삭제 성공 (ID: ${largeTagNumber})`);
   } catch (error) {
-    console.error(`❌ 태그 삭제 실패:`, error.response?.data || error.message);
+    console.error(`❌ 대분류 태그 삭제 실패:`, error.response?.data || error.message);
     throw error;
   }
 };
 
-// ✅ 태그 수정 API
-export const updateTag = async (wsId, tagType, tagId, newTagName) => {
-  if (!wsId || !tagId || !newTagName || !tagType) {
-    console.warn("🚨 updateTag: 필요한 데이터가 없습니다.");
+// ✅ 중분류 태그 삭제 API
+export const deleteMediumTag = async (mediumTagNumber) => {
+  if (!mediumTagNumber) {
+    console.warn("🚨 deleteMediumTag: 필요한 데이터가 없습니다.");
     return;
   }
 
   try {
-    console.log(`📌 updateTag(${tagType}, ${tagId}) → ${newTagName}`);
+    console.log(`📌 deleteMediumTag 요청: ID(${mediumTagNumber})`);
+    await api.delete(`/schedule/tag/medium`, {
+      params: { mediumTagNumber },
+      ...getAxiosConfig(),
+    });
+    console.log(`✅ 중분류 태그 삭제 성공 (ID: ${mediumTagNumber})`);
+  } catch (error) {
+    console.error(`❌ 중분류 태그 삭제 실패:`, error.response?.data || error.message);
+    throw error;
+  }
+};
 
-    await api.put(`/schedule/tag/${tagType}`, {
+// ✅ 소분류 태그 삭제 API
+export const deleteSmallTag = async (smallTagNumber) => {
+  if (!smallTagNumber) {
+    console.warn("🚨 deleteSmallTag: 필요한 데이터가 없습니다.");
+    return;
+  }
+
+  try {
+    console.log(`📌 deleteSmallTag 요청: ID(${smallTagNumber})`);
+    await api.delete(`/schedule/tag/small`, {
+      params: { smallTagNumber },
+      ...getAxiosConfig(),
+    });
+    console.log(`✅ 소분류 태그 삭제 성공 (ID: ${smallTagNumber})`);
+  } catch (error) {
+    console.error(`❌ 소분류 태그 삭제 실패:`, error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// ✅ 대분류 태그 수정 API
+export const updateLargeTag = async (wsId, largeTagNumber, newTagName, newTagColor) => {
+  console.log("📌 updateLargeTag 요청 데이터:", { wsId, largeTagNumber, newTagName, newTagColor });
+
+  if (!wsId || !largeTagNumber || !newTagName) {
+    console.warn("🚨 updateLargeTag: 필요한 데이터가 없습니다.");
+    return;
+  }
+
+  try {
+    const response = await api.put("/schedule/tag/large", {
       wsId,
-      tagNumber: tagId,
-      newTagName: newTagName,
+      largeTagNumber,
+      newTagName,
+      newTagColor,
     }, getAxiosConfig());
 
-    console.log(`✅ 태그 수정 완료: ${newTagName}`);
+    console.log(`✅ 대분류 태그 수정 완료: ${newTagName}`);
+    return response.data;
   } catch (error) {
-    console.error(`❌ 태그 수정 실패:`, error.response?.data || error.message);
+    console.error(`❌ 대분류 태그 수정 실패:`, error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// ✅ 중분류 태그 수정 API
+export const updateMediumTag = async (largeTagNumber, mediumTagNumber, newTagName) => {
+  console.log("📌 updateMediumTag 요청 데이터:", { largeTagNumber, mediumTagNumber, newTagName });
+
+  if (!largeTagNumber || !mediumTagNumber || !newTagName) {
+    console.warn("🚨 updateMediumTag: 필요한 데이터가 없습니다.");
+    return;
+  }
+
+  try {
+    const response = await api.put("/schedule/tag/medium", {
+      largeTagNumber,
+      mediumTagNumber,
+      newTagName,
+    }, getAxiosConfig());
+
+    console.log(`✅ 중분류 태그 수정 완료: ${newTagName}`);
+    return response.data;
+  } catch (error) {
+    console.error(`❌ 중분류 태그 수정 실패:`, error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// ✅ 소분류 태그 수정 API
+export const updateSmallTag = async (mediumTagNumber, smallTagNumber, newTagName) => {
+  console.log("📌 updateSmallTag 요청 데이터:", { mediumTagNumber, smallTagNumber, newTagName });
+
+  if (!mediumTagNumber || !smallTagNumber || !newTagName) {
+    console.warn("🚨 updateSmallTag: 필요한 데이터가 없습니다.");
+    return;
+  }
+
+  try {
+    const response = await api.put("/schedule/tag/small", {
+      mediumTagNumber,
+      smallTagNumber,
+      newTagName,
+    }, getAxiosConfig());
+
+    console.log(`✅ 소분류 태그 수정 완료: ${newTagName}`);
+    return response.data;
+  } catch (error) {
+    console.error(`❌ 소분류 태그 수정 실패:`, error.response?.data || error.message);
     throw error;
   }
 };
@@ -180,7 +270,11 @@ export default {
   fetchMediumTags,
   fetchSmallTags,
   createTag,
-  deleteTag,
-  updateTag,
+  deleteLargeTag,
+  deleteMediumTag,
+  deleteSmallTag,
+  updateLargeTag,
+  updateMediumTag,
+  updateSmallTag,
   fetchAllTags,
 };

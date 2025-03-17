@@ -74,25 +74,42 @@ export const convertToCalendarFormat = (scheduleList) => {
     return [];
   }
 
-  return scheduleList.map(schedule => ({
-    id: schedule.scheduleNumber.toString(),
-    title: schedule.scheduleTitle,
-    start: schedule.scheduleStartDate,
-    end: schedule.scheduleFinishDate,
-    backgroundColor: schedule.color || '#1976d2',
-    borderColor: schedule.color || '#1976d2',
-    extendedProps: {
-      content: schedule.scheduleContent,
-      wsName: schedule.wsName,
-      wsId: schedule.wsId,
-      status: schedule.scheduleStatus,
-      tag1: schedule.tag1,
-      tag2: schedule.tag2,
-      tag3: schedule.tag3,
-      color: schedule.color,
-      modifyTime: schedule.scheduleModifytime
+  return scheduleList.map(schedule => {
+    // 시작일과 종료일이 같은지 확인
+    const startDate = new Date(schedule.scheduleStartDate);
+    const endDate = new Date(schedule.scheduleFinishDate);
+    const isSameDay = startDate.toDateString() === endDate.toDateString();
+    
+    // 하루짜리 일정인 경우 종료일을 다음날로 설정 (FullCalendar에서 제대로 표시되도록)
+    let adjustedEnd = schedule.scheduleFinishDate;
+    if (isSameDay) {
+      const nextDay = new Date(endDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      adjustedEnd = nextDay.toISOString().split('T')[0]; // YYYY-MM-DD 형식으로 변환
     }
-  }));
+    
+    return {
+      id: schedule.scheduleNumber.toString(),
+      title: schedule.scheduleTitle,
+      start: schedule.scheduleStartDate,
+      end: adjustedEnd,
+      backgroundColor: schedule.color || '#1976d2',
+      borderColor: schedule.color || '#1976d2',
+      allDay: true, // 모든 일정을 종일 일정으로 표시
+      extendedProps: {
+        content: schedule.scheduleContent,
+        wsName: schedule.wsName,
+        wsId: schedule.wsId,
+        status: schedule.scheduleStatus,
+        tag1: schedule.tag1,
+        tag2: schedule.tag2,
+        tag3: schedule.tag3,
+        color: schedule.color,
+        modifyTime: schedule.scheduleModifytime,
+        originalEndDate: schedule.scheduleFinishDate // 원래 종료일 저장
+      }
+    };
+  });
 };
 
 /**

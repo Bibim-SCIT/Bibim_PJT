@@ -11,7 +11,6 @@ const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')))
 // sample page routing
 const DMPage = Loadable(lazy(() => import('views/dm')));
 const MeetingPage = Loadable(lazy(() => import('views/meeting')));
-const SamplePage = Loadable(lazy(() => import('views/sample-page')));
 const WorkDataPage = Loadable(lazy(() => import('views/workdata')));
 const WdCreatePage = Loadable(lazy(() => import('views/workdata_create')));
 const WdUpdatePage = Loadable(lazy(() => import('views/workdata_update')));
@@ -21,7 +20,6 @@ const WsSelectPage = Loadable(lazy(() => import('views/ws-select')));
 const WsSettingPage = Loadable(lazy(() => import('views/ws-setting')));
 const MyPage = Loadable(lazy(() => import('views/mypage')));
 const MyPageUpdatePage = Loadable(lazy(() => import('views/mypage_update')));
-// const Channel = Loadable(lazy(() => import('views/ws-channel/ChatComponent')));
 const ChannelPage = Loadable(lazy(() => import('views/ws-channel')));
 const WsRoleSetting = Loadable(lazy(() => import('views/ws-role/WsRoleSetting')));
 
@@ -31,10 +29,6 @@ const MainRoutes = {
   path: '/',
   element: <MainLayout />,
   children: [
-    {
-      path: '/',
-      element: <DashboardDefault />
-    },
     {
       path: 'dashboard',
       children: [
@@ -51,10 +45,6 @@ const MainRoutes = {
     {
       path: '/meeting',
       element: <MeetingPage />
-    },
-    {
-      path: '/sample-page',
-      element: <SamplePage />
     },
     {
       path: '/workdata',

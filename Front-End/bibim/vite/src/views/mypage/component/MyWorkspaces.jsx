@@ -1,5 +1,15 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Card, Avatar, Typography, Button, Box, Stack, Divider } from '@mui/material';
+import { 
+  Card, 
+  Avatar, 
+  Typography, 
+  Button, 
+  Box, 
+  Stack, 
+  Divider, 
+  Snackbar, 
+  Alert
+} from '@mui/material';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Grid } from 'swiper/modules';
 import 'swiper/css';
@@ -7,13 +17,28 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/grid';
 import { getMyWorkspaces } from '../../../api/mypage';
+import { leaveWorkspace } from '../../../api/workspaceApi';
 import CreateWorkspaceModal from '../../../views/ws-select/components/CreateWorkspaceModal';
+import LeaveWorkspaceModal from '../../../views/ws-setting/components/LeaveWorkspaceModal';
 
-const MyWorkspaces = ({ onLeaveWorkspace }) => {
+const MyWorkspaces = () => {
   const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  
+  // 스낵바 상태 관리
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
+  
+  // 탈퇴 확인 모달 상태 관리
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    workspace: null
+  });
 
   // fetchWorkspaces 함수를 useCallback으로 감싸서 재사용 가능하게 만듭니다
   const fetchWorkspaces = useCallback(async () => {
@@ -52,6 +77,54 @@ const MyWorkspaces = ({ onLeaveWorkspace }) => {
     console.log('선택된 워크스페이스:', ws);
   };
 
+  // 탈퇴 확인 모달 열기
+  const openConfirmModal = (workspace, e) => {
+    e.stopPropagation(); // 이벤트 버블링 방지
+    setConfirmModal({
+      open: true,
+      workspace: workspace
+    });
+  };
+
+  // 탈퇴 확인 모달 닫기
+  const closeConfirmModal = () => {
+    setConfirmModal({
+      open: false,
+      workspace: null
+    });
+  };
+
+  // 워크스페이스 탈퇴 함수
+  const handleLeaveWorkspace = async (workspace) => {
+    try {
+      if (!workspace) return Promise.reject(new Error('워크스페이스 정보가 없습니다.'));
+      
+      console.log('워크스페이스 탈퇴 시도:', workspace.wsId);
+      const result = await leaveWorkspace(workspace.wsId);
+      console.log('워크스페이스 탈퇴 결과:', result);
+      
+      setSnackbar({
+        open: true,
+        message: '워크스페이스에서 성공적으로 탈퇴했습니다.',
+        severity: 'success'
+      });
+      
+      // 워크스페이스 목록 새로고침
+      fetchWorkspaces();
+      
+      return Promise.resolve();
+    } catch (error) {
+      console.error('워크스페이스 탈퇴 오류:', error);
+      setSnackbar({
+        open: true,
+        message: '워크스페이스 탈퇴 중 오류가 발생했습니다.',
+        severity: 'error'
+      });
+      
+      return Promise.reject(error);
+    }
+  };
+
   // 모달이 닫힐 때 워크스페이스 목록을 새로 조회합니다
   const handleModalClose = () => {
     setModalOpen(false);
@@ -61,6 +134,16 @@ const MyWorkspaces = ({ onLeaveWorkspace }) => {
   const handleCreateSuccess = () => {
     console.log('워크스페이스 생성 성공, 목록 새로고침');
     fetchWorkspaces(); // 워크스페이스 생성 성공 시 목록 새로고침
+    setSnackbar({
+      open: true,
+      message: '워크스페이스가 성공적으로 생성되었습니다.',
+      severity: 'success'
+    });
+  };
+
+  // 스낵바 닫기 함수
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
   };
 
   return (
@@ -144,10 +227,12 @@ const MyWorkspaces = ({ onLeaveWorkspace }) => {
                           {workspace.wsName}
                         </Typography>
                       </Box>
-                      <Button variant="outlined" color="error" onClick={(e) => {
-                        e.stopPropagation(); // 이벤트 버블링 방지
-                        onLeaveWorkspace && onLeaveWorkspace(workspace);
-                      }} sx={{ whiteSpace: 'nowrap', minWidth: 'auto' }}>
+                      <Button 
+                        variant="outlined" 
+                        color="error" 
+                        onClick={(e) => openConfirmModal(workspace, e)} 
+                        sx={{ whiteSpace: 'nowrap', minWidth: 'auto' }}
+                      >
                         나가기
                       </Button>
                     </Stack>
@@ -230,6 +315,30 @@ const MyWorkspaces = ({ onLeaveWorkspace }) => {
         onClose={handleModalClose} 
         onSuccess={handleCreateSuccess} 
       />
+
+      {/* 워크스페이스 탈퇴 모달 */}
+      <LeaveWorkspaceModal
+        open={confirmModal.open}
+        onClose={closeConfirmModal}
+        workspace={confirmModal.workspace}
+        onConfirm={handleLeaveWorkspace}
+      />
+
+      {/* 스낵바 컴포넌트 */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

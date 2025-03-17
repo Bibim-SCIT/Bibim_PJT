@@ -55,23 +55,23 @@ const KanbanBoard = ({ wsId, setSchedules, setGanttTasks }) => {
     loadTasks();
   }, [wsId]);
 
-// ✅ 새롭게 추가할 useEffect (tasks가 변경될 때 실행)
-useEffect(() => {
-  if (!wsId) return;
-  console.log("🚀 tasks 변경 감지됨! 캘린더 & 간트차트 업데이트 실행");
+  // ✅ 새롭게 추가할 useEffect (tasks가 변경될 때 실행)
+  useEffect(() => {
+    if (!wsId) return;
+    console.log("🚀 tasks 변경 감지됨! 캘린더 & 간트차트 업데이트 실행");
 
-  // ✅ 이전 상태와 비교하여 변경이 있을 때만 업데이트 실행
-  setSchedules(prevSchedules => {
-    const newSchedules = JSON.parse(JSON.stringify(tasks));
-    return JSON.stringify(prevSchedules) !== JSON.stringify(newSchedules) ? newSchedules : prevSchedules;
-  });
+    // ✅ 이전 상태와 비교하여 변경이 있을 때만 업데이트 실행
+    setSchedules(prevSchedules => {
+      const newSchedules = JSON.parse(JSON.stringify(tasks));
+      return JSON.stringify(prevSchedules) !== JSON.stringify(newSchedules) ? newSchedules : prevSchedules;
+    });
 
-  setGanttTasks(prevGanttTasks => {
-    const newGanttTasks = JSON.parse(JSON.stringify(tasks));
-    return JSON.stringify(prevGanttTasks) !== JSON.stringify(newGanttTasks) ? newGanttTasks : prevGanttTasks;
-  });
+    setGanttTasks(prevGanttTasks => {
+      const newGanttTasks = JSON.parse(JSON.stringify(tasks));
+      return JSON.stringify(prevGanttTasks) !== JSON.stringify(newGanttTasks) ? newGanttTasks : prevGanttTasks;
+    });
 
-}, [tasks]);
+  }, [tasks]);
 
   const validStateTransitions = {
     unassigned: ["inProgress", "completed", "backlog"], // 할 일 → 가능
@@ -145,7 +145,7 @@ useEffect(() => {
     } catch (error) {
       console.error(`❌ 상태 변경 실패 (${movedTask.id} → ${newMappedStatus}):`, error);
     }
-};
+  };
 
   return (
     <KanbanWrapper>
@@ -171,7 +171,7 @@ useEffect(() => {
                   </Typography>
                   {tasks
                     .filter((task) => {
-                      console.log(`🧐 필터링: task.status = "${task.status}", columnId = "${columnId}"`);
+                      // console.log(`🧐 필터링: task.status = "${task.status}", columnId = "${columnId}"`);
                       return task.status.trim() === columnId.trim();
                     })
                     .map((task, taskIndex) => (

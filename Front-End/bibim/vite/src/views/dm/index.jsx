@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState, useCallback } from "react";
 import { useSelector } from 'react-redux';
 import axios from "axios";
 import { Client } from "@stomp/stompjs";
@@ -35,7 +35,7 @@ import { translateText } from "../../api/translate";
 import TranslateIcon from '@mui/icons-material/Translate'; // 번역 아이콘 추가
 
 // ✅ API 기본 URL 설정
-const API_BASE_URL = "http://localhost:8080/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'; // 백엔드 API 기본 URL
 
 // ✅ DM 방의 고유 ID 생성 함수
 const generateRoomId = (wsId, senderEmail, receiverEmail) => {
@@ -188,9 +188,9 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
 
 
     // ✅ 메시지 목록 스크롤을 맨 아래로 이동
-    const scrollToBottom = () => {
+    const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
+    }, []);
 
     // ✅ 파일 업로드 함수
     const uploadFile = async () => {
@@ -309,7 +309,12 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
             headers: { Authorization: `Bearer ${token}` },
         });
 
-        setMessages((prev) => [...prev, messageDTO]);
+        // ✅ setMessages 제거하여 중복 메시지 방지
+        setMessage("");
+
+        // 이게 있으면 바로 올라오는데, 문제는 메세지가 두번 올라오는 문제가 발생함
+        // 느리더라도 메세지가 한번만 올라오게 하는 방법임
+        // setMessages((prev) => [...prev, messageDTO]);
         setMessage("");
         setTimeout(scrollToBottom, 100);
     };
@@ -531,7 +536,7 @@ export default function DmPage() {
 
     // ✅ WebSocket 클라이언트 초기화 및 연결 설정
     useEffect(() => {
-        const socket = new SockJS("http://localhost:8080/ws/chat");
+        const socket = new SockJS(`${API_BASE_URL}/ws/chat`);
         const client = new Client({
             webSocketFactory: () => socket,
             connectHeaders: { Authorization: `Bearer ${localStorage.getItem("token")}` },
