@@ -59,7 +59,6 @@ public class SecurityConfig {
                                 "/workspace/**",
                                 "/ws/**",
                                 "/actuator/**",
-                                "/global/health-check",
                                 "/error")
                         .permitAll() // 로그인 엔드포인트 허용
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 전용
