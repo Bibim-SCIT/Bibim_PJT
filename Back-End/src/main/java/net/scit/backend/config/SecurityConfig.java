@@ -58,7 +58,9 @@ public class SecurityConfig {
                                 "/workdata/**", // 자료실 관련(추후 삭제)
                                 "/workspace/**",
                                 "/ws/**",
-                                "/error")
+                                "/actuator/**",
+                                "/error",
+                                "/notification/subscribe")
                         .permitAll() // 로그인 엔드포인트 허용
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 전용
                         .requestMatchers("/user/**", "/schedule/**", "/members/myinfo", "/members/changeinfo",

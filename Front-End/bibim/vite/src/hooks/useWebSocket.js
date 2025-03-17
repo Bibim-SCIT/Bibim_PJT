@@ -7,27 +7,25 @@ import { Client } from "@stomp/stompjs";
  * @returns 
  */
 
-const useWebSocket = () =>
-{
+const useWebSocket = () => {
     const [client, setClient] = useState(null);
     const [messages, setMessages] = useState([]);
 
-    useEffect(() =>
-    {
+    // .env에서 WebSocket URL 가져오기
+    const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || "ws://localhost:8080/ws";
+
+    useEffect(() => {
         const stompClient = new Client({
-            brokerURL: "ws://localhost:8080/ws", // WebSocket 서버 URL
-            onConnect: () =>
-            {
-                console.log("WebSocket 연결 성공!");
+            brokerURL: WS_BASE_URL, // ✅ WebSocket 서버 URL을 .env에서 가져오기
+            onConnect: () => {
+                console.log(`✅ WebSocket 연결 성공! (${WS_BASE_URL})`);
 
                 // 메시지 구독 (예: "/topic/messages" 채널 구독)
-                stompClient.subscribe("/topic/messages", (message) =>
-                {
+                stompClient.subscribe("/topic/messages", (message) => {
                     setMessages((prevMessages) => [...prevMessages, JSON.parse(message.body)]);
                 });
             },
-            onStompError: (frame) =>
-            {
+            onStompError: (frame) => {
                 console.error("WebSocket 오류:", frame);
             },
         });
@@ -35,15 +33,13 @@ const useWebSocket = () =>
         stompClient.activate(); // WebSocket 활성화
         setClient(stompClient);
 
-        return () =>
-        {
+        return () => {
             stompClient.deactivate(); // 컴포넌트 언마운트 시 연결 해제
         };
     }, []);
 
     // 메시지 전송 함수
-    const sendMessage = (message) =>
-    {
+    const sendMessage = (message) => {
         if (client && client.connected) {
             client.publish({
                 destination: "/app/sendMessage",

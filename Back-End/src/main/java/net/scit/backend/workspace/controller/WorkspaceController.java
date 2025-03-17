@@ -2,7 +2,6 @@ package net.scit.backend.workspace.controller;
 
 import java.util.List;
 
-import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,16 +18,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.scit.backend.jwt.AuthUtil;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
+import net.scit.backend.jwt.AuthUtil;
+import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import net.scit.backend.workspace.dto.UpdateWorkspaceMemberDTO;
 import net.scit.backend.workspace.dto.WorkspaceDTO;
 import net.scit.backend.workspace.dto.WorkspaceMemberDTO;
 import net.scit.backend.workspace.service.WorkspaceService;
-import net.scit.backend.member.dto.MemberLoginStatusDTO;
 
 
 @RestController
@@ -192,7 +191,7 @@ public class WorkspaceController {
      */
     @DeleteMapping("/right")
     public ResponseEntity<ResultDTO<SuccessDTO>> wsRightDelete(@RequestParam("wsId") Long wsId,
-            @RequestParam("wsId") Long chRole) {
+            @RequestParam("chRole") Long chRole) {
         ResultDTO<SuccessDTO> result = workspaceService.workspaceRightDelete(wsId, chRole);
         return ResponseEntity.ok(result);
     }

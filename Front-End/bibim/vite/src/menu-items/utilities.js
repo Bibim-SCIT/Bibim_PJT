@@ -21,48 +21,34 @@ const utilities = {
   type: 'group',
   children: [
     {
-      id: 'schedules',
+      id: 'schedule',
       title: '일정 관리',
-      type: 'collapse',
+      type: 'item',
+      url: '/schedule',
       icon: icons.IconCalendar,
-      children: [
-        {
-          id: 'calendarView',
-          title: '캘린더로 보기',
-          type: 'item',
-          url: '/schedule',
-          target: false,
-          breadcrumbs: false
-        },
-        {
-          id: 'overallView',
-          title: '전체로 보기',
-          type: 'item',
-          url: '/schedule/overall',
-          target: false,
-          breadcrumbs: false
-        }
-      ]
+      breadcrumbs: false
     },
     // {
-    //   id: 'channel',
-    //   title: '채널',
+    //   id: 'schedules',
+    //   title: '일정 관리',
     //   type: 'collapse',
-    //   icon: icons.IconBrandHipchat,
+    //   icon: icons.IconCalendar,
     //   children: [
     //     {
-    //       id: 'channel01',
-    //       title: '채널1',
+    //       id: 'calendarView',
+    //       title: '캘린더로 보기',
     //       type: 'item',
-    //       url: '/channel/01',
-    //       target: false
+    //       url: '/schedule',
+    //       target: false,
+    //       breadcrumbs: false
     //     },
     //     {
-    //       id: 'channel02',
-    //       title: '채널2',
+    //       id: 'overallView',
+    //       title: '전체로 보기',
     //       type: 'item',
-    //       url: '/channel/02',
-    //       target: false
+    //       url: '/schedule/overall',
+    //       target: false,
+    //       breadcrumbs: false
     //     }
     //   ]
     // },
@@ -82,14 +68,14 @@ const utilities = {
       icon: icons.IconTypography,
       breadcrumbs: false
     },
-    {
-      id: 'meeting',
-      title: '회의하기',
-      type: 'item',
-      url: '/meeting',
-      icon: icons.IconPalette,
-      breadcrumbs: false
-    },
+    // {
+    //   id: 'meeting',
+    //   title: '회의하기',
+    //   type: 'item',
+    //   url: '/meeting',
+    //   icon: icons.IconPalette,
+    //   breadcrumbs: false
+    // },
     {
       id: 'referencepage',
       title: '자료실',

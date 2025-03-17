@@ -11,6 +11,16 @@ import "./ChatComponent.css";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import { Drawer, List, ListItem, ListItemText, Button, IconButton, Typography } from "@mui/material";
+import SettingsIcon from '@mui/icons-material/Settings';
+import { getWorkspaceChannels } from "../../../api/channel";
+import { useSelector } from 'react-redux';
+import ChannelEditModal from "./ChannelEditModal";
+import ChannelCreateModal from "./ChannelCreateModal";
+import ChannelLoading2 from "./ChannelLoading2"; // ✅ 로딩 컴포넌트 추가
+// 번역관련 api 호출
+import { translateText } from "../../../api/translate";
+import TranslateIcon from '@mui/icons-material/Translate'; // 번역 아이콘 추가
 
 /**
  * LocalDateTime을 Asia/Seoul 시간대로 변환하고 포맷팅하는 함수
@@ -27,6 +37,8 @@ const formatToKoreanTime = (timestamp) => {
     return dayjs(timestamp).add(9, 'hour').format('MM-DD HH:mm');
 };
 
+// .env에서 API URL 불러오기
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 /**
  * 채팅 컴포넌트
@@ -35,7 +47,7 @@ const formatToKoreanTime = (timestamp) => {
  * @param {string} channelId - 채팅 채널 ID
  * @param {string} workspaceId - 워크스페이스 ID
  */
-function ChatComponent({ channelId, workspaceId }) {
+function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
     // Context에서 현재 사용자 정보 가져오기
     const { user } = useContext(ConfigContext);
 
@@ -47,6 +59,22 @@ function ChatComponent({ channelId, workspaceId }) {
     const [activeUsers, setActiveUsers] = useState([]); // 접속 중인 사용자 목록
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isChatLoading, setIsChatLoading] = useState(false); // ✅ 채팅 로딩 상태 추가
+
+    const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
+    console.log("몇번", activeWorkspace)
+    const WSID = activeWorkspace.wsId;
+
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [channels, setChannels] = useState([]);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [createModalOpen, setCreateModalOpen] = useState(false);
+    const [selectedChannel, setSelectedChannel] = useState(null);
+
+    // ✅ 번역된 메시지를 저장하는 상태 (각 메시지 ID별로 관리)
+    const [translatedMessages, setTranslatedMessages] = useState({});
+
+    console.log("번역메시지", translatedMessages);
 
     // WebSocket 클라이언트 참조
     const stompClientRef = useRef(null);
@@ -82,7 +110,9 @@ function ChatComponent({ channelId, workspaceId }) {
     /**
      * 메시지 내용 렌더링 함수
      */
-    const renderMessageContent = (msg) => {
+    const renderMessageContent = (msg, handleTranslate, messageIndex, translatedMessage) => {
+        // console.log("찍어보기", msg);
+        // console.log("인덱스", messageIndex);
         if (msg.messageOrFile && msg.content) {
             return isImageFile(msg.content) ? (
                 <img src={msg.content} alt="파일 미리보기" className="chat-image" />
@@ -107,7 +137,47 @@ function ChatComponent({ channelId, workspaceId }) {
                 <div>{msg.content}</div>
             );
         } else {
-            return <div>{msg.content}</div>;
+            // return <div>{msg.content}</div>;
+            return (
+                <div className="channel-message-wrapper">
+                    {/* ✅ 원문 메시지 */}
+                    <div className="channel-message-content">
+                        {msg.content}
+                        {/* ✅ 번역된 메시지 표시 (해당 메시지에만 표시됨) */}
+                        {translatedMessage && (
+                            <div className="channel-translated-message">
+                                {/* <small>{translatedMessage}</small> */}
+                                <Typography variant="body1" color="textSecondary">
+                                    {translatedMessage}
+                                </Typography>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ✅ 번역 버튼 */}
+                    <Button
+                        variant="contained"
+                        size="small"
+                        color="primary"
+                        startIcon={<TranslateIcon />}
+                        onClick={() => handleTranslate(messageIndex, msg.content)}
+                        sx={{
+                            textTransform: "none",  // 대문자 변환 방지
+                            fontSize: "0.8rem",
+                            padding: "5px 10px",
+                            borderRadius: "8px",
+                            marginLeft: "5px",
+                            backgroundColor: "#007BFF",
+                            "&:hover": {
+                                backgroundColor: "#0056b3"
+                            }
+                        }}
+                    >
+                        번역
+                    </Button>
+
+                </div>
+            );
         }
     };
 
@@ -117,9 +187,11 @@ function ChatComponent({ channelId, workspaceId }) {
      * 과거 메시지 가져오기 함수
      */
     const fetchMessages = async () => {
+        setIsChatLoading(true); // ✅ 로딩 시작
+        setMessages([]); // ✅ 기존 메시지 비우기
         const token = localStorage.getItem("token");
         try {
-            const response = await fetch(`http://localhost:8080/api/chat/messages/${channelId}`, {
+            const response = await fetch(`${API_BASE_URL}/api/chat/messages/${channelId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (!response.ok) throw new Error("메시지 조회 실패");
@@ -134,44 +206,10 @@ function ChatComponent({ channelId, workspaceId }) {
             }, 100);
         } catch (error) {
             console.error("❌ 메시지 조회 오류:", error);
+        } finally {
+            setIsChatLoading(false); // ✅ 로딩 종료
         }
     };
-
-    /**
-     * WebSocket 연결 설정 및 과거 메시지 로딩 추가
-     */
-    useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (!token || !channelId || !user) return;
-
-        // ✅ 과거 메시지 먼저 가져오기
-        fetchMessages();
-
-        // WebSocket 연결 설정
-        const socket = new SockJS("http://localhost:8080/ws/chat");
-        const client = new Client({
-            webSocketFactory: () => socket,
-            connectHeaders: { Authorization: `Bearer ${token}` },
-
-            // 연결 성공 시 채널 구독
-            onConnect: () => {
-                client.subscribe(`/exchange/chat-exchange/msg.${channelId}`, (message) => {
-                    try {
-                        const parsedMessage = JSON.parse(message.body);
-                        setMessages((prev) => [...prev, parsedMessage]); // 실시간 메시지 추가
-                    } catch (error) {
-                        console.error("❌ 메시지 파싱 오류:", error);
-                    }
-                });
-                stompClientRef.current = client;
-            },
-            onStompError: (error) => console.error("STOMP 에러:", error),
-            onWebSocketClose: () => console.log("WebSocket 연결 종료"),
-        });
-
-        client.activate();
-        return () => client.deactivate(); // 컴포넌트 언마운트 시 연결 해제
-    }, [channelId, user]);
 
     /**
      * 메시지 전송 함수
@@ -235,7 +273,7 @@ function ChatComponent({ channelId, workspaceId }) {
         const token = localStorage.getItem("token");
         console.log("🔍 업로드 요청 - JWT 토큰:", token);
 
-        const uploadUrl = `http://localhost:8080/api/chat/upload/${channelId}`;
+        const uploadUrl = `${API_BASE_URL}/api/chat/upload/${channelId}`;
         console.log("🔍 파일 업로드 요청 URL:", uploadUrl);
 
         try {
@@ -292,27 +330,222 @@ function ChatComponent({ channelId, workspaceId }) {
         }
     };
 
-    /**
-     * 메시지 상태가 변경될 때마다 스크롤을 맨 아래로 이동
-     */
+    // const handleChannelUpdate = (id, newName) => {
+    //     setChannels(channels.map(channel => channel.channelId === id ? { ...channel, channelName: newName } : channel));
+    // };
 
+    // 채널 수정시 채팅 헤더에도 즉시 반영
+    const handleChannelUpdate = (id, newName) => {
+        setChannels(channels.map(channel =>
+            channel.channelId === id ? { ...channel, channelName: newName } : channel
+        ));
+        if (channelId === id) {
+            setChannelId(id);
+            setChannelName(newName); // ✅ 채팅 헤더에도 즉시 반영
+            setChannel(id, newName); // ✅ 채팅 헤더에도 즉시 반영
+        }
+        setEditModalOpen(false); // ✅ 수정 완료 시 모달 닫기
+    };
+
+    const handleChannelCreated = async (id, name) => {
+        console.log(`🔄 새 채널로 이동: ${id} - ${name}`);
+
+        try {
+            // ✅ 채널 목록을 다시 불러오기 (채널 생성 후 변경사항 반영)
+            const updatedChannels = await getWorkspaceChannels(WSID);
+            setChannels(updatedChannels);
+
+            // ✅ 새 채널로 이동
+            setChannel(id, name);
+            setMessages([{ sender: "System", content: "채널이 생성되었습니다! 채팅을 입력해보세요!" }]);
+
+            // ✅ 모달 닫기 (setTimeout으로 상태 변경 반영을 보장)
+            setTimeout(() => {
+                setCreateModalOpen(false);
+                setDrawerOpen(false); // ✅ Drawer 닫기 추가
+            }, 200);
+        } catch (error) {
+            console.error("❌ 채널 목록 갱신 실패:", error);
+        }
+    };
+
+    // ✅ 번역 기능 함수 (번역된 메시지 상태를 개별적으로 저장)
+    const handleTranslate = async (msgId, text) => {
+        console.log("번역 실행?", msgId, text);
+
+        if (!msgId) {
+            console.error("🚨 msgId가 undefined입니다. 번역을 실행할 수 없습니다.");
+            return;
+        }
+
+        console.log("번역 실행 시작!");
+
+        setTranslatedMessages({}); // 기존 번역 메시지 초기화
+
+        // ✅ 언어 코드 맵핑 설정
+        const langMap = {
+            ko: "ko",
+            en: "en",
+            jp: "ja",  // ✅ 'jp'를 'ja'로 변환
+        };
+
+        // ✅ 현재 로그인한 사용자의 언어 설정 가져오기
+        const targetLang = langMap[user.language] || "en";  // 기본값은 영어(en)
+        const translated = await translateText(text, targetLang);
+
+        console.log("번역시키기", translated);
+        console.log("번역할 언어:", targetLang);
+
+        setTranslatedMessages((prev) => ({
+            ...prev,
+            [msgId]: translated, // ✅ msgId가 undefined가 아닌 값이 되도록 보장
+        }));
+    };
+
+
+
+    // ✅ 채널 삭제 핸들러 추가
+    const handleChannelDelete = (deletedChannelId) => {
+        console.log(`🗑 채널 삭제됨: ${deletedChannelId}`);
+
+        // ✅ 삭제된 채널 목록에서 제거
+        setChannels(channels.filter(channel => channel.channelId !== deletedChannelId));
+
+        // ✅ 현재 보고 있는 채널이 삭제된 경우 첫 번째 채널로 이동
+        if (channelId === deletedChannelId) {
+            if (channels.length > 1) {
+                const newChannel = channels.find(channel => channel.channelId !== deletedChannelId);
+                if (newChannel) {
+                    setChannel(newChannel.channelId, newChannel.channelName);
+                }
+            } else {
+                setChannel(null, ""); // ✅ 모든 채널이 삭제되었을 경우 초기화
+            }
+        }
+    };
+
+    // 채널 선택
+    const handleChannelSelect = (id, name) => {
+        setIsChatLoading(true); // ✅ 채널 변경 시 로딩 화면 표시
+        setMessages([]); // ✅ 기존 채팅 내역 제거
+        setChannel(id, name); // ✅ index.jsx의 상태 변경
+        setDrawerOpen(false); // ✅ 채널 선택 후 Drawer 닫기
+    };
+    /**
+ * ✅ 1. WebSocket 연결 및 메시지 구독
+ */
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token || !channelId || !user) return;
+
+        const socket = new SockJS(`${API_BASE_URL}/ws/chat`);
+        const client = new Client({
+            webSocketFactory: () => socket,
+            connectHeaders: { Authorization: `Bearer ${token}` },
+
+            onConnect: () => {
+                client.subscribe(`/exchange/chat-exchange/msg.${channelId}`, (message) => {
+                    try {
+                        const parsedMessage = JSON.parse(message.body);
+                        setMessages((prev) => [...prev, parsedMessage]);
+                    } catch (error) {
+                        console.error("❌ 메시지 파싱 오류:", error);
+                    }
+                });
+                stompClientRef.current = client;
+            },
+            onStompError: (error) => console.error("STOMP 에러:", error),
+            onWebSocketClose: () => console.log("WebSocket 연결 종료"),
+        });
+
+        client.activate();
+
+        return () => client.deactivate(); // 연결 해제
+    }, [channelId, user]);
+
+
+
+    /**
+     * ✅ 2. 과거 메시지 가져오기 (채널 변경 시)
+     */
+    useEffect(() => {
+        if (!channelId || !user) return;
+
+        const fetchMessages = async () => {
+            setIsChatLoading(true);
+            setMessages([]);
+            const token = localStorage.getItem("token");
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/chat/messages/${channelId}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (!response.ok) throw new Error("메시지 조회 실패");
+
+                const data = await response.json();
+                setMessages(data);
+
+                setTimeout(() => scrollToBottom(), 100);
+            } catch (error) {
+                console.error("❌ 메시지 조회 오류:", error);
+            } finally {
+                setIsChatLoading(false);
+            }
+        };
+
+        fetchMessages();
+    }, [channelId, user]);
+
+
+
+    /**
+     * ✅ 3. 메시지가 추가될 때마다 스크롤을 맨 아래로 이동
+     */
     useEffect(() => {
         if (messages.length > 0) {
             scrollToBottom();
         }
     }, [messages]);
 
+
+
     /**
-     * 컴포넌트 마운트 시 한 번 스크롤 이동
+     * ✅ 4. 컴포넌트 최초 마운트 시 스크롤 이동
      */
     useEffect(() => {
-        // 컴포넌트가 마운트된 후 약간의 지연을 두고 스크롤 이동
-        const timer = setTimeout(() => {
-            scrollToBottom();
-        }, 300);
-
+        const timer = setTimeout(() => scrollToBottom(), 300);
         return () => clearTimeout(timer);
     }, []);
+
+    /**
+     * ✅ 5. 워크스페이스 ID 변경 시 채널 목록 가져오기
+     */
+    useEffect(() => {
+        if (WSID) {
+            getWorkspaceChannels(WSID).then(setChannels).catch(console.error);
+        }
+    }, [WSID]);
+
+    const handleChannelEdit = (channel) => {
+        setSelectedChannel(channel);
+        setEditModalOpen(true);
+    };
+
+    // 채널 변경 감지 (2025.03.14 추가)
+    useEffect(() => {
+        if (!channelId || !user) return;
+
+        console.log(`🟢 채널 변경 감지: ${channelId}`);
+
+        fetchMessages();
+    }, [channelId, user]);
+
+    const getMessageKey = (msg, index) => {
+        return msg.Number || `message-${index}`;  // ✅ dmNumber 사용, 없을 경우 index 사용
+    };
+
+    console.log(channels);
+    console.log("채널 id와 채널명", channelId, channelName);
 
     return (
         <div className="chat-container">
@@ -320,7 +553,15 @@ function ChatComponent({ channelId, workspaceId }) {
             <div className="chat-header">
                 <div className="channel-info">
                     <TagIcon sx={{ color: '#6b7280', fontSize: 20 }} />
-                    <span>채널 {channelId}</span>
+                    <span>{channelName} (채널 {channelId})</span>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        sx={{ marginLeft: "10px" }}
+                        onClick={() => setDrawerOpen(true)}
+                    >
+                        채널 변경
+                    </Button>
                 </div>
                 <div className="active-users">
                     <PersonIcon sx={{ color: '#6b7280', fontSize: 20 }} />
@@ -361,31 +602,43 @@ function ChatComponent({ channelId, workspaceId }) {
 
             {/* 메시지 목록 */}
             <div className="chat-messages">
-                {messages.map((msg, index) => (
-                    <div key={index} className={`message ${msg.sender === user?.email ? "my-message" : "other-message"}`}>
-                        {/* 발신자 정보 */}
-                        <div className="sender">
-                            <div className="sender-avatar">
-                                {msg.profileImage ? (
-                                    <img src={msg.profileImage} alt={msg.sender} />
-                                ) : (
-                                    <div className="default-avatar">
-                                        {msg.sender.charAt(0).toUpperCase()}
-                                    </div>
-                                )}
+                {isChatLoading ? (
+                    <ChannelLoading2 /> // ✅ 로딩 화면 추가
+                ) : messages.length === 0 ? (
+                    <div className="empty-chat-message">채널이 생성되었습니다! 채팅을 입력해보세요!</div> // ✅ 안내 메시지 표시
+                ) : (messages.map((msg, index) => {
+                    const messageKey = getMessageKey(msg, index); // ✅ 고유 key 생성
+                    console.log("메시지키 확인", messageKey);
+                    return (
+                        <div
+                            // key={index}
+                            key={messageKey} // ✅ key 값을 msg.id 또는 index 기반으로 설정
+                            className={`message ${msg.sender === user?.email ? "my-message" : "other-message"}`}>
+                            {/* 발신자 정보 */}
+                            <div className="sender">
+                                <div className="sender-avatar">
+                                    {msg.profileImage ? (
+                                        <img src={msg.profileImage} alt={msg.sender} />
+                                    ) : (
+                                        <div className="default-avatar">
+                                            {msg.sender.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                </div>
+                                <span className="sender-name">{msg.sender}</span>
+                                <span className="message-time">
+                                    {formatToKoreanTime(msg.sendTime)}
+                                </span>
                             </div>
-                            <span className="sender-name">{msg.sender}</span>
-                            <span className="message-time">
-                                {formatToKoreanTime(msg.sendTime)}
-                            </span>
-                        </div>
 
-                        {/* 메시지 내용 */}
-                        <div className="message-content-container">
-                            {renderMessageContent(msg)}
+                            {/* 메시지 내용 */}
+                            <div key={messageKey} className="message-content-container">
+                                {renderMessageContent(msg, handleTranslate, messageKey, translatedMessages[messageKey])}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    )
+                })
+                )}
                 {/* 스크롤 위치 참조를 위한 빈 div 추가 */}
                 <div ref={messagesEndRef} />
             </div>
@@ -433,6 +686,61 @@ function ChatComponent({ channelId, workspaceId }) {
                     </>
                 )}
             </div>
+
+            {/* Drawer - 채널 목록 */}
+            <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+                <div style={{ width: 300, padding: "16px" }}>
+                    <h3>채널 선택</h3>
+                    <List>
+                        {channels.map((channel) => (
+                            <ListItem
+                                button
+                                key={channel.channelId}
+                                sx={{ cursor: "pointer" }}
+                                onClick={() => {
+                                    handleChannelSelect(channel.channelId, channel.channelName);
+                                    setSelectedChannel(channel);
+                                    setDrawerOpen(false);
+                                }}
+                            >
+                                <ListItemText primary={`# ${channel.channelName}`} />
+                                <IconButton onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleChannelEdit(channel);
+                                }}>
+                                    <SettingsIcon />
+                                </IconButton>
+                            </ListItem>
+                        ))}
+                    </List>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        fullWidth
+                        sx={{ marginTop: "16px" }}
+                        onClick={() => setCreateModalOpen(true)}
+                    >
+                        + 채널 생성
+                    </Button>
+                </div>
+            </Drawer>
+
+            <ChannelEditModal
+                open={editModalOpen}
+                onClose={() => setEditModalOpen(false)}
+                workspaceId={workspaceId}
+                channelId={selectedChannel?.channelId}
+                currentName={selectedChannel?.channelName}
+                onUpdate={handleChannelUpdate}
+                onDelete={handleChannelDelete} // ✅ 삭제 핸들러 추가
+            />
+
+            <ChannelCreateModal
+                open={createModalOpen}
+                onClose={() => setCreateModalOpen(false)}
+                workspaceId={workspaceId}
+                onChannelCreated={handleChannelCreated}
+            />
         </div>
     );
 }

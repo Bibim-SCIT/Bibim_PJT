@@ -16,6 +16,7 @@ const GanttWrapper = styled(Box)({
   borderRadius: "10px",
   boxShadow: "0 0 10px rgba(0,0,0,0.1)",
   overflow: 'hidden',
+  marginTop: '3px',
 });
 
 // ✅ 날짜를 'YYYY.MM.DD' 형식으로 변환하는 함수
@@ -23,16 +24,24 @@ const formatDate = (date) => dayjs(date).format("YYYY.MM.DD");
 
 const statusMapping = {
   UNASSIGNED: { label: "미배정", icon: <HourglassEmptyIcon /> },
+  unassigned: { label: "미배정", icon: <HourglassEmptyIcon /> },
+
   IN_PROGRESS: { label: "진행 중", icon: <PlayCircleIcon /> },
+  inProgress: { label: "진행 중", icon: <PlayCircleIcon /> },
+
   COMPLETED: { label: "완료", icon: <CheckCircleIcon /> },
+  completed: { label: "완료", icon: <CheckCircleIcon /> },
+
   ON_HOLD: { label: "보류", icon: <PauseCircleIcon /> },
+  backlog: { label: "보류", icon: <PauseCircleIcon /> },  // "backlog"도 "보류"로 매핑
 };
 
 
 // ✅ 커스텀 툴팁 컴포넌트 (기본 툴팁 오버라이드)
 const CustomTooltip = ({ task }) => {
-  console.log("툴팁일정", task);
+  // console.log("툴팁일정", task);
   const taskStatus = statusMapping[task.status] || { label: "알 수 없음", icon: null };
+  // console.log("툴팁상세", taskStatus);
 
   return (
     <div style={{ background: "#222", color: "#fff", padding: "5px", borderRadius: "5px" }}>
@@ -42,6 +51,7 @@ const CustomTooltip = ({ task }) => {
       <p>
         상태: {taskStatus.icon} {taskStatus.label}
       </p>
+      {/* <p>담당자: {task.nickname ? task.nickname : "미지정"}</p> */}
     </div>
   );
 };
@@ -96,7 +106,7 @@ const CustomTaskListTable = ({ tasks, rowHeight, onTaskClick }) => (
   </div>
 );
 
-const GanttChart = ({ tasks }) => {
+const GanttChart = ({ tasks, onDeleteSuccess }) => {
   const [ganttTasks, setGanttTasks] = useState([]);
   const [viewMode, setViewMode] = useState(ViewMode.Day); // ✅ 기본값: Week
   const [selectedTask, setSelectedTask] = useState(null); // ✅ 선택된 Task 저장
@@ -151,6 +161,13 @@ const GanttChart = ({ tasks }) => {
       setIsModalOpen(true);
     } else {
       console.error("❌ 원본 데이터에서 일치하는 Task를 찾을 수 없음!", task.id);
+    }
+  };
+
+  // ✅ 스케줄 삭제 시 전체 데이터 다시 불러오기
+  const handleScheduleDeleted = () => {
+    if (onDeleteSuccess) {
+      onDeleteSuccess(); // 부모 컴포넌트(SchedulePage)에서 전체 일정 다시 불러오기
     }
   };
 
@@ -212,6 +229,7 @@ const GanttChart = ({ tasks }) => {
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         schedule={selectedTask?.extendedProps || selectedTask} // ✅ 원본 데이터 유지
+        onDeleteSuccess={handleScheduleDeleted} // ✅ 삭제 후 전체 일정 다시 불러오기
       />
     </GanttWrapper>
   );

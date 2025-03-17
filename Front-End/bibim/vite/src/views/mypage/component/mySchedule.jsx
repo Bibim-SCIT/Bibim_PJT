@@ -1,93 +1,55 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Box, Typography, Divider, Stack, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { Box, Typography, Divider, Stack, ToggleButton, ToggleButtonGroup, CircularProgress } from '@mui/material';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import InsertChartIcon from '@mui/icons-material/InsertChart';
 import dayjs from "dayjs";
 import MyCalendar from './MyCalendar';
 import MyGanttChart from './MyGanttChart';
+import { getMySchedule, convertToCalendarFormat, convertToGanttFormat } from '../../../api/mypage';
 
 const MySchedule = () => {
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [view, setView] = useState("calendar"); // 현재 선택된 뷰 (calendar 또는 gantt)
   const [ganttTasks, setGanttTasks] = useState([]);
+  const [calendarEvents, setCalendarEvents] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   
-  // 더미 스케줄 데이터 - FullCalendar 형식으로 변환
-  const scheduleData = useMemo(() => [
-    {
-      id: '1',
-      title: 'test_schedule_1 수정버전',
-      start: '2025-03-10',
-      end: '2025-03-18', // FullCalendar에서 end는 exclusive이므로 하루 더 추가
-      backgroundColor: '#1976d2',
-      borderColor: '#1976d2',
-      extendedProps: {
-        content: '수정된 내용입니다.',
-        wsName: '프로젝트 A',
-        wsId: 1,
-        status: 'IN_PROGRESS'
-      }
-    },
-    {
-      id: '2',
-      title: '뭐게요?',
-      start: '2025-03-11',
-      end: '2025-03-18',
-      backgroundColor: '#2196F3',
-      borderColor: '#2196F3',
-      extendedProps: {
-        content: '일정 내용입니다.',
-        wsName: '프로젝트 B',
-        wsId: 2,
-        status: 'UNASSIGNED'
-      }
-    },
-    {
-      id: '3',
-      title: '비밀',
-      start: '2025-03-13',
-      end: '2025-03-17',
-      backgroundColor: '#FF9800',
-      borderColor: '#FF9800',
-      extendedProps: {
-        content: '비밀 내용입니다.',
-        wsName: '프로젝트 C',
-        wsId: 3,
-        status: 'COMPLETED'
-      }
-    },
-    {
-      id: '4',
-      title: '뭐게요',
-      start: '2025-03-17',
-      end: '2025-03-19',
-      backgroundColor: '#4CAF50',
-      borderColor: '#4CAF50',
-      extendedProps: {
-        content: '일정 내용입니다.',
-        wsName: '프로젝트 D',
-        wsId: 4,
-        status: 'ON_HOLD'
-      }
-    }
-  ], []); // 빈 의존성 배열로 한 번만 생성
-
-  // 스케줄 데이터를 간트 차트 형식으로 변환
+  // API에서 스케줄 데이터 가져오기
   useEffect(() => {
-    const formattedTasks = scheduleData.map(task => ({
-      id: task.id,
-      name: task.title,
-      start: dayjs(task.start).toDate(),
-      end: dayjs(task.end).toDate(),
-      progress: 0,
-      dependencies: [],
-      type: "task",
-      status: task.extendedProps.status,
-      wsName: task.extendedProps.wsName,
-      extendedProps: task.extendedProps
-    }));
+    const fetchScheduleData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await getMySchedule();
+        console.log('스케줄 데이터 응답:', result); // 응답 데이터 확인용 로그
+        
+        // 응답 형식 확인 및 데이터 처리
+        if (result && result.data && Array.isArray(result.data)) {
+          // 간트차트 형식으로 변환
+          const ganttData = convertToGanttFormat(result.data);
+          setGanttTasks(ganttData);
+          
+          // 캘린더 형식으로 변환
+          const calendarData = convertToCalendarFormat(result.data);
+          setCalendarEvents(calendarData);
+        } else {
+          console.warn('스케줄 데이터가 없거나 형식이 올바르지 않습니다:', result);
+          setGanttTasks([]);
+          setCalendarEvents([]);
+        }
+      } catch (err) {
+        console.error('스케줄 데이터 로딩 중 오류 발생:', err);
+        setError('스케줄 데이터를 불러오는 중 오류가 발생했습니다.');
+        setGanttTasks([]);
+        setCalendarEvents([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    setGanttTasks(formattedTasks);
-  }, [scheduleData]);
+    fetchScheduleData();
+  }, []);
 
   // 캘린더 이벤트 클릭 핸들러 - useCallback으로 메모이제이션
   const handleCalendarEventClick = useCallback((clickInfo) => {
@@ -97,7 +59,6 @@ const MySchedule = () => {
 
   // 간트 차트 이벤트 클릭 핸들러 - useCallback으로 메모이제이션
   const handleGanttTaskClick = useCallback((task) => {
-    // 새로운 MyGanttChart 컴포넌트에 맞게 수정
     console.log('간트 차트에서 선택된 일정:', task);
     if (task.extendedProps) {
       setSelectedSchedule(task.extendedProps);
@@ -117,6 +78,24 @@ const MySchedule = () => {
       setView(newView);
     }
   }, []);
+
+  // 로딩 중 표시
+  if (loading) {
+    return (
+      <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // 에러 표시
+  if (error) {
+    return (
+      <Box sx={{ width: '100%', p: 3, textAlign: 'center', color: 'error.main' }}>
+        <Typography variant="h6">{error}</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -152,7 +131,7 @@ const MySchedule = () => {
         
         {view === "calendar" ? (
           <MyCalendar 
-            scheduleData={scheduleData} 
+            scheduleData={calendarEvents} 
             onEventClick={handleCalendarEventClick} 
           />
         ) : (
@@ -168,6 +147,9 @@ const MySchedule = () => {
             <Typography>워크스페이스: {selectedSchedule.wsName}</Typography>
             <Typography>상태: {selectedSchedule.status}</Typography>
             <Typography>내용: {selectedSchedule.content}</Typography>
+            {selectedSchedule.tag1 && (
+              <Typography>태그: {selectedSchedule.tag1} &gt; {selectedSchedule.tag2} &gt; {selectedSchedule.tag3}</Typography>
+            )}
           </Box>
         )}
       </Box>

@@ -261,7 +261,7 @@ public class ScheduleServiceImpl implements ScheduleService {
      * @return 메시지와 성공여부
      */
     @Override
-    public ResultDTO<SuccessDTO> assignSchedule(Long scheduleNumber) {
+    public ResultDTO<SuccessDTO> assignScheduleKanban(Long scheduleNumber) {
 
         // 토큰으로 사용자 정보 가져오기
         String email = AuthUtil.getLoginUserId();
@@ -289,6 +289,48 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .build();
 
         return ResultDTO.of("해당 스케줄 담당에 성공했습니다.", successDTO);
+    }
+
+    @Override
+    public ResultDTO<SuccessDTO> assignScheduleDetail(Long scheduleNumber, String email) {
+
+        // 토큰으로 사용자 정보 가져오기
+        String currentEmail = AuthUtil.getLoginUserId();
+        MemberEntity currentMember = memberRepository.findByEmail(currentEmail)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // 스케줄 식별자로 특정 스케줄 정보 가져오기
+        ScheduleEntity scheduleEntity = scheduleRepository.findByScheduleNumber(scheduleNumber)
+                .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        WorkspaceEntity workspace = scheduleEntity.getWorkspace();
+
+        // 해당 워크스페이스 멤버인지 확인
+        WorkspaceMemberEntity workspaceMemberEntity = workspaceMemberRepository.findByWorkspaceAndMember(workspace, currentMember)
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
+
+        // 스케줄 변경하려는 멤버가 워크스페이스의 멤버인지 확인
+        MemberEntity updateMember = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        workspaceMemberRepository.findByWorkspaceAndMember(workspace, updateMember)
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
+
+        // 해당 스케줄 권한이 있는 확인
+        if (scheduleEntity.getMember() == null) { // 담장자가 없을 때
+            scheduleEntity.setMember(updateMember);
+        } else { // 해당 스케줄의 권한이 있는지 확인
+            if (workspaceMemberEntity.getWsRole().equals("owner")
+                    || scheduleEntity.getMember().getEmail().equals(currentEmail)) {
+                scheduleEntity.setMember(updateMember);
+            }
+        }
+
+        SuccessDTO successDTO = SuccessDTO.builder()
+                .success(true)
+                .build();
+
+        return ResultDTO.of("해당 스케줄 담당 변경에 성공했습니다.", successDTO);
     }
 
     /**
@@ -792,7 +834,7 @@ public class ScheduleServiceImpl implements ScheduleService {
      * @return 전체 태그 리스트트
      */
     @Override
-    public ResultDTO<List<TagListDTO>> getAllTags(Long wsId) {
+    public ResultDTO<TagListDTO> getAllTags(Long wsId) {
         // 1. 로그인한 사용자 정보 가져오기
         String email = AuthUtil.getLoginUserId();
         MemberEntity member = memberRepository.findByEmail(email)
@@ -807,31 +849,44 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
 
         // 4. 전체 태그 조회
-        List<TagListDTO> tagList = new ArrayList<>();
+        List<Object[]> result = largeTagRepository.findAllTagsByWorkspace(wsId);
 
-        List<LargeTagEntity> largeTags = largeTagRepository.findAllByWorkspace(workspace);
-        for (LargeTagEntity largeTag : largeTags) {
-            List<MediumTagEntity> mediumTags = mediumTagRepository.findAllByLargeTag(largeTag);
+        List<LargeTagDTO> largeTagDTOList = new ArrayList<>();
+        List<MediumTagDTO> mediumTagDTOList = new ArrayList<>();
+        List<SmallTagDTO> smallTagDTOList = new ArrayList<>();
 
-            if (mediumTags.isEmpty()) {
-                tagList.add(TagListDTO.of(wsId, largeTag, null, null));
-            } else {
-                for (MediumTagEntity mediumTag : mediumTags) {
-                    List<SmallTagEntity> smallTags = smallTagRepository
-                            .findAllByMediumTag(mediumTag);
+        // Set을 사용하여 중복을 제거합니다.
+        Set<String> largeTagNames = new HashSet<>();
+        Set<String> mediumTagNames = new HashSet<>();
+        Set<String> smallTagNames = new HashSet<>();
 
-                    if (smallTags.isEmpty()) {
-                        tagList.add(TagListDTO.of(wsId, largeTag, mediumTag, null));
-                    } else {
-                        for (SmallTagEntity smallTag : smallTags) {
-                            tagList.add(TagListDTO.of(wsId, largeTag, mediumTag, smallTag));
-                        }
-                    }
-                }
+        for (Object[] row : result) {
+            LargeTagEntity largeTag = (LargeTagEntity) row[0];
+            MediumTagEntity mediumTag = (MediumTagEntity) row[1];
+            SmallTagEntity smallTag = (SmallTagEntity) row[2];
+
+            // LargeTag 중복 체크
+            if (largeTag != null && !largeTagNames.contains(largeTag.getTagName())) {
+                largeTagDTOList.add(LargeTagDTO.toDTO(largeTag));
+                largeTagNames.add(largeTag.getTagName()); // 중복을 방지
+            }
+
+            // MediumTag 중복 체크
+            if (mediumTag != null && !mediumTagNames.contains(mediumTag.getTagName())) {
+                mediumTagDTOList.add(MediumTagDTO.toDTO(mediumTag));
+                mediumTagNames.add(mediumTag.getTagName()); // 중복을 방지
+            }
+
+            // SmallTag 중복 체크
+            if (smallTag != null && !smallTagNames.contains(smallTag.getTagName())) {
+                smallTagDTOList.add(SmallTagDTO.toDTO(smallTag));
+                smallTagNames.add(smallTag.getTagName()); // 중복을 방지
             }
         }
 
-        return ResultDTO.of("전체 태그 조회에 성공했습니다.", tagList);
+        TagListDTO tagListDTO = TagListDTO.toDTO(largeTagDTOList, mediumTagDTOList, smallTagDTOList);
+
+        return ResultDTO.of("전체 태그 조회에 성공했습니다.", tagListDTO);
     }
 
 

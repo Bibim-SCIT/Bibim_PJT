@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // 백엔드 API 기본 URL 설정
-const API_BASE_URL = "http://localhost:8080"; // 백엔드 API 기본 URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'; // 백엔드 API 기본 URL
 
 // auth.js에서 default export가 없으므로 직접 axios 인스턴스 생성
 const api = axios.create({

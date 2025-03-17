@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Box, Card, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { fetchKanbanTasks, updateKanbanTaskStatus, assignSchedule } from "../../../api/schedule";
+import { fetchKanbanTasks, fetchScheduleTasks, updateKanbanTaskStatus, assignSchedule } from "../../../api/schedule";
 
 const KanbanWrapper = styled(Box)({
   padding: "20px",
@@ -35,51 +35,115 @@ const columns = {
   backlog: "보류",
 };
 
-const KanbanBoard = ({ wsId }) => {
+const KanbanBoard = ({ wsId, setSchedules, setGanttTasks }) => {
   const [tasks, setTasks] = useState([]);
 
+  // ✅ 기존 useEffect (유지)
   useEffect(() => {
-  const loadTasks = async () => {
-    try {
-      const data = await fetchKanbanTasks(wsId);
-      console.log("📌 원본 API 응답 데이터:", data); // 🟢 API 데이터 그대로 출력
+    const loadTasks = async () => {
+      if (!wsId) return;
 
-      // ✅ 불필요한 상태 변환 제거 (그대로 사용)
-      setTasks(data);
+      try {
+        const data = await fetchKanbanTasks(wsId);
+        console.log("📌 원본 API 응답 데이터:", data);
+        setTasks(data);
+      } catch (error) {
+        console.error("❌ 칸반 보드 데이터 로드 실패:", error);
+      }
+    };
 
-      console.log("✅ 최종적으로 적용된 tasks:", data);
-    } catch (error) {
-      console.error("❌ 칸반 보드 데이터 로드 실패:", error);
-    }
+    loadTasks();
+  }, [wsId]);
+
+  // ✅ 새롭게 추가할 useEffect (tasks가 변경될 때 실행)
+  useEffect(() => {
+    if (!wsId) return;
+    console.log("🚀 tasks 변경 감지됨! 캘린더 & 간트차트 업데이트 실행");
+
+    // ✅ 이전 상태와 비교하여 변경이 있을 때만 업데이트 실행
+    setSchedules(prevSchedules => {
+      const newSchedules = JSON.parse(JSON.stringify(tasks));
+      return JSON.stringify(prevSchedules) !== JSON.stringify(newSchedules) ? newSchedules : prevSchedules;
+    });
+
+    setGanttTasks(prevGanttTasks => {
+      const newGanttTasks = JSON.parse(JSON.stringify(tasks));
+      return JSON.stringify(prevGanttTasks) !== JSON.stringify(newGanttTasks) ? newGanttTasks : prevGanttTasks;
+    });
+
+  }, [tasks]);
+
+  const validStateTransitions = {
+    unassigned: ["inProgress", "completed", "backlog"], // 할 일 → 가능
+    inProgress: ["completed", "backlog", "unassigned"], // 진행 중 → 가능
+    completed: ["inProgress", "backlog", "unassigned"], // 완료 → 가능
+    backlog: ["unassigned", "inProgress", "completed"], // 보류 → 가능
   };
-
-  loadTasks();
-}, [wsId]);
 
   const onDragEnd = async (result) => {
     if (!result.destination) return;
 
-    const newTasks = [...tasks];
-    const [movedTask] = newTasks.splice(result.source.index, 1);
-    const newStatusKey = result.destination.droppableId; // ✅ 'inProgress' 등 문자열로 받아옴
+    const movedTaskIndex = tasks.findIndex(task => task.id.toString() === result.draggableId);
+    if (movedTaskIndex === -1) {
+      console.error("❌ 이동할 태스크를 찾을 수 없음!", result.draggableId);
+      return;
+    }
+
+    const movedTask = { ...tasks[movedTaskIndex] };
+    const newStatusKey = result.destination.droppableId;
+    let currentStatus = String(movedTask.status).trim();
+    let newMappedStatus = String(newStatusKey).trim();
+
+    console.log(`🛠 상태 변환 디버깅
+    - movedTask.id: ${movedTask.id}
+    - movedTask.status: ${movedTask.status}
+    - newStatusKey: ${newStatusKey}
+    - newMappedStatus: ${newMappedStatus}
+    `);
+
+    if (!validStateTransitions[currentStatus]?.includes(newMappedStatus)) {
+      console.warn(`🚨 유효하지 않은 상태 변경 시도: ${currentStatus} → ${newMappedStatus}`);
+      return;
+    }
+
+    if (currentStatus === newMappedStatus) {
+      console.warn(`🚨 상태 변경 불필요: ${currentStatus} → ${newMappedStatus}`);
+      return;
+    }
 
     try {
-      // ✅ 담당자가 없고, "진행중 (inProgress)"으로 이동하는 경우, 먼저 assignSchedule 실행
-      if (movedTask.status === "unassigned" && newStatusKey === "inProgress") {
+      if (currentStatus === "unassigned" && newMappedStatus === "inProgress") {
+        console.log(`🔄 담당자 자동 배정 실행: scheduleNumber=${movedTask.id}`);
         await assignSchedule(movedTask.id);
       }
 
-      // ✅ 상태 변경 API 요청
-      await updateKanbanTaskStatus(movedTask.id, newStatusKey); // ✅ 문자열(`inProgress`)로 전달
+      console.log(`🔥 상태 변경 요청: scheduleNumber=${movedTask.id} (${currentStatus} → ${newMappedStatus})`);
+      await updateKanbanTaskStatus(movedTask.id, newMappedStatus);
+      console.log(`✅ 상태 변경 완료!`);
 
-      // ✅ UI 업데이트
-      movedTask.status = newStatusKey;
-      newTasks.splice(result.destination.index, 0, movedTask);
-      setTasks(newTasks);
+      // ✅ 최신 데이터 가져오기
+      let freshTasks = await fetchScheduleTasks(wsId);
+      console.log("📌 최신 스케줄 데이터 가져옴:", freshTasks);
 
-      console.log(`✅ ${movedTask.id} 상태 변경 완료 (${newStatusKey})`);
+      // ✅ 기존 tasks를 유지하면서 상태 변경된 movedTask 반영
+      const updatedTasks = tasks.map(task =>
+        task.id === movedTask.id ? { ...task, status: newMappedStatus } : task
+      );
+
+      // ✅ 기존 데이터를 유지하면서 최신 데이터와 병합
+      const mergedTasks = freshTasks.map(task =>
+        updatedTasks.find(updated => updated.id === task.id) || task
+      );
+
+      // ✅ 깊은 복사 후 상태 업데이트 (React가 변경을 감지하도록 강제)
+      setTasks([...JSON.parse(JSON.stringify(mergedTasks))]);  // ✅ 칸반 보드 업데이트
+      setSchedules([...JSON.parse(JSON.stringify(mergedTasks))]);  // ✅ 캘린더 업데이트
+      setGanttTasks([...JSON.parse(JSON.stringify(mergedTasks))]); // ✅ 간트차트 업데이트
+
+      console.log("📌 캘린더 & 간트차트 데이터 강제 업데이트 완료!", mergedTasks);
+
     } catch (error) {
-      console.error(`❌ 상태 변경 실패 (${movedTask.id} → ${newStatusKey}):`, error);
+      console.error(`❌ 상태 변경 실패 (${movedTask.id} → ${newMappedStatus}):`, error);
     }
   };
 
@@ -106,24 +170,24 @@ const KanbanBoard = ({ wsId }) => {
                     {columnTitle}
                   </Typography>
                   {tasks
-  .filter((task) => {
-    console.log(`🧐 필터링: task.status = "${task.status}", columnId = "${columnId}"`);
-    return task.status.trim() === columnId.trim();
-  })
-  .map((task, taskIndex) => (
-    <Draggable key={task.id} draggableId={task.id.toString()} index={taskIndex}>
-      {(provided) => (
-        <Card
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          sx={{ marginBottom: "10px", padding: "10px" }}
-        >
-          <Typography>{task.title}</Typography>
-        </Card>
-      )}
-    </Draggable>
-  ))}
+                    .filter((task) => {
+                      // console.log(`🧐 필터링: task.status = "${task.status}", columnId = "${columnId}"`);
+                      return task.status.trim() === columnId.trim();
+                    })
+                    .map((task, taskIndex) => (
+                      <Draggable key={task.id} draggableId={task.id.toString()} index={taskIndex}>
+                        {(provided) => (
+                          <Card
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            sx={{ marginBottom: "10px", padding: "10px" }}
+                          >
+                            <Typography>{task.title}</Typography>
+                          </Card>
+                        )}
+                      </Draggable>
+                    ))}
                   {provided.placeholder}
                 </Box>
               )}
