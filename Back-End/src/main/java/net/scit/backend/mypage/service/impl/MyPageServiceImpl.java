@@ -1,10 +1,15 @@
 package net.scit.backend.mypage.service.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import lombok.RequiredArgsConstructor;
 import net.scit.backend.common.ResultDTO;
@@ -17,17 +22,12 @@ import net.scit.backend.mypage.dto.AllWorkspaceDataDTO;
 import net.scit.backend.mypage.dto.MyScheduleDTO;
 import net.scit.backend.mypage.service.MyPageService;
 import net.scit.backend.schedule.entity.ScheduleEntity;
+import net.scit.backend.schedule.entity.ScheduleTagEntity;
 import net.scit.backend.schedule.repository.ScheduleRepository;
 import net.scit.backend.workdata.entity.WorkdataEntity;
 import net.scit.backend.workdata.repository.WorkdataRepository;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
-
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +38,7 @@ public class MyPageServiceImpl implements MyPageService {
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final WorkdataRepository workdataRepository;
 
-    /**
+     /**
      * 내 스케줄 조회
      *
      * @return 내 스케줄 목록
@@ -52,8 +52,25 @@ public class MyPageServiceImpl implements MyPageService {
         List<ScheduleEntity> scheduleEntityList = scheduleRepository.findAllByMember(member);
         List<MyScheduleDTO> myScheduleDTOList = new ArrayList<>();
 
-        for (ScheduleEntity scheduleEntity : scheduleEntityList) {
+        // 스케줄에 관련된 태그를 미리 가져오기
+        List<ScheduleTagEntity> scheduleTags = scheduleEntityList.stream()
+                .map(ScheduleEntity::getScheduleTag)
+                .filter(Objects::nonNull)  // null 값 제거
+                .collect(Collectors.toList());
 
+        // 태그를 빠르게 검색할 수 있도록 Map으로 변환
+        Map<Long, ScheduleTagEntity> scheduleTagMap =
+                Optional.ofNullable(scheduleTags)
+                        .orElse(Collections.emptyList()) // null 방지
+                        .stream()
+                        .filter(tag -> tag.getScheduleTagNumber() != null) // null 키 방지
+                        .collect(Collectors.toMap(
+                                ScheduleTagEntity::getScheduleTagNumber,
+                                tag -> tag,
+                                (existing, replacement) -> existing // 중복 키 발생 시 기존 값 유지
+                        ));
+
+        for (ScheduleEntity scheduleEntity : scheduleEntityList) {
             MyScheduleDTO.MyScheduleDTOBuilder dtoBuilder = MyScheduleDTO.builder()
                     .wsId(scheduleEntity.getWorkspace().getWsId())
                     .wsName(scheduleEntity.getWorkspace().getWsName())
@@ -66,23 +83,37 @@ public class MyPageServiceImpl implements MyPageService {
                     .scheduleModifytime(scheduleEntity.getScheduleModifytime())
                     .color("#DBE2EF"); // 기본 색상 설정
 
-            // ScheduleTag가 null이 아닌 경우에만 추가적인 태그 정보 설정
+            // 스케줄 태그 처리
             if (scheduleEntity.getScheduleTag() != null) {
-                dtoBuilder
-                        .tag1(scheduleEntity.getScheduleTag().getLargeTag().getTagName())
-                        .tag2(scheduleEntity.getScheduleTag().getMediumTag().getTagName())
-                        .tag3(scheduleEntity.getScheduleTag().getSmallTag().getTagName())
-                        .color(scheduleEntity.getScheduleTag().getLargeTag().getTagColor()); // 태그 색상 업데이트
-            } else {
-                dtoBuilder
-                        .tag1("")
-                        .tag2("")
-                        .tag3(""); // null인 경우 빈 문자열 처리
+                ScheduleTagEntity scheduleTagEntity = scheduleTagMap.get(scheduleEntity.getScheduleTag().getScheduleTagNumber());
+                
+                if (scheduleTagEntity != null) {
+                    // 대분류 태그 처리
+                    if (scheduleTagEntity.getLargeTag() != null) {
+                        dtoBuilder.tag1(scheduleTagEntity.getLargeTag().getTagName());
+                        
+                        // 태그 색상 설정
+                        if (scheduleTagEntity.getLargeTag().getTagColor() != null) {
+                            dtoBuilder.color(scheduleTagEntity.getLargeTag().getTagColor());
+                        }
+                    }
+                    
+                    // 중분류 태그 처리
+                    if (scheduleTagEntity.getMediumTag() != null) {
+                        dtoBuilder.tag2(scheduleTagEntity.getMediumTag().getTagName());
+                    }
+                    
+                    // 소분류 태그 처리
+                    if (scheduleTagEntity.getSmallTag() != null) {
+                        dtoBuilder.tag3(scheduleTagEntity.getSmallTag().getTagName());
+                    }
+                }
             }
 
             // DTO 빌드 및 리스트에 추가
             myScheduleDTOList.add(dtoBuilder.build());
         }
+        
         return ResultDTO.of("나의 전체 스케줄 불러오기에 성공했습니다.", myScheduleDTOList);
     }
 

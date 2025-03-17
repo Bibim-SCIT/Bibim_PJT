@@ -8,12 +8,8 @@ import {
   Stack, 
   Divider, 
   Snackbar, 
-  Alert,
-  Modal,
-  IconButton
+  Alert
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import WarningIcon from '@mui/icons-material/Warning';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Grid } from 'swiper/modules';
 import 'swiper/css';
@@ -23,6 +19,7 @@ import 'swiper/css/grid';
 import { getMyWorkspaces } from '../../../api/mypage';
 import { leaveWorkspace } from '../../../api/workspaceApi';
 import CreateWorkspaceModal from '../../../views/ws-select/components/CreateWorkspaceModal';
+import LeaveWorkspaceModal from '../../../views/ws-setting/components/LeaveWorkspaceModal';
 
 const MyWorkspaces = () => {
   const [workspaces, setWorkspaces] = useState([]);
@@ -98,10 +95,9 @@ const MyWorkspaces = () => {
   };
 
   // 워크스페이스 탈퇴 함수
-  const handleLeaveWorkspace = async () => {
+  const handleLeaveWorkspace = async (workspace) => {
     try {
-      const workspace = confirmModal.workspace;
-      if (!workspace) return;
+      if (!workspace) return Promise.reject(new Error('워크스페이스 정보가 없습니다.'));
       
       console.log('워크스페이스 탈퇴 시도:', workspace.wsId);
       const result = await leaveWorkspace(workspace.wsId);
@@ -113,11 +109,10 @@ const MyWorkspaces = () => {
         severity: 'success'
       });
       
-      // 모달 닫기
-      closeConfirmModal();
-      
       // 워크스페이스 목록 새로고침
       fetchWorkspaces();
+      
+      return Promise.resolve();
     } catch (error) {
       console.error('워크스페이스 탈퇴 오류:', error);
       setSnackbar({
@@ -126,8 +121,7 @@ const MyWorkspaces = () => {
         severity: 'error'
       });
       
-      // 모달 닫기
-      closeConfirmModal();
+      return Promise.reject(error);
     }
   };
 
@@ -322,114 +316,13 @@ const MyWorkspaces = () => {
         onSuccess={handleCreateSuccess} 
       />
 
-      {/* 탈퇴 확인 모달 */}
-      <Modal
+      {/* 워크스페이스 탈퇴 모달 */}
+      <LeaveWorkspaceModal
         open={confirmModal.open}
         onClose={closeConfirmModal}
-      >
-        <Box sx={{
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 400,
-          bgcolor: 'background.paper',
-          borderRadius: 1,
-          boxShadow: 24,
-          p: 0,
-          position: 'absolute',
-          outline: 'none'
-        }}>
-          <Box sx={{ p: 3, pb: 2 }}>
-            <IconButton
-              onClick={closeConfirmModal}
-              sx={{
-                position: 'absolute',
-                right: 8,
-                top: 8
-              }}
-            >
-              <CloseIcon />
-            </IconButton>
-
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 400,
-                mb: 0
-              }}
-            >
-              워크스페이스 탈퇴
-            </Typography>
-          </Box>
-
-          <Divider sx={{ borderColor: '#e0e0e0' }} />
-
-          <Box sx={{ p: 3 }}>
-            <Box sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              mb: 3
-            }}>
-              <WarningIcon
-                sx={{
-                  fontSize: 40,
-                  color: '#ff4444',
-                  mb: 2
-                }}
-              />
-              <Typography sx={{ mb: 1, textAlign: 'center' }}>
-                {confirmModal.workspace && `'${confirmModal.workspace.wsName}' 워크스페이스에서 정말 탈퇴하시겠습니까?`}
-              </Typography>
-              <Typography
-                color="error"
-                sx={{
-                  fontSize: '0.875rem',
-                  fontStyle: 'italic',
-                  textAlign: 'center'
-                }}
-              >
-                ※ 탈퇴 후에는 다시 초대를 받아야 참여할 수 있습니다.
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box sx={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: 1,
-            p: 2,
-            bgcolor: '#f8f9fa',
-            borderTop: '1px solid #e0e0e0'
-          }}>
-            <Button
-              variant="outlined"
-              onClick={closeConfirmModal}
-              sx={{
-                color: '#666',
-                borderColor: '#666',
-                boxShadow: 'none'
-              }}
-            >
-              취소
-            </Button>
-            <Button
-              variant="contained"
-              onClick={handleLeaveWorkspace}
-              sx={{
-                bgcolor: '#ff4444',
-                boxShadow: 'none',
-                '&:hover': {
-                  bgcolor: '#ff0000',
-                  boxShadow: 'none'
-                }
-              }}
-            >
-              탈퇴하기
-            </Button>
-          </Box>
-        </Box>
-      </Modal>
+        workspace={confirmModal.workspace}
+        onConfirm={handleLeaveWorkspace}
+      />
 
       {/* 스낵바 컴포넌트 */}
       <Snackbar

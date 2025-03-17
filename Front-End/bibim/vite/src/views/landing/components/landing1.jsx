@@ -9,7 +9,6 @@ import { useNavigate } from 'react-router-dom';
 import LandingHeader from './components/LandingHeader';
 import LogoSection from 'layout/MainLayout/LogoSection';
 import ProfileSection from 'layout/MainLayout/Header/ProfileSection';
-import NotificationSection from 'layout/MainLayout/Header/NotificationSection';
 
 // 스타일 컴포넌트
 const HeaderSection = styled(Box)(({ theme }) => ({

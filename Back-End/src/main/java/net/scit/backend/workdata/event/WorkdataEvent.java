@@ -31,16 +31,12 @@ public class WorkdataEvent implements BasedUpdatedEvent {
     @Override
     public String getNotificationName() {
         String wsName = workdata.getWorkspace().getWsName();
-        switch (eventType) {
-            case "create":
-                return String.format("%s님이 %s에서 새로운 작업 데이터를 생성하였습니다.", senderNickname, wsName);
-            case "delete":
-                return String.format("%s님이 %s에서 작업 데이터를 삭제하였습니다.", senderNickname, wsName);
-            case "update":
-                return String.format("%s님이 %s에서 작업 데이터를 수정하였습니다.", senderNickname, wsName);
-            default:
-                return "작업 데이터 이벤트";
-        }
+        return switch (eventType) {
+            case "create" -> "자료실 글 등록";
+            case "delete" -> "자료실 글 삭제";
+            case "update" -> "자료실 글 수정";
+            default -> "작업 데이터 이벤트";
+        };
     }
 
     @Override
@@ -51,15 +47,11 @@ public class WorkdataEvent implements BasedUpdatedEvent {
     @Override
     public String getNotificationContent() {
         String wsName = workdata.getWorkspace().getWsName();
-        switch (eventType) {
-            case "create":
-                return String.format("%s 워크스페이스에서 새로운 작업 데이터가 생성되었습니다.", wsName);
-            case "delete":
-                return String.format("%s 워크스페이스에서 작업 데이터가 삭제되었습니다.", wsName);
-            case "update":
-                return String.format("%s 워크스페이스에서 작업 데이터가 수정되었습니다.", wsName);
-            default:
-                return "작업 데이터 관련 이벤트가 발생하였습니다.";
-        }
+        return switch (eventType) {
+            case "create" -> String.format("%s 워크스페이스에서 새로운 작업 데이터가 생성되었습니다.", wsName);
+            case "delete" -> String.format("%s 워크스페이스에서 작업 데이터가 삭제되었습니다.", wsName);
+            case "update" -> String.format("%s 워크스페이스에서 작업 데이터가 수정되었습니다.", wsName);
+            default -> "작업 데이터 관련 이벤트가 발생하였습니다.";
+        };
     }
 }

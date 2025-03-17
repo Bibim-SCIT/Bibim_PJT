@@ -90,6 +90,18 @@ public class JwtTokenProvider {
         return null;
     }
 
+
+    /**
+     * 토큰에서 이메일 추출
+     * @param token
+     * @return
+     */
+    public String getEmailFromToken(String token) {
+        Claims claims = getClaimsFromToken(token);
+        return claims.getSubject(); // subject에 이메일 저장
+    }
+
+
     /**
      * JWT 토큰에서 사용자 이름 추출
      *
