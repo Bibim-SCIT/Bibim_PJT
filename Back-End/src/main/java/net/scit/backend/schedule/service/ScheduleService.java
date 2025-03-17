@@ -14,7 +14,9 @@ public interface ScheduleService {
 
     ResultDTO<ScheduleDTO> getSchedule(Long scheduleNumber);
 
-    ResultDTO<SuccessDTO> assignSchedule(Long scheduleNumber);
+    ResultDTO<SuccessDTO> assignScheduleKanban(Long scheduleNumber);
+
+    ResultDTO<SuccessDTO> assignScheduleDetail(Long scheduleNumber, String email);
 
     ResultDTO<SuccessDTO> changeScheduleStatus(Long scheduleNumber, char status);
 
@@ -34,7 +36,7 @@ public interface ScheduleService {
 
     ResultDTO<List<SmallTagDTO>> getSmallTags(Long wsId, Long largeTagNumber, Long mediumTagNumber);
 
-    ResultDTO<List<TagListDTO>> getAllTags(Long wsId);
+    ResultDTO<TagListDTO> getAllTags(Long wsId);
 
     ResultDTO<SuccessDTO> deleteLargeTag(Long largeTagNumber);
 
@@ -47,5 +49,4 @@ public interface ScheduleService {
     ResultDTO<SuccessDTO> updateMediumTag(UpdateMediumTagDTO updateMediumTagDTO);
 
     ResultDTO<SuccessDTO> updateSmallTag(UpdateSmallTagDTO updateSmallTagDTO);
-
 }

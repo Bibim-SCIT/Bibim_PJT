@@ -1,15 +1,10 @@
 package net.scit.backend.mypage.service.impl;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import net.scit.backend.schedule.entity.ScheduleTagEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import lombok.RequiredArgsConstructor;
 import net.scit.backend.common.ResultDTO;
@@ -22,12 +17,15 @@ import net.scit.backend.mypage.dto.AllWorkspaceDataDTO;
 import net.scit.backend.mypage.dto.MyScheduleDTO;
 import net.scit.backend.mypage.service.MyPageService;
 import net.scit.backend.schedule.entity.ScheduleEntity;
-import net.scit.backend.schedule.entity.ScheduleTagEntity;
 import net.scit.backend.schedule.repository.ScheduleRepository;
 import net.scit.backend.workdata.entity.WorkdataEntity;
 import net.scit.backend.workdata.repository.WorkdataRepository;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
+
+import org.springframework.util.CollectionUtils;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +36,7 @@ public class MyPageServiceImpl implements MyPageService {
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final WorkdataRepository workdataRepository;
 
-     /**
+    /**
      * 내 스케줄 조회
      *
      * @return 내 스케줄 목록
@@ -60,7 +58,7 @@ public class MyPageServiceImpl implements MyPageService {
 
         // 태그를 빠르게 검색할 수 있도록 Map으로 변환
         Map<Long, ScheduleTagEntity> scheduleTagMap =
-                Optional.ofNullable(scheduleTags)
+                Optional.of(scheduleTags)
                         .orElse(Collections.emptyList()) // null 방지
                         .stream()
                         .filter(tag -> tag.getScheduleTagNumber() != null) // null 키 방지
@@ -86,23 +84,23 @@ public class MyPageServiceImpl implements MyPageService {
             // 스케줄 태그 처리
             if (scheduleEntity.getScheduleTag() != null) {
                 ScheduleTagEntity scheduleTagEntity = scheduleTagMap.get(scheduleEntity.getScheduleTag().getScheduleTagNumber());
-                
+
                 if (scheduleTagEntity != null) {
                     // 대분류 태그 처리
                     if (scheduleTagEntity.getLargeTag() != null) {
                         dtoBuilder.tag1(scheduleTagEntity.getLargeTag().getTagName());
-                        
+
                         // 태그 색상 설정
                         if (scheduleTagEntity.getLargeTag().getTagColor() != null) {
                             dtoBuilder.color(scheduleTagEntity.getLargeTag().getTagColor());
                         }
                     }
-                    
+
                     // 중분류 태그 처리
                     if (scheduleTagEntity.getMediumTag() != null) {
                         dtoBuilder.tag2(scheduleTagEntity.getMediumTag().getTagName());
                     }
-                    
+
                     // 소분류 태그 처리
                     if (scheduleTagEntity.getSmallTag() != null) {
                         dtoBuilder.tag3(scheduleTagEntity.getSmallTag().getTagName());
@@ -113,7 +111,6 @@ public class MyPageServiceImpl implements MyPageService {
             // DTO 빌드 및 리스트에 추가
             myScheduleDTOList.add(dtoBuilder.build());
         }
-        
         return ResultDTO.of("나의 전체 스케줄 불러오기에 성공했습니다.", myScheduleDTOList);
     }
 

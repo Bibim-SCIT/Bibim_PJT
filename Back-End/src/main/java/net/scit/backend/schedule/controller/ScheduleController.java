@@ -38,9 +38,16 @@ public class ScheduleController {
         return ResponseEntity.ok(result);
     }
 
-    @PutMapping("/{scheduleNumber}/assignees")
-    public ResponseEntity<ResultDTO<SuccessDTO>> assignSchedule(@PathVariable Long scheduleNumber) {
-        ResultDTO<SuccessDTO> result = scheduleService.assignSchedule(scheduleNumber);
+    @PutMapping("/{scheduleNumber}/assignees/kanban")
+    public ResponseEntity<ResultDTO<SuccessDTO>> assignScheduleKanban(@PathVariable Long scheduleNumber) {
+        ResultDTO<SuccessDTO> result = scheduleService.assignScheduleKanban(scheduleNumber);
+        return ResponseEntity.ok(result);
+    }
+
+    @PutMapping("/{scheduleNumber}/assignees/detail")
+    public ResponseEntity<ResultDTO<SuccessDTO>> assignScheduleDetail(@PathVariable Long scheduleNumber,
+                                                                      @RequestParam String email) {
+        ResultDTO<SuccessDTO> result = scheduleService.assignScheduleDetail(scheduleNumber, email);
         return ResponseEntity.ok(result);
     }
 
@@ -154,8 +161,8 @@ public class ScheduleController {
      * @return 전체 태그 계층 리스트
      */
     @GetMapping("/tag")
-    public ResponseEntity<ResultDTO<List<TagListDTO>>> getAllTags(@RequestParam(name = "wsId") Long wsId) {
-        ResultDTO<List<TagListDTO>> result = scheduleService.getAllTags(wsId);
+    public ResponseEntity<ResultDTO<TagListDTO>> getAllTags(@RequestParam(name = "wsId") Long wsId) {
+        ResultDTO<TagListDTO> result = scheduleService.getAllTags(wsId);
         return ResponseEntity.ok(result);
     }
 

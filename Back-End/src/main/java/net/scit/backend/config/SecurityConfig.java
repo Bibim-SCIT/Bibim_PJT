@@ -59,6 +59,7 @@ public class SecurityConfig {
                                 "/workspace/**",
                                 "/ws/**",
                                 "/actuator/**",
+                                "/error")
                                 "/error",
                                 "/notification/subscribe")
                         .permitAll() // 로그인 엔드포인트 허용
