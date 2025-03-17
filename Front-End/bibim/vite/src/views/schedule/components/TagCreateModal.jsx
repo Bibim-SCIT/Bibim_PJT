@@ -14,9 +14,12 @@ import {
     Grid,
     Divider,
     Alert,
-    CircularProgress
+    CircularProgress,
+    Popover
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import CheckIcon from "@mui/icons-material/Check"; // ✔️ 체크 아이콘 추가
+import { SketchPicker } from "react-color"; // 🎨 색상 선택기 추가
 import { styled } from "@mui/material/styles";
 import { useSelector } from "react-redux";
 import { fetchLargeTags, fetchMediumTags, fetchSmallTags, createTag } from "../../../api/tag";
@@ -30,6 +33,9 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
     },
 }));
 
+// 🎨 기본 색상 팔레트 (6가지 색상)
+const colorPalette = ["#FF5733", "#33FF57", "#3357FF", "#FF33A8", "#FFB533", "#8D33FF"];
+
 const TagCreateModal = ({ open, onClose }) => {
     const wsId = useSelector((state) => state.workspace.activeWorkspace?.wsId);
 
@@ -38,6 +44,7 @@ const TagCreateModal = ({ open, onClose }) => {
         tagType: "large", // 기본값: 대분류
         parentTag: "",
         subParentTag: "",
+        tagColor: colorPalette[0], // 기본 색상
     });
 
     const [largeTags, setLargeTags] = useState([]);
@@ -47,6 +54,7 @@ const TagCreateModal = ({ open, onClose }) => {
     const [isLoading, setIsLoading] = useState(false); // ✅ 로딩 상태 추가
     const [isCreating, setIsCreating] = useState(false); // ✅ 생성 버튼 로딩 상태
     const [errorMessage, setErrorMessage] = useState("");
+    const [colorPickerAnchor, setColorPickerAnchor] = useState(null); // 색상 선택기 위치 상태
 
     // ✅ 대분류 태그 가져오기
     useEffect(() => {
@@ -117,30 +125,54 @@ const TagCreateModal = ({ open, onClose }) => {
     // ✅ 태그 생성
     const handleSubmit = async (e) => {
         e.preventDefault();
-        // if (!formData.tagName) {
-        //     alert("태그명을 입력해주세요.");
-        //     return;
-        // }
 
         if (!formData.tagName || isCreating) return;
 
         setIsCreating(true); // ✅ 버튼 비활성화 및 로딩 중 표시
 
-        if (formData.tagType === "medium" && !formData.parentTag) {
-            alert("중분류 태그를 생성하려면 대분류 태그를 선택해야 합니다.");
+        // ✅ 부모 태그 정보 확인 (비동기 업데이트 방지)
+        let updatedParentTag = formData.parentTag;
+        let updatedSubParentTag = formData.subParentTag;
+
+        if (formData.tagType === "medium" && !updatedParentTag) {
+            alert("🚨 중분류 태그를 생성하려면 대분류 태그를 선택해야 합니다.");
+            setIsCreating(false);
             return;
         }
 
-        if (formData.tagType === "small" && (!formData.parentTag || !formData.subParentTag)) {
-            alert("소분류 태그를 생성하려면 대분류 및 중분류 태그를 선택해야 합니다.");
+        if (formData.tagType === "small" && (!updatedParentTag || !updatedSubParentTag)) {
+            alert("🚨 소분류 태그를 생성하려면 대분류 및 중분류 태그를 선택해야 합니다.");
+            setIsCreating(false);
             return;
         }
+
+        const tagData = {
+            wsId,
+            tagName: formData.tagName,
+            tagType: formData.tagType,
+            ...(formData.tagType === "large" && { tagColor: formData.tagColor }),
+            ...(formData.tagType === "medium" && { largeTagNumber: updatedParentTag }),
+            ...(formData.tagType === "small" && {
+                largeTagNumber: updatedParentTag,
+                mediumTagNumber: updatedSubParentTag
+            })
+        };
+
+        console.log("📌 최종 API 요청 데이터:", tagData); // ✅ 디버깅용 로그
 
         try {
-            await createTag(wsId, formData);
+            // await createTag(wsId, formData);
+            await createTag(wsId, tagData);
             alert("태그가 생성되었습니다.");
             onClose();
-            setFormData({ tagName: "", tagType: "large", parentTag: "", subParentTag: "" });
+            setFormData({
+                tagName: "",
+                tagType: "large",
+                parentTag: "",
+                subParentTag: "",
+                tagColor: colorPalette[0],
+                isCustomColor: false,
+            });
             setErrorMessage("");
         } catch (error) {
             setErrorMessage("태그 생성 중 오류가 발생했습니다.");
@@ -190,6 +222,84 @@ const TagCreateModal = ({ open, onClose }) => {
                                 <MenuItem value="small">소분류</MenuItem>
                             </Select>
                         </FormControl>
+
+                        {/* 🎨 대분류 태그일 때만 색상 선택 가능 */}
+                        {formData.tagType === "large" && (
+                            <Box mt={2}>
+                                <Typography variant="subtitle2" gutterBottom>
+                                    태그 색상 선택
+                                </Typography>
+                                <Box display="flex" gap={1} alignItems="center">
+                                    {/* 🎨 기본 색상 버튼 */}
+                                    {colorPalette.map((color) => (
+                                        <Button
+                                            key={color}
+                                            sx={{
+                                                bgcolor: color,
+                                                width: 30,
+                                                height: 30,
+                                                minWidth: 0,
+                                                borderRadius: "50%",
+                                                border: formData.tagColor === color ? "3px solid black" : "none",
+                                                position: "relative"
+                                            }}
+                                            onClick={() => setFormData({ ...formData, tagColor: color })}
+                                        >
+                                            {formData.tagColor === color && !formData.isCustomColor && (
+                                                <CheckIcon sx={{ color: "white", fontSize: 18 }} />
+                                            )}
+                                        </Button>
+                                    ))}
+                                    {/* 🎨 색상 선택기 버튼 */}
+                                    {/* <Button
+                                        variant="outlined"
+                                        onClick={(e) => setColorPickerAnchor(e.currentTarget)}
+                                        sx={{ minWidth: 30, height: 30, borderRadius: "50%", bgcolor: formData.tagColor }}
+                                    >
+                                        {formData.tagColor === color && (
+                                            <CheckIcon sx={{ color: "white", fontSize: 18 }} />
+                                        )}
+                                    </Button> */}
+                                </Box>
+
+                                <Divider sx={{ my: 2 }} /> {/* 📌 구분선 추가 */}
+                                <Typography variant="subtitle2" gutterBottom>
+                                    🎨 사용자 지정 색상
+                                </Typography>
+                                <Button
+                                    variant="outlined"
+                                    onClick={(e) => setColorPickerAnchor(e.currentTarget)}
+                                    sx={{
+                                        minWidth: 30,
+                                        height: 30,
+                                        borderRadius: "50%",
+                                        bgcolor: formData.tagColor,
+                                        border: formData.isCustomColor ? "3px solid black" : "2px dashed gray",
+                                        position: "relative"
+                                    }}
+                                >
+                                    {formData.isCustomColor && <CheckIcon sx={{ color: "white", fontSize: 18 }} />}
+                                </Button>
+
+                            </Box>
+                        )}
+
+                        {/* 🎨 색상 선택기 (Popover) */}
+                        <Popover
+                            open={Boolean(colorPickerAnchor)}
+                            anchorEl={colorPickerAnchor}
+                            onClose={() => setColorPickerAnchor(null)}
+                            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                        >
+                            <SketchPicker
+                                color={formData.tagColor}
+                                onChangeComplete={(color) => setFormData({
+                                    ...formData,
+                                    tagColor: color.hex,
+                                    isCustomColor: true
+                                })}
+                            />
+                        </Popover>
 
                         {/* ✅ 중분류 태그 선택 */}
                         {formData.tagType === "medium" && (
@@ -280,7 +390,17 @@ const TagCreateModal = ({ open, onClose }) => {
                             </Box>
                         ) : existingTags.length > 0 ? (
                             existingTags.map(tag => (
-                                <Chip key={tag.id} label={tag.tagName} color="primary" variant="outlined" />
+                                // <Chip key={tag.id} label={tag.tagName} color="primary" variant="outlined" />
+                                <Chip
+                                    key={tag.largeTagNumber}
+                                    label={tag.tagName}
+                                    sx={{
+                                        backgroundColor: tag.tagColor ? tag.tagColor : "default",
+                                        color: tag.tagColor ? "white" : "black", // 배경색이 있을 경우 글씨색을 흰색으로 변경
+                                        border: tag.tagColor ? `1px solid ${tag.tagColor}` : "1px solid #ccc",
+                                        // fontWeight: "bold"
+                                    }}
+                                />
                             ))
                         ) : (
                             <Typography color="textSecondary">등록된 태그가 없습니다.</Typography>

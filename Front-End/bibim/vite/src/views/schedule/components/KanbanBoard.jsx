@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, Card, Typography } from "@mui/material";
+import { Box, Card, Typography, Avatar } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { fetchKanbanTasks, fetchScheduleTasks, updateKanbanTaskStatus, assignSchedule } from "../../../api/schedule";
@@ -33,6 +33,13 @@ const columns = {
   inProgress: "진행 중",
   completed: "완료",
   backlog: "보류",
+};
+
+const columnColors = {
+  unassigned: "#ECF2FF", // 할 일
+  inProgress: "#E8F7FF", // 진행 중
+  completed: "#FEF5E5", // 완료
+  backlog: "#E6FFFA", // 보류
 };
 
 const KanbanBoard = ({ wsId, setSchedules, setGanttTasks }) => {
@@ -149,7 +156,8 @@ const KanbanBoard = ({ wsId, setSchedules, setGanttTasks }) => {
 
   return (
     <KanbanWrapper>
-      <h2>📌 칸반 보드 (wsId: {wsId})</h2>
+      {/* <h2>📌 칸반 보드 (wsId: {wsId})</h2> */}
+      <h2>📌 칸반 보드</h2>
       <DragDropContext onDragEnd={onDragEnd}>
         <Box display="flex" justifyContent="space-around">
           {Object.entries(columns).map(([columnId, columnTitle]) => (
@@ -162,11 +170,20 @@ const KanbanBoard = ({ wsId, setSchedules, setGanttTasks }) => {
                     width: "250px",
                     minHeight: "400px",
                     padding: "10px",
-                    backgroundColor: "#f4f4f4",
+                    backgroundColor: columnColors[columnId],
                     borderRadius: "8px",
                   }}
                 >
-                  <Typography variant="h6" align="center" gutterBottom>
+                  <Typography
+                    variant="h4"
+                    align="center"
+                    gutterBottom
+                    sx={{
+                      fontWeight: "bold",
+                      marginBottom: "20px",
+                      marginTop: "5px",
+                    }}
+                  >
                     {columnTitle}
                   </Typography>
                   {tasks
@@ -181,8 +198,25 @@ const KanbanBoard = ({ wsId, setSchedules, setGanttTasks }) => {
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
-                            sx={{ marginBottom: "10px", padding: "10px" }}
+                            sx={{
+                              marginBottom: "10px",
+                              padding: "10px",
+                              boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "10px"
+                            }}
                           >
+                            {task.extendedProps?.profileImage && (
+                              <Avatar
+                                src={task.extendedProps.profileImage}
+                                alt={task.extendedProps.nickname}
+                                sx={{
+                                  width: "30px",
+                                  height: "30px",
+                                }}
+                              />
+                            )}
                             <Typography>{task.title}</Typography>
                           </Card>
                         )}

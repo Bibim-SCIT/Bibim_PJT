@@ -112,7 +112,7 @@ const WorkspaceSelector = () => {
                                 variant="outlined"
                                 fullWidth
                                 onClick={handleClick} // 클릭 시 메뉴 열기
-                                sx={{ height: 36, textTransform: 'none' }}
+                                sx={{ height: 36, textTransform: 'none', }}
                                 disabled={loading} // 로딩 중일 때 비활성화
                             >
                                 {loading ? '로딩 중...' : '워크스페이스 변경'}
