@@ -83,20 +83,6 @@ public class MyPageServiceImpl implements MyPageService {
                     .scheduleModifytime(scheduleEntity.getScheduleModifytime())
                     .color("#DBE2EF"); // 기본 색상 설정
 
-//            // ScheduleTag가 null이 아닌 경우에만 추가적인 태그 정보 설정
-//            if (scheduleEntity.getScheduleTag() != null) {
-//                dtoBuilder
-//                        .tag1(scheduleEntity.getScheduleTag().getLargeTag().getTagName())
-//                        .tag2(scheduleEntity.getScheduleTag().getMediumTag().getTagName())
-//                        .tag3(scheduleEntity.getScheduleTag().getSmallTag().getTagName())
-//                        .color(scheduleEntity.getScheduleTag().getLargeTag().getTagColor()); // 태그 색상 업데이트
-//            } else {
-//                dtoBuilder
-//                        .tag1("")
-//                        .tag2("")
-//                        .tag3(""); // null인 경우 빈 문자열 처리
-//            }
-
             // 스케줄 태그 처리
             if (scheduleEntity.getScheduleTag() != null) {
                 ScheduleTagEntity scheduleTagEntity = scheduleTagMap.get(scheduleEntity.getScheduleTag().getScheduleTagNumber());
