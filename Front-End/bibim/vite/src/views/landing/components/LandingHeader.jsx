@@ -7,7 +7,6 @@ import Box from '@mui/material/Box';
 // project imports
 import LogoSection from 'layout/MainLayout/LogoSection';
 import ProfileSection from 'layout/MainLayout/Header/ProfileSection';
-import NotificationSection from 'layout/MainLayout/Header/NotificationSection';
 
 // assets
 import { IconMenu2 } from '@tabler/icons-react';
@@ -30,9 +29,6 @@ export default function LandingHeader() {
       {/* header search */}
       <Box sx={{ flexGrow: 1 }} />
       <Box sx={{ flexGrow: 1 }} />
-
-      {/* notification */}
-      <NotificationSection />
 
       {/* profile */}
       <ProfileSection />
