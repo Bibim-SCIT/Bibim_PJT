@@ -40,7 +40,8 @@ export default defineConfig(({ mode }) => {
                 // { find: 'assets', replacement: path.join(process.cwd(), 'src/assets') },
             ],
         },
-        base: API_URL,
+        // base: API_URL,
+        base: '/',
         plugins: [react(), jsconfigPaths()],
     };
 });
