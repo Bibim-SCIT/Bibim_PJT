@@ -54,7 +54,7 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
     const [previewUrl, setPreviewUrl] = useState(null);
     const closeTimeoutRef = useRef(null);
     const [anchorPosition, setAnchorPosition] = useState(null);
-
+    const [isHoveringPopover, setIsHoveringPopover] = useState(false);
 
     console.log("📌 FileTable에서 받은 files 데이터:", files); // ✅ 전달된 데이터 확인
     console.log("현재 유저정보", user)
@@ -184,6 +184,7 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
         // 기존 닫기 타이머가 있으면 취소
         if (closeTimeoutRef.current) {
             clearTimeout(closeTimeoutRef.current);
+            closeTimeoutRef.current = null;
         }
         const ext = fileName.split(".").pop().toLowerCase();
         if (["png", "jpg", "jpeg", "pdf", "gif"].includes(ext)) {
@@ -197,26 +198,32 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
     };
 
     const handleCellMouseLeave = () => {
-        // 500ms 후에 Popover 닫기
-        closeTimeoutRef.current = setTimeout(() => {
-            setPreviewAnchorEl(null);
-            setPreviewUrl(null);
-        }, 500);
-    };
-
-    // Popover 영역에서 마우스가 들어오면 닫기 타이머 취소
-    const handlePopoverMouseEnter = () => {
-        if (closeTimeoutRef.current) {
-            clearTimeout(closeTimeoutRef.current);
+        // isHoveringPopover가 true이면 타이머를 설정하지 않음
+        if (!isHoveringPopover) {
+            // 500ms 후에 Popover 닫기
+            closeTimeoutRef.current = setTimeout(() => {
+                setPreviewAnchorEl(null);
+                setPreviewUrl(null);
+            }, 200);
         }
     };
 
-    // Popover 영역에서 마우스가 나가면 500ms 후에 닫기
+    // Popover 영역에서 마우스가 들어오면 닫기 타이머 취소하고 호버 상태 설정
+    const handlePopoverMouseEnter = () => {
+        setIsHoveringPopover(true);
+        if (closeTimeoutRef.current) {
+            clearTimeout(closeTimeoutRef.current);
+            closeTimeoutRef.current = null;
+        }
+    };
+
+    // Popover 영역에서 마우스가 나가면 호버 상태 해제하고 타이머 설정
     const handlePopoverMouseLeave = () => {
+        setIsHoveringPopover(false);
         closeTimeoutRef.current = setTimeout(() => {
             setPreviewAnchorEl(null);
             setPreviewUrl(null);
-        }, 600);
+        }, 200);
     };
 
 
@@ -387,7 +394,12 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                 anchorEl={previewAnchorEl}
                 anchorReference="anchorPosition"
                 anchorPosition={anchorPosition}
-                onClose={handleCellMouseLeave} // Popover 외부 클릭 시 닫힘
+                onClose={() => {
+                    if (!isHoveringPopover) {
+                        setPreviewAnchorEl(null);
+                        setPreviewUrl(null);
+                    }
+                }}
                 anchorOrigin={{
                     vertical: "top",
                     horizontal: "right",
@@ -399,7 +411,9 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                 PaperProps={{
                     onMouseEnter: handlePopoverMouseEnter,
                     onMouseLeave: handlePopoverMouseLeave,
+                    sx: { pointerEvents: 'auto' }
                 }}
+                sx={{ pointerEvents: 'none' }}
             >
                 <Box sx={{ p: 1, maxWidth: 300, maxHeight: 300 }}>
                     {previewUrl && (() => {

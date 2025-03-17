@@ -141,14 +141,12 @@ public class NotificationServiceImpl implements NotificationService {
         return false;
     }
 
+
     @Override
     public String getNotificationUrl(Long notificationId) {
-        String currentUserEmail = AuthUtil.getLoginUserId();
         NotificationEntity notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOTIFICATION_NOT_FOUND));
-        if (!notification.getReceiverEmail().equals(currentUserEmail)) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED_ACCESS);
-        }
+
         String notificationUrl = notification.getNotificationUrl();
         if (notificationUrl == null || notificationUrl.isEmpty()) {
             throw new CustomException(ErrorCode.INVALID_NOTIFICATION_URL);

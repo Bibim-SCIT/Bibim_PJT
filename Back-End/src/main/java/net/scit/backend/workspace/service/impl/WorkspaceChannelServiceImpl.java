@@ -47,13 +47,17 @@ public class WorkspaceChannelServiceImpl implements WorkspaceChannelService {
                 .orElseThrow(() -> new CustomException(ErrorCode.CHANNEL_NOT_FOUND));
     }
 
+    private WorkspaceChannelEntity getChannel(Long wsId, String channelName) {
+        return channelRepository.findByWorkspace_wsIdAndChannelName(wsId, channelName);
+    }
+
     private void publishChannelEvent(WorkspaceEntity workspace, String email, String nickname, String action, String channelName, Long channelNumber) {
         eventPublisher.publishEvent(new WorkspaceChannelEvent(workspace, email, nickname, action, channelName, channelNumber));
     }
 
     @Override
     @Transactional
-    public ResultDTO<SuccessDTO> createChannel(Long workspaceId, String channelName, Long roleId) {
+    public ChannelDTO createChannel(Long workspaceId, String channelName) {
         String email = AuthUtil.getLoginUserId();
         log.info("📢 채널 생성 요청: workspaceId={}, userEmail={}, channelName={}", workspaceId, email, channelName);
 
@@ -69,7 +73,11 @@ public class WorkspaceChannelServiceImpl implements WorkspaceChannelService {
 
         publishChannelEvent(member.getWorkspace(), email, member.getNickname(), "create", channelName, channel.getChannelNumber());
 
-        return ResultDTO.of("채널이 성공적으로 생성되었습니다.", SuccessDTO.builder().success(true).build());
+        WorkspaceChannelEntity temp = getChannel(workspaceId,channelName);
+
+        ChannelDTO result = ChannelDTO.builder().channelId(temp.getChannelNumber()).channelName(temp.getChannelName()).build();
+
+        return result;
     }
 
     @Override
