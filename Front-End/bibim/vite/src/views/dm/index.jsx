@@ -36,6 +36,7 @@ import TranslateIcon from '@mui/icons-material/Translate'; // 번역 아이콘 �
 
 // ✅ API 기본 URL 설정
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'; // 백엔드 API 기본 URL
+const API_BASE_URL2 = `${API_BASE_URL}/api`;
 
 // ✅ DM 방의 고유 ID 생성 함수
 const generateRoomId = (wsId, senderEmail, receiverEmail) => {
@@ -74,7 +75,7 @@ const formatToKoreanTime = (timestamp) => {
 
 // ✅ 메시지 내용을 렌더링하는 함수
 const renderMessageContent = (msg, handleTranslate, translatedMessage) => {
-    console.log("찍어보기", msg);
+    // console.log("찍어보기", msg);
 
     // ✅ 유튜브 링크인 경우
     if (!msg.isFile && !msg.file && isYouTubeLink(msg.dmContent)) {
@@ -203,7 +204,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
         formData.append("wsId", wsId);
 
         try {
-            const response = await axios.post(`${API_BASE_URL}/dm/upload`, formData, {
+            const response = await axios.post(`${API_BASE_URL2}/dm/upload`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "multipart/form-data",
@@ -225,7 +226,10 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
             return;
         }
 
-        axios.get(`${API_BASE_URL}/dm/messages`, {
+        console.log("하이로", roomId, wsId);
+        console.log("메시지불", `${API_BASE_URL2}`);
+
+        axios.get(`${API_BASE_URL2}/dm/messages`, {
             params: { wsId, roomId },
             headers: { Authorization: `Bearer ${token}` },
             withCredentials: true,
@@ -536,7 +540,7 @@ export default function DmPage() {
 
     // ✅ WebSocket 클라이언트 초기화 및 연결 설정
     useEffect(() => {
-        const socket = new SockJS(`${API_BASE_URL}/ws/chat`);
+        const socket = new SockJS(`${API_BASE_URL2}/ws/chat`);
         const client = new Client({
             webSocketFactory: () => socket,
             connectHeaders: { Authorization: `Bearer ${localStorage.getItem("token")}` },
