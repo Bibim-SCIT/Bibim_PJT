@@ -6,8 +6,6 @@ import net.scit.backend.jwt.AuthUtil;
 import net.scit.backend.jwt.JwtTokenProvider;
 import net.scit.backend.notification.entity.NotificationEntity;
 import net.scit.backend.notification.service.NotificationService;
-import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
-import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +15,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/notification")
@@ -28,7 +25,9 @@ public class NotificationController {
     private final NotificationService notificationService;
     private final JwtTokenProvider jwtTokenProvider;
 
-
+    /**
+     * SSE 구독 처리 메서드
+     */
     @GetMapping("/subscribe")
     public SseEmitter subscribe(@RequestParam("token") String token) {
         if (!jwtTokenProvider.validateToken(token)) {
@@ -49,7 +48,9 @@ public class NotificationController {
         return emitter;
     }
 
-
+    /**
+     * 로그아웃 처리 및 SSE 구독 해제
+     */
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@RequestHeader("Authorization") String token) {
         String email = AuthUtil.getLoginUserId();
@@ -57,7 +58,9 @@ public class NotificationController {
         return ResponseEntity.ok("로그아웃 성공");
     }
 
-
+    /**
+     * 읽지 않은 알림 조회
+     */
     @GetMapping("/unread")
     public ResponseEntity<List<NotificationEntity>> getUnreadNotifications(@RequestHeader("Authorization") String token) {
         String email = AuthUtil.getLoginUserId();
@@ -65,24 +68,28 @@ public class NotificationController {
         return ResponseEntity.ok(unreadNotifications);
     }
 
-
+    /**
+     * 읽은 알림 조회
+     */
     @GetMapping("/read")
-    public ResponseEntity<List<NotificationEntity>> getReadNotifications(
-            @RequestHeader("Authorization") String token) {
+    public ResponseEntity<List<NotificationEntity>> getReadNotifications(@RequestHeader("Authorization") String token) {
         String email = AuthUtil.getLoginUserId();
         List<NotificationEntity> readNotifications = notificationService.getReadNotifications(email);
         return ResponseEntity.ok(readNotifications);
     }
 
-
+    /**
+     * 단일 알림 읽음 처리
+     */
     @PostMapping("/read-single")
-    public ResponseEntity<String> markAsRead(@RequestHeader("Authorization") String token,
-                                             @RequestParam Long notificationNumber) {
+    public ResponseEntity<String> markAsRead(@RequestHeader("Authorization") String token, @RequestParam Long notificationNumber) {
         boolean result = notificationService.markAsRead(notificationNumber);
         return result ? ResponseEntity.ok("해당 알림을 읽는 데 성공하였습니다") : ResponseEntity.badRequest().body("해당 알림을 읽는 데 실패하였습니다");
     }
 
-
+    /**
+     * 모든 알림 읽음 처리
+     */
     @PostMapping("/read-all")
     public ResponseEntity<String> markAllAsRead(@RequestHeader("Authorization") String token) {
         String email = AuthUtil.getLoginUserId();
@@ -90,13 +97,13 @@ public class NotificationController {
         return result ? ResponseEntity.ok("모든 알림을 읽음 처리하는 데에 성공하였습니다.") : ResponseEntity.ok("읽지 않은 알림이 없습니다.");
     }
 
-
+    /**
+     * 단일 알림 삭제 처리
+     */
     @DeleteMapping
-    public ResponseEntity<String> deleteNotification(@RequestHeader("Authorization") String token,
-                                                     @RequestParam Long notificationNumber) {
+    public ResponseEntity<String> deleteNotification(@RequestHeader("Authorization") String token, @RequestParam Long notificationNumber) {
         try {
-            // 토큰 접두사 제거
-            if(token.startsWith("Bearer ")) {
+            if (token.startsWith("Bearer ")) {
                 token = token.substring(7);
             }
             String email = jwtTokenProvider.getEmailFromToken(token);
@@ -104,12 +111,13 @@ public class NotificationController {
             return result ? ResponseEntity.ok("알림 삭제 완료") : ResponseEntity.badRequest().body("알림 삭제 실패");
         } catch (Exception e) {
             log.error("알림 삭제 중 오류 발생", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("알림 삭제 중 오류 발생: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("알림 삭제 중 오류 발생: " + e.getMessage());
         }
     }
 
-
+    /**
+     * 알림 URL로 리다이렉트
+     */
     @GetMapping("/{notificationId}")
     public ResponseEntity<Void> redirectToNotificationUrl(@PathVariable Long notificationId) {
         String url = notificationService.getNotificationUrl(notificationId);

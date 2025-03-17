@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import net.scit.backend.schedule.entity.ScheduleTagEntity;
+import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ public class MyPageServiceImpl implements MyPageService {
     private final WorkdataRepository workdataRepository;
 
     /**
-     * 내 스케줄 조회
+     * 내 스케줄을 조회하는 메서드
      *
      * @return 내 스케줄 목록
      */
@@ -50,23 +51,14 @@ public class MyPageServiceImpl implements MyPageService {
         List<ScheduleEntity> scheduleEntityList = scheduleRepository.findAllByMember(member);
         List<MyScheduleDTO> myScheduleDTOList = new ArrayList<>();
 
-        // 스케줄에 관련된 태그를 미리 가져오기
-        List<ScheduleTagEntity> scheduleTags = scheduleEntityList.stream()
+        // 스케줄에 관련된 태그 가져오기 및 맵으로 변환
+        Map<Long, ScheduleTagEntity> scheduleTagMap = scheduleEntityList.stream()
                 .map(ScheduleEntity::getScheduleTag)
-                .filter(Objects::nonNull)  // null 값 제거
-                .collect(Collectors.toList());
-
-        // 태그를 빠르게 검색할 수 있도록 Map으로 변환
-        Map<Long, ScheduleTagEntity> scheduleTagMap =
-                Optional.of(scheduleTags)
-                        .orElse(Collections.emptyList()) // null 방지
-                        .stream()
-                        .filter(tag -> tag.getScheduleTagNumber() != null) // null 키 방지
-                        .collect(Collectors.toMap(
-                                ScheduleTagEntity::getScheduleTagNumber,
-                                tag -> tag,
-                                (existing, replacement) -> existing // 중복 키 발생 시 기존 값 유지
-                        ));
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(
+                        ScheduleTagEntity::getScheduleTagNumber,
+                        tag -> tag,
+                        (existing, replacement) -> existing));
 
         for (ScheduleEntity scheduleEntity : scheduleEntityList) {
             MyScheduleDTO.MyScheduleDTOBuilder dtoBuilder = MyScheduleDTO.builder()
@@ -79,45 +71,31 @@ public class MyPageServiceImpl implements MyPageService {
                     .scheduleStartDate(scheduleEntity.getScheduleStartdate())
                     .scheduleFinishDate(scheduleEntity.getScheduleFinishdate())
                     .scheduleModifytime(scheduleEntity.getScheduleModifytime())
-                    .color("#DBE2EF"); // 기본 색상 설정
+                    .color("#DBE2EF"); // 기본 색상
 
-            // 스케줄 태그 처리
-            if (scheduleEntity.getScheduleTag() != null) {
-                ScheduleTagEntity scheduleTagEntity = scheduleTagMap.get(scheduleEntity.getScheduleTag().getScheduleTagNumber());
-
-                if (scheduleTagEntity != null) {
-                    // 대분류 태그 처리
-                    if (scheduleTagEntity.getLargeTag() != null) {
-                        dtoBuilder.tag1(scheduleTagEntity.getLargeTag().getTagName());
-
-                        // 태그 색상 설정
-                        if (scheduleTagEntity.getLargeTag().getTagColor() != null) {
-                            dtoBuilder.color(scheduleTagEntity.getLargeTag().getTagColor());
-                        }
-                    }
-
-                    // 중분류 태그 처리
-                    if (scheduleTagEntity.getMediumTag() != null) {
-                        dtoBuilder.tag2(scheduleTagEntity.getMediumTag().getTagName());
-                    }
-
-                    // 소분류 태그 처리
-                    if (scheduleTagEntity.getSmallTag() != null) {
-                        dtoBuilder.tag3(scheduleTagEntity.getSmallTag().getTagName());
-                    }
+            ScheduleTagEntity scheduleTagEntity = scheduleTagMap.get(scheduleEntity.getScheduleTag().getScheduleTagNumber());
+            if (scheduleTagEntity != null) {
+                if (scheduleTagEntity.getLargeTag() != null) {
+                    dtoBuilder.tag1(scheduleTagEntity.getLargeTag().getTagName());
+                    dtoBuilder.color(scheduleTagEntity.getLargeTag().getTagColor());
+                }
+                if (scheduleTagEntity.getMediumTag() != null) {
+                    dtoBuilder.tag2(scheduleTagEntity.getMediumTag().getTagName());
+                }
+                if (scheduleTagEntity.getSmallTag() != null) {
+                    dtoBuilder.tag3(scheduleTagEntity.getSmallTag().getTagName());
                 }
             }
 
-            // DTO 빌드 및 리스트에 추가
             myScheduleDTOList.add(dtoBuilder.build());
         }
         return ResultDTO.of("나의 전체 스케줄 불러오기에 성공했습니다.", myScheduleDTOList);
     }
 
     /**
-     * 모든 워크스페이스 데이터 조회
+     * 내가 가입한 모든 워크스페이스의 자료실 데이터 조회
      *
-     * @return 모든 워크스페이스 데이터 목록
+     * @return 모든 워크스페이스의 자료실 데이터 목록
      */
     @Override
     public ResultDTO<List<AllWorkspaceDataDTO>> getWorkData() {
@@ -125,12 +103,10 @@ public class MyPageServiceImpl implements MyPageService {
         MemberEntity member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        // 내가 속한 워크스페이스 받아오기
         List<WorkspaceEntity> workspaceEntities = workspaceMemberRepository.findByMember(member).stream()
-                .map(workspaceMember -> workspaceMember.getWorkspace())
+                .map(WorkspaceMemberEntity::getWorkspace)
                 .collect(Collectors.toList());
 
-        // 워크스페이스 목록을 기반으로 해당 워크스페이스의 자료실 데이터 가져오기
         List<WorkdataEntity> workDataEntities = workdataRepository.findAllByWorkspaceIn(workspaceEntities);
 
         if (CollectionUtils.isEmpty(workDataEntities)) {

@@ -24,83 +24,102 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService; // 사용자 정보 제공 Service
     private final RedisTemplate<String, String> redisTemplate; // Redis를 통한 토큰 관리
 
+    /**
+     * 필터링 로직 처리 메서드
+     *
+     * @param request  HTTP 요청 객체
+     * @param response HTTP 응답 객체
+     * @param chain    필터 체인
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        try {
-            // 인증 제외 경로 처리
-            if (isExcludedPath(request)) {
-                chain.doFilter(request, response);
+        if (shouldFilter(request)) {
+            try {
+                authenticateRequest(request); // 요청 인증 처리
+            } catch (CustomException e) {
+                // Custom 예외 발생 시 응답에 상태 코드 설정
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
                 return;
             }
-
-            // 요청에서 JWT 토큰 추출
-            String token = jwtTokenProvider.getJwtFromRequest(request);
-
-            if (token != null && jwtTokenProvider.validateToken(token)) {
-                // JWT 인증 수행
-                processTokenAuthentication(request, token);
-            }
-        } catch (CustomException e) {
-            logger.error("❌ JWT 인증 오류: " + e.getMessage());
-        } catch (Exception e) {
-            logger.error("❌ 필터 처리 중 오류 발생", e);
         }
+        chain.doFilter(request, response); // 다음 필터로 전달
+    }
 
-        // 다음 필터로 요청 전달
-        chain.doFilter(request, response);
+    /**
+     * 필터링 대상 경로인지 확인
+     *
+     * @param request HTTP 요청 객체
+     * @return 필터링이 필요한 경우 true 반환
+     */
+    private boolean shouldFilter(HttpServletRequest request) {
+        return !isExcludedPath(request);
     }
 
     /**
      * 인증 제외 경로 확인
-     * 로그인 및 특정 엔드포인트를 필터링 대상에서 제외
      *
-     * @param request HTTP 요청
-     * @return 인증 제외 여부
+     * @param request HTTP 요청 객체
+     * @return 제외 대상 경로일 경우 true 반환
      */
     private boolean isExcludedPath(HttpServletRequest request) {
-        String path = request.getRequestURI();
-        return path.equals("/members/login"); // 인증 제외 경로
+        return "/members/login".equals(request.getRequestURI());
     }
 
     /**
-     * JWT 토큰 기반 인증 처리
+     * 요청에 대한 JWT 인증 처리
+     *
+     * @param request HTTP 요청 객체
+     */
+    private void authenticateRequest(HttpServletRequest request) {
+        String token = jwtTokenProvider.getJwtFromRequest(request);
+        if (isValidToken(token)) {
+            authenticateUser(request, token);
+        }
+    }
+
+    /**
+     * JWT 토큰 유효성 검증 및 블랙리스트 확인
+     *
+     * @param token JWT 토큰
+     * @return 유효하면 true 반환
+     */
+    private boolean isValidToken(String token) {
+        return token != null && jwtTokenProvider.validateToken(token) && !isTokenBlacklisted(token) && !isRefreshToken(token);
+    }
+
+    /**
+     * 토큰이 Redis 블랙리스트에 있는지 확인
+     *
+     * @param token JWT 토큰
+     * @return 블랙리스트에 있으면 true 반환
+     */
+    private boolean isTokenBlacklisted(String token) {
+        return !ObjectUtils.isEmpty(redisTemplate.opsForValue().get(token));
+    }
+
+    /**
+     * 토큰이 리프레시 토큰인지 확인
+     *
+     * @param token JWT 토큰
+     * @return 리프레시 토큰이면 true 반환
+     */
+    private boolean isRefreshToken(String token) {
+        return "refresh".equals(jwtTokenProvider.getClaimsFromToken(token).get("token_type"));
+    }
+
+    /**
+     * 사용자 인증 처리
      *
      * @param request HTTP 요청 객체
      * @param token   JWT 토큰
      */
-    private void processTokenAuthentication(HttpServletRequest request, String token) {
-        // 토큰 타입 확인 및 Redis 블랙리스트 체크
-        validateTokenTypeAndBlacklist(token);
-
-        String username = jwtTokenProvider.getUsernameFromToken(token); // 사용자명 추출
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username); // 사용자 데이터 조회
+    private void authenticateUser(HttpServletRequest request, String token) {
+        String username = jwtTokenProvider.getUsernameFromToken(token);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
         if (userDetails != null) {
-            // Spring Security Authentication 객체 생성 및 설정
-            var authentication = createAuthentication(userDetails, request);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            logger.info("🟢 사용자 인증 완료: " + username);
-        }
-    }
-
-    /**
-     * 토큰 타입 확인 및 Redis 블랙리스트 검증
-     *
-     * @param token JWT 토큰
-     */
-    private void validateTokenTypeAndBlacklist(String token) {
-        String tokenType = (String) jwtTokenProvider.getClaimsFromToken(token).get("token_type");
-
-        if ("refresh".equals(tokenType)) {
-            throw new CustomException(ErrorCode.INVALID_TOKEN);
-        }
-
-        // Redis에서 BlackList 확인
-        String isLogout = redisTemplate.opsForValue().get(token);
-        if (!ObjectUtils.isEmpty(isLogout)) {
-            throw new CustomException(ErrorCode.INVALID_TOKEN);
+            SecurityContextHolder.getContext().setAuthentication(createAuthentication(userDetails, request));
         }
     }
 
@@ -114,7 +133,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private JwtAuthenticationToken createAuthentication(UserDetails userDetails, HttpServletRequest request) {
         JwtAuthenticationToken authentication =
                 new JwtAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         return authentication;
     }

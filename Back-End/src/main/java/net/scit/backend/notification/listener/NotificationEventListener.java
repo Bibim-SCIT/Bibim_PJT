@@ -1,4 +1,3 @@
-// 파일: net/scit/backend/notification/listener/NotificationEventListener.java
 package net.scit.backend.notification.listener;
 
 import lombok.RequiredArgsConstructor;
