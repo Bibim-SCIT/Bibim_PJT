@@ -26,7 +26,6 @@ public class WorkspaceEventListener {
         // 이벤트 유형에 따라 URL 결정
         String notificationUrl = switch (event.getEventType()) {
             case "grant", "role_update" -> "http://localhost:3000/ws-setting";
-            case "create", "delete", "update", "invite", "join", "member_update", "withdraw" -> "http://localhost:3000/ws-select";
             default -> "http://localhost:3000/ws-select";
         };
 
