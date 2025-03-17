@@ -17,7 +17,6 @@ public class MediumTagDTO {
     private Long largeTagNumber;
     private Long mediumTagNumber;
     private String tagName;
-    private Long wsId;
 
     public static MediumTagDTO toDTO(MediumTagEntity mediumTagEntity) {
         return MediumTagDTO.builder()

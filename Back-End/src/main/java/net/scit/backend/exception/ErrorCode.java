@@ -1,5 +1,6 @@
 package net.scit.backend.exception;
 
+import lombok.Setter;
 import org.springframework.http.HttpStatus;
 
 import lombok.Getter;

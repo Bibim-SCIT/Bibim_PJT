@@ -1,9 +1,8 @@
 package net.scit.backend.schedule.dto;
 
 import lombok.*;
-import net.scit.backend.schedule.entity.LargeTagEntity;
-import net.scit.backend.schedule.entity.MediumTagEntity;
-import net.scit.backend.schedule.entity.SmallTagEntity;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -11,26 +10,17 @@ import net.scit.backend.schedule.entity.SmallTagEntity;
 @AllArgsConstructor
 @Builder
 public class TagListDTO {
-    private Long wsId;
-    private Long largeTagNumber;
-    private String largeTagName;
 
-    private Long mediumTagNumber;
-    private String mediumTagName;
+    private List<LargeTagDTO> largeTags;
+    private List<MediumTagDTO> mediumTags;
+    private List<SmallTagDTO> smallTags;
 
-    private Long smallTagNumber;
-    private String smallTagName;
-
-    public static TagListDTO of(Long wsId, LargeTagEntity largeTag, MediumTagEntity mediumTag,
-            SmallTagEntity smallTag) {
+    public static TagListDTO toDTO(List<LargeTagDTO> largeTagDTOList,
+                                   List<MediumTagDTO> mediumTagDTOList, List<SmallTagDTO> smallTagDTOList) {
         return TagListDTO.builder()
-                .wsId(wsId)
-                .largeTagNumber(largeTag != null ? largeTag.getLargeTagNumber() : null)
-                .largeTagName(largeTag != null ? largeTag.getTagName() : null)
-                .mediumTagNumber(mediumTag != null ? mediumTag.getMediumTagNumber() : null)
-                .mediumTagName(mediumTag != null ? mediumTag.getTagName() : null)
-                .smallTagNumber(smallTag != null ? smallTag.getSmallTagNumber() : null)
-                .smallTagName(smallTag != null ? smallTag.getTagName() : null)
+                .largeTags(largeTagDTOList)
+                .mediumTags(mediumTagDTOList)
+                .smallTags(smallTagDTOList)
                 .build();
     }
 }
