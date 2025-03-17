@@ -68,14 +68,14 @@ const utilities = {
       icon: icons.IconTypography,
       breadcrumbs: false
     },
-    {
-      id: 'meeting',
-      title: '회의하기',
-      type: 'item',
-      url: '/meeting',
-      icon: icons.IconPalette,
-      breadcrumbs: false
-    },
+    // {
+    //   id: 'meeting',
+    //   title: '회의하기',
+    //   type: 'item',
+    //   url: '/meeting',
+    //   icon: icons.IconPalette,
+    //   breadcrumbs: false
+    // },
     {
       id: 'referencepage',
       title: '자료실',
