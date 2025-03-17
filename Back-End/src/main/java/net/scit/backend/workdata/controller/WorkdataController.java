@@ -173,6 +173,17 @@ public class WorkdataController {
 
 
     /**
+     * 1-4-3) 태그 전체 조회
+     * @param wsId
+     * @return
+     */
+    @GetMapping("/{wsId}/tags")
+    public ResponseEntity<List<String>> getAllTags(@PathVariable Long wsId) {
+        List<String> tags = workdataService.getAllTags(wsId);
+        return ResponseEntity.ok(tags);
+    }
+
+    /**
      * 2. 검색
      * keyword는 workdata의 title, writer, fileName, tag에서 찾을 수 있음
      */

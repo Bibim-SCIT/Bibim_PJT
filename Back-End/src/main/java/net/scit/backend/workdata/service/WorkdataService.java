@@ -38,6 +38,10 @@ public interface WorkdataService {
     //자료글 개별 조회
     ResponseEntity<ResultDTO<WorkdataTotalSearchDTO>> workdataDetail(Long wsId, Long dataNumber);
 
+    //태그 전체 조회
+    List<String> getAllTags(Long wsId);
+
     //자료 검색(workdata의 title, writer 기반)
     ResultDTO<List<WorkdataTotalSearchDTO>> searchWorkdata(Long wsId, String keyword, String sort, String order);
+
 }

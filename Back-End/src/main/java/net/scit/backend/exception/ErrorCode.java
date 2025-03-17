@@ -63,7 +63,11 @@ public enum ErrorCode {
     // Notification
     NOTIFICATION_NOT_FOUND("해당 알림을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     UNAUTHORIZED_ACCESS("해당 알림에 접근할 수 없습니다.", HttpStatus.FORBIDDEN),
-    INVALID_NOTIFICATION_URL("잘못된 알림 URL입니다.", HttpStatus.BAD_REQUEST);
+    INVALID_NOTIFICATION_URL("잘못된 알림 URL입니다.", HttpStatus.BAD_REQUEST),
+
+    // Workdata
+    INVALID_WORKSPACE_ACCESS("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
+    TAGS_NOT_FOUND("해당 워크스페이스에 등록된 태그가 없습니다.", HttpStatus.NOT_FOUND);
 
     String message;
     HttpStatus status;
