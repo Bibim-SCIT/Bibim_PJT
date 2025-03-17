@@ -1,7 +1,10 @@
 package net.scit.backend.workdata.service.impl;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.scit.backend.exception.CustomException;
+import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.jwt.AuthUtil;
 import net.scit.backend.common.ResultDTO;
 import net.scit.backend.common.SuccessDTO;
@@ -472,6 +475,28 @@ public class WorkdataServiceImpl implements WorkdataService {
         return ResponseEntity.ok(ResultDTO.of("자료글 개별 조회 성공!", dto));
     }
 
+    // 1-4-3) 태그 전체 조회
+    @Transactional
+    @Override
+    public List<String> getAllTags(Long wsId) {
+        // 1️⃣ 현재 로그인한 사용자 이메일 조회
+        String userEmail = AuthUtil.getLoginUserId();
+
+        // 2️⃣ 사용자가 해당 워크스페이스에 속해 있는지 검증
+        boolean isMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, userEmail).isPresent();
+        if (!isMember) {
+            throw new CustomException(ErrorCode.INVALID_WORKSPACE_ACCESS);
+        }
+
+        // 3️⃣ 해당 워크스페이스에 속한 모든 태그 조회
+        List<String> tags = workdataFileTagRepository.findAllTagsByWorkspace(wsId);
+        if (tags.isEmpty()) {
+            throw new CustomException(ErrorCode.TAGS_NOT_FOUND);
+        }
+
+        log.info("✅ 조회된 태그 개수: {}", tags.size());
+        return tags;
+    }
 
 
     /**
