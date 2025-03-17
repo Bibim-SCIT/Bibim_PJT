@@ -8,7 +8,6 @@ import { useNavigate } from 'react-router-dom';
 import LogoSection from 'layout/MainLayout/LogoSection';
 import LandingHeader from './components/LandingHeader';
 import ProfileSection from 'layout/MainLayout/Header/ProfileSection';
-import NotificationSection from 'layout/MainLayout/Header/NotificationSection';
 
 // 스타일 컴포넌트
 const HeaderSection = styled(Box)(({ theme }) => ({
@@ -88,6 +87,11 @@ export default function LandingPage3() {
   // 랜딩 페이지 선택으로 돌아가기
   const backToLandingSelect = () => {
     navigate("/landing");
+  };
+
+  // 랜딩 페이지 4로 이동
+  const moveToLanding4 = () => {
+    navigate("/landing4");
   };
 
   // 대시보드 섹션으로 스크롤
@@ -297,39 +301,41 @@ export default function LandingPage3() {
       {/* CTA 섹션 */}
       <Box 
         sx={{ 
-          py: 15, 
+          pt: { xs: 10, md: 15 }, 
+          pb: 0,
           textAlign: 'center',
           background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-          marginTop: 'auto'
+          mt: 'auto',
+          mb: 0
         }}
       >
-        <Container maxWidth="md">
+        <Container maxWidth="md" sx={{ pb: 0 }}>
           <Typography 
             variant="h2" 
             sx={{ 
-              fontWeight: 800,
-              mb: 3
+              fontWeight: 700, 
+              mb: 3,
+              color: 'text.primary'
             }}
           >
-            지금 바로 <GradientText>비빔</GradientText>을 시작하세요
+            지금 바로 비빔을 시작하세요
           </Typography>
-          
           <Typography 
             variant="h6" 
             sx={{ 
               color: 'text.secondary',
-              mb: 6,
+              mb: 4,
               maxWidth: '600px',
               mx: 'auto'
             }}
           >
             더 나은 협업과 생산성 향상을 위한 첫 걸음을 시작하세요
           </Typography>
-          
           <Stack 
             direction={{ xs: 'column', sm: 'row' }} 
             spacing={3} 
             justifyContent="center"
+            sx={{ mb: 0 }}
           >
             <Button 
               variant="contained" 
@@ -343,6 +349,7 @@ export default function LandingPage3() {
                 borderRadius: '50px',
                 fontSize: '1.1rem',
                 fontWeight: 600,
+                mb: 0,
                 '&:hover': {
                   bgcolor: '#333'
                 }
@@ -351,6 +358,25 @@ export default function LandingPage3() {
               워크스페이스 선택하기
             </Button>
           </Stack>
+          
+          <Box sx={{ mt: 5, pb: 5 }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+              다른 랜딩 페이지 스타일 보기
+            </Typography>
+            <Button 
+              variant="text" 
+              onClick={moveToLanding4}
+              sx={{ 
+                color: theme.palette.primary.main,
+                fontWeight: 500,
+                '&:hover': {
+                  bgcolor: 'rgba(0,0,0,0.05)'
+                }
+              }}
+            >
+              랜딩 페이지 4 보기
+            </Button>
+          </Box>
         </Container>
       </Box>
     </Box>

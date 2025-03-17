@@ -91,9 +91,9 @@ const FeatureIcon = styled(Avatar)(({ theme }) => ({
   color: theme.palette.primary.dark
 }));
 
-// ==============================|| Landing PAGE ||============================== //
+// ==============================|| Landing PAGE 4 ||============================== //
 
-export default function LandingPage() {
+export default function LandingPage4() {
   const navigate = useNavigate();
   const theme = useTheme();
 
@@ -216,7 +216,7 @@ export default function LandingPage() {
               mb: 3
             }}
           >
-            BIBIM과 함께<br />
+            비빔과 함께<br />
             <GradientText>창의적인 협업</GradientText>을 경험하세요
           </Typography>
           
@@ -230,7 +230,7 @@ export default function LandingPage() {
               lineHeight: 1.6
             }}
           >
-            BIBIM은 팀의 생산성을 높이고 효율적인 협업을 가능하게 하는 
+            비빔은 팀의 생산성을 높이고 효율적인 협업을 가능하게 하는 
             혁신적인 플랫폼입니다. 지금 바로 시작해보세요.
           </Typography>
           
@@ -242,7 +242,7 @@ export default function LandingPage() {
             <Button 
               variant="contained" 
               size="large"
-              onClick={moveToSignup}
+              onClick={moveToWorkspace}
               sx={{ 
                 bgcolor: '#111', 
                 color: '#fff',
@@ -256,7 +256,7 @@ export default function LandingPage() {
                 }
               }}
             >
-              지금 시작하기
+              워크스페이스 선택하기
             </Button>
             <Button 
               variant="outlined" 
@@ -298,7 +298,7 @@ export default function LandingPage() {
           <Grid container spacing={6} alignItems="center">
             <Grid item xs={12} md={6}>
               <SectionTitle variant="h3">
-                BIBIM 플랫폼 살펴보기
+                비빔 플랫폼 살펴보기
               </SectionTitle>
               <Typography 
                 variant="body1" 
@@ -308,7 +308,7 @@ export default function LandingPage() {
                   lineHeight: 1.7
                 }}
               >
-                BIBIM의 다양한 기능과 사용법을 확인해보세요.
+                비빔의 다양한 기능과 사용법을 확인해보세요.
                 직관적인 인터페이스와 강력한 협업 도구를 통해 팀의 생산성을 높이고 효율적인 업무 환경을 구축하는 방법을 알아볼 수 있습니다.
               </Typography>
               <Stack direction="row" spacing={2}>
@@ -327,7 +327,7 @@ export default function LandingPage() {
                 </Button>
                 <Button 
                   variant="outlined" 
-                  onClick={moveToWorkspace}
+                  onClick={scrollToPlatform}
                   sx={{
                     borderColor: '#111',
                     color: '#111',
@@ -337,7 +337,7 @@ export default function LandingPage() {
                     }
                   }}
                 >
-                  워크스페이스 선택하기
+                  더 알아보기
                 </Button>
               </Stack>
             </Grid>
@@ -358,7 +358,7 @@ export default function LandingPage() {
               >
                 <img 
                   src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80" 
-                  alt="BIBIM 사용 사례" 
+                  alt="비빔 사용 사례" 
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               </Box>
@@ -371,7 +371,7 @@ export default function LandingPage() {
       <Box sx={{ py: 10, bgcolor: theme.palette.background.default }} id="features-section">
         <Container>
           <SectionTitleCenter variant="h2">
-            BIBIM의 주요 기능
+            비빔의 주요 기능
           </SectionTitleCenter>
           <Typography 
             variant="body1" 
@@ -383,7 +383,7 @@ export default function LandingPage() {
               color: 'text.secondary'
             }}
           >
-            BIBIM은 팀 협업에 필요한 모든 기능을 한 곳에서 제공합니다.
+            비빔은 팀 협업에 필요한 모든 기능을 한 곳에서 제공합니다.
             실시간 채팅, 협업 도구, 일정 관리, 자료실까지 - <br />
             효율적인 팀워크를 위한 완벽한 솔루션을 경험해보세요.
           </Typography>
@@ -428,7 +428,7 @@ export default function LandingPage() {
               color: 'text.primary'
             }}
           >
-            지금 바로 BIBIM을 시작하세요
+            지금 바로 비빔을 시작하세요
           </Typography>
           <Typography 
             variant="h6" 
@@ -450,7 +450,7 @@ export default function LandingPage() {
             <Button 
               variant="contained" 
               size="large"
-              onClick={moveToSignup}
+              onClick={moveToWorkspace}
               sx={{ 
                 bgcolor: '#111', 
                 color: '#fff',
@@ -465,17 +465,17 @@ export default function LandingPage() {
                 }
               }}
             >
-              지금 시작하기
+              워크스페이스 선택하기
             </Button>
           </Stack>
           
-          <Box sx={{ mt: 3, mb: 5 }}>
-            <Typography variant="body1" sx={{ color: 'text.secondary', mb: 1 }}>
-              이미 계정이 있으신가요?
+          <Box sx={{ mt: 5, pb: 5 }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+              다른 랜딩 페이지 스타일 보기
             </Typography>
             <Button 
               variant="text" 
-              onClick={moveToLogin}
+              onClick={() => moveLandingPage(3)}
               sx={{ 
                 color: theme.palette.primary.main,
                 fontWeight: 500,
@@ -484,7 +484,7 @@ export default function LandingPage() {
                 }
               }}
             >
-              로그인하기
+              랜딩 페이지 3 보기
             </Button>
           </Box>
         </Container>

@@ -103,10 +103,10 @@ export const joinWorkspaceByInviteCode = async (inviteCode) => {
 //         throw error.response?.data || "워크스페이스 삭제에 실패했습니다.";
 //     }
 // };
-export const deleteWorkspace = async (workspaceName) => {
+export const deleteWorkspace = async (wsId) => {
     try {
         const response = await api.delete(API_BASE_URL, {
-            params: { wsName: workspaceName }
+            params: { wsId: wsId }
         });
         return response.data;
     } catch (error) {
