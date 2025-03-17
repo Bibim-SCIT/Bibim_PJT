@@ -37,6 +37,8 @@ const formatToKoreanTime = (timestamp) => {
     return dayjs(timestamp).add(9, 'hour').format('MM-DD HH:mm');
 };
 
+// .env에서 API URL 불러오기
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 /**
  * 채팅 컴포넌트
@@ -189,7 +191,7 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
         setMessages([]); // ✅ 기존 메시지 비우기
         const token = localStorage.getItem("token");
         try {
-            const response = await fetch(`http://localhost:8080/api/chat/messages/${channelId}`, {
+            const response = await fetch(`${API_BASE_URL}/api/chat/messages/${channelId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (!response.ok) throw new Error("메시지 조회 실패");
@@ -271,7 +273,7 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
         const token = localStorage.getItem("token");
         console.log("🔍 업로드 요청 - JWT 토큰:", token);
 
-        const uploadUrl = `http://localhost:8080/api/chat/upload/${channelId}`;
+        const uploadUrl = `${API_BASE_URL}/api/chat/upload/${channelId}`;
         console.log("🔍 파일 업로드 요청 URL:", uploadUrl);
 
         try {
@@ -436,7 +438,7 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
         const token = localStorage.getItem("token");
         if (!token || !channelId || !user) return;
 
-        const socket = new SockJS("http://localhost:8080/ws/chat");
+        const socket = new SockJS(`${API_BASE_URL}/ws/chat`);
         const client = new Client({
             webSocketFactory: () => socket,
             connectHeaders: { Authorization: `Bearer ${token}` },
@@ -475,7 +477,7 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
             const token = localStorage.getItem("token");
 
             try {
-                const response = await fetch(`http://localhost:8080/api/chat/messages/${channelId}`, {
+                const response = await fetch(`${API_BASE_URL}/api/chat/messages/${channelId}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 if (!response.ok) throw new Error("메시지 조회 실패");

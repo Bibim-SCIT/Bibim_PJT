@@ -24,7 +24,7 @@ import Transitions from 'ui-component/extended/Transitions';
 import NotificationList from './NotificationList';
 
 // API Base URL (백엔드 주소에 맞게 수정)
-const API_BASE_URL = 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'; // 백엔드 API 기본 URL
 
 // Select options: "안 읽은 알림" and "읽은 알림"
 const statusOptions = [

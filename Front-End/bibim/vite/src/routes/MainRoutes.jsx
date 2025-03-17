@@ -11,7 +11,6 @@ const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')))
 // sample page routing
 const DMPage = Loadable(lazy(() => import('views/dm')));
 const MeetingPage = Loadable(lazy(() => import('views/meeting')));
-const SamplePage = Loadable(lazy(() => import('views/sample-page')));
 const WorkDataPage = Loadable(lazy(() => import('views/workdata')));
 const WdCreatePage = Loadable(lazy(() => import('views/workdata_create')));
 const WdUpdatePage = Loadable(lazy(() => import('views/workdata_update')));
@@ -50,10 +49,6 @@ const MainRoutes = {
     {
       path: '/meeting',
       element: <MeetingPage />
-    },
-    {
-      path: '/sample-page',
-      element: <SamplePage />
     },
     {
       path: '/workdata',

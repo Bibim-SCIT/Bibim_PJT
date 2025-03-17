@@ -35,7 +35,7 @@ import { translateText } from "../../api/translate";
 import TranslateIcon from '@mui/icons-material/Translate'; // 번역 아이콘 추가
 
 // ✅ API 기본 URL 설정
-const API_BASE_URL = "http://localhost:8080/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'; // 백엔드 API 기본 URL
 
 // ✅ DM 방의 고유 ID 생성 함수
 const generateRoomId = (wsId, senderEmail, receiverEmail) => {
@@ -190,7 +190,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
     // ✅ 메시지 목록 스크롤을 맨 아래로 이동
     const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    },[]);
+    }, []);
 
     // ✅ 파일 업로드 함수
     const uploadFile = async () => {
@@ -308,7 +308,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
             body: JSON.stringify(messageDTO),
             headers: { Authorization: `Bearer ${token}` },
         });
-        
+
         // ✅ setMessages 제거하여 중복 메시지 방지
         setMessage("");
 
@@ -536,7 +536,7 @@ export default function DmPage() {
 
     // ✅ WebSocket 클라이언트 초기화 및 연결 설정
     useEffect(() => {
-        const socket = new SockJS("http://localhost:8080/ws/chat");
+        const socket = new SockJS(`${API_BASE_URL}/ws/chat`);
         const client = new Client({
             webSocketFactory: () => socket,
             connectHeaders: { Authorization: `Bearer ${localStorage.getItem("token")}` },
