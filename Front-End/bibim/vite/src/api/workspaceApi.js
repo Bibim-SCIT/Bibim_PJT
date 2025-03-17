@@ -3,7 +3,9 @@ import axios from "axios";
 
 import { api } from "./auth"; // ✅ `auth.js`의 api 인스턴스를 가져옴
 
-const API_BASE_URL = "http://localhost:8080/workspace"; // 백엔드 API 기본 URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'; // 백엔드 API 기본 URL
+console.log("✅ 현재 연결된 API 서버:", API_BASE_URL);
+const API_BASE_URL2 = `${API_BASE_URL}/workspace`;
 
 // ✅ 공통 헤더 생성 함수 (토큰 포함)
 const getAuthHeaders = () => {
@@ -21,7 +23,8 @@ const getAuthHeaders = () => {
 // ✅ 워크스페이스 리스트 가져오기
 export const getWorkspaces = async () => {
     try {
-        const response = await api.get(API_BASE_URL);
+        console.log("✅ 현재 연결된 API 서버:", API_BASE_URL);
+        const response = await api.get(API_BASE_URL2);
         return response.data;
     } catch (error) {
         throw error.response?.data || "워크스페이스 목록을 불러오는데 실패했습니다.";
@@ -53,12 +56,6 @@ export const createWorkspace = async (workspaceName, workspaceImage = null) => {
 
         return response.data;
 
-        // const response = await axios.get(`${API_BASE_URL}`, 
-        // {
-        //     // headers : {Authorization: `Bearer ${token}`},
-        //     headers : {Authorization: `Bearer eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiJ0ZXN0QGVtYWlsLmNvbSIsInJvbGVzIjpbIlJPTEVfVVNFUiJdLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiaWF0IjoxNzQwNTQ0NDMzLCJleHAiOjE3NDA1NTE2MzN9.8-x4Gzupg2VqShiVOZmkH7t9aMBm-IPIvRsdX2SP0ZU`},
-        // });
-        // return response.data;
     } catch (error) {
         console.error("🚨 워크스페이스 생성 실패:", error);
         throw error.response?.data || "워크스페이스 생성에 실패했습니다.";
@@ -71,7 +68,7 @@ export const createWorkspace = async (workspaceName, workspaceImage = null) => {
 // 초대 코드에 의해 가입하기
 export const joinWorkspaceByInviteCode = async (inviteCode) => {
     try {
-        const response = await api.post(`${API_BASE_URL}/add`, null, {
+        const response = await api.post(`${API_BASE_URL2}/add`, null, {
             params: { code: inviteCode },
         });
         return response.data;
@@ -105,7 +102,7 @@ export const joinWorkspaceByInviteCode = async (inviteCode) => {
 // };
 export const deleteWorkspace = async (wsId) => {
     try {
-        const response = await api.delete(API_BASE_URL, {
+        const response = await api.delete(API_BASE_URL2, {
             params: { wsId: wsId }
         });
         return response.data;
@@ -117,7 +114,7 @@ export const deleteWorkspace = async (wsId) => {
 // ✅ 현재 워크스페이스 멤버 정보 조회
 export const getWorkspaceMembers = async (workspaceId) => {
     try {
-        const response = await api.get(`${API_BASE_URL}/myinfo`, {
+        const response = await api.get(`${API_BASE_URL2}/myinfo`, {
             params: { wsId: workspaceId }
         });
         console.log('API 응답:', response);  // 응답 확인
@@ -156,7 +153,7 @@ export const updateWorkspace = async (wsName, newName, imageFile) => {
 // 초대 기능 API 호출
 export const inviteWorkspace = async (wsId, email) => {
     try {
-        const response = await api.post(`${API_BASE_URL}/invite`, null, {
+        const response = await api.post(`${API_BASE_URL2}/invite`, null, {
             params: { wsId, email },
         });
         return response.data;
@@ -168,7 +165,7 @@ export const inviteWorkspace = async (wsId, email) => {
 export const kickUserFromWorkspace = async (wsId, email) => {
     try {
         console.log('강퇴 요청 파라미터:', { wsId, email });  // 요청 파라미터 확인
-        const response = await api.delete(`${API_BASE_URL}/forcedrawal`, {
+        const response = await api.delete(`${API_BASE_URL2}/forcedrawal`, {
             params: { wsId, email }
         });
         console.log('강퇴 API 응답:', response);  // API 응답 확인
@@ -187,12 +184,12 @@ export const fetchWorkspaceUsers = async (workspaceId) => {
             console.error("🚨 workspaceId가 없어 API 호출을 중단합니다.");
             return [];
         }
-        
-        const response = await api.get(`${API_BASE_URL}/${workspaceId}/members`, {
+
+        const response = await api.get(`${API_BASE_URL2}/${workspaceId}/members`, {
             headers: getAuthHeaders(),
             withCredentials: true
         });
-        
+
         return response.data;
     } catch (error) {
         console.error('워크스페이스 멤버 조회 실패:', error);
@@ -203,16 +200,16 @@ export const fetchWorkspaceUsers = async (workspaceId) => {
 // 워크스페이스 멤버 권한 변경 API
 export const updateUserRole = async (wsId, email, newRole) => {
     try {
-        const response = await api.patch(`${API_BASE_URL}/rolesetting`, null, {
+        const response = await api.patch(`${API_BASE_URL2}/rolesetting`, null, {
             params: { wsId, email, newRole },
             headers: {
                 'Content-Type': 'application/json'
             }
         });
-        
+
         // 응답 데이터 확인 로깅
         console.log('권한 변경 응답:', response);
-        
+
         return response.data;
     } catch (error) {
         console.error('권한 변경 API 에러:', error);
@@ -227,29 +224,29 @@ export const fetchWorkspaceMembersStatus = async (workspaceId) => {
             console.error("🚨 workspaceId가 없어 API 호출을 중단합니다.");
             return [];
         }
-        
-        const response = await axios.get(`${API_BASE_URL}/${workspaceId}/members/status`, {
+
+        const response = await axios.get(`${API_BASE_URL2}/${workspaceId}/members/status`, {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
             withCredentials: true,
         });
-        
+
         if (!response.data || !response.data.data) {
             console.error("🚨 API 응답에 data 필드가 없습니다");
             return [];
         }
-        
+
         // 응답 데이터 형식 확인
         const statusData = response.data.data;
-        
+
         // 데이터 형식 변환 (loginStatus -> status)
         const formattedData = statusData.map(item => ({
             email: item.email,
             status: item.loginStatus ? 'online' : 'offline',
             lastActiveTime: item.lastActiveTime
         }));
-        
+
         return formattedData;
     } catch (error) {
         console.error("🚨 워크스페이스 멤버 접속 현황 조회 실패:", error);
@@ -263,18 +260,18 @@ export const fetchWorkspaceMembersStatus = async (workspaceId) => {
  * @returns {Promise<Object>} 탈퇴 결과
  */
 export const leaveWorkspace = async (wsId) => {
-  try {
-    const response = await api.delete('/workspace/withdrawal', {
-      params: { wsId }
-    });
-    
-    console.log('워크스페이스 탈퇴 응답:', response.data);  // 응답 확인
-    return response.data;
-  } catch (error) {
-    console.error('워크스페이스 탈퇴 중 오류 발생:', error);
-    console.error('오류 응답:', error.response?.data);  // 오류 응답 데이터 확인
-    throw error.response?.data || "워크스페이스 탈퇴에 실패했습니다.";
-  }
+    try {
+        const response = await api.delete('/workspace/withdrawal', {
+            params: { wsId }
+        });
+
+        console.log('워크스페이스 탈퇴 응답:', response.data);  // 응답 확인
+        return response.data;
+    } catch (error) {
+        console.error('워크스페이스 탈퇴 중 오류 발생:', error);
+        console.error('오류 응답:', error.response?.data);  // 오류 응답 데이터 확인
+        throw error.response?.data || "워크스페이스 탈퇴에 실패했습니다.";
+    }
 };
 
 export default {
