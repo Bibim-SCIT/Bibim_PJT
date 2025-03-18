@@ -19,7 +19,6 @@ import { useNavigate } from 'react-router-dom';
 import { getMyWorkspaceData } from '../../../api/mypage';
 import TableChartIcon from "@mui/icons-material/TableChart";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
-import DescriptionIcon from "@mui/icons-material/Description";
 import FileDetailModal from './FileDetailModal';
 
 // 파일 아이콘 import
@@ -244,7 +243,6 @@ const MyWorkData = () => {
               border: '1px dashed #ccc'
             }}
           >
-            <DescriptionIcon sx={{ fontSize: 60, color: '#aaa', mb: 2 }} />
             <Typography variant="h5" color="text.secondary" fontWeight={500} gutterBottom>
               등록한 자료가 없습니다
             </Typography>
