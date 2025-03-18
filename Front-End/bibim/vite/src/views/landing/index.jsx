@@ -217,7 +217,7 @@ export default function LandingPage() {
             }}
           >
             BIBIM과 함께<br />
-            <GradientText>창의적인 협업</GradientText>을 경험하세요
+            <GradientText>혁신적인 협업</GradientText>을 경험하세요
           </Typography>
           
           <Typography 
@@ -428,7 +428,7 @@ export default function LandingPage() {
               color: 'text.primary'
             }}
           >
-            지금 바로 BIBIM을 시작하세요
+            지금 바로 <GradientText>BIBIM</GradientText>을 시작하세요
           </Typography>
           <Typography 
             variant="h6" 
