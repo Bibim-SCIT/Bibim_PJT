@@ -23,9 +23,6 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
     // 수정 전: Optional<WorkspaceMemberEntity> findByWorkspaceWsIdAndMemberEmail(Long workspaceId, String email);
     Optional<WorkspaceMemberEntity> findByWorkspace_wsIdAndMember_Email(Long workspaceId, String email);
 
-    // 수정 전: List<WorkspaceMemberEntity> findByWorkspaceWsId(Long wsId);
-    List<WorkspaceMemberEntity> findByWorkspace_wsId(Long wsId);
-
     List<WorkspaceMemberEntity> findByWorkspace(WorkspaceEntity workspace);
   
 //    List<WorkspaceMemberEntity> findByWorkspace_wsIdAndChRoleNumber_ChRoleNumber(Long wsId,Long chRoleNumber);
@@ -34,7 +31,7 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
     Optional<WorkspaceMemberEntity> findByWorkspace_WsIdAndMember_Email(Long wsId, String email);
 
     // 특정 워크스페이스에 소속된 모든 멤버 조회
-    List<WorkspaceMemberEntity> findByWorkspace_WsId(Long wsId);
+    List<WorkspaceMemberEntity> findAllByWorkspace_WsId(Long wsId);
 
     //게시물 등록 시 이메일 가져옴
     Optional<WorkspaceMemberEntity> findByMember_EmailAndWorkspace_WsId(String email, Long wsId); // ✅ 수정
@@ -52,5 +49,4 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
     @Query("DELETE FROM WorkspaceMemberEntity wm WHERE wm.workspace.wsId = :wsId")
     void deleteByWorkspace(@Param("wsId") Long wsId);
 
-    List<WorkspaceMemberEntity> findAllByWorkspace_WsId(Long wsId);
 }

@@ -399,7 +399,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
 
                 <div className="dm-chat-header-info">
                     <div className="dm-chat-header-name">
-                        {receiverInfo?.nickname || receiverId.split('@')[0]}
+                        {receiverInfo?.nickame || receiverId.split('@')[0]}
                     </div>
                     <div className="dm-chat-header-email">{receiverId}</div>
                 </div>
@@ -446,7 +446,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                                                 )}
                                             </div>
                                             <span className="dm-sender-name">
-                                                {msg.sender.split('@')[0]}
+                                                {msg.nickname}
                                             </span>
                                         </>
                                     )}
