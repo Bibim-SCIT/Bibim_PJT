@@ -200,6 +200,10 @@
     margin-bottom: 16px;
 }
 
+.message:hover {
+    background-color: #00000010;
+}
+
 /* 발신자 정보 영역 */
 .sender {
     display: flex;

@@ -175,7 +175,6 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                     >
                         번역
                     </Button>
-
                 </div>
             );
         }
