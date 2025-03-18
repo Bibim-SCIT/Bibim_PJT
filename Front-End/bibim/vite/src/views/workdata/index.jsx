@@ -17,7 +17,7 @@ import SearchBar from "./components/SearchBar";
 import Filter from "./components/Filter";
 import TableChartIcon from "@mui/icons-material/TableChart";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
-import { getWorkdataList, getWorkdataDetail, searchWorkdata } from '../../api/workdata'; // ✅ 전체 조회 API import
+import { getWorkdataList, getWorkdataDetail, searchWorkdata, getAllTags } from '../../api/workdata'; // ✅ 전체 조회 API import
 
 // ==============================|| 자료실 ||============================== //
 
@@ -27,9 +27,10 @@ export default function WorkDataPage() {
     // const [files, setFiles] = useState(filesData);
     const [files, setFiles] = useState([]); // ✅ 초기 데이터를 빈 배열로 설정
     const [searchQuery, setSearchQuery] = useState("");
-    const [selectedTag, setSelectedTag] = useState("전체");
     const [viewMode, setViewMode] = useState("table"); // "table" or "card"
     const [loading, setLoading] = useState(true);  // ✅ 로딩 상태 추가
+    const [tags, setTags] = useState(["전체"]); // 기본 태그 옵션
+    const [selectedTag, setSelectedTag] = useState("전체");
 
     console.log("현재 JWT 토큰:", localStorage.getItem("token")); // ✅ auth.js에서 저장한 토큰 키 사용
 
@@ -37,81 +38,21 @@ export default function WorkDataPage() {
     const [sortField, setSortField] = useState("regDate");
     const [sortOrder, setSortOrder] = useState("desc");
 
-    // ✅ 전체 조회 API 호출
-    // ✅ 처음 API 요청할 때만 실행 (정렬할 때는 새로 요청하지 않음)
-    // useEffect(() => {
-    //     const fetchWorkdata = async () => {
-    //         try {
-    //             setLoading(true);
-    //             const wsId = activeWorkspace.wsId;
-    //             console.log("📌 현재 등록할 워크스페이스 번호:", wsId);
-    //             console.log("📌 현재 등록할 워크스페이스 이름 등 정보:", activeWorkspace);
-    //             // 전체 목록 조회
-    //             const listData = await getWorkdataList(wsId, "regDate", "desc");
-    //             console.log("📌 불러온 자료 목록:", listData);
-
-    //             if (Array.isArray(listData)) {
-    //                 // 각 항목마다 상세 조회 API 호출 (content 포함)
-    //                 const detailedData = await Promise.all(
-    //                     listData.map(async (item) => {
-    //                         try {
-    //                             const detail = await getWorkdataDetail(wsId, item.dataNumber);
-    //                             console.log("📌 불러온 자료 상세:", detail);
-    //                             return {
-    //                                 ...item, content: detail.content, fileNames2: detail.fileNames, fileUrls: detail.fileUrls
-    //                             };
-    //                         } catch (error) {
-    //                             console.error("상세 조회 실패:", item.dataNumber, error);
-    //                             return { ...item, content: "" }; // 실패 시 빈 문자열
-    //                         }
-    //                     })
-    //                 );
-
-    //                 const formattedData = detailedData.map((item) => ({
-    //                     id: item.dataNumber,
-    //                     title: item.title,
-    //                     files: item.fileNames2 || ["파일 없음"],
-    //                     tags: item.tags || [],
-    //                     date: item.regDate.split("T")[0],
-    //                     uploader: item.nickname,
-    //                     writer: item.writer,
-    //                     avatar: item.profileImage || "/avatars/default.png",
-    //                     wsId: activeWorkspace.wsId,
-    //                     content: item.content,
-    //                     fileUrls: item.fileUrls
-    //                 }));
-    //                 setFiles(formattedData);
-    //             } else {
-    //                 console.error("❌ API에서 받은 데이터가 배열이 아님:", listData);
-    //                 setFiles([]);
-    //             }
-    //         } catch (error) {
-    //             console.error("❌ 자료 목록 조회 실패:", error);
-    //             setFiles([]);
-    //         } finally {
-    //             setLoading(false);
-    //         }
-    //     };
-
-    //     fetchWorkdata();
-    // }, [activeWorkspace]);
-
     // API 호출 함수: 검색어 여부에 따라 전체 목록 또는 검색 결과를 받아오고, 각 항목에 대해 상세 조회 호출
     const fetchData = async () => {
         try {
             setLoading(true);
             const wsId = activeWorkspace.wsId;
             let listData;
+
             if (searchQuery.trim() === "") {
-                // 검색어가 없으면 전체 자료 조회
-                listData = await getWorkdataList(wsId, sortField, sortOrder);
-                console.log("검색어 X", listData);
+                // ✅ 태그 필터가 '전체'가 아닐 경우 서버에서 태그 필터링 적용
+                listData = await getWorkdataList(wsId, sortField, sortOrder, selectedTag !== "전체" ? selectedTag : null);
             } else {
-                // 검색어가 있으면 검색 API 호출
                 let temp;
-                temp = await searchWorkdata(wsId, searchQuery, sortField, sortOrder);
+                temp = await searchWorkdata(wsId, searchQuery, sortField, sortOrder, selectedTag !== "전체" ? selectedTag : null);
                 listData = temp.data;
-                console.log("검색어 O", listData);
+                console.log("검색어 및 태그 O", listData);
             }
 
             if (Array.isArray(listData)) {
@@ -142,13 +83,28 @@ export default function WorkDataPage() {
         }
     };
 
+    useEffect(() => {
+        const fetchTags = async () => {
+            if (!activeWorkspace) return;
+            try {
+                const wsId = activeWorkspace.wsId;
+                const tagList = await getAllTags(wsId);
+                setTags(["전체", ...tagList]); // "전체" 옵션 추가
+            } catch (error) {
+                console.error("태그 불러오기 실패:", error);
+            }
+        };
+
+        fetchTags();
+    }, [activeWorkspace]);
+
     // 검색어, 정렬, 워크스페이스 변경 시 debounce 적용
     useEffect(() => {
         const debounceTimeout = setTimeout(() => {
             fetchData();
         }, 300); // 300ms 지연
         return () => clearTimeout(debounceTimeout);
-    }, [activeWorkspace, searchQuery, sortField, sortOrder]);
+    }, [activeWorkspace, searchQuery, sortField, sortOrder, selectedTag]);
 
 
     const handleSort = (field) => {
@@ -156,16 +112,22 @@ export default function WorkDataPage() {
         setSortOrder(prevOrder => (prevOrder === "asc" ? "desc" : "asc"));
     };
 
+    // 태그 필터링: API 검색 결과에는 태그 필터링이 적용되어 있지 않다면 클라이언트에서 추가 필터링
+    const filteredFiles = useMemo(() => {
+        return files.filter(file =>
+            selectedTag === "전체" || (file.tags && file.tags.includes(selectedTag))
+        );
+    }, [files, selectedTag]); // ✅ selectedTag 변경될 때마다 실행
+
     // ✅ 클라이언트 측에서 정렬 수행
     const sortedFiles = useMemo(() => {
-        return [...files].sort((a, b) => {
+        return [...filteredFiles].sort((a, b) => { // ✅ filteredFiles 기반으로 정렬
             if (sortField === "title" || sortField === "uploader") {
                 return sortOrder === "asc"
                     ? a[sortField].localeCompare(b[sortField])
                     : b[sortField].localeCompare(a[sortField]);
             }
             if (sortField === "date") {
-                // ✅ "YYYY-MM-DD" -> Date 객체 변환하여 비교
                 const [yearA, monthA, dayA] = a.date.split("-").map(Number);
                 const [yearB, monthB, dayB] = b.date.split("-").map(Number);
                 const dateA = new Date(yearA, monthA - 1, dayA);
@@ -175,26 +137,7 @@ export default function WorkDataPage() {
             }
             return 0;
         });
-    }, [files, sortField, sortOrder]);  // ✅ files가 변경될 때만 정렬 실행
-
-
-
-    // 🔍 파일 검색 및 필터링
-    // const filteredFiles = files.filter(
-    //     (file) =>
-    //         file.files.some(f => f.toLowerCase().includes(searchQuery.toLowerCase())) &&
-    //         (selectedTag === "전체" || file.tags.includes(selectedTag))
-    // );
-    // const filteredFiles = files.filter(
-    //     (file) =>
-    //         (file.files || []).some(f => f.toLowerCase().includes(searchQuery.toLowerCase())) &&
-    //         (selectedTag === "전체" || file.tags?.includes(selectedTag))
-    // );
-
-    // 태그 필터링: API 검색 결과에는 태그 필터링이 적용되어 있지 않다면 클라이언트에서 추가 필터링
-    const filteredFiles = files.filter(file =>
-        selectedTag === "전체" || (file.tags && file.tags.includes(selectedTag))
-    );
+    }, [filteredFiles, sortField, sortOrder]); // ✅ filteredFiles가 변경될 때 정렬
 
     // 정렬은 API에서 처리하거나, 클라이언트 단에서 추가 정렬할 수도 있음.
     // 여기서는 API에서 정렬을 처리한다고 가정
@@ -238,7 +181,7 @@ export default function WorkDataPage() {
             {/* 🔍 검색 & 필터 (자연스럽게 배치) */}
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
                 <Box sx={{ flexGrow: 1, maxWidth: "200px" }}>
-                    <Filter selectedTag={selectedTag} setSelectedTag={setSelectedTag} />
+                    <Filter selectedTag={selectedTag} setSelectedTag={setSelectedTag} tags={tags} />
                 </Box>
                 <Box sx={{ flexGrow: 2, maxWidth: "400px", display: "flex", justifyContent: "flex-end" }}>
                     <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />

@@ -295,6 +295,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
 
     // ✅ 메시지 전송 함수
     const sendMessage = () => {
+
         if (!message.trim() || !stompClient) return;
 
         const messageDTO = {
@@ -540,7 +541,7 @@ export default function DmPage() {
 
     // ✅ WebSocket 클라이언트 초기화 및 연결 설정
     useEffect(() => {
-        const socket = new SockJS(`${API_BASE_URL2}/ws/chat`);
+        const socket = new SockJS(`${API_BASE_URL}/ws/chat`);
         const client = new Client({
             webSocketFactory: () => socket,
             connectHeaders: { Authorization: `Bearer ${localStorage.getItem("token")}` },

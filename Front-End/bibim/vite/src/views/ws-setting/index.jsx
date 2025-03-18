@@ -4,7 +4,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import WsBasicSetting from './components/WsBasicSetting';
 import WsUserRoleManagement from './components/WsUserRoleManagement';
-import WsDelete from './components/WsDelete';
 import LeaveWorkspaceModal from './components/LeaveWorkspaceModal';
 // project imports
 import { leaveWorkspace } from '../../api/workspaceApi';
@@ -15,7 +14,6 @@ const WsSettingPage = () => {
     const { wsId } = useParams(); // URL에서 워크스페이스 ID 가져오기
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [leaveModalOpen, setLeaveModalOpen] = useState(false);
     const [workspace, setWorkspace] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -86,10 +84,6 @@ const WsSettingPage = () => {
         setLoading(false);
     }, [wsId, workspaceList, activeWorkspace, reduxLoading, navigate]);
 
-    // 삭제 모달 열기/닫기
-    const handleOpenDeleteModal = () => setDeleteModalOpen(true);
-    const handleCloseDeleteModal = () => setDeleteModalOpen(false);
-
     // 탈퇴 모달 열기/닫기
     const handleOpenLeaveModal = () => setLeaveModalOpen(true);
     const handleCloseLeaveModal = () => setLeaveModalOpen(false);
@@ -107,12 +101,6 @@ const WsSettingPage = () => {
             console.log('워크스페이스 탈퇴 시도:', workspace.wsId);
             const result = await leaveWorkspace(workspace.wsId);
             console.log('워크스페이스 탈퇴 결과:', result);
-            
-            setSnackbar({
-                open: true,
-                message: '워크스페이스에서 성공적으로 탈퇴했습니다.',
-                severity: 'success'
-            });
             
             // 탈퇴 성공 시 즉시 워크스페이스 선택 페이지로 이동
             navigate('/workspace');
@@ -177,46 +165,34 @@ const WsSettingPage = () => {
                     <WsUserRoleManagement workspace={workspace} />
                 </Box>
 
-                {/* 3. 워크스페이스 나가기/삭제 버튼 */}
+                {/* 3. 워크스페이스 나가기 버튼 */}
                 <Box sx={{ 
                     bgcolor: 'white',
                     borderRadius: 1,
                     boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
-                    p: 3,
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    gap: 2
+                    p: 3
                 }}>
-                    <Button 
-                        variant="outlined" 
-                        sx={{
-                            color: '#666',
-                            borderColor: '#666',
-                            '&:hover': {
-                                borderColor: '#444',
-                                backgroundColor: 'rgba(102, 102, 102, 0.04)'
-                            }
-                        }}
-                        onClick={handleOpenLeaveModal}
-                    >
-                        워크스페이스 나가기
-                    </Button>
-                    <Button 
-                        variant="contained" 
-                        color="error"
-                        onClick={handleOpenDeleteModal}
-                    >
-                        워크스페이스 삭제
-                    </Button>
+                    <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'flex-end'
+                    }}>
+                        <Button 
+                            variant="outlined" 
+                            sx={{
+                                color: '#ff4444',
+                                borderColor: '#ff4444',
+                                '&:hover': {
+                                    borderColor: '#ff0000',
+                                    backgroundColor: 'rgba(255, 68, 68, 0.04)'
+                                }
+                            }}
+                            onClick={handleOpenLeaveModal}
+                        >
+                            워크스페이스 나가기
+                        </Button>
+                    </Box>
                 </Box>
             </Box>
-
-            {/* 워크스페이스 삭제 모달 */}
-            <WsDelete 
-                open={deleteModalOpen} 
-                onClose={handleCloseDeleteModal} 
-                workspace={workspace}
-            />
 
             {/* 워크스페이스 탈퇴 모달 */}
             <LeaveWorkspaceModal
