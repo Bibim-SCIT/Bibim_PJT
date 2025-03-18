@@ -528,6 +528,8 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 .name(member.getName()) // 기본 회원 이름
                 .nickname(workspaceMember.getNickname()) // 워크스페이스 내 닉네임
                 .profileImage(workspaceMember.getProfileImage()) // 워크스페이스 내 프로필 이미지
+                .wsRole(workspaceMember.getWsRole())
+                .email(member.getEmail())
                 .build();
 
         return ResultDTO.of("워크스페이스 회원 정보 조회 성공", workspaceMemberDTO);
