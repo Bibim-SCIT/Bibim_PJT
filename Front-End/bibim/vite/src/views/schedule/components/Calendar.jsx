@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { Box, Avatar } from '@mui/material';
+import { Box, Avatar, Paper } from '@mui/material';
 import styled from '@emotion/styled';
 import ScheduleDetailModal from './ScheduleDetailModal';
 import ScheduleEditModal from './ScheduleEditModal';
@@ -88,54 +88,60 @@ const Calendar = ({ tasks, onDeleteSuccess }) => {
   console.log("현재 선택 달력 스케줄", selectedSchedule);
 
   return (
-    <Box
-      sx={{
-        padding: 2,
+    <Paper
+      elevation={0}
+      sx={{ 
         width: '100%',
         maxWidth: '1200px',
         margin: '0 auto',
-        boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-        borderRadius: '10px',
-        '& .calendar-container': {
-          padding: 2,
-          background: '#fff',
-          borderRadius: 2,
-          boxShadow: 1,
-        },
-        '& .fc-toolbar': {
-          display: 'flex !important',
-          justifyContent: 'space-between !important',
-          alignItems: 'center',
-          marginBottom: 3,
-          padding: '0 1em',
-        },
-        '& .fc-today-button': {
-          backgroundColor: '#6B7280',
-          color: '#FFFFFF',
-          borderRadius: 1,
-          '&:hover': {
-            backgroundColor: '#4B5563',
-          },
-        },
-        '& .fc-event': {
-          borderRadius: 1,
-          padding: '2px 4px',
-          transition: 'all 0.2s ease-in-out',
-          cursor: 'pointer',
-        },
-        '& .fc-day-today': {
-          backgroundColor: '#F8F9FA !important',
-          '&:hover': {
-            backgroundColor: '#F1F3F5 !important',
-          },
-        },
-        '& .fc-daygrid-day-number': {
-          padding: '4px 8px',
-          fontSize: '14px',
-        },
+        borderRadius: 2,
+        border: '1px solid #e0e0e0',
+        overflow: 'hidden',
+        transition: 'all 0.2s ease',
+        '&:hover': {
+          boxShadow: '0 3px 10px rgba(0,0,0,0.03), 0 1px 5px rgba(0,0,0,0.02)'
+        }
       }}
     >
-      <Box className="calendar-container">
+      <Box
+        sx={{
+          padding: 2,
+          '& .fc': {
+            width: '100%',
+          },
+          '& .fc-toolbar': {
+            display: 'flex !important',
+            justifyContent: 'space-between !important',
+            alignItems: 'center',
+            marginBottom: 2,
+            padding: '0 1em',
+          },
+          '& .fc-today-button': {
+            backgroundColor: '#6B7280',
+            color: '#FFFFFF',
+            borderRadius: 1,
+            '&:hover': {
+              backgroundColor: '#4B5563',
+            },
+          },
+          '& .fc-event': {
+            borderRadius: 1,
+            padding: '2px 4px',
+            transition: 'all 0.2s ease-in-out',
+            cursor: 'pointer',
+          },
+          '& .fc-day-today': {
+            backgroundColor: '#F8F9FA !important',
+            '&:hover': {
+              backgroundColor: '#F1F3F5 !important',
+            },
+          },
+          '& .fc-daygrid-day-number': {
+            padding: '4px 8px',
+            fontSize: '14px',
+          },
+        }}
+      >
         <FullCalendar
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
@@ -243,7 +249,7 @@ const Calendar = ({ tasks, onDeleteSuccess }) => {
           />
         )}
       </Box>
-    </Box>
+    </Paper>
   );
 };
 export default Calendar;
