@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { 
-    Modal, 
-    Box, 
-    Typography, 
-    TextField, 
-    Button, 
-    Avatar, 
+import React, { useState, useEffect } from 'react';
+import {
+    Modal,
+    Box,
+    Typography,
+    TextField,
+    Button,
+    Avatar,
     IconButton,
     Divider,
     Stack
@@ -16,6 +16,7 @@ import { loadWorkspace } from '../../../store/workspaceRedux';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
+import defaultWorkspaceImage from '../../../assets/images/icons/bibimsero.png'; // 기본 로고 이미지
 
 // 모달창 스타일
 const modalStyle = {
@@ -31,12 +32,23 @@ const modalStyle = {
     outline: 'none'
 };
 
+const defaultImage = 'https://bibim2.s3.ap-northeast-2.amazonaws.com/workdata-files/587fb795-8fbf-4a5c-a203-d714f585422d.png';
+
 const CreateWorkspaceModal = ({ open, onClose, onSuccess }) => {
     const dispatch = useDispatch();
     const [workspaceName, setWorkspaceName] = useState('');
     const [workspaceImage, setWorkspaceImage] = useState(null);
-    const [previewImage, setPreviewImage] = useState(null);
+    const [previewImage, setPreviewImage] = useState(defaultWorkspaceImage);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // 모달이 열릴 때 초기화
+    useEffect(() => {
+        if (open) {
+            setWorkspaceName('');
+            setWorkspaceImage(null);
+            setPreviewImage(defaultWorkspaceImage);
+        }
+    }, [open]);
 
     // 이미지 선택 핸들러
     const handleImageChange = (event) => {
@@ -56,7 +68,7 @@ const CreateWorkspaceModal = ({ open, onClose, onSuccess }) => {
     // 워크스페이스 생성 요청
     const handleCreate = async () => {
         if (!workspaceName.trim()) return;
-        
+
         const token = localStorage.getItem("token");
         if (!token) {
             alert("로그인이 필요합니다. 다시 로그인 후 시도해주세요.");
@@ -65,14 +77,27 @@ const CreateWorkspaceModal = ({ open, onClose, onSuccess }) => {
 
         try {
             setIsSubmitting(true);
-            await createWorkspace(workspaceName, workspaceImage);
+
+            let fileToSend = workspaceImage;
+            if (!fileToSend) {
+                // 기본 이미지 URL을 Blob으로 변환하여 파일로 전송
+                const response = await fetch(defaultImage);
+                const blob = await response.blob();
+                fileToSend = new File([blob], "defaultImage.png", { type: "image/png" });
+            }
+
+            await createWorkspace(workspaceName, fileToSend);
+            // await createWorkspace(workspaceName, workspaceImage || defaultImage);
             await dispatch(loadWorkspace());
-            
+
+            console.log("원래등록", workspaceImage, workspaceName);
+            console.log("워크스페이스 생성 요청:", fileToSend, workspaceName);
+
             // 성공 콜백이 있으면 호출
             if (onSuccess && typeof onSuccess === 'function') {
                 onSuccess();
             }
-            
+
             onClose();
         } catch (error) {
             console.error("워크스페이스 생성 실패:", error);
@@ -113,7 +138,7 @@ const CreateWorkspaceModal = ({ open, onClose, onSuccess }) => {
                 {/* 내용 영역 */}
                 <Box sx={{ p: 3 }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <Box sx={{ 
+                        <Box sx={{
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
@@ -136,16 +161,20 @@ const CreateWorkspaceModal = ({ open, onClose, onSuccess }) => {
                                 onClick={() => document.getElementById('workspace-image-input').click()}
                             >
                                 {previewImage ? (
-                                    <img 
-                                        src={previewImage} 
+                                    <img
+                                        src={previewImage}
                                         alt="워크스페이스 이미지"
-                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        style={{
+                                            width: previewImage === defaultWorkspaceImage ? '70%' : '100%',
+                                            height: previewImage === defaultWorkspaceImage ? 'auto' : '100%',
+                                            objectFit: previewImage === defaultWorkspaceImage ? 'cover' : 'contain',
+                                        }}
                                     />
                                 ) : (
                                     <PhotoCameraIcon sx={{ color: '#999', fontSize: 40 }} />
                                 )}
                             </Box>
-                            <Stack sx={{ 
+                            <Stack sx={{
                                 flexDirection: 'row',
                                 gap: 1.5,
                                 alignItems: 'center',
@@ -157,7 +186,7 @@ const CreateWorkspaceModal = ({ open, onClose, onSuccess }) => {
                                     onClick={handleRemoveImage}
                                     size="small"
                                     disabled={!previewImage}
-                                    sx={{ 
+                                    sx={{
                                         color: '#666',
                                         borderColor: '#d0d0d0',
                                         boxShadow: 'none'
@@ -169,10 +198,10 @@ const CreateWorkspaceModal = ({ open, onClose, onSuccess }) => {
                                     variant="contained"
                                     component="label"
                                     size="small"
-                                    sx={{ 
+                                    sx={{
                                         bgcolor: '#4a6cc7',
                                         boxShadow: 'none',
-                                        '&:hover': { 
+                                        '&:hover': {
                                             bgcolor: '#3f5ba9',
                                             boxShadow: 'none'
                                         }
@@ -233,7 +262,7 @@ const CreateWorkspaceModal = ({ open, onClose, onSuccess }) => {
                         sx={{
                             bgcolor: '#4a6cc7',
                             boxShadow: 'none',
-                            '&:hover': { 
+                            '&:hover': {
                                 bgcolor: '#3f5ba9',
                                 boxShadow: 'none'
                             }

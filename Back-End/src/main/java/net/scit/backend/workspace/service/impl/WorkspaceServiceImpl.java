@@ -230,7 +230,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         String senderNickname = senderMember.getNickname();
 
         // 4. 워크스페이스 멤버 리스트 조회 (알림 대상)
-        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findByWorkspace_wsId(wsId);
+        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findAllByWorkspace_WsId(wsId);
 
 
         // 6. **알림 이벤트 발행**
@@ -289,7 +289,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         String senderNickname = senderMember.getNickname();
 
         // ✅ 수정됨: 동일 워크스페이스에 속한 모든 멤버 조회 (알림 대상)
-        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findByWorkspace_wsId(wsId);
+        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findAllByWorkspace_WsId(wsId);
 
         String imageUrl = workspaceEntity.getWsImg();
         if (file != null && !file.isEmpty()) {
@@ -327,7 +327,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
         workspaceMemberRepository.deleteByWorkspace_wsIdAndMember_Email(wsId, senderEmail);
 
-        List<WorkspaceMemberEntity> remainingMembers = workspaceMemberRepository.findByWorkspace_wsId(wsId);
+        List<WorkspaceMemberEntity> remainingMembers = workspaceMemberRepository.findAllByWorkspace_WsId(wsId);
 
         if (remainingMembers.isEmpty()) {
             // 삭제 전에 이벤트 먼저 발생
@@ -491,7 +491,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                         .build());
 
         // ✅ 수정됨: 동일 워크스페이스의 모든 멤버에게 알림 전송 (개별 알림)
-        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findByWorkspace_wsId(wsId);
+        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findAllByWorkspace_WsId(wsId);
         for (WorkspaceMemberEntity wm : workspaceMembers) {
             eventPublisher.publishEvent(
                     new WorkspaceEvent(workspaceEntity, senderEmail, memberEntity.getName(), "join",
@@ -618,7 +618,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         }
 
         // 워크스페이스에 소속된 모든 멤버 조회
-        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findByWorkspace_WsId(workspaceId);
+        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findAllByWorkspace_WsId(workspaceId);
         List<MemberLoginStatusDTO> statusList = new ArrayList<>();
         workspaceMembers.forEach(wme -> {
             // MemberEntity에서 로그인 상태와 마지막 활동 시간을 가져옴
@@ -649,7 +649,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         }
 
         // 워크스페이스에 소속된 모든 멤버 조회
-        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findByWorkspace_WsId(workspaceId);
+        List<WorkspaceMemberEntity> workspaceMembers = workspaceMemberRepository.findAllByWorkspace_WsId(workspaceId);
         List<WorkspaceMemberDTO> memberList = new ArrayList<>();
 
         workspaceMembers.forEach(wme -> {

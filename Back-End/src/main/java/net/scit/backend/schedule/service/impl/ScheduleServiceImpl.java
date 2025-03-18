@@ -239,11 +239,16 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
 
         // 담당자 찾아오기
-        WorkspaceMemberEntity workspaceMemberEntity = workspaceMemberRepository.findByWorkspaceAndMember(workspace, member)
-                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
-        String nickname = workspaceMemberEntity.getNickname();
-        String profileImage = workspaceMemberEntity.getProfileImage();
+        String nickname = null;
+        String profileImage = null;
 
+        if(scheduleEntity.getMember() != null) {
+            WorkspaceMemberEntity workspaceMemberEntity =
+                    workspaceMemberRepository.findByWorkspaceAndMember(workspace, scheduleEntity.getMember())
+                    .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
+            nickname = workspaceMemberEntity.getNickname();
+            profileImage = workspaceMemberEntity.getProfileImage();
+        }
 
         // 해당 스케줄의 태그 가져오기
         ScheduleTagEntity scheduleTagEntity = scheduleEntity.getScheduleTag();
@@ -319,10 +324,12 @@ public class ScheduleServiceImpl implements ScheduleService {
         // 해당 스케줄 권한이 있는 확인
         if (scheduleEntity.getMember() == null) { // 담장자가 없을 때
             scheduleEntity.setMember(updateMember);
+			scheduleRepository.save(scheduleEntity);
         } else { // 해당 스케줄의 권한이 있는지 확인
             if (workspaceMemberEntity.getWsRole().equals("owner")
                     || scheduleEntity.getMember().getEmail().equals(currentEmail)) {
                 scheduleEntity.setMember(updateMember);
+				scheduleRepository.save(scheduleEntity);
             }
         }
 

@@ -175,7 +175,6 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                     >
                         번역
                     </Button>
-
                 </div>
             );
         }
@@ -625,7 +624,7 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                                         </div>
                                     )}
                                 </div>
-                                <span className="sender-name">{msg.sender}</span>
+                                <span className="sender-name">{msg.nickname}</span>
                                 <span className="message-time">
                                     {formatToKoreanTime(msg.sendTime)}
                                 </span>

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogActions,
+  DialogTitle,
   IconButton,
   Typography,
   Box,
@@ -28,7 +30,7 @@ import PlayCircleIcon from '@mui/icons-material/PlayCircle'; // 진행 중
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'; // 완료
 import PauseCircleIcon from '@mui/icons-material/PauseCircle'; // 보류
 import { styled } from '@mui/material/styles';
-import { getSchedule, deleteSchedule, updateSchedule } from '../../../api/schedule';  // ✅ 최신 스케줄 가져오는 함수 추가
+import { getSchedule, deleteSchedule, updateSchedule, assignScheduleDetail } from '../../../api/schedule';  // ✅ 최신 스케줄 가져오는 함수 추가
 import { fetchWorkspaceUsers } from '../../../api/workspaceApi'; // 현재 워크스페이스 멤버 가져오는 함수 
 import { useSelector } from 'react-redux';
 import ScheduleEditModal from './ScheduleEditModal';
@@ -78,6 +80,10 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSucces
   const [isDeleting, setIsDeleting] = useState(false); // ✅ 삭제 진행 상태 추가
   console.log("스케줄 디테일 정보", localSchedule);
 
+  // 담당자 지정 관련 코드
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
+
   // ✅ 스낵바 상태 추가
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -101,6 +107,7 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSucces
 
           // 🔥 `updatedSchedule.data`를 사용해야 최신 스케줄 정보만 반영됨!
           setLocalSchedule(updatedSchedule.data);
+
         })
         .catch((error) => {
           console.error("❌ 스케줄 데이터를 불러오지 못함:", error);
@@ -205,24 +212,62 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSucces
     setAnchorEl(null);
   };
 
+  // ✅ 담당자 선택 시 확인 모달 띄우기 (기존 코드 활용)
+  const handleMemberClick = (member) => {
+    if (member.email === (localSchedule?.assigneeEmail ?? "")) {
+      setSnackbar({ open: true, message: "이미 담당자로 지정된 유저입니다.", severity: "info" });
+      return;
+    }
+    setSelectedMember(member);
+    setConfirmOpen(true);
+  };
+
   const handleSnackbarClose = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
   // ✅ 담당자 변경 요청
-  const handleAssignMember = async (member) => {
-    if (!localSchedule.scheduleNumber) return;
+  // const handleAssignMember = async (member) => {
+  //   if (!localSchedule.scheduleNumber) return;
+  //   try {
+  //     await updateSchedule(localSchedule.scheduleNumber, { nickname: member.nickname });
+  //     setLocalSchedule((prev) => ({ ...prev, nickname: member.nickname, profileImage: member.profileImage }));
+  //     onUpdate({ ...localSchedule, nickname: member.nickname, profileImage: member.profileImage });
+  //     handleCloseMenu();
+  //   } catch (error) {
+  //     console.error("❌ 담당자 변경 실패:", error);
+  //   }
+  // };
+
+  // 담당자 변경 관련
+  const handleAssignConfirm = async () => {
+    if (!selectedMember || !localSchedule.scheduleNumber) return;
+
     try {
-      await updateSchedule(localSchedule.scheduleNumber, { nickname: member.nickname });
-      setLocalSchedule((prev) => ({ ...prev, nickname: member.nickname, profileImage: member.profileImage }));
-      onUpdate({ ...localSchedule, nickname: member.nickname, profileImage: member.profileImage });
-      handleCloseMenu();
+      await assignScheduleDetail(localSchedule.scheduleNumber, selectedMember.email);
+
+      // ✅ 부모 컴포넌트에도 변경 사항 반영
+      onUpdate({
+        ...localSchedule,
+        nickname: selectedMember.nickname,
+        profileImage: selectedMember.profileImage,
+        assigneeEmail: selectedMember.email,  // ✅ assigneeEmail 업데이트
+      });
+
+      setSnackbar({ open: true, message: "담당자가 변경되었습니다.", severity: "success" });
     } catch (error) {
       console.error("❌ 담당자 변경 실패:", error);
+      setSnackbar({ open: true, message: "담당자 변경에 실패했습니다.", severity: "error" });
+    } finally {
+      setConfirmOpen(false);
+      handleCloseMenu();
     }
   };
 
+
   const scheduleStatus = statusMapping[localSchedule.scheduleStatus] || { label: "알 수 없음", icon: null, color: "default" };
+
+  console.log("확인", localSchedule);
 
   return (
     <>
@@ -262,7 +307,7 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSucces
                   <>
                     <Avatar src={localSchedule.profileImage} sx={{ width: 40, height: 40 }} />
                     <Typography fontWeight="500">{localSchedule.nickname}</Typography>
-                    <Button variant="contained" startIcon={<PersonIcon />} onClick={handleOpenMenu}>
+                    <Button variant="contained" startIcon={<PersonIcon />} onClick={handleOpenMenu} sx={{ backgroundColor: '#3F72AF' }}>
                       변경
                     </Button>
                   </>
@@ -274,7 +319,7 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSucces
               {/* 담당자 변경 메뉴 */}
               <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCloseMenu}>
                 {members.map((member) => (
-                  <MenuItem key={member.nickname} onClick={() => handleAssignMember(member)}>
+                  <MenuItem key={member.email} onClick={() => handleMemberClick(member)}>
                     <ListItemIcon>
                       <Avatar src={member.profileImage} sx={{ width: 30, height: 30 }} />
                     </ListItemIcon>
@@ -309,7 +354,14 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSucces
               </InfoBox>
 
               <Box display="flex" gap={1} flexWrap="wrap" mt={2}>
-                {localSchedule.tag1 && <Chip label={`# ${localSchedule.tag1}`} color="primary" />}
+                {localSchedule.tag1 &&
+                  <Chip
+                    label={`# ${localSchedule.tag1}`}
+                    sx={{
+                      backgroundColor: localSchedule.color ? localSchedule.color : "primary.main", // ✅ 배경색 지정
+                      color: localSchedule.color ? "white" : "primary.contrastText", // ✅ 글자색 지정
+                    }}
+                  />}
                 {localSchedule.tag2 && <Chip label={`# ${localSchedule.tag2}`} color="secondary" />}
                 {localSchedule.tag3 && <Chip label={`# ${localSchedule.tag3}`} color="success" />}
               </Box>
@@ -323,7 +375,7 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSucces
                     minWidth: '140px',
                     fontSize: '16px',
                     fontWeight: 'bold',
-                    backgroundColor: "#1976d2",
+                    backgroundColor: '#3F72AF',
                     "&:hover": { backgroundColor: "#1565c0" },
                   }}
                 >
@@ -355,6 +407,23 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSucces
           )}
         </DialogContent>
       </StyledDialog>
+
+      {/* 담당자 변경 재확인 */}
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+        <DialogTitle>
+          정말로 {selectedMember?.nickname} 님을 담당자로 지정하시겠습니까?
+        </DialogTitle>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)}>취소</Button>
+          <Button
+            onClick={() => handleAssignConfirm()}
+            color="primary"
+            variant="contained"
+          >
+            확인
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* ✅ 삭제 성공/실패 스낵바 추가 */}
       <Snackbar

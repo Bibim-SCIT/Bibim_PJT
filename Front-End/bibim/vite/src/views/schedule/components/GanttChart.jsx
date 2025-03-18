@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { Box, ToggleButton, ToggleButtonGroup, Paper } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { Gantt, ViewMode } from "gantt-task-react"; // ✅ Task 제거
 import "gantt-task-react/dist/index.css";
@@ -10,13 +10,11 @@ import PlayCircleIcon from '@mui/icons-material/PlayCircle'; // 진행 중
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'; // 완료
 import PauseCircleIcon from '@mui/icons-material/PauseCircle'; // 보류
 
+// GanttWrapper 디자인 업데이트
 const GanttWrapper = styled(Box)({
   padding: "20px",
   background: "#fff",
-  borderRadius: "10px",
-  boxShadow: "0 0 10px rgba(0,0,0,0.1)",
   overflow: 'hidden',
-  marginTop: '3px',
 });
 
 // ✅ 날짜를 'YYYY.MM.DD' 형식으로 변환하는 함수
@@ -171,67 +169,91 @@ const GanttChart = ({ tasks, onDeleteSuccess }) => {
     }
   };
 
-
-
-  // ✅ Task 클릭 시 모달 열기
-  // const handleTaskClick = (task) => {
-  //   setSelectedTask(task);
-  //   setIsModalOpen(true);
-  // };
-
   return (
-
-    <GanttWrapper>
-      <Box sx={{ textAlign: "right", mb: 2 }}>
-        <ToggleButtonGroup
-          value={viewMode}
-          exclusive
-          onChange={handleViewModeChange}
-          aria-label="Gantt View Mode"
-        >
-          <ToggleButton value={ViewMode.Week} aria-label="Week View">
-            주 단위 보기
-          </ToggleButton>
-          <ToggleButton value={ViewMode.Day} aria-label="Day View">
-            일 단위 보기
-          </ToggleButton>
-        </ToggleButtonGroup>
-      </Box>
-
-      {ganttTasks.length > 0 ? (
-        <Gantt
-          tasks={ganttTasks}
-          viewMode={viewMode} // ✅ 동적으로 뷰 모드 적용
-          // columnWidth={viewMode === ViewMode.Day ? 80 : 50} // ✅ 일 단위일 때 가독성 개선
-          columnWidth={80} // ✅ 날짜 간격을 좁게 설정
-          barCornerRadius={5} // ✅ 바 모서리 둥글게
-          fontSize={12} // ✅ 폰트 크기 줄이기
-          locale="ko" // ✅ 한국어 설정
-          TooltipContent={CustomTooltip} // ✅ 커스텀 툴팁 적용
-          preStepsCount={5} // ✅ 앞쪽 빈 공간 조정
-          viewDate={new Date()} // ✅ 기본 표시 날짜 설정 (오늘 날짜 기준)
-          listCellWidth="120px" // ✅ 왼쪽 Task List 너비 조절 (기본값: "155px")
-          TaskListHeader={CustomTaskListHeader}
-          // TaskListTable={CustomTaskListTable}
-          TaskListTable={(props) => <CustomTaskListTable {...props} onTaskClick={handleTaskClick} />} // ✅ Task 클릭 핸들러 추가
-        />
-      ) : (
-        <Box sx={{
-          width: '100%',
-          maxWidth: '1200px',
-        }}>
-          <p>⏳ 등록된 작업이 없습니다.</p>
+    <Paper
+      elevation={0}
+      sx={{ 
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        borderRadius: 2,
+        border: '1px solid #e0e0e0',
+        overflow: 'hidden',
+        transition: 'all 0.2s ease',
+        '&:hover': {
+          boxShadow: '0 3px 10px rgba(0,0,0,0.03), 0 1px 5px rgba(0,0,0,0.02)'
+        }
+      }}
+    >
+      <GanttWrapper>
+        <Box sx={{ textAlign: "right", mb: 2 }}>
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={handleViewModeChange}
+            aria-label="Gantt View Mode"
+            sx={{
+              '& .MuiToggleButton-root': {
+                border: '1px solid rgba(0, 0, 0, 0.12)',
+                borderRadius: '8px',
+                mx: 0.5,
+                py: 0.8,
+                px: 2,
+                '&.Mui-selected': {
+                  backgroundColor: '#1976d2',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: '#1565c0',
+                  }
+                }
+              }
+            }}
+          >
+            <ToggleButton value={ViewMode.Week} aria-label="Week View">
+              주 단위 보기
+            </ToggleButton>
+            <ToggleButton value={ViewMode.Day} aria-label="Day View">
+              일 단위 보기
+            </ToggleButton>
+          </ToggleButtonGroup>
         </Box>
-      )}
 
-      {/* ✅ 일정 상세 모달 추가 */}
-      <ScheduleDetailModal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        schedule={selectedTask?.extendedProps || selectedTask} // ✅ 원본 데이터 유지
-        onDeleteSuccess={handleScheduleDeleted} // ✅ 삭제 후 전체 일정 다시 불러오기
-      />
-    </GanttWrapper>
+        {ganttTasks.length > 0 ? (
+          <Gantt
+            tasks={ganttTasks}
+            viewMode={viewMode} // ✅ 동적으로 뷰 모드 적용
+            // columnWidth={viewMode === ViewMode.Day ? 80 : 50} // ✅ 일 단위일 때 가독성 개선
+            columnWidth={80} // ✅ 날짜 간격을 좁게 설정
+            barCornerRadius={5} // ✅ 바 모서리 둥글게
+            fontSize={12} // ✅ 폰트 크기 줄이기
+            locale="ko" // ✅ 한국어 설정
+            TooltipContent={CustomTooltip} // ✅ 커스텀 툴팁 적용
+            preStepsCount={5} // ✅ 앞쪽 빈 공간 조정
+            viewDate={new Date()} // ✅ 기본 표시 날짜 설정 (오늘 날짜 기준)
+            listCellWidth="120px" // ✅ 왼쪽 Task List 너비 조절 (기본값: "155px")
+            TaskListHeader={CustomTaskListHeader}
+            // TaskListTable={CustomTaskListTable}
+            TaskListTable={(props) => <CustomTaskListTable {...props} onTaskClick={handleTaskClick} />} // ✅ Task 클릭 핸들러 추가
+          />
+        ) : (
+          <Box sx={{
+            width: '100%',
+            padding: 2,
+            textAlign: 'center'
+          }}>
+            <p>⏳ 등록된 작업이 없습니다.</p>
+          </Box>
+        )}
+
+        {/* ✅ 일정 상세 모달 추가 */}
+        <ScheduleDetailModal
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          schedule={selectedTask?.extendedProps || selectedTask} // ✅ 원본 데이터 유지
+          onDeleteSuccess={handleScheduleDeleted} // ✅ 삭제 후 전체 일정 다시 불러오기
+        />
+      </GanttWrapper>
+    </Paper>
   );
 };
 

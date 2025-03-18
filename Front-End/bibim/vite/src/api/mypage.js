@@ -97,14 +97,32 @@ export const convertToCalendarFormat = (scheduleList) => {
       borderColor: schedule.color || '#1976d2',
       allDay: true, // 모든 일정을 종일 일정으로 표시
       extendedProps: {
-        content: schedule.scheduleContent,
+        // ScheduleDetailModal에 필요한 속성 이름으로 매핑
+        scheduleNumber: schedule.scheduleNumber,
+        scheduleTitle: schedule.scheduleTitle,
+        scheduleContent: schedule.scheduleContent,
+        scheduleStartDate: schedule.scheduleStartDate,
+        scheduleFinishDate: schedule.scheduleFinishDate,
+        scheduleStatus: schedule.scheduleStatus || 'UNASSIGNED',
+        scheduleModifytime: schedule.scheduleModifytime || new Date().toISOString(),
+        color: schedule.color,
+        
+        // 워크스페이스 정보
         wsName: schedule.wsName,
         wsId: schedule.wsId,
-        status: schedule.scheduleStatus,
+        
+        // 태그 정보
         tag1: schedule.tag1,
         tag2: schedule.tag2,
         tag3: schedule.tag3,
-        color: schedule.color,
+        
+        // 담당자 정보
+        nickname: schedule.nickname,
+        profileImage: schedule.profileImage,
+        
+        // 원본 데이터도 유지
+        content: schedule.scheduleContent,
+        status: schedule.scheduleStatus || 'UNASSIGNED',
         modifyTime: schedule.scheduleModifytime,
         originalEndDate: schedule.scheduleFinishDate // 원래 종료일 저장
       }

@@ -127,7 +127,7 @@ export default function LandingPage() {
     const dashboardSection = document.getElementById('dashboard-section');
     const offset = 100; // 헤더 높이 등을 고려한 오프셋
     const targetPosition = dashboardSection.getBoundingClientRect().top + window.pageYOffset - offset;
-    
+
     window.scrollTo({
       top: targetPosition,
       behavior: 'smooth'
@@ -139,7 +139,7 @@ export default function LandingPage() {
     const featuresSection = document.getElementById('features-section');
     const offset = 80; // 헤더 높이 등을 고려한 오프셋
     const targetPosition = featuresSection.getBoundingClientRect().top + window.pageYOffset - offset;
-    
+
     window.scrollTo({
       top: targetPosition,
       behavior: 'smooth'
@@ -151,7 +151,7 @@ export default function LandingPage() {
     const platformSection = document.getElementById('platform-section');
     const offset = 80; // 헤더 높이 등을 고려한 오프셋
     const targetPosition = platformSection.getBoundingClientRect().top + window.pageYOffset - offset;
-    
+
     window.scrollTo({
       top: targetPosition,
       behavior: 'smooth'
@@ -182,8 +182,8 @@ export default function LandingPage() {
   ];
 
   return (
-    <Box sx={{ 
-      bgcolor: '#FAFAFA', 
+    <Box sx={{
+      bgcolor: '#FAFAFA',
       minHeight: '100vh',
       height: '100%',
       position: 'relative',
@@ -198,53 +198,53 @@ export default function LandingPage() {
           <LandingHeader />
         </Toolbar>
       </AppBar>
-      
+
       <Box sx={{ mt: 8 }}>
         <CircleDecoration position={{ top: '-150px', right: '-150px' }} />
         <CircleDecoration position={{ bottom: '-150px', left: '-150px' }} />
       </Box>
-      
+
       {/* 히어로 섹션 (랜딩페이지 3에서 가져옴) */}
       <Container maxWidth="lg" sx={{ pt: 16, pb: 15 }}>
         <Box sx={{ textAlign: 'center', mb: 20, position: 'relative', zIndex: 2 }}>
-          <Typography 
-            variant="h1" 
-            sx={{ 
-              fontWeight: 800, 
+          <Typography
+            variant="h1"
+            sx={{
+              fontWeight: 800,
               fontSize: { xs: '2.5rem', md: '4.5rem' },
               lineHeight: 1.2,
               mb: 3
             }}
           >
             BIBIM과 함께<br />
-            <GradientText>창의적인 협업</GradientText>을 경험하세요
+            <GradientText>혁신적인 협업</GradientText>을 경험하세요
           </Typography>
-          
-          <Typography 
-            variant="h5" 
-            sx={{ 
-              maxWidth: '700px', 
-              mx: 'auto', 
+
+          <Typography
+            variant="h5"
+            sx={{
+              maxWidth: '700px',
+              mx: 'auto',
               mb: 6,
               color: 'text.secondary',
               lineHeight: 1.6
             }}
           >
-            BIBIM은 팀의 생산성을 높이고 효율적인 협업을 가능하게 하는 
+            BIBIM은 팀의 생산성을 높이고 효율적인 협업을 가능하게 하는
             혁신적인 플랫폼입니다. 지금 바로 시작해보세요.
           </Typography>
-          
-          <Stack 
-            direction={{ xs: 'column', sm: 'row' }} 
-            spacing={3} 
+
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={3}
             justifyContent="center"
           >
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               size="large"
-              onClick={moveToSignup}
-              sx={{ 
-                bgcolor: '#111', 
+              onClick={moveToLogin}
+              sx={{
+                bgcolor: '#111',
                 color: '#fff',
                 px: 4,
                 py: 1.5,
@@ -258,11 +258,11 @@ export default function LandingPage() {
             >
               지금 시작하기
             </Button>
-            <Button 
-              variant="outlined" 
+            <Button
+              variant="outlined"
               size="large"
               onClick={scrollToPlatform}
-              sx={{ 
+              sx={{
                 borderColor: '#111',
                 color: '#111',
                 px: 4,
@@ -281,28 +281,28 @@ export default function LandingPage() {
           </Stack>
         </Box>
       </Container>
-      
-      
+
+
 
       {/* 비디오 섹션 (랜딩 index에서 가져옴) */}
-      <Box 
+      <Box
         id="platform-section"
-        sx={{ 
-        py: 10, 
-        bgcolor: '#ffffff',
-        position: 'relative',
-        overflow: 'hidden',
-        boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.03)'
-      }}>
+        sx={{
+          py: 10,
+          bgcolor: '#ffffff',
+          position: 'relative',
+          overflow: 'hidden',
+          boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.03)'
+        }}>
         <Container sx={{ position: 'relative', zIndex: 1 }}>
           <Grid container spacing={6} alignItems="center">
             <Grid item xs={12} md={6}>
               <SectionTitle variant="h3">
                 BIBIM 플랫폼 살펴보기
               </SectionTitle>
-              <Typography 
-                variant="body1" 
-                sx={{ 
+              <Typography
+                variant="body1"
+                sx={{
                   mb: 4,
                   color: 'text.secondary',
                   lineHeight: 1.7
@@ -312,8 +312,8 @@ export default function LandingPage() {
                 직관적인 인터페이스와 강력한 협업 도구를 통해 팀의 생산성을 높이고 효율적인 업무 환경을 구축하는 방법을 알아볼 수 있습니다.
               </Typography>
               <Stack direction="row" spacing={2}>
-                <Button 
-                  variant="contained" 
+                <Button
+                  variant="contained"
                   onClick={moveToSignup}
                   sx={{
                     bgcolor: '#111',
@@ -325,8 +325,8 @@ export default function LandingPage() {
                 >
                   가입하기
                 </Button>
-                <Button 
-                  variant="outlined" 
+                <Button
+                  variant="outlined"
                   onClick={moveToWorkspace}
                   sx={{
                     borderColor: '#111',
@@ -342,8 +342,8 @@ export default function LandingPage() {
               </Stack>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Box 
-                sx={{ 
+              <Box
+                sx={{
                   position: 'relative',
                   borderRadius: '20px',
                   overflow: 'hidden',
@@ -356,9 +356,9 @@ export default function LandingPage() {
                   justifyContent: 'center'
                 }}
               >
-                <img 
-                  src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80" 
-                  alt="BIBIM 사용 사례" 
+                <img
+                  src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80"
+                  alt="BIBIM 사용 사례"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               </Box>
@@ -373,12 +373,12 @@ export default function LandingPage() {
           <SectionTitleCenter variant="h2">
             BIBIM의 주요 기능
           </SectionTitleCenter>
-          <Typography 
-            variant="body1" 
-            align="center" 
-            sx={{ 
-              mb: 8, 
-              maxWidth: '700px', 
+          <Typography
+            variant="body1"
+            align="center"
+            sx={{
+              mb: 8,
+              maxWidth: '700px',
               mx: 'auto',
               color: 'text.secondary'
             }}
@@ -387,7 +387,7 @@ export default function LandingPage() {
             실시간 채팅, 협업 도구, 일정 관리, 자료실까지 - <br />
             효율적인 팀워크를 위한 완벽한 솔루션을 경험해보세요.
           </Typography>
-          
+
           <Grid container spacing={4}>
             {features.map((feature, index) => (
               <Grid item xs={12} sm={6} md={3} key={index}>
@@ -409,9 +409,9 @@ export default function LandingPage() {
       </Box>
 
       {/* CTA 섹션 (랜딩 3 스타일로 변경) */}
-      <Box 
-        sx={{ 
-          pt: { xs: 10, md: 15 }, 
+      <Box
+        sx={{
+          pt: { xs: 10, md: 15 },
           pb: 0,
           textAlign: 'center',
           background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
@@ -420,19 +420,19 @@ export default function LandingPage() {
         }}
       >
         <Container maxWidth="md" sx={{ pb: 0 }}>
-          <Typography 
-            variant="h2" 
-            sx={{ 
-              fontWeight: 700, 
+          <Typography
+            variant="h2"
+            sx={{
+              fontWeight: 700,
               mb: 3,
               color: 'text.primary'
             }}
           >
-            지금 바로 BIBIM을 시작하세요
+            지금 바로 <GradientText>BIBIM</GradientText>을 시작하세요
           </Typography>
-          <Typography 
-            variant="h6" 
-            sx={{ 
+          <Typography
+            variant="h6"
+            sx={{
               color: 'text.secondary',
               mb: 4,
               maxWidth: '600px',
@@ -441,18 +441,18 @@ export default function LandingPage() {
           >
             더 나은 협업과 생산성 향상을 위한 첫 걸음을 시작하세요
           </Typography>
-          <Stack 
-            direction={{ xs: 'column', sm: 'row' }} 
-            spacing={3} 
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={3}
             justifyContent="center"
             sx={{ mb: 0 }}
           >
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               size="large"
               onClick={moveToSignup}
-              sx={{ 
-                bgcolor: '#111', 
+              sx={{
+                bgcolor: '#111',
                 color: '#fff',
                 px: 4,
                 py: 1.5,
@@ -468,15 +468,15 @@ export default function LandingPage() {
               지금 시작하기
             </Button>
           </Stack>
-          
+
           <Box sx={{ mt: 3, mb: 5 }}>
             <Typography variant="body1" sx={{ color: 'text.secondary', mb: 1 }}>
               이미 계정이 있으신가요?
             </Typography>
-            <Button 
-              variant="text" 
+            <Button
+              variant="text"
               onClick={moveToLogin}
-              sx={{ 
+              sx={{
                 color: theme.palette.primary.main,
                 fontWeight: 500,
                 '&:hover': {

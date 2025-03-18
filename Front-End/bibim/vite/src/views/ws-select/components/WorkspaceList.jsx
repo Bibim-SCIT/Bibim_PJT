@@ -24,7 +24,8 @@ export default function WorkspaceList({ workspaces = [], onSelect }) {
                 width: '90%', // 좌우 90% 영역 차지
                 maxWidth: 1100, // 최대 너비 지정
                 mx: 'auto', // 가운데 정렬
-                textAlign: 'center'
+                textAlign: 'center',
+                backgroundColor: '#DBE2EF'
             }}
         >
             <Typography variant="h4" sx={{ mb: 2 }}>
@@ -58,9 +59,10 @@ export default function WorkspaceList({ workspaces = [], onSelect }) {
                                     borderRadius: 2,
                                     boxShadow: '2px 2px 8px rgba(0,0,0,0.1)',
                                     transition: 'transform 0.2s ease-in-out',
+                                    // backgroundColor: '#DBE2EF',
                                     '&:hover': {
                                         transform: 'scale(1.05)',
-                                        border: '2px solid #1976d2'
+                                        border: '2px solid #1976d2',
                                     }
                                 }}
                             >
@@ -75,7 +77,10 @@ export default function WorkspaceList({ workspaces = [], onSelect }) {
                                 <Button
                                     variant="contained"
                                     size="small"
-                                    sx={{ mt: 1 }}
+                                    sx={{
+                                        mt: 1,
+                                        backgroundColor: '#3F72AF'
+                                    }}
                                     onClick={() => onSelect(ws)} // ✅ 클릭 시 선택
                                 >
                                     변경
@@ -92,10 +97,10 @@ export default function WorkspaceList({ workspaces = [], onSelect }) {
 
             {/* 새 워크스페이스 생성 버튼 */}
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                <Button variant="outlined" sx={{ width: 200 }} onClick={() => setModalOpen(true)}>
+                <Button variant="contained" sx={{ width: 200, backgroundColor: '#3F72AF' }} onClick={() => setModalOpen(true)}>
                     새 워크스페이스 생성하기
                 </Button>
-                <Button variant="outlined" sx={{ width: 200, ml: 2 }} onClick={() => setInviteModalOpen(true)}>
+                <Button variant="contained" sx={{ width: 200, ml: 2, backgroundColor: '#3F72AF' }} onClick={() => setInviteModalOpen(true)}>
                     워크스페이스 초대하기
                 </Button>
             </Box>

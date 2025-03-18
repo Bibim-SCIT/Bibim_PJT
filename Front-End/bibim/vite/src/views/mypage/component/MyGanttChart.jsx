@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
-import { Box, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { Box, ToggleButton, ToggleButtonGroup, Paper } from '@mui/material';
 import { Gantt, ViewMode } from "gantt-task-react";
 import "gantt-task-react/dist/index.css";
 import dayjs from "dayjs";
 import { styled } from "@mui/material/styles";
 
-// GanttChart.jsx와 동일한 방식으로 GanttWrapper 정의
+// GanttWrapper 정의 업데이트
 const GanttWrapper = styled(Box)({
   padding: "20px",
   background: "#fff",
-  borderRadius: "0", // 요청에 따라 모서리는 뾰족하게 유지
-  border: "1px solid #e0e0e0",
-  boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-  overflow: 'hidden', // 중요: GanttChart.jsx에서는 'hidden'을 사용
+  overflow: 'hidden',
 });
 
 // 날짜를 'YYYY.MM.DD' 형식으로 변환하는 함수
@@ -100,48 +97,78 @@ const MyGanttChart = ({ tasks, onTaskClick }) => {
   };
 
   return (
-    <GanttWrapper>
-      <Box sx={{ textAlign: "right", mb: 2 }}>
-        <ToggleButtonGroup
-          value={viewMode}
-          exclusive
-          onChange={handleViewModeChange}
-          aria-label="Gantt View Mode"
-        >
-          <ToggleButton value={ViewMode.Week} aria-label="Week View">
-            주 단위 보기
-          </ToggleButton>
-          <ToggleButton value={ViewMode.Day} aria-label="Day View">
-            일 단위 보기
-          </ToggleButton>
-        </ToggleButtonGroup>
-      </Box>
-      
-      {tasks.length > 0 ? (
-        <Gantt
-          tasks={tasks}
-          viewMode={viewMode}
-          columnWidth={80}
-          barCornerRadius={0}
-          fontSize={12}
-          locale="ko"
-          TooltipContent={CustomTooltip}
-          preStepsCount={5}
-          viewDate={new Date()}
-          listCellWidth="120px"
-          TaskListHeader={CustomTaskListHeader}
-          TaskListTable={(props) => <CustomTaskListTable {...props} onTaskClick={onTaskClick} />}
-        />
-      ) : (
-        <Box sx={{
-          width: '100%',
-          padding: 2,
-          textAlign: 'center'
-        }}>
-          <p>⏳ 등록된 작업이 없습니다.</p>
+    <Paper
+      elevation={0}
+      sx={{ 
+        width: '100%',
+        borderRadius: 2,
+        border: '1px solid #e0e0e0',
+        overflow: 'hidden',
+        transition: 'all 0.2s ease',
+        '&:hover': {
+          boxShadow: '0 3px 10px rgba(0,0,0,0.03), 0 1px 5px rgba(0,0,0,0.02)'
+        }
+      }}
+    >
+      <GanttWrapper>
+        <Box sx={{ textAlign: "right", mb: 2 }}>
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={handleViewModeChange}
+            aria-label="Gantt View Mode"
+            sx={{
+              '& .MuiToggleButton-root': {
+                border: '1px solid rgba(0, 0, 0, 0.12)',
+                borderRadius: '8px',
+                mx: 0.5,
+                py: 0.8,
+                px: 2,
+                '&.Mui-selected': {
+                  backgroundColor: '#1976d2',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: '#1565c0',
+                  }
+                }
+              }
+            }}
+          >
+            <ToggleButton value={ViewMode.Week} aria-label="Week View">
+              주 단위 보기
+            </ToggleButton>
+            <ToggleButton value={ViewMode.Day} aria-label="Day View">
+              일 단위 보기
+            </ToggleButton>
+          </ToggleButtonGroup>
         </Box>
-      )}
-    </GanttWrapper>
+        
+        {tasks.length > 0 ? (
+          <Gantt
+            tasks={tasks}
+            viewMode={viewMode}
+            columnWidth={80}
+            barCornerRadius={0}
+            fontSize={12}
+            locale="ko"
+            TooltipContent={CustomTooltip}
+            preStepsCount={5}
+            viewDate={new Date()}
+            listCellWidth="120px"
+            TaskListHeader={CustomTaskListHeader}
+            TaskListTable={(props) => <CustomTaskListTable {...props} onTaskClick={onTaskClick} />}
+          />
+        ) : (
+          <Box sx={{
+            width: '100%',
+            padding: 2,
+            textAlign: 'center'
+          }}>
+            <p>⏳ 등록된 작업이 없습니다.</p>
+          </Box>
+        )}
+      </GanttWrapper>
+    </Paper>
   );
 };
 

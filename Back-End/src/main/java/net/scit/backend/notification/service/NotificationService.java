@@ -35,6 +35,12 @@ public interface NotificationService {
 
     boolean deleteNotification(Long notificationNumber);
 
+    // 읽은 알림 전체 삭제
+    boolean deleteAllRead(String receiverEmail);
+
+    // 안 읽은 알림 전체 삭제
+    boolean deleteAllUnread(String receiverEmail);
+
     // 알림 URL 조회 (리다이렉트용)
     String getNotificationUrl(Long notificationId);
 }

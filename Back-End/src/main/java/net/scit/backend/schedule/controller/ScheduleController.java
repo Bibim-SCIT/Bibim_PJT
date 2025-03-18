@@ -38,15 +38,17 @@ public class ScheduleController {
         return ResponseEntity.ok(result);
     }
 
+    // 칸반에서 담당자 변경
     @PutMapping("/{scheduleNumber}/assignees/kanban")
     public ResponseEntity<ResultDTO<SuccessDTO>> assignScheduleKanban(@PathVariable Long scheduleNumber) {
         ResultDTO<SuccessDTO> result = scheduleService.assignScheduleKanban(scheduleNumber);
         return ResponseEntity.ok(result);
     }
 
+    // 스케줄 상세 모달에서 담당자 변경
     @PutMapping("/{scheduleNumber}/assignees/detail")
     public ResponseEntity<ResultDTO<SuccessDTO>> assignScheduleDetail(@PathVariable Long scheduleNumber,
-                                                                      @RequestParam String email) {
+            @RequestParam String email) {
         ResultDTO<SuccessDTO> result = scheduleService.assignScheduleDetail(scheduleNumber, email);
         return ResponseEntity.ok(result);
     }

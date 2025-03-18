@@ -2,6 +2,10 @@ package net.scit.backend.channel.service.impl;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+import net.scit.backend.workspace.entity.WorkspaceEntity;
+import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
+import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +28,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     private final MessageReposittory messageReposittory; // 메시지 관련 데이터 처리
     private final WorkspaceChannelRepository workspaceChannelRepository; // 워크스페이스 채널 관련 데이터 처리
+    private final WorkspaceMemberRepository workspaceMemberRepository;
     private final S3Uploader s3Uploader; // S3 파일 업로드 기능 제공 컴포넌트
 
     /**
@@ -149,9 +154,17 @@ public class ChannelServiceImpl implements ChannelService {
      * @return MessageDTO
      */
     private MessageDTO convertToDTO(MessageEntity messageEntity) {
+
+        // 프로필 사진을 찾기 위한 워크스페이스 아이디 찾기
+        WorkspaceChannelEntity workspaceChannelEntity = messageEntity.getWorkspaceChannelEntity();
+        WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(workspaceChannelEntity.getWorkspace().getWsId(),messageEntity.getSender())
+                                                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
         return MessageDTO.builder()
                 .channelNumber(messageEntity.getWorkspaceChannelEntity().getChannelNumber())
                 .sender(messageEntity.getSender())
+                .nickname(workspaceMember.getNickname())
+                .profileImage(workspaceMember.getProfileImage())
                 .messageOrFile(messageEntity.getMessageOrFile())
                 .content(messageEntity.getContent())
                 .sendTime(messageEntity.getSendTime())
