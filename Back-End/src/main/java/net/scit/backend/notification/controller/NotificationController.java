@@ -32,33 +32,45 @@ public class NotificationController {
 
     @GetMapping("/subscribe")
     public SseEmitter subscribe(@RequestParam("token") String token, HttpServletResponse response) {
+        log.info("📡 SSE 구독 요청 시작: token={}", token);
+
         if (!jwtTokenProvider.validateToken(token)) {
+            log.error("❌ SSE 구독 실패: Invalid token");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
         }
+
         String email = jwtTokenProvider.getEmailFromToken(token);
         if (email == null) {
+            log.error("❌ SSE 구독 실패: Unauthorized user");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized user");
         }
 
-        // 📌 CORS 헤더 추가 (SSE 응답에 포함)
-        response.setHeader("Access-Control-Allow-Origin", "*"); // 혹은 "https://dev.bibim.shop"
+        // CORS 및 SSE 관련 헤더 추가
+        response.setHeader("Access-Control-Allow-Origin", "https://dev.bibim.shop");
         response.setHeader("Access-Control-Allow-Credentials", "true");
         response.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS");
         response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
+        response.setHeader("X-Accel-Buffering", "no");
+        response.setHeader("Cache-Control", "no-cache");
 
-
-        // SSEEmitter 생성
+        // 서비스에서 subscribe() 호출하여 SSEEmitter 생성 및 등록
         SseEmitter emitter = notificationService.subscribe(email);
 
-        // 기존 안 읽은 알림을 초기 데이터로 보냄
+        // 기존 안 읽은 알림을 초기 데이터로 전송
         List<NotificationEntity> unreadNotifications = notificationService.getUnreadNotifications(email);
         try {
-            emitter.send(SseEmitter.event().name("HISTORY").data(unreadNotifications));
+            if (unreadNotifications != null && !unreadNotifications.isEmpty()) {
+                emitter.send(SseEmitter.event().name("HISTORY").data(unreadNotifications));
+                log.info("✅ 초기 알림 데이터 전송 완료 ({}개)", unreadNotifications.size());
+            }
         } catch (IOException e) {
+            log.error("❌ SSE 데이터 전송 오류: {}", e.getMessage());
             emitter.completeWithError(e);
         }
+
         return emitter;
     }
+
 
 
 
