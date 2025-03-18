@@ -5,6 +5,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import net.scit.backend.exception.CustomException;
+import net.scit.backend.exception.ErrorCode;
+import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
+import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,6 +25,7 @@ import net.scit.backend.component.S3Uploader;
 @Slf4j
 public class DmServiceImpl implements DmService {
     private final DmRepository dmRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
     private final S3Uploader s3Uploader;
 
     /**
@@ -158,9 +163,12 @@ public class DmServiceImpl implements DmService {
      * @return 변환된 DTO
      */
     private DmMessageDTO mapToDTO(DmMessageEntity entity) {
+        WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(entity.getWsId(),entity.getSender())
+                                                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         return DmMessageDTO.builder()
                 .dmNumber(entity.getId())
                 .wsId(entity.getWsId())
+                .nickname(workspaceMember.getNickname())
                 .roomId(entity.getRoomId())
                 .sender(entity.getSender())
                 .receiver(entity.getReceiver())
