@@ -22,7 +22,7 @@ export default function InviteWorkspace({ onInvite }) {
                 maxWidth: 600, // 최대 너비 지정
                 mx: 'auto', // 가운데 정렬
                 textAlign: 'center', // 텍스트 중앙 정렬
-                backgroundColor: '#F9F7F7'
+                backgroundColor: '#DBE2EF'
             }}
         >
             <Typography variant="h5" sx={{ mb: 2 }}>
@@ -38,7 +38,8 @@ export default function InviteWorkspace({ onInvite }) {
                         value={inviteCode}
                         onChange={(e) => setInviteCode(e.target.value)}
                         sx={{
-                            backgroundColor: '#FFFFFF'
+                            backgroundColor: '#FFFFFF',
+                            borderRadius: "10px"
                         }}
                     />
                 </Grid>

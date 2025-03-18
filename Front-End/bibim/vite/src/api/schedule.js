@@ -56,7 +56,7 @@ export const fetchKanbanTasks = async (wsId) => {
       const statusKey = task.scheduleStatus?.toUpperCase(); // ✅ 대문자로 변환 후 매핑
       const mappedStatus = statusMappingReverse[statusKey] || "unassigned"; // ✅ 변환 후 상태 확인
 
-       // ✅ 상태 변환 검토 추가
+      // ✅ 상태 변환 검토 추가
       console.log(`
     🔄 상태 변환 과정 확인:
     - 원본 상태: ${task.scheduleStatus}
@@ -67,8 +67,8 @@ export const fetchKanbanTasks = async (wsId) => {
       return {
         id: task.scheduleNumber,
         title: task.scheduleTitle || "제목 없음",
-        start: task.scheduleStartDate ? new Date(task.scheduleStartDate) : null,  
-        end: task.scheduleFinishDate ? new Date(task.scheduleFinishDate) : null,  
+        start: task.scheduleStartDate ? new Date(task.scheduleStartDate) : null,
+        end: task.scheduleFinishDate ? new Date(task.scheduleFinishDate) : null,
         status: mappedStatus, // ✅ ENUM 변환 적용
         extendedProps: task,
       };
@@ -152,7 +152,7 @@ export const deleteSchedule = async (scheduleNumber) => {
   return response.data;
 };
 
-// ✅ [공통] 스케줄 담당자 지정 (추가)
+// ✅ [공통] 칸반에서 스케줄 담당자 지정 (추가)
 export const assignSchedule = async (scheduleNumber) => {
   if (!scheduleNumber) {
     console.warn("🚨 assignSchedule: 잘못된 입력 값 (scheduleNumber)");
@@ -162,7 +162,7 @@ export const assignSchedule = async (scheduleNumber) => {
   try {
     console.log(`📌 assignSchedule(${scheduleNumber}) 요청`);
 
-    await api.put(`/schedule/${scheduleNumber}/assignees`, {}, getAxiosConfig());
+    await api.put(`/schedule/${scheduleNumber}/assignees/kanban`, {}, getAxiosConfig());
 
     console.log(`✅ ${scheduleNumber} 스케줄 담당자 지정 완료`);
   } catch (error) {
@@ -200,6 +200,32 @@ export const updateKanbanTaskStatus = async (taskId, newStatus) => {
   }
 };
 
+// ✅ 스케줄 상세 모달에서 담당자 변경 API 요청
+export const assignScheduleDetail = async (scheduleNumber, email) => {
+  console.log("현재 선택 멤버, 이메일 확인", scheduleNumber, email)
+
+  if (!scheduleNumber || !email) {
+    console.warn("🚨 assignScheduleDetail: 잘못된 입력 값 (scheduleNumber, email)");
+    return;
+  }
+
+  try {
+    console.log(`📌 assignScheduleDetail(${scheduleNumber}, ${email}) 요청 시작`);
+
+    await api.put(`/schedule/${scheduleNumber}/assignees/detail`, null, {
+      params: { email },  // ✅ 쿼리 파라미터로 이메일 전달
+      ...getAxiosConfig(),
+    });
+
+    console.log(`✅ ${scheduleNumber} 담당자 변경 완료 (${email})`);
+  } catch (error) {
+    console.error(`❌ ${scheduleNumber} 담당자 변경 실패:`, error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
+
 // ✅ 수정된 `fetchKanbanTasks`로 변경
 export default {
   fetchKanbanTasks,
@@ -209,4 +235,5 @@ export default {
   deleteSchedule,
   assignSchedule,
   updateKanbanTaskStatus, // ✅ 칸반 보드 상태 업데이트 추가
+  assignScheduleDetail,
 };

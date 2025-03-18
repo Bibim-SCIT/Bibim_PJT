@@ -25,7 +25,7 @@ export default function WorkspaceList({ workspaces = [], onSelect }) {
                 maxWidth: 1100, // 최대 너비 지정
                 mx: 'auto', // 가운데 정렬
                 textAlign: 'center',
-                backgroundColor: '#F9F7F7'
+                backgroundColor: '#DBE2EF'
             }}
         >
             <Typography variant="h4" sx={{ mb: 2 }}>
