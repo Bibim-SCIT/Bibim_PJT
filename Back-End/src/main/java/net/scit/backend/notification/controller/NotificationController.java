@@ -1,5 +1,6 @@
 package net.scit.backend.notification.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.jwt.AuthUtil;
@@ -30,7 +31,7 @@ public class NotificationController {
 
 
     @GetMapping("/subscribe")
-    public SseEmitter subscribe(@RequestParam("token") String token) {
+    public SseEmitter subscribe(@RequestParam("token") String token, HttpServletResponse response) {
         if (!jwtTokenProvider.validateToken(token)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
         }
@@ -39,7 +40,14 @@ public class NotificationController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized user");
         }
 
+        // 📌 CORS 헤더 추가 (SSE 응답에 포함)
+        response.setHeader("Access-Control-Allow-Origin", "https://dev.bibim.shop");
+        response.setHeader("Access-Control-Allow-Credentials", "true");
+
+        // SSEEmitter 생성
         SseEmitter emitter = notificationService.subscribe(email);
+
+        // 기존 안 읽은 알림을 초기 데이터로 보냄
         List<NotificationEntity> unreadNotifications = notificationService.getUnreadNotifications(email);
         try {
             emitter.send(SseEmitter.event().name("HISTORY").data(unreadNotifications));
@@ -48,6 +56,7 @@ public class NotificationController {
         }
         return emitter;
     }
+
 
 
     @PostMapping("/logout")
