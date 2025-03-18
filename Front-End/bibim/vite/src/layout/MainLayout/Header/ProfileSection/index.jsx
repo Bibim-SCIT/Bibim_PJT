@@ -38,6 +38,7 @@ import { useNavigate } from 'react-router-dom'; // 추가
 // assets
 import User1 from 'assets/images/users/user-round.svg';
 import cat from 'assets/images/cat_profile.jpg'
+import bibimlogo from 'assets/images/icons/bibimlogo250318.png'
 import { IconLogout, IconSearch, IconSettings, IconUser } from '@tabler/icons-react';
 
 // ==============================|| PROFILE MENU ||============================== //
@@ -125,12 +126,19 @@ export default function ProfileSection() {
         icon={
           <Avatar
             key={user?.profileImage} // ✅ key 속성을 추가하여 상태 변경 시 다시 렌더링되도록 함
-            src={user?.profileImage || cat} // ✅ 프로필 이미지 적용, 없으면 기본 이미지
+            src={user?.profileImage || bibimlogo} // ✅ 프로필 이미지 적용, 없으면 기본 이미지
             alt="user-images"
             sx={{
               ...theme.typography.mediumAvatar,
               margin: '8px 0 8px 8px !important',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              '& img': user?.profileImage
+                ? {} // 사용자가 프로필 이미지를 설정한 경우 스타일 변경 없음
+                : {
+                  width: '70%', // 기본 이미지(bibimlogo) 크기 조절
+                  height: '70%', // 기본 이미지 크기 조절
+                  objectFit: 'contain'
+                }
             }}
             ref={anchorRef}
             aria-controls={open ? 'menu-list-grow' : undefined}

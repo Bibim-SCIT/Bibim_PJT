@@ -154,3 +154,14 @@ export const getSortedWorkdata = async (wsId, sortField, sortOrder) => {
     }
 };
 
+// ✅ 태그 전체 조회 API
+export const getAllTags = async (wsId) => {
+    try {
+        const response = await api.get(`/workdata/${wsId}/tags`);
+        return response.data;
+    } catch (error) {
+        console.error("❌ 태그 목록 조회 실패:", error.response?.data || error.message);
+        return [];
+    }
+};
+
