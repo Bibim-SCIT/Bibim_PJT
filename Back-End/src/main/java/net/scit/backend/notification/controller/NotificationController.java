@@ -41,8 +41,11 @@ public class NotificationController {
         }
 
         // 📌 CORS 헤더 추가 (SSE 응답에 포함)
-        response.setHeader("Access-Control-Allow-Origin", "https://dev.bibim.shop");
+        response.setHeader("Access-Control-Allow-Origin", "*"); // 혹은 "https://dev.bibim.shop"
         response.setHeader("Access-Control-Allow-Credentials", "true");
+        response.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS");
+        response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
+
 
         // SSEEmitter 생성
         SseEmitter emitter = notificationService.subscribe(email);
