@@ -33,8 +33,8 @@ public class SecurityConfig {
     @Lazy
     @Autowired
     public SecurityConfig(JwtTokenProvider jwtTokenProvider,
-            UserDetailsService userDetailsService,
-            RedisTemplate<String, String> redisTemplate) {
+                          UserDetailsService userDetailsService,
+                          RedisTemplate<String, String> redisTemplate) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.userDetailsService = userDetailsService;
         this.redisTemplate = redisTemplate;
@@ -46,7 +46,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable()) // ✅ SSE 사용을 위해 CSRF 비활성화
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // ✅ JWT
-                                                                                                              // 기반 관리
+                // 기반 관리
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/members/check-email", "/members/signup/",
                                 "/members/signup/**",
@@ -71,7 +71,8 @@ public class SecurityConfig {
                         .hasRole("USER") // 사용자 전용
                         .requestMatchers("/notification/{notificationId}", "/notification/subscribe").permitAll() // ✅ SSE 및 리다이렉트 허용
                         .requestMatchers("/notification/unread", "/notification/read-single",
-                                "/notification/read-all", "/notification/delete")
+                                "/notification/read-all", "/notification/delete",
+                                "/notification/delete-unread", "/notification/delete-read")
                         .authenticated() // ✅ 알림 관련 API는 인증 필요
                         .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
                 )
@@ -86,10 +87,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:3000", // ✅ React 허용
-                                         "https://bibim-main.vercel.app",
-                                         "https://bibim-dev.vercel.app",
-                                         "https://bibim.shop",
-                                         "https://dev.bibim.shop"));
+                "https://bibim-main.vercel.app",
+                "https://bibim-dev.vercel.app",
+                "https://bibim.shop",
+                "https://dev.bibim.shop"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")); // ✅ 허용할 HTTP 메소드
         config.setAllowedHeaders(List.of("*")); // ✅ 모든 헤더 허용
         config.setAllowCredentials(true);
