@@ -10,6 +10,9 @@ public interface NotificationService {
     // 새 알림 생성 및 SSE 전송 (DTO 반환)
     NotificationResponseDTO createAndSendNotification(NotificationEntity notification);
 
+    // 새로운 SSE Emitter 추가
+//    void addEmitter(String email, SseEmitter emitter);
+
     // SSE 구독(Emitter 생성)
     SseEmitter subscribe(String receiverEmail);
 

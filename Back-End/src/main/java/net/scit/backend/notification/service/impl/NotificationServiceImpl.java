@@ -44,6 +44,13 @@ public class NotificationServiceImpl implements NotificationService {
         return emitter;
     }
 
+//    // 🔹 SSE Emitter 추가 (addEmitter)
+//    @Override
+//    public void addEmitter(String email, SseEmitter emitter) {
+//        emitters.put(email, emitter);
+//        log.info("✅ SSE Emitter 등록 완료: {}", email);
+//    }
+
     @Override
     public void removeEmitter(String email) {
         SseEmitter emitter = emitters.remove(email);
