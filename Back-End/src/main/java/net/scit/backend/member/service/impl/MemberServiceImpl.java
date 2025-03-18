@@ -22,6 +22,7 @@ import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.member.event.MemberEvent;
 import net.scit.backend.member.repository.MemberRepository;
 import net.scit.backend.member.service.MemberService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -52,6 +53,9 @@ public class MemberServiceImpl implements MemberService {
     private final HttpServletRequest httpServletRequest;
     private final ApplicationEventPublisher eventPublisher;
 
+    @Value("${default_image}")
+    String defaultImage;
+
     /**
      * 회원가입 처리를 수행하는 메소드
      */
@@ -60,6 +64,10 @@ public class MemberServiceImpl implements MemberService {
         validateSignup(signupDTO);
 
         String imageUrl = uploadProfileImage(file);
+        if(imageUrl == null) {
+            imageUrl = defaultImage;
+        }
+
         String encryptedPassword = bCryptPasswordEncoder.encode(signupDTO.getPassword());
 
         MemberDTO memberDTO = createMemberDTO(signupDTO, encryptedPassword, imageUrl);
