@@ -62,6 +62,9 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isChatLoading, setIsChatLoading] = useState(false); // ✅ 채팅 로딩 상태 추가
+    
+    // 멤버 상태 모달 관련 상태 추가
+    const [memberStatusModalOpen, setMemberStatusModalOpen] = useState(false);
 
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
     console.log("몇번", activeWorkspace)
@@ -545,6 +548,68 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
         return msg.Number || `message-${index}`;  // ✅ dmNumber 사용, 없을 경우 index 사용
     };
 
+    /**
+     * ✅ 워크스페이스 멤버 목록과 접속 상태를 가져오는 함수
+     */
+    const fetchMembersStatus = useCallback(async () => {
+        if (!WSID) return;
+        
+        setIsLoading(true);
+        try {
+            // 1. 워크스페이스 멤버 목록 가져오기
+            const usersData = await fetchWorkspaceUsers(WSID);
+            
+            // 2. 워크스페이스 멤버의 접속 상태 가져오기
+            const statusData = await fetchWorkspaceMembersStatus(WSID);
+            
+            if (!statusData || statusData.length === 0) {
+                // 접속 상태 데이터가 없는 경우 모든 사용자를 오프라인으로 표시
+                const offlineUsers = usersData.map(user => ({
+                    ...user,
+                    loginStatus: false
+                }));
+                setActiveUsers(offlineUsers);
+                return;
+            }
+            
+            // 3. usersData에 statusData를 매핑하여 온라인/오프라인 상태 추가
+            const updatedUsers = usersData.map(user => {
+                // 이메일로 상태 데이터 찾기
+                const userStatus = statusData.find(status => status.email === user.email);
+                
+                // 상태 데이터가 있으면 해당 상태 사용, 없으면 오프라인으로 설정
+                return {
+                    ...user,
+                    loginStatus: userStatus?.status === 'online'
+                };
+            });
+            
+            setActiveUsers(updatedUsers);
+        } catch (error) {
+            console.error("🚨 사용자 목록 및 접속 상태 불러오기 실패:", error);
+            setError("멤버 정보를 불러오는데 실패했습니다");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [WSID]);
+
+    /**
+     * ✅ 워크스페이스 ID 변경 시 멤버 접속 상태 가져오기
+     */
+    useEffect(() => {
+        fetchMembersStatus();
+        
+        // 5분마다 멤버 접속 상태 갱신
+        const intervalId = setInterval(fetchMembersStatus, 5 * 60 * 1000);
+        
+        return () => clearInterval(intervalId);
+    }, [WSID, fetchMembersStatus]);
+
+    // 멤버 상태 모달 토글 함수 추가
+    const toggleMemberStatusModal = () => {
+        setMemberStatusModalOpen(!memberStatusModalOpen);
+    };
+
     console.log(channels);
     console.log("채널 id와 채널명", channelId, channelName);
 
@@ -564,7 +629,7 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                         채널 변경
                     </Button>
                 </div>
-                <div className="active-users">
+                <div className="active-users" onClick={toggleMemberStatusModal}>
                     <PersonIcon sx={{ color: '#6b7280', fontSize: 20 }} />
                     {isLoading ? (
                         <span>멤버 정보 로딩 중...</span>
@@ -733,7 +798,7 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                 channelId={selectedChannel?.channelId}
                 currentName={selectedChannel?.channelName}
                 onUpdate={handleChannelUpdate}
-                onDelete={handleChannelDelete} // ✅ 삭제 핸들러 추가
+                onDelete={handleChannelDelete}
             />
 
             <ChannelCreateModal
@@ -741,6 +806,13 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                 onClose={() => setCreateModalOpen(false)}
                 workspaceId={workspaceId}
                 onChannelCreated={handleChannelCreated}
+            />
+            
+            {/* 멤버 상태 모달 추가 */}
+            <MemberStatusModal 
+                open={memberStatusModalOpen}
+                onClose={() => setMemberStatusModalOpen(false)}
+                workspaceId={WSID}
             />
         </div>
     );

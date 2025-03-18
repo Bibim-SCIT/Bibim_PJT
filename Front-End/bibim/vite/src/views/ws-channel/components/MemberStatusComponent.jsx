@@ -212,4 +212,4 @@ const MemberStatusComponent = ({ workspaceId }) => {
     );
 };
 
-export default MemberStatusComponent; 
+export default MemberStatusComponent;
