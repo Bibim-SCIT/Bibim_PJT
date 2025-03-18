@@ -6,7 +6,7 @@ import { ConfigContext } from "../../../contexts/ConfigContext";
 import { FaPaperPlane, FaPlus } from "react-icons/fa";
 import TagIcon from '@mui/icons-material/Tag';
 import PersonIcon from '@mui/icons-material/Person';
-import { fetchWorkspaceUsers } from "../../../api/workspaceApi";
+import { fetchWorkspaceUsers, fetchWorkspaceMembersStatus } from "../../../api/workspaceApi";
 import "./ChatComponent.css";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -21,6 +21,8 @@ import ChannelLoading2 from "./ChannelLoading2"; // ✅ 로딩 컴포넌트 추�
 // 번역관련 api 호출
 import { translateText } from "../../../api/translate";
 import TranslateIcon from '@mui/icons-material/Translate'; // 번역 아이콘 추가
+// 멤버 상태 모달 컴포넌트 추가
+import MemberStatusModal from './MemberStatusModal';
 
 /**
  * LocalDateTime을 Asia/Seoul 시간대로 변환하고 포맷팅하는 함수
