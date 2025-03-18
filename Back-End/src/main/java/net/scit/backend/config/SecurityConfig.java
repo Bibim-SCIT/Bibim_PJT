@@ -61,14 +61,19 @@ public class SecurityConfig {
                                 "/actuator/**",
                                 "/global/health-check",
                                 "/error",
-                                "/notification/subscribe", "/notification/{notificationId}",
-                                "/notification/subscribe").permitAll() // 로그인 엔드포인트 허용
-                        .requestMatchers("/user/**", "/schedule/**", "/members/myinfo",
-                                        "/members/changeinfo", "/members/withdraw",
-                                        "/workspace/**", "/mypage/**").hasRole("USER") // 사용자 전용
+                                "/notification/subscribe")
+                        .permitAll() // 로그인 엔드포인트 허용
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 전용
+                        .requestMatchers("/user/**", "/schedule/**", "/members/myinfo", "/members/changeinfo",
+                                "/members/withdraw",
+                                "/workspace/**",
+                                "/mypage/**")
+                        .hasRole("USER") // 사용자 전용
+                        .requestMatchers("/notification/{notificationId}", "/notification/subscribe").permitAll() // ✅ SSE 및 리다이렉트 허용
                         .requestMatchers("/notification/unread", "/notification/read-single",
-                                "/notification/read-all", "/notification/delete").authenticated() // ✅ 알림 관련 API는 인증 필요
+                                        "/notification/read-all", "/notification/delete",
+                                        "/notification/delete-unread", "/notification/delete-read")
+                        .authenticated() // ✅ 알림 관련 API는 인증 필요
                         .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
                 )
                 .addFilterBefore(
