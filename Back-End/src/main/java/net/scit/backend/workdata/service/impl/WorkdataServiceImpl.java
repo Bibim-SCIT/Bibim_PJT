@@ -205,6 +205,7 @@ public class WorkdataServiceImpl implements WorkdataService {
 
         // 1. 현재 로그인한 사용자 이메일 추출 (AuthUtil 사용)
         String userEmail = AuthUtil.getLoginUserId();
+        log.info("📌 updateWorkdata 호출 - userEmail: {}, wsId: {}, dataNumber: {}", userEmail, wsId, dataNumber);
 
         // 2. 해당 사용자가 wsId에 속해 있는지 검증
         workspaceMemberRepository.findByMember_EmailAndWorkspace_WsId(userEmail, wsId)
@@ -213,94 +214,72 @@ public class WorkdataServiceImpl implements WorkdataService {
         // 3. 자료글 조회
         WorkdataEntity existingEntity = workdataRepository.findById(dataNumber)
                 .orElseThrow(() -> new IllegalArgumentException("자료글을 찾을 수 없습니다."));
+        log.info("📌 기존 자료글 정보: title={}, content={}, writer={}",
+                existingEntity.getTitle(), existingEntity.getContent(), existingEntity.getWriter());
 
         // 4. 작성자 검증
         if (!existingEntity.getWriter().equals(userEmail)) {
             throw new IllegalArgumentException("본인만 수정할 수 있습니다.");
         }
 
-        // 기존의 workspaceMember(작성자/워크스페이스) 유지
-        WorkspaceMemberEntity existingWorkspaceMember = existingEntity.getWorkspaceMember();
-
         /* ---------------------------
-         *    파일 삭제 처리
+         *    파일 삭제 처리 (로그 추가)
          * --------------------------- */
         if (deleteFiles != null && !deleteFiles.isEmpty()) {
+            log.info("📌 삭제할 파일 목록: {}", deleteFiles);
+
             // 1) 삭제할 파일들 조회
             List<WorkdataFileEntity> filesToDelete = workdataFileRepository.findByFileNameInAndWorkdataEntity(deleteFiles, existingEntity);
+            log.info("📌 DB에서 조회된 삭제 대상 파일: {}", filesToDelete);
+
             // 2) S3 파일 삭제
             filesToDelete.forEach(fileEntity -> {
                 try {
                     String fileUrl = fileEntity.getFile(); // full path
+                    log.info("🗑 삭제할 S3 파일 URL: {}", fileUrl);
+
                     // S3에서 key 추출 시 경로 처리(예: path.substring(1))
                     s3Uploader.deleteFile(new URL(fileUrl).getPath().substring(1));
                 } catch (MalformedURLException e) {
-                    log.error("잘못된 파일 URL: {}", fileEntity.getFile(), e);
+                    log.error("❌ 잘못된 파일 URL: {}", fileEntity.getFile(), e);
                     throw new RuntimeException("파일 삭제 중 오류 발생: 잘못된 URL 형식입니다.");
                 }
             });
+
             // 3) DB에서도 삭제
             workdataFileRepository.deleteAll(filesToDelete);
+            log.info("✅ 파일 삭제 완료: {}", deleteFiles);
         }
 
         /* ---------------------------
-         *    태그 삭제 / 추가 처리
+         *    태그 삭제 / 추가 처리 (로그 추가)
          * --------------------------- */
-        // 현재 등록된 태그 set
-        Set<String> existingTags = workdataFileTagRepository.findByWorkdataEntity(existingEntity)
-                .stream()
-                .map(WorkDataFileTagEntity::getTag)
-                .collect(Collectors.toSet());
-
-        // 1) 태그 삭제
         if (deleteTags != null && !deleteTags.isEmpty()) {
+            log.info("📌 삭제할 태그 목록: {}", deleteTags);
             List<WorkDataFileTagEntity> tagsToRemove = workdataFileTagRepository.findByTagInAndWorkdataEntity(deleteTags, existingEntity);
             workdataFileTagRepository.deleteAll(tagsToRemove);
+            log.info("✅ 태그 삭제 완료: {}", deleteTags);
         }
 
-        // 2) 태그 추가 (중복 태그 제거 후 추가)
         if (newTags != null && !newTags.isEmpty()) {
-            newTags.removeAll(existingTags);
+            log.info("📌 새로 추가할 태그 목록: {}", newTags);
             List<WorkDataFileTagEntity> newTagEntities = newTags.stream()
                     .map(tag -> WorkDataFileTagEntity.builder()
                             .workdataEntity(existingEntity)
                             .tag(tag)
                             .build())
                     .collect(Collectors.toList());
-            if (!newTagEntities.isEmpty()) {
-                workdataFileTagRepository.saveAll(newTagEntities);
-            }
+            workdataFileTagRepository.saveAll(newTagEntities);
+            log.info("✅ 태그 추가 완료: {}", newTags);
         }
 
         /* ---------------------------
-         *    새 파일 업로드 처리
+         *    새 파일 업로드 처리 (로그 추가)
          * --------------------------- */
         if (newFiles != null && newFiles.length > 0) {
-            // 1) 현재 등록된 파일명 set
-            Set<String> existingFileNames = workdataFileRepository.findByWorkdataEntity(existingEntity)
-                    .stream()
-                    .map(WorkdataFileEntity::getFileName)
-                    .collect(Collectors.toSet());
-            // 2) 새 파일 업로드 + DB 저장
-            List<WorkdataFileEntity> newFileEntities = Arrays.stream(newFiles)
-                    .filter(file -> file != null && file.getSize() > 0)
-                    .filter(file -> !existingFileNames.contains(file.getOriginalFilename()))
-                    .map(file -> {
-                        try {
-                            String fileUrl = s3Uploader.upload(file, "workdata-files");
-                            return WorkdataFileEntity.builder()
-                                    .workdataEntity(existingEntity)
-                                    .file(fileUrl)
-                                    .fileName(file.getOriginalFilename())
-                                    .build();
-                        } catch (IOException e) {
-                            log.error("파일 업로드 실패: {}", file.getOriginalFilename(), e);
-                            throw new RuntimeException("파일 업로드 중 오류 발생: " + file.getOriginalFilename(), e);
-                        }
-                    })
-                    .collect(Collectors.toList());
-            if (!newFileEntities.isEmpty()) {
-                workdataFileRepository.saveAll(newFileEntities);
+            log.info("📌 새로 업로드할 파일 개수: {}", newFiles.length);
+            for (MultipartFile file : newFiles) {
+                log.info("🆕 업로드 파일명: {}, 크기: {}", file.getOriginalFilename(), file.getSize());
             }
         }
 
@@ -310,19 +289,20 @@ public class WorkdataServiceImpl implements WorkdataService {
         existingEntity.setTitle(title != null ? title : existingEntity.getTitle());
         existingEntity.setContent(content != null ? content : existingEntity.getContent());
 
-        // 작성자/워크스페이스 변경 방지
-        existingEntity.setWorkspaceMember(existingWorkspaceMember);
+        // 최종 업데이트된 엔터티 로그 출력
+        log.info("✅ 최종 업데이트된 자료글: title={}, content={}", existingEntity.getTitle(), existingEntity.getContent());
 
         // DB에 저장 (즉시 반영을 위해 save)
         workdataRepository.save(existingEntity);
 
-        // 자료글 수정 이벤트 발생 (알림 등)
+        // 이벤트 발생 (알림 전송)
         String senderNickname = getSenderNickname(wsId, userEmail);
         eventPublisher.publishEvent(new WorkdataEvent(existingEntity, userEmail, senderNickname, "update"));
 
-        // 수정 결과 응답
         return ResultDTO.of("자료글 수정 완료!", SuccessDTO.builder().success(true).build());
     }
+
+
 
 
     /**

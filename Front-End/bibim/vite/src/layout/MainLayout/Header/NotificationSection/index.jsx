@@ -108,6 +108,7 @@ export default function NotificationSection() {
 
 
   // 개별 알림 삭제 API
+  // 개별 알림 삭제 API (수정)
   const deleteNotification = async (notificationId) => {
     try {
       const token = localStorage.getItem("token");
@@ -116,9 +117,16 @@ export default function NotificationSection() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
-        setNotifications((prev) =>
-          prev.filter((n) => n.notificationNumber !== notificationId)
-        );
+        // 삭제 전 현재 목록에서 해당 알림을 찾음
+        setNotifications((prev) => {
+          const deletedNotification = prev.find((n) => n.notificationNumber === notificationId);
+          const updated = prev.filter((n) => n.notificationNumber !== notificationId);
+          // 만약 삭제된 알림이 읽지 않은 상태라면 unreadCount 감소
+          if (deletedNotification && !deletedNotification.notificationStatus) {
+            setUnreadCount((prevCount) => Math.max(prevCount - 1, 0));
+          }
+          return updated;
+        });
       } else {
         console.error('❌ 알림 삭제 실패:', response.status);
       }
@@ -126,6 +134,7 @@ export default function NotificationSection() {
       console.error('❌ 알림 삭제 중 오류 발생:', error);
     }
   };
+
 
 
   // 안 읽은 알림 전체 삭제 및 unreadCount 초기화
