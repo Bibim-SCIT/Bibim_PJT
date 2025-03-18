@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
 import CloseIcon from '@mui/icons-material/Close';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { useDispatch } from 'react-redux';
 import { loadWorkspace } from '../../../store/workspaceRedux';
 // import { leaveWorkspace } from '../../../api/workspaceApi'; // 나중에 API 연결 시 사용
@@ -38,6 +39,14 @@ const LeaveWorkspaceModal = ({ open, onClose, workspace, onConfirm }) => {
             
             // localStorage에서 activeWorkspace 제거
             localStorage.removeItem('activeWorkspace');
+            
+            // 성공 메시지를 localStorage에 저장 (페이지 이동 후 스낵바 표시용)
+            localStorage.setItem('workspaceLeaveSuccess', 
+                JSON.stringify({
+                    message: '워크스페이스 나가기가 완료되었습니다.',
+                    wsName: workspace?.name || workspace?.wsName || '워크스페이스'
+                })
+            );
             
             // 전체 페이지 새로고침하면서 워크스페이스 선택 페이지로 이동
             window.location.href = '/ws-select';
@@ -119,6 +128,34 @@ const LeaveWorkspaceModal = ({ open, onClose, workspace, onConfirm }) => {
                             }}
                         >
                             ※ 탈퇴 후에는 다시 초대를 받아야 참여할 수 있습니다.
+                        </Typography>
+                    </Box>
+                    
+                    {/* 워크스페이스 자동 삭제 안내 */}
+                    <Box sx={{ 
+                        bgcolor: '#f5f5f5', 
+                        p: 1.5, 
+                        borderRadius: 1, 
+                        borderLeft: '3px solid rgb(50, 51, 53)',
+                        mt: 2
+                    }}>
+                        <Typography 
+                            variant="body2" 
+                            sx={{ 
+                                color: 'text.secondary',
+                                fontSize: '0.75rem',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}
+                        >
+                            <ErrorOutlineIcon 
+                                sx={{ 
+                                    fontSize: '16px', 
+                                    mr: 1.8,
+                                    color: 'text.secondary'
+                                }} 
+                            />
+                            마지막 멤버가 나가면 워크스페이스는 자동으로 삭제됩니다.
                         </Typography>
                     </Box>
                 </Box>
