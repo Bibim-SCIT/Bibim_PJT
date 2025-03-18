@@ -32,6 +32,8 @@ const modalStyle = {
     outline: 'none'
 };
 
+const defaultImage = 'https://bibim2.s3.ap-northeast-2.amazonaws.com/workdata-files/587fb795-8fbf-4a5c-a203-d714f585422d.png';
+
 const CreateWorkspaceModal = ({ open, onClose, onSuccess }) => {
     const dispatch = useDispatch();
     const [workspaceName, setWorkspaceName] = useState('');
@@ -75,8 +77,21 @@ const CreateWorkspaceModal = ({ open, onClose, onSuccess }) => {
 
         try {
             setIsSubmitting(true);
-            await createWorkspace(workspaceName, workspaceImage || defaultWorkspaceImage);
+
+            let fileToSend = workspaceImage;
+            if (!fileToSend) {
+                // 기본 이미지 URL을 Blob으로 변환하여 파일로 전송
+                const response = await fetch(defaultImage);
+                const blob = await response.blob();
+                fileToSend = new File([blob], "defaultImage.png", { type: "image/png" });
+            }
+
+            await createWorkspace(workspaceName, fileToSend);
+            // await createWorkspace(workspaceName, workspaceImage || defaultImage);
             await dispatch(loadWorkspace());
+
+            console.log("원래등록", workspaceImage, workspaceName);
+            console.log("워크스페이스 생성 요청:", fileToSend, workspaceName);
 
             // 성공 콜백이 있으면 호출
             if (onSuccess && typeof onSuccess === 'function') {
@@ -149,7 +164,11 @@ const CreateWorkspaceModal = ({ open, onClose, onSuccess }) => {
                                     <img
                                         src={previewImage}
                                         alt="워크스페이스 이미지"
-                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        style={{
+                                            width: previewImage === defaultWorkspaceImage ? '70%' : '100%',
+                                            height: previewImage === defaultWorkspaceImage ? 'auto' : '100%',
+                                            objectFit: previewImage === defaultWorkspaceImage ? 'cover' : 'contain',
+                                        }}
                                     />
                                 ) : (
                                     <PhotoCameraIcon sx={{ color: '#999', fontSize: 40 }} />

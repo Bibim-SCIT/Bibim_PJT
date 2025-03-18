@@ -36,6 +36,7 @@ export const createWorkspace = async (workspaceName, workspaceImage = null) => {
     try {
         const formData = new FormData();
         formData.append("wsName", workspaceName); // ✅ 백엔드 DTO와 맞춤
+
         if (workspaceImage) {
             formData.append("file", workspaceImage);
         }

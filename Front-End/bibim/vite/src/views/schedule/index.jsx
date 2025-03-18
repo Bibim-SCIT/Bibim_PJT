@@ -179,9 +179,6 @@ const SchedulePage = () => {
         >
           일정 생성
         </Button>
-        {/* <Button variant="contained" color="primary" onClick={() => setModalOpen2(true)}>
-          일정 수정
-        </Button> */}
         <Button variant="contained" color="secondary" onClick={() => setTagCreateModalOpen(true)}>
           태그 생성
         </Button>
