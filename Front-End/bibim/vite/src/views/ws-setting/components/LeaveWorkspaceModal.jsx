@@ -9,6 +9,8 @@ import {
 } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
 import CloseIcon from '@mui/icons-material/Close';
+import { useDispatch } from 'react-redux';
+import { loadWorkspace } from '../../../store/workspaceRedux';
 // import { leaveWorkspace } from '../../../api/workspaceApi'; // 나중에 API 연결 시 사용
 
 /**
@@ -21,6 +23,7 @@ import CloseIcon from '@mui/icons-material/Close';
  */
 const LeaveWorkspaceModal = ({ open, onClose, workspace, onConfirm }) => {
     const [loading, setLoading] = useState(false);
+    const dispatch = useDispatch();
 
     // 워크스페이스 탈퇴 처리
     const handleLeaveWorkspace = async () => {
@@ -32,6 +35,12 @@ const LeaveWorkspaceModal = ({ open, onClose, workspace, onConfirm }) => {
             // 부모 컴포넌트에서 전달받은 확인 함수 호출
             await onConfirm(workspace);
             onClose(); // 모달 닫기
+            
+            // localStorage에서 activeWorkspace 제거
+            localStorage.removeItem('activeWorkspace');
+            
+            // 전체 페이지 새로고침하면서 워크스페이스 선택 페이지로 이동
+            window.location.href = '/ws-select';
         } catch (error) {
             console.error('워크스페이스 탈퇴 오류:', error);
             // 오류 발생 시에도 모달은 닫지 않고 오류 메시지만 표시
