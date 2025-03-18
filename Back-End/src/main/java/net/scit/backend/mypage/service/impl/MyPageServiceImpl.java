@@ -130,8 +130,8 @@ public class MyPageServiceImpl implements MyPageService {
                 .map(workspaceMember -> workspaceMember.getWorkspace())
                 .collect(Collectors.toList());
 
-        // 워크스페이스 목록을 기반으로 해당 워크스페이스의 자료실 데이터 가져오기
-        List<WorkdataEntity> workDataEntities = workdataRepository.findAllByWorkspaceIn(workspaceEntities);
+        // 워크스페이스와 멤버를 기반으로 해당 워크스페이스의 자료실 데이터 가져오기
+        List<WorkdataEntity> workDataEntities = workdataRepository.findAllByWorkspaceInAndWriter(workspaceEntities, member.getEmail());
 
         if (CollectionUtils.isEmpty(workDataEntities)) {
             return ResultDTO.of("등록 된 자료실 정보가 없습니다.", null);
@@ -141,6 +141,6 @@ public class MyPageServiceImpl implements MyPageService {
                 .map(AllWorkspaceDataDTO::toDTO)
                 .collect(Collectors.toList());
 
-        return ResultDTO.of("내가 가입한 모든 워크스페이스의 자료실 정보 가져오기에 성공했습니다.", allWorkspaceDataDTOList);
+        return ResultDTO.of("내가 작성 한 모든 자료실 정보 조회에 성공했습니다.", allWorkspaceDataDTOList);
     }
 }

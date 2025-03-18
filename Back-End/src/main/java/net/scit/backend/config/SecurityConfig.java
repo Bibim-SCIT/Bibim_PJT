@@ -19,7 +19,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
 import net.scit.backend.jwt.JwtAuthenticationFilter;
 import net.scit.backend.jwt.JwtTokenProvider;
 
@@ -72,7 +71,8 @@ public class SecurityConfig {
                         .hasRole("USER") // 사용자 전용
                         .requestMatchers("/notification/{notificationId}", "/notification/subscribe").permitAll() // ✅ SSE 및 리다이렉트 허용
                         .requestMatchers("/notification/unread", "/notification/read-single",
-                                "/notification/read-all", "/notification/delete")
+                                        "/notification/read-all", "/notification/delete",
+                                        "/notification/delete-unread", "/notification/delete-read")
                         .authenticated() // ✅ 알림 관련 API는 인증 필요
                         .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
                 )
@@ -110,3 +110,4 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
+

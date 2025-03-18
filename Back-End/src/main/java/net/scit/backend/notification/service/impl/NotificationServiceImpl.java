@@ -142,6 +142,33 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
 
+    @Transactional
+    @Override
+    public boolean deleteAllRead(String receiverEmail) {
+        List<NotificationEntity> readNotifications =
+                notificationRepository.findByReceiverEmailAndNotificationStatusTrueOrderByNotificationDateDesc(receiverEmail);
+        if (readNotifications.isEmpty()) {
+            return false;
+        }
+        notificationRepository.deleteAll(readNotifications);
+        log.info("읽은 알림 전체 삭제 완료, 삭제 개수: {}", readNotifications.size());
+        return true;
+    }
+
+    @Transactional
+    @Override
+    public boolean deleteAllUnread(String receiverEmail) {
+        List<NotificationEntity> unreadNotifications =
+                notificationRepository.findByReceiverEmailAndNotificationStatusFalseOrderByNotificationDateDesc(receiverEmail);
+        if (unreadNotifications.isEmpty()) {
+            return false;
+        }
+        notificationRepository.deleteAll(unreadNotifications);
+        log.info("안 읽은 알림 전체 삭제 완료, 삭제 개수: {}", unreadNotifications.size());
+        return true;
+    }
+
+
     @Override
     public String getNotificationUrl(Long notificationId) {
         NotificationEntity notification = notificationRepository.findById(notificationId)

@@ -81,33 +81,83 @@ export const fetchSmallTags = async (wsId, largeTagNumber, mediumTagNumber) => {
 };
 
 // ✅ 태그 생성 API
+// export const createTag = async (wsId, tagData) => {
+//   if (!wsId || !tagData.tagName || !tagData.tagType) {
+//     console.warn("🚨 createTag: 필요한 데이터가 없습니다.");
+//     return;
+//   }
+
+//   const payload = { wsId, tagName: tagData.tagName };
+
+//   // 중분류 & 소분류는 부모 태그 정보를 추가
+//   if (tagData.tagType === "medium" && tagData.parentTag) {
+//     payload.largeTagNumber = tagData.parentTag;
+//   } else if (tagData.tagType === "small" && tagData.parentTag && tagData.subParentTag) {
+//     payload.largeTagNumber = tagData.parentTag;
+//     payload.mediumTagNumber = tagData.subParentTag;
+//   }
+
+//   try {
+//     console.log(`📌 createTag(${tagData.tagType}) 요청 데이터:`, payload);
+
+//     await api.post(`/schedule/tag/${tagData.tagType}`, payload, getAxiosConfig());
+
+//     console.log(`✅ 태그(${tagData.tagName}) 생성 성공`);
+//   } catch (error) {
+//     console.error(`❌ createTag 실패:`, error.response?.data || error);
+//     throw error;
+//   }
+// };
+
+// ✅ 태그 생성 API (태그 색깔 포함)
 export const createTag = async (wsId, tagData) => {
   if (!wsId || !tagData.tagName || !tagData.tagType) {
     console.warn("🚨 createTag: 필요한 데이터가 없습니다.");
     return;
   }
 
-  const payload = { wsId, tagName: tagData.tagName };
+  const payload = {
+    wsId,
+    tagName: tagData.tagName
+  };
 
-  // 중분류 & 소분류는 부모 태그 정보를 추가
-  if (tagData.tagType === "medium" && tagData.parentTag) {
-    payload.largeTagNumber = tagData.parentTag;
-  } else if (tagData.tagType === "small" && tagData.parentTag && tagData.subParentTag) {
-    payload.largeTagNumber = tagData.parentTag;
-    payload.mediumTagNumber = tagData.subParentTag;
+  // ✅ 대분류 태그일 경우, tagColor 추가
+  if (tagData.tagType === "large" && tagData.tagColor) {
+    payload.tagColor = tagData.tagColor;
   }
+
+  if (tagData.tagType === "medium") {
+    if (!tagData.largeTagNumber) {
+      console.error("🚨 createTag 오류: 중분류 태그를 생성하려면 largeTagNumber(부모 태그 ID)가 필요합니다.");
+      return;
+    }
+    payload.largeTagNumber = tagData.largeTagNumber;
+  }
+
+  if (tagData.tagType === "small") {
+    if (!tagData.largeTagNumber || !tagData.mediumTagNumber) {
+      console.error("🚨 createTag 오류: 소분류 태그를 생성하려면 부모 태그 정보가 필요합니다.");
+      return;
+    }
+    payload.largeTagNumber = tagData.largeTagNumber;
+    payload.mediumTagNumber = tagData.mediumTagNumber;
+  }
+
+  console.log("📌 최종 API 요청 데이터:", payload); // ✅ 디버깅용 로그
 
   try {
     console.log(`📌 createTag(${tagData.tagType}) 요청 데이터:`, payload);
 
-    await api.post(`/schedule/tag/${tagData.tagType}`, payload, getAxiosConfig());
+    const response = await api.post(`/schedule/tag/${tagData.tagType}`, payload, getAxiosConfig());
 
-    console.log(`✅ 태그(${tagData.tagName}) 생성 성공`);
+    console.log(`✅ 태그(${tagData.tagName}) 생성 성공:`, response.data);
+    return response.data;
   } catch (error) {
     console.error(`❌ createTag 실패:`, error.response?.data || error);
     throw error;
   }
 };
+
 
 // ✅ 대분류 태그 삭제 API
 export const deleteLargeTag = async (largeTagNumber) => {

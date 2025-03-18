@@ -1,6 +1,7 @@
 package net.scit.backend.workdata.repository;
 
 import io.lettuce.core.dynamic.annotation.Param;
+import net.scit.backend.member.entity.MemberEntity;
 import net.scit.backend.workdata.entity.WorkdataEntity;
 import net.scit.backend.workspace.entity.WorkspaceEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -48,8 +49,7 @@ public interface WorkdataRepository extends JpaRepository<WorkdataEntity, Long> 
             OR LOWER(t.tag) LIKE LOWER(CONCAT('%', :keyword, '%'))
           )
         """)
-    List<WorkdataEntity> searchByWorkspaceAndKeyword(@Param("wsId") Long wsId,
-                                                     @Param("keyword") String keyword);
+    List<WorkdataEntity> searchByWorkspaceAndKeyword(@Param("wsId") Long wsId, @Param("keyword") String keyword);
 
-    List<WorkdataEntity> findAllByWorkspaceIn(List<WorkspaceEntity> workspaceEntities);
+    List<WorkdataEntity> findAllByWorkspaceInAndWriter(List<WorkspaceEntity> workspaceEntities, String email);
 }

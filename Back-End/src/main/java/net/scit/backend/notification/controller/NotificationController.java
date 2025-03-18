@@ -110,6 +110,22 @@ public class NotificationController {
     }
 
 
+    @DeleteMapping("/delete-read")
+    public ResponseEntity<String> deleteAllReadNotifications(@RequestHeader("Authorization") String token) {
+        String email = AuthUtil.getLoginUserId();
+        boolean result = notificationService.deleteAllRead(email);
+        return result ? ResponseEntity.ok("읽은 알림 전체 삭제 완료")
+                : ResponseEntity.badRequest().body("삭제할 읽은 알림이 없습니다.");
+    }
+
+    @DeleteMapping("/delete-unread")
+    public ResponseEntity<String> deleteAllUnreadNotifications(@RequestHeader("Authorization") String token) {
+        String email = AuthUtil.getLoginUserId();
+        boolean result = notificationService.deleteAllUnread(email);
+        return result ? ResponseEntity.ok("안 읽은 알림 전체 삭제 완료")
+                : ResponseEntity.badRequest().body("삭제할 안 읽은 알림이 없습니다.");
+    }
+
     @GetMapping("/{notificationId}")
     public ResponseEntity<Void> redirectToNotificationUrl(@PathVariable Long notificationId) {
         String url = notificationService.getNotificationUrl(notificationId);
@@ -117,4 +133,6 @@ public class NotificationController {
         headers.add("Location", url);
         return new ResponseEntity<>(headers, HttpStatus.FOUND);
     }
+
+
 }
