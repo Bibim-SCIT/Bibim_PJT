@@ -51,11 +51,12 @@ function Sidebar()
             <>
                 <WorkspaceSelector /> {/* ✅ 1️⃣ 최상단에 워크스페이스 선택자 추가 */}
                 <MenuList /> {/* ✅ 2️⃣ 그 아래에 메뉴 리스트 추가 */}
+                {drawerOpen && <MenuCard />} {/* ✅ 프로필 카드도 스크롤 영역에 포함 */}
             </>
         );
 
-        // 고정 영역에 들어갈 컨텐츠 (MenuCard)
-        const fixedContent = drawerOpen && <MenuCard />;
+        // 고정 영역에 들어갈 컨텐츠 (MenuCard를 스크롤 영역으로 이동)
+        // const fixedContent = drawerOpen && <MenuCard />;
 
         return (
             <>
@@ -65,14 +66,10 @@ function Sidebar()
                         ...drawerSX, 
                         display: 'flex', 
                         flexDirection: 'column', 
-                        height: '100%',
-                        justifyContent: 'space-between'
+                        height: '100%'
                     }}>
                         <Box sx={{ overflow: 'auto' }}>
                             {scrollableContent}
-                        </Box>
-                        <Box>
-                            {fixedContent}
                         </Box>
                     </Box>
                 ) : (
@@ -81,16 +78,12 @@ function Sidebar()
                         ...drawerSX, 
                         display: 'flex', 
                         flexDirection: 'column', 
-                        height: 'calc(100vh - 88px)',
-                        justifyContent: 'space-between'
+                        height: 'calc(100vh - 88px)'
                     }}>
                         <Box sx={{ overflow: 'auto' }}>
                             <PerfectScrollbar>
                                 {scrollableContent}
                             </PerfectScrollbar>
-                        </Box>
-                        <Box>
-                            {fixedContent}
                         </Box>
                     </Box>
                 )}

@@ -112,7 +112,6 @@ const MySchedule = () => {
             fontWeight: 600,
             color: '#333'
           }}>
-            <CalendarMonthIcon sx={{ mr: 1, color: '#1976d2' }} />
             내 일정 관리
           </Typography>
           
