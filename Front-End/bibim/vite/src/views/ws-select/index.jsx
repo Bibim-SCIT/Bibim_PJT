@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ConfigContext } from '../../contexts/ConfigContext'; // ✅ ConfigContext import
 import { loadWorkspace, setActiveWorkspace } from '../../store/workspaceRedux';
 import { useNavigate } from 'react-router-dom';
-import { Grid, Box } from '@mui/material';
+import { Grid, Box, Snackbar, Alert } from '@mui/material';
 
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
@@ -28,6 +28,13 @@ export default function WsSelectPage() {
     const loading = useSelector((state) => state.workspace.loading);
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace);
     const [inviteAcceptModalOpen, setInviteAcceptModalOpen] = useState(false);
+    
+    // 스낵바 상태 관리
+    const [snackbar, setSnackbar] = useState({
+        open: false,
+        message: '',
+        severity: 'success'
+    });
 
     useEffect(() => {
         console.log("👤 현재 로그인한 사용자:", user);
@@ -46,7 +53,31 @@ export default function WsSelectPage() {
             console.log("🔄 저장된 activeWorkspace:", parsedWorkspace);
             dispatch(setActiveWorkspace(parsedWorkspace));
         }
+        
+        // 워크스페이스 나가기 성공 메시지가 있으면 스낵바로 표시
+        const leaveSuccessData = localStorage.getItem('workspaceLeaveSuccess');
+        if (leaveSuccessData) {
+            try {
+                const { message, wsName } = JSON.parse(leaveSuccessData);
+                setSnackbar({
+                    open: true,
+                    message: message || '워크스페이스 나가기가 완료되었습니다.',
+                    severity: 'success'
+                });
+                
+                // 메시지를 표시한 후 localStorage에서 삭제
+                localStorage.removeItem('workspaceLeaveSuccess');
+            } catch (error) {
+                console.error('워크스페이스 나가기 메시지 처리 오류:', error);
+                localStorage.removeItem('workspaceLeaveSuccess');
+            }
+        }
     }, [dispatch]);
+
+    // 스낵바 닫기 함수
+    const handleCloseSnackbar = () => {
+        setSnackbar(prev => ({ ...prev, open: false }));
+    };
 
     useEffect(() => {
         if (!loading && Array.isArray(workspaces) && workspaces.length === 1) {
@@ -97,20 +128,6 @@ export default function WsSelectPage() {
         }
     };
 
-    // 로그인 후 자동 리디렉션: 워크스페이스가 1개만 있으면 자동 선택
-    // useEffect(() => {
-    //     if (!loading && workspaces.length === 1) {
-    //         handleSelectWorkspace(workspaces[0]);
-    //     }
-    // }, [loading, workspaces]);
-
-    // ✅ workspaces가 undefined인 경우 빈 배열로 처리하여 오류 방지
-    useEffect(() => {
-        if (!loading && Array.isArray(workspaces) && workspaces.length === 1) {
-            handleSelectWorkspace(workspaces[0]);
-        }
-    }, [loading, workspaces]);
-
     // 로딩 상태일 때 커스텀 로딩 컴포넌트 렌더링
     if (loading) return <LoadingScreen />;
 
@@ -130,10 +147,28 @@ export default function WsSelectPage() {
                 <Box sx={{ height: '200px' }}>
                 </Box>
             </Grid>
+            
+            {/* 초대 수락 모달 */}
             <AcceptInviteModal
                 open={inviteAcceptModalOpen}
                 onClose={() => setInviteAcceptModalOpen(false)}
             />
+            
+            {/* 스낵바 컴포넌트 */}
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={4000}
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert
+                    onClose={handleCloseSnackbar}
+                    severity={snackbar.severity}
+                    sx={{ width: '100%' }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </MainCard>
     );
 }
