@@ -32,7 +32,7 @@ public class WorkspaceChannelEventListener {
                 event.getEventType(), workspaceId, notificationMessage);
 
         // 모든 경우에 대해 동일한 URL로 리다이렉트: http://localhost:3000/channel
-        String notificationUrl = "http://localhost:3000/channel";
+        String notificationUrl = "https://dev.bibim.shop/channel";
 
         List<WorkspaceMemberEntity> workspaceMembers =
                 workspaceMemberRepository.findMembersByWorkspaceIdNative(workspaceId);

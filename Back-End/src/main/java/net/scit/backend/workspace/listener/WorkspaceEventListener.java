@@ -25,8 +25,8 @@ public class WorkspaceEventListener {
 
         // 이벤트 유형에 따라 URL 결정
         String notificationUrl = switch (event.getEventType()) {
-            case "grant", "role_update" -> "http://localhost:3000/ws-setting";
-            default -> "http://localhost:3000/ws-select";
+            case "grant", "role_update" -> "https://dev.bibim.shop/ws-setting";
+            default -> "https://dev.bibim.shop/ws-select";
         };
 
         log.info("📢 이벤트 감지: {} | 대상자: {} | 내용: {} | URL: {}",
