@@ -112,7 +112,18 @@ const WorkspaceSelector = () => {
                                 variant="outlined"
                                 fullWidth
                                 onClick={handleClick} // 클릭 시 메뉴 열기
-                                sx={{ height: 36, textTransform: 'none', }}
+                                sx={{ 
+                                    height: 36, 
+                                    textTransform: 'none', 
+                                    color: '#3F72AF', 
+                                    borderColor: '#3F72AF',
+                                    bgcolor: 'white',
+                                    '&:hover': {
+                                        borderColor: '#3F72AF',
+                                        color: '#3F72AF',
+                                        bgcolor: 'rgba(77, 85, 204, 0.08)'
+                                    }
+                                }}
                                 disabled={loading} // 로딩 중일 때 비활성화
                             >
                                 {loading ? '로딩 중...' : '워크스페이스 변경'}

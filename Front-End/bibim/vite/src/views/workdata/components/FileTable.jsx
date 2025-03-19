@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Button, Avatar, Chip, Box, Dialog,
-    DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemIcon, ListItemText, Popover
+    DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemIcon, ListItemText, Popover, Divider
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -10,6 +10,9 @@ import { deleteWorkdata } from "../../../api/workdata";
 import LoadingScreen from './LoadingScreen';
 import { useContext } from 'react';
 import { ConfigContext } from '../../../contexts/ConfigContext';
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import DownloadIcon from "@mui/icons-material/Download";
 
 // 파일 아이콘 import
 import pdfIcon from "assets/images/icons/pdf.png";
@@ -508,28 +511,63 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                 open={openModal}
                 onClose={handleCloseModal}
                 fullWidth
-                maxWidth="sm" // 고정된 모달 크기 설정 (small 크기)
+                maxWidth="sm"
+                PaperProps={{ 
+                    sx: { 
+                        borderRadius: 1,
+                        boxShadow: 24,
+                        overflow: 'hidden'
+                    } 
+                }}
             >
-                <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    📁 파일 정보
-                    <IconButton onClick={handleCloseModal}>
+                {/* 모달 헤더 */}
+                <Box sx={{ p: 3, pb: 1.5 }}>
+                    <IconButton
+                        onClick={handleCloseModal}
+                        sx={{
+                            position: 'absolute',
+                            right: 8,
+                            top: 8
+                        }}
+                    >
                         <CloseIcon />
                     </IconButton>
-                </DialogTitle>
-                <DialogContent>
+
+                    <Typography
+                        variant="h3"
+                        sx={{
+                            fontWeight: 400,
+                            mb: 2
+                        }}
+                    >
+                        파일 정보
+                    </Typography>
+                </Box>
+
+                <Divider sx={{ borderColor: '#e0e0e0' }} />
+
+                <DialogContent sx={{ px: 3, py: 3 }}>
                     {selectedFile && (
                         <Box>
                             {/* 파일 아이콘 또는 이미지 미리보기 */}
-                            <Box sx={{ textAlign: "center", marginBottom: 2 }}>
+                            <Box sx={{ textAlign: "center", marginBottom: 4 }}>
                                 {(() => {
                                     const firstFileExt = selectedFile.files[0].split(".").pop().toLowerCase();
                                     const isImageFile = ["png", "jpg", "jpeg", "gif"].includes(firstFileExt);
                                     return isImageFile ? (
-                                        <img
-                                            src={selectedFile.fileUrls[0]} // 파일의 URL로 이미지 미리보기
-                                            alt="파일 미리보기"
-                                            style={{ width: "100%", maxWidth: "200px", height: "auto", borderRadius: "8px" }}
-                                        />
+                                        <Box sx={{ 
+                                            p: 1, 
+                                            border: '1px solid #eee',
+                                            borderRadius: 1,
+                                            display: 'inline-block',
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                                        }}>
+                                            <img
+                                                src={selectedFile.fileUrls[0]}
+                                                alt="파일 미리보기"
+                                                style={{ width: "100%", maxWidth: "300px", height: "auto", borderRadius: "4px" }}
+                                            />
+                                        </Box>
                                     ) : (
                                         <img
                                             src={fileTypeIcons[firstFileExt] || fileTypeIcons["default"]}
@@ -540,93 +578,157 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                 })()}
                             </Box>
 
-                            {/* 항목별 2:10 Grid 레이아웃 적용 */}
-                            <Box sx={{ display: "grid", gridTemplateColumns: "2fr 10fr", gap: 1, padding: 2, alignItems: "center" }}>
-                                <Typography variant="body1" sx={{ fontWeight: "bold" }}>제목:</Typography>
-                                <Typography>{selectedFile.title}</Typography>
+                            {/* 항목별 Grid 레이아웃 적용 */}
+                            <Box sx={{ 
+                                display: "grid", 
+                                gridTemplateColumns: { xs: "1fr", sm: "130px 1fr" }, 
+                                gap: 3, 
+                                rowGap: 2,
+                                padding: 1, 
+                                alignItems: "center" 
+                            }}>
+                                <Typography variant="body1" sx={{ fontWeight: 600, color: '#555' }}>제목</Typography>
+                                <Typography variant="body1">{selectedFile.title}</Typography>
 
-                                <Typography variant="body1" sx={{ fontWeight: "bold", alignSelf: "start" }}>파일명:</Typography>
-                                <List dense>
+                                <Typography variant="body1" sx={{ fontWeight: 600, color: '#555' }}>파일명</Typography>
+                                <List dense sx={{ 
+                                    width: '100%', 
+                                    padding: 0,
+                                    margin: 0
+                                }}>
                                     {selectedFile.files.map((fileName, idx) => (
-                                        // 각 파일명을 클릭하면 바로 다운로드 (새 탭)
                                         <ListItem
                                             key={idx} button
                                             sx={{
-                                                cursor: "pointer"
+                                                cursor: "pointer",
+                                                borderRadius: 1,
+                                                '&:hover': {
+                                                    backgroundColor: '#f5f5f5'
+                                                },
+                                                padding: '4px 8px',
+                                                margin: '2px 0'
                                             }}
-                                            onClick={() => {
-                                                // fileUrls 배열이 있을 경우 해당 파일 URL로 이동
-                                                if (selectedFile.fileUrls && selectedFile.fileUrls[idx]) {
-                                                    window.open(selectedFile.fileUrls[idx], '_blank');
-                                                    // handleDownload(selectedFile.fileUrls[idx], fileName);
-                                                } else {
-                                                    alert("다운로드 URL이 없습니다.");
-                                                }
-                                            }}>
-                                            <ListItemIcon>
+                                            onClick={() => handleOpenModal(selectedFile)}>
+                                            <ListItemIcon sx={{ minWidth: 36 }}>
                                                 <img
                                                     src={fileTypeIcons[fileName.split(".").pop().toLowerCase()] || fileTypeIcons.default}
                                                     alt={fileName}
-                                                    style={{ width: 25 }}
+                                                    style={{ width: 24, height: 24 }}
                                                 />
                                             </ListItemIcon>
-                                            <ListItemText primary={fileName} />
+                                            <ListItemText 
+                                                primary={fileName} 
+                                                primaryTypographyProps={{ 
+                                                    variant: 'body2',
+                                                    sx: { 
+                                                        overflow: 'hidden', 
+                                                        textOverflow: 'ellipsis', 
+                                                        whiteSpace: 'nowrap'
+                                                    } 
+                                                }}
+                                            />
                                         </ListItem>
                                     ))}
                                 </List>
 
-                                <Typography variant="body1" sx={{ fontWeight: "bold" }}>업로더:</Typography>
+                                <Typography variant="body1" sx={{ fontWeight: 600, color: '#555', alignSelf: "start" }}>업로더</Typography>
                                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                     <Avatar src={selectedFile.avatar} sx={{ width: 28, height: 28 }} />
-                                    <Typography>{selectedFile.uploader}</Typography>
+                                    <Typography variant="body1">{selectedFile.uploader}</Typography>
                                 </Box>
 
-                                <Typography variant="body1" sx={{ fontWeight: "bold" }}>업로드 날짜:</Typography>
-                                <Typography>{selectedFile.date}</Typography>
+                                <Typography variant="body1" sx={{ fontWeight: 600, color: '#555' }}>업로드 날짜</Typography>
+                                <Typography variant="body1">{selectedFile.date}</Typography>
 
-                                {/* 새로운 content 항목 추가 */}
-                                <Typography variant="body1" sx={{ fontWeight: "bold", alignSelf: "start" }}>내용:</Typography>
-                                <Typography>{selectedFile.content}</Typography>
+                                <Typography variant="body1" sx={{ fontWeight: 600, color: '#555', alignSelf: "start" }}>내용</Typography>
+                                <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>{selectedFile.content}</Typography>
 
-                                <Typography variant="body1" sx={{ fontWeight: "bold", alignSelf: "start" }}>태그:</Typography>
-                                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                                    {selectedFile.tags.slice(0, 3).map((tag, idx) => (
+                                <Typography variant="body1" sx={{ fontWeight: 600, color: '#555', alignSelf: "start" }}>태그</Typography>
+                                <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", alignItems: "flex-start" }}>
+                                    {selectedFile.tags && selectedFile.tags.map((tag, idx) => (
                                         <Chip
                                             key={idx}
                                             label={tag}
-                                            color={tagColors[tag] || "default"}
-                                            sx={{ m: 0.5, width: 80, justifyContent: "center" }} // 칩 크기 고정
+                                            color="default"
+                                            size="small"
+                                            sx={{ m: 0.3, backgroundColor: '#DBE2EF' }}
                                         />
                                     ))}
                                 </Box>
                             </Box>
-
                         </Box>
                     )}
                 </DialogContent>
 
-                <DialogActions>
-                    {/* 파일 다운로드 버튼: 클릭 시 별도의 다운로드 선택 모달을 엽니다 */}
-                    <Button variant="contained" color="primary" onClick={() => setOpenDownloadDialog(true)}>📥 파일 다운로드</Button>
+                {/* 모달 푸터 (버튼 영역) */}
+                <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: 1,
+                    p: 2,
+                    bgcolor: '#f8f9fa',
+                    borderTop: '1px solid #e0e0e0'
+                }}>
                     <Button
                         variant="contained"
-                        color="warning"
-                        onClick={() => {
-                            // 수정 버튼 클릭 시 workdata/update 페이지로 이동
-                            navigate(`/workdata/update/${selectedFile.wsId}/${selectedFile.id}`); // ✅ 워크스페이스 ID와 자료 ID 전달
+                        startIcon={<DeleteIcon />}
+                        onClick={() => modalhandleDelete(selectedFile)}
+                        disabled={selectedFile && selectedFile.writer !== currentUser}
+                        sx={{
+                            bgcolor: '#f44336',
+                            boxShadow: 'none',
+                            '&:hover': {
+                                bgcolor: '#d32f2f',
+                                boxShadow: 'none'
+                            },
+                            '&.Mui-disabled': {
+                                bgcolor: '#ffcdd2',
+                                color: '#ffffff'
+                            }
                         }}
-                        disabled={selectedFile && selectedFile.writer !== currentUser} // 모달에서도 동일한 조건 적용
                     >
-                        ✏️ 수정
+                        삭제
                     </Button>
                     <Button
                         variant="contained"
-                        color="error"
-                        onClick={() => modalhandleDelete(selectedFile)}
-                        disabled={selectedFile && selectedFile.writer !== currentUser} // 모달에서도 동일한 조건 적용
-                    >🗑️ 파일 삭제</Button>
-                </DialogActions>
-            </Dialog >
+                        startIcon={<EditIcon />}
+                        onClick={() => {
+                            navigate(`/workdata/update/${selectedFile.wsId}/${selectedFile.id}`);
+                            handleCloseModal();
+                        }}
+                        disabled={selectedFile && selectedFile.writer !== currentUser}
+                        sx={{
+                            bgcolor: '#ff9800',
+                            boxShadow: 'none',
+                            '&:hover': {
+                                bgcolor: '#f57c00',
+                                boxShadow: 'none'
+                            },
+                            '&.Mui-disabled': {
+                                bgcolor: '#ffe0b2',
+                                color: '#ffffff'
+                            }
+                        }}
+                    >
+                        수정
+                    </Button>
+                    <Button
+                        variant="contained"
+                        startIcon={<DownloadIcon />}
+                        onClick={() => setOpenDownloadDialog(true)}
+                        sx={{
+                            bgcolor: '#1976d2',
+                            boxShadow: 'none',
+                            '&:hover': {
+                                bgcolor: '#1565c0',
+                                boxShadow: 'none'
+                            }
+                        }}
+                    >
+                        다운로드
+                    </Button>
+                </Box>
+            </Dialog>
 
             {/* 다운로드 선택 모달 (옵션 2) */}
             <Dialog Dialog

@@ -27,10 +27,11 @@ export default function Header() {
   return (
     <>
       {/* logo & toggler button */}
-      <Box sx={{ width: downMD ? 'auto' : 228, display: 'flex' }}>
+      <Box sx={{ width: downMD ? 'auto' : 228, display: 'flex', marginTop: '1px' }}>
         <Box component="span" sx={{ display: { xs: 'none', md: 'block' }, flexGrow: 1 }}>
           <LogoSection />
         </Box>
+        {/* 페이지 토글 버튼 - 위치 조정이 필요한 요소 */}
         <Avatar
           variant="rounded"
           sx={{
@@ -40,6 +41,7 @@ export default function Header() {
             transition: 'all .2s ease-in-out',
             bgcolor: 'secondary.light',
             color: 'secondary.dark',
+            marginTop: '6px',
             '&:hover': {
               bgcolor: 'secondary.dark',
               color: 'secondary.light'
