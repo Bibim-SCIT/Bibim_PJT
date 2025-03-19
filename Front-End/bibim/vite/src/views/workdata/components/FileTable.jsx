@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Button, Avatar, Chip, Box, Dialog,
-    DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemIcon, ListItemText, Popover, Divider
+    DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemIcon, ListItemText, Popover, Divider, Snackbar, Alert
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -56,10 +56,14 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
     const [anchorPosition, setAnchorPosition] = useState(null);
     const [isHoveringPopover, setIsHoveringPopover] = useState(false);
 
+    // 스낵바
+    const [openSnackbar, setOpenSnackbar] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState("");
+
     console.log("📌 FileTable에서 받은 files 데이터:", files); // ✅ 전달된 데이터 확인
     console.log("현재 유저정보", user)
 
-    const currentUser = user.email;
+    const currentUser = user?.email;
 
     // 로딩 상태일 때 커스텀 로딩 컴포넌트 렌더링
     if (loading) return <LoadingScreen />;
@@ -174,6 +178,75 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
     //     } catch (error) {
     //         console.error("다운로드 실패:", error);
     //         alert("파일 다운로드에 실패했습니다.");
+    //     }
+    // };
+
+    // 2025.03.19 버전 다운로드 
+    const handleDownload = async (url, fileName) => {
+        try {
+            const response = await fetch(url, {
+                method: "GET",
+                mode: "cors",
+            });
+
+            if (!response.ok) throw new Error("파일 다운로드 실패");
+
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+
+            const link = document.createElement("a");
+            link.href = blobUrl;
+            link.setAttribute("download", fileName); // 다운로드 창을 유도
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            window.URL.revokeObjectURL(blobUrl); // 메모리 해제
+        } catch (error) {
+            console.error("다운로드 실패:", error);
+
+            // MUI Snackbar를 이용한 Alert 표시
+            setSnackbarMessage("해당 파일은 새 창에서 열립니다.");
+            setOpenSnackbar(true);
+
+            // 다운로드가 실패하면 파일을 새 창에서 열기
+            window.open(url, "_blank");
+        }
+    };
+
+    // 2025.03.20 다운로드 - 오류발생
+    // const handleDownload = async (url, fileName) => {
+    //     try {
+    //         // URL에 다운로드 강제 속성 추가
+    //         const downloadUrl = `${url}?response-content-disposition=attachment`;
+
+    //         const response = await fetch(downloadUrl, {
+    //             method: "GET",
+    //             mode: "cors",
+    //         });
+
+    //         if (!response.ok) throw new Error("파일 다운로드 실패");
+
+    //         const blob = await response.blob();
+    //         const blobUrl = window.URL.createObjectURL(blob);
+
+    //         const link = document.createElement("a");
+    //         link.href = blobUrl;
+    //         link.setAttribute("download", fileName);
+    //         document.body.appendChild(link);
+    //         link.click();
+    //         document.body.removeChild(link);
+
+    //         window.URL.revokeObjectURL(blobUrl);
+    //     } catch (error) {
+    //         console.error("다운로드 실패:", error);
+
+    //         // MUI Snackbar를 이용한 Alert 표시
+    //         setSnackbarMessage("파일 다운로드에 실패했습니다. 새 창에서 열립니다.");
+    //         setOpenSnackbar(true);
+
+    //         // 다운로드가 실패하면 파일을 새 창에서 열기
+    //         // window.open(url, "_blank");
     //     }
     // };
 
@@ -512,12 +585,12 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                 onClose={handleCloseModal}
                 fullWidth
                 maxWidth="sm"
-                PaperProps={{ 
-                    sx: { 
+                PaperProps={{
+                    sx: {
                         borderRadius: 1,
                         boxShadow: 24,
                         overflow: 'hidden'
-                    } 
+                    }
                 }}
             >
                 {/* 모달 헤더 */}
@@ -555,8 +628,8 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                     const firstFileExt = selectedFile.files[0].split(".").pop().toLowerCase();
                                     const isImageFile = ["png", "jpg", "jpeg", "gif"].includes(firstFileExt);
                                     return isImageFile ? (
-                                        <Box sx={{ 
-                                            p: 1, 
+                                        <Box sx={{
+                                            p: 1,
                                             border: '1px solid #eee',
                                             borderRadius: 1,
                                             display: 'inline-block',
@@ -579,23 +652,26 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                             </Box>
 
                             {/* 항목별 Grid 레이아웃 적용 */}
-                            <Box sx={{ 
-                                display: "grid", 
-                                gridTemplateColumns: { xs: "1fr", sm: "130px 1fr" }, 
-                                gap: 3, 
+                            <Box sx={{
+                                display: "grid",
+                                gridTemplateColumns: { xs: "1fr", sm: "130px 1fr" },
+                                gap: 3,
                                 rowGap: 2,
-                                padding: 1, 
-                                alignItems: "center" 
+                                padding: 1,
+                                alignItems: "center"
                             }}>
                                 <Typography variant="body1" sx={{ fontWeight: 600, color: '#555' }}>제목</Typography>
                                 <Typography variant="body1">{selectedFile.title}</Typography>
 
                                 <Typography variant="body1" sx={{ fontWeight: 600, color: '#555' }}>파일명</Typography>
-                                <List dense sx={{ 
-                                    width: '100%', 
-                                    padding: 0,
-                                    margin: 0
-                                }}>
+                                <List
+                                    dense
+                                // sx={{
+                                //     width: '100%',
+                                //     padding: 0,
+                                //     margin: 0
+                                // }}
+                                >
                                     {selectedFile.files.map((fileName, idx) => (
                                         <ListItem
                                             key={idx} button
@@ -608,7 +684,16 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                                 padding: '4px 8px',
                                                 margin: '2px 0'
                                             }}
-                                            onClick={() => handleOpenModal(selectedFile)}>
+                                            onClick={() => {
+                                                // fileUrls 배열이 있을 경우 해당 파일 URL로 이동
+                                                if (selectedFile.fileUrls && selectedFile.fileUrls[idx]) {
+                                                    // window.open(selectedFile.fileUrls[idx], '_blank');
+                                                    handleDownload(selectedFile.fileUrls[idx], fileName);
+                                                } else {
+                                                    alert("다운로드 URL이 없습니다.");
+                                                }
+                                            }}
+                                        >
                                             <ListItemIcon sx={{ minWidth: 36 }}>
                                                 <img
                                                     src={fileTypeIcons[fileName.split(".").pop().toLowerCase()] || fileTypeIcons.default}
@@ -616,16 +701,16 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                                     style={{ width: 24, height: 24 }}
                                                 />
                                             </ListItemIcon>
-                                            <ListItemText 
-                                                primary={fileName} 
-                                                primaryTypographyProps={{ 
-                                                    variant: 'body2',
-                                                    sx: { 
-                                                        overflow: 'hidden', 
-                                                        textOverflow: 'ellipsis', 
-                                                        whiteSpace: 'nowrap'
-                                                    } 
-                                                }}
+                                            <ListItemText
+                                                primary={fileName}
+                                            // primaryTypographyProps={{
+                                            //     variant: 'body2',
+                                            //     sx: {
+                                            //         overflow: 'hidden',
+                                            //         textOverflow: 'ellipsis',
+                                            //         whiteSpace: 'nowrap'
+                                            //     }
+                                            // }}
                                             />
                                         </ListItem>
                                     ))}
@@ -651,7 +736,18 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                             label={tag}
                                             color="default"
                                             size="small"
-                                            sx={{ m: 0.3, backgroundColor: '#DBE2EF' }}
+                                            sx={{
+                                                m: 0.5,
+                                                backgroundColor: '#DBE2EF',
+                                                borderRadius: "12px",
+                                                transition: "transform 0.2s ease-in-out",
+                                                "&:hover": {
+                                                    transform: "scale(1.1)",
+                                                    boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
+                                                    cursor: "pointer"
+                                                }
+                                            }}
+
                                         />
                                     ))}
                                 </Box>
@@ -747,8 +843,8 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                 }}
                                 onClick={() => {
                                     if (selectedFile.fileUrls && selectedFile.fileUrls[idx]) {
-                                        window.open(selectedFile.fileUrls[idx], '_blank');
-                                        // handleDownload(selectedFile.fileUrls[idx], fileName);
+                                        // window.open(selectedFile.fileUrls[idx], '_blank');
+                                        handleDownload(selectedFile.fileUrls[idx], fileName);
                                     } else {
                                         alert("다운로드 URL이 없습니다.");
                                     }
@@ -787,8 +883,8 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                 sx={{ cursor: "pointer" }}
                                 onClick={() => {
                                     if (downloadFile.fileUrls && downloadFile.fileUrls[idx]) {
-                                        window.open(downloadFile.fileUrls[idx], '_blank');
-                                        // handleDownload(downloadFile.fileUrls[idx], fileName);
+                                        // window.open(downloadFile.fileUrls[idx], '_blank');
+                                        handleDownload(downloadFile.fileUrls[idx], fileName);
                                     } else {
                                         alert("다운로드 URL이 없습니다.");
                                     }
@@ -812,6 +908,21 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                 </DialogActions>
             </Dialog>
 
+            {/* 다운로드 실패 시 알림 */}
+            <Snackbar
+                open={openSnackbar}
+                autoHideDuration={3000} // 3초 후 자동 닫힘
+                onClose={() => setOpenSnackbar(false)}
+                anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            >
+                <Alert
+                    onClose={() => setOpenSnackbar(false)}
+                    severity="error"
+                    variant="filled"
+                >
+                    {snackbarMessage}
+                </Alert>
+            </Snackbar>
         </>
     );
 };
