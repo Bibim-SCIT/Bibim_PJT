@@ -76,6 +76,13 @@
     /* 크기 고정 */
 }
 
+.sender-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 비율 유지하면서 컨테이너 크기에 맞춤 */
+    border-radius: 50%; /* 동그랗게 */
+}
+
 /* 발신자 이름 */
 .sender-name {
     font-size: 13px;

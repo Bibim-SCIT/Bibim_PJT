@@ -453,9 +453,6 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                                         {formatToKoreanTime(msg.sendTime)}
                                     </span>
                                 </div>
-                                <div className="dm-message-isRead">
-                                    {}
-                                </div>
                                 <div className="dm-message-content-container">
                                     <div key={messageKey} className={`dm-message-content ${(msg.file && isImage(msg.fileName)) || isYouTubeLink(msg.dmContent) ? "has-media" : ""}`}>
                                         {/* {renderMessageContent(msg, handleTranslate, translatedMessages)} */}
