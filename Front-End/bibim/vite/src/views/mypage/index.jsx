@@ -8,14 +8,22 @@ import { getMyWorkspaces } from '../../api/mypage'; // 워크스페이스 데이
 
 const MyPage = () => {
   const [workspaces, setWorkspaces] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchWorkspaces = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const data = await getMyWorkspaces();
+        console.log('워크스페이스 데이터 로드:', data);
         setWorkspaces(data);
       } catch (error) {
-        console.error('Failed to fetch workspaces:', error);
+        console.error('워크스페이스 데이터 로드 실패:', error);
+        setError('워크스페이스 정보를 불러오는 중 오류가 발생했습니다');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -27,7 +35,7 @@ const MyPage = () => {
       <MyInfo />
       <MySchedule workspaces={workspaces} />
       <MyWorkData workspaces={workspaces} />
-      <MyWorkspaces workspaces={workspaces} /> 
+      <MyWorkspaces workspaces={workspaces} loading={loading} error={error} /> 
     </Box>
   );
 };

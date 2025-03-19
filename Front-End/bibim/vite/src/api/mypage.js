@@ -160,11 +160,23 @@ export const convertToGanttFormat = (scheduleList) => {
     // 워크스페이스 이미지 URL 검증
     const wsImg = getValidImageUrl(schedule.wsImg);
     
+    // 시작일과 종료일이 같은지 확인 (하루짜리 일정)
+    const startDate = new Date(schedule.scheduleStartDate);
+    const endDate = new Date(schedule.scheduleFinishDate);
+    const isSameDay = startDate.toDateString() === endDate.toDateString();
+    
+    // 하루짜리 일정인 경우 간트차트에서 보이도록 종료일을 다음날로 조정
+    let adjustedEnd = endDate;
+    if (isSameDay) {
+      adjustedEnd = new Date(endDate);
+      adjustedEnd.setDate(adjustedEnd.getDate() + 1);
+    }
+    
     return {
       id: schedule.scheduleNumber.toString(),
       name: schedule.scheduleTitle,
       start: new Date(schedule.scheduleStartDate),
-      end: new Date(schedule.scheduleFinishDate),
+      end: adjustedEnd, // 조정된 종료일 사용
       progress: 0,
       dependencies: [],
       type: "task",
@@ -188,7 +200,8 @@ export const convertToGanttFormat = (scheduleList) => {
         tag2: schedule.tag2,
         tag3: schedule.tag3,
         color: wsColor, // 태그 색상 대신 워크스페이스 색상 사용
-        modifyTime: schedule.scheduleModifytime
+        modifyTime: schedule.scheduleModifytime,
+        originalEndDate: schedule.scheduleFinishDate // 원래 종료일 저장
       }
     };
   });
