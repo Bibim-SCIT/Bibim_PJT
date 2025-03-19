@@ -176,6 +176,7 @@ const FileCardView = ({ files, setFiles, loading }) => {
                                     "&:hover": {
                                         transform: "translateY(-5px) scale(1.02)", // 마우스 오버 시 위로 5px 이동, 1.02배 확대
                                     },
+                                    backgroundColor: "#F9F7F7"
                                 }}
                                 onClick={() => handleOpenModal(file)}
                             >
@@ -245,7 +246,23 @@ const FileCardView = ({ files, setFiles, loading }) => {
                                     {/* 🏷️ 태그 */}
                                     <Box sx={{ display: "flex", justifyContent: "center", marginTop: 1 }}>
                                         {/* <Chip label={file.tag} color={tagColors[file.tag] || "default"} /> */}
-                                        {file.tags.slice(0, 3).map((tag, idx) => (<Chip key={idx} label={tag} color={tagColors[tag] || "default"} sx={{ m: 0.5 }} />))}
+                                        {file.tags.slice(0, 3).map((tag, idx) => (
+                                            <Chip
+                                                key={idx}
+                                                label={tag}
+                                                color={tagColors[tag] || "default"}
+                                                sx={{
+                                                    m: 0.5,
+                                                    backgroundColor: '#DBE2EF',
+                                                    color: "black",
+                                                    borderRadius: "12px",
+                                                    transition: "transform 0.2s ease-in-out",
+                                                    "&:hover": {
+                                                        transform: "scale(1.1)",
+                                                        boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
+                                                    }
+                                                }}
+                                            />))}
                                     </Box>
                                 </CardContent>
                             </Card>

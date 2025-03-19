@@ -65,12 +65,12 @@ export const fetchKanbanTasks = async (wsId) => {
       const mappedStatus = statusMappingReverse[statusKey] || "unassigned"; // ✅ 변환 후 상태 확인
 
       // ✅ 상태 변환 검토 추가
-      console.log(`
-    🔄 상태 변환 과정 확인:
-    - 원본 상태: ${task.scheduleStatus}
-    - 변환된 상태: ${statusKey}
-    - 최종 매핑 결과: ${mappedStatus}
-      `);
+      //   console.log(`
+      // 🔄 상태 변환 과정 확인:
+      // - 원본 상태: ${task.scheduleStatus}
+      // - 변환된 상태: ${statusKey}
+      // - 최종 매핑 결과: ${mappedStatus}
+      //   `);
 
       return {
         id: task.scheduleNumber,

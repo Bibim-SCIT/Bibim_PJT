@@ -178,7 +178,7 @@ const KanbanBoard = ({ wsId, setSchedules, setGanttTasks, onKanbanUpdated, force
   return (
     <KanbanWrapper>
       {/* <h2>📌 칸반 보드 (wsId: {wsId})</h2> */}
-      <h2>📌 칸반 보드</h2>
+      <Typography variant="h2" sx={{ textAlign: "center", mb: 2 }}>📌 칸반 보드</Typography>
       <DragDropContext onDragEnd={onDragEnd}>
         <Box display="flex" justifyContent="space-around">
           {Object.entries(columns).map(([columnId, columnTitle]) => (

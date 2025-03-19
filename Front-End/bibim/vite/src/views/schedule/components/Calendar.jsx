@@ -90,7 +90,7 @@ const Calendar = ({ tasks, onDeleteSuccess }) => {
   return (
     <Paper
       elevation={0}
-      sx={{ 
+      sx={{
         width: '100%',
         maxWidth: '1200px',
         margin: '0 auto',
@@ -166,32 +166,24 @@ const Calendar = ({ tasks, onDeleteSuccess }) => {
             info.el.style.backgroundColor = eventColor;
             info.el.style.borderColor = eventColor; // 테두리 색상도 동일하게 설정
             info.el.style.color = 'white'; // 텍스트 가독성을 위해 흰색으로 설정
+            info.el.style.transition = 'all 0.2s ease-in-out';
 
-            info.el.addEventListener('mouseenter', () => handleEventHover(scheduleId, true));
-            info.el.addEventListener('mouseleave', () => handleEventHover(scheduleId, false));
+            // ✅ Hover 이벤트 등록 (스타일 직접 변경)
+            info.el.addEventListener('mouseenter', () => {
+              info.el.style.transform = 'scale(1.05)'; // 5% 확대
+              info.el.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.2)'; // 강조 효과
+              info.el.style.zIndex = '10';
+            });
+
+            info.el.addEventListener('mouseleave', () => {
+              info.el.style.transform = 'scale(1)'; // 원래 크기로 복구
+              info.el.style.boxShadow = 'none'; // 그림자 제거
+              info.el.style.zIndex = '1';
+            });
+            // info.el.addEventListener('mouseenter', () => handleEventHover(scheduleId, true));
+            // info.el.addEventListener('mouseleave', () => handleEventHover(scheduleId, false));
           }}
-          // eventContent={(arg) => (
-          //   <Box
-          //     sx={{
-          //       '& .fc-daygrid-event-harness': {
-          //         display: 'flex',
-          //         flexDirection: 'column',
-          //         gap: '4px', // ✅ 이벤트 간 간격 확보 (margin 없이!)
-          //       },
-          //       '& .fc-daygrid-event': {
-          //         padding: '4px', // ✅ 내부 간격 조정 (이벤트 높이 변화 없음)
-          //         borderRadius: '5px', // ✅ 둥근 테두리
-          //         fontSize: '13px', // ✅ 폰트 크기 조정
-          //       },
-          //       '& .fc-event-title': {
-          //         lineHeight: '1.2', // ✅ 글자 높이 조정
-          //       },
-          //     }}
-          //   >
 
-          //     {arg.event.title}
-          //   </Box>
-          // )}
           /** ✅ 일정 내부 텍스트 및 프로필 이미지 추가 */
           eventContent={(arg) => {
             const { scheduleStatus, profileImage } = arg.event.extendedProps;

@@ -34,10 +34,7 @@ const fileTypeIcons = {
     "default": fileIcon
 };
 
-const tagColors = {
-    "문서": "primary",
-    "디자인": "secondary"
-};
+const tagColors = ["#FFD700", "#FF6F61", "#6B8E23", "#20B2AA", "#6495ED"];
 
 const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) => {
     const [anchorEl, setAnchorEl] = useState(null);
@@ -240,19 +237,80 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead>
-                        <TableRow>
-                            <TableCell onClick={() => onSort("title")} sx={{ cursor: "pointer" }}>
+                        <TableRow sx={{ backgroundColor: "#DBE2EF" }}>
+                            <TableCell
+                                onClick={() => onSort("title")}
+                                sx={{
+                                    cursor: "pointer",
+                                    fontWeight: "bold !important",
+                                    borderBottom: "2px solid #B0BEC5",
+                                    transition: "background-color 0.3s ease",
+                                    "&:hover": {
+                                        backgroundColor: "#AFCDE7",
+                                    }
+                                }}
+                            >
                                 제목 {sortField === "title" && (sortOrder === "asc" ? "⬆️" : "⬇️")}
                             </TableCell>
-                            <TableCell>파일명</TableCell>
-                            <TableCell>태그</TableCell>
-                            <TableCell onClick={() => onSort("regDate")} sx={{ cursor: "pointer" }}>
+                            <TableCell
+                                sx={{
+                                    fontWeight: "bold !important",
+                                    borderBottom: "2px solid #B0BEC5",
+                                    transition: "background-color 0.3s ease",
+                                    "&:hover": {
+                                        backgroundColor: "#AFCDE7",
+                                        cursor: "pointer"
+                                    }
+                                }}>파일명</TableCell>
+                            <TableCell
+                                sx={{
+                                    fontWeight: "bold !important",
+                                    borderBottom: "2px solid #B0BEC5",
+                                    transition: "background-color 0.3s ease",
+                                    "&:hover": {
+                                        backgroundColor: "#AFCDE7",
+                                        cursor: "pointer"
+                                    }
+                                }}>태그</TableCell>
+                            <TableCell
+                                onClick={() => onSort("regDate")}
+                                sx={{
+                                    cursor: "pointer",
+                                    fontWeight: "bold !important",
+                                    borderBottom: "2px solid #B0BEC5",
+                                    transition: "background-color 0.3s ease",
+                                    "&:hover": {
+                                        backgroundColor: "#AFCDE7",
+                                    }
+                                }}
+                            >
                                 업로드 날짜 {sortField === "regDate" && (sortOrder === "asc" ? "⬆️" : "⬇️")}
                             </TableCell>
-                            <TableCell onClick={() => onSort("writer")} sx={{ cursor: "pointer" }}>
+                            <TableCell
+                                onClick={() => onSort("writer")}
+                                sx={{
+                                    cursor: "pointer",
+                                    fontWeight: "bold !important",
+                                    borderBottom: "2px solid #B0BEC5",
+                                    transition: "background-color 0.3s ease",
+                                    "&:hover": {
+                                        backgroundColor: "#AFCDE7",
+                                    }
+                                }}
+                            >
                                 업로더 {sortField === "writer" && (sortOrder === "asc" ? "⬆️" : "⬇️")}
                             </TableCell>
-                            <TableCell>기능</TableCell>
+                            <TableCell
+                                sx={{
+                                    fontWeight: "bold !important",
+                                    borderBottom: "2px solid #B0BEC5",
+                                    transition: "background-color 0.3s ease",
+                                    "&:hover": {
+                                        backgroundColor: "#AFCDE7",
+                                        cursor: "pointer"
+                                    }
+                                }}
+                            >기능</TableCell>
                         </TableRow>
                     </TableHead>
 
@@ -324,16 +382,27 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                 </TableCell>
 
                                 {/* 태그 */}
-                                <TableCell
-                                    sx={{
-                                        cursor: "pointer",
-                                    }}
-                                    onClick={() => handleOpenModal(file)}
-                                >
+                                <TableCell sx={{ cursor: "pointer" }} onClick={() => handleOpenModal(file)}>
                                     {file.tags.slice(0, 3).map((tag, idx) => (
-                                        <Chip key={idx} label={tag} color={tagColors[tag] || "default"} sx={{ m: 0.5 }} />
+                                        <Chip
+                                            key={idx}
+                                            label={tag}
+                                            sx={{
+                                                m: 0.5,
+                                                // backgroundColor: tagColors[idx % tagColors.length], // 순차적으로 색상 적용
+                                                backgroundColor: '#DBE2EF',
+                                                color: "black",
+                                                borderRadius: "12px",
+                                                transition: "transform 0.2s ease-in-out",
+                                                "&:hover": {
+                                                    transform: "scale(1.1)",
+                                                    boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
+                                                }
+                                            }}
+                                        />
                                     ))}
                                 </TableCell>
+
 
 
                                 {/* 업로드 날짜 */}
@@ -367,7 +436,7 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                         variant="contained"
                                         size="small"
                                         color="info"
-                                        sx={{ marginRight: 1 }}
+                                        sx={{ marginRight: 1, backgroundColor: '#3F72AF' }}
                                         onClick={() => { setDownloadFile(file); setOpenDownloadDialog2(true); }}
                                     >
                                         다운로드

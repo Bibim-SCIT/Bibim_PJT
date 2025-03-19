@@ -80,35 +80,6 @@ export const fetchSmallTags = async (wsId, largeTagNumber, mediumTagNumber) => {
   }
 };
 
-// ✅ 태그 생성 API
-// export const createTag = async (wsId, tagData) => {
-//   if (!wsId || !tagData.tagName || !tagData.tagType) {
-//     console.warn("🚨 createTag: 필요한 데이터가 없습니다.");
-//     return;
-//   }
-
-//   const payload = { wsId, tagName: tagData.tagName };
-
-//   // 중분류 & 소분류는 부모 태그 정보를 추가
-//   if (tagData.tagType === "medium" && tagData.parentTag) {
-//     payload.largeTagNumber = tagData.parentTag;
-//   } else if (tagData.tagType === "small" && tagData.parentTag && tagData.subParentTag) {
-//     payload.largeTagNumber = tagData.parentTag;
-//     payload.mediumTagNumber = tagData.subParentTag;
-//   }
-
-//   try {
-//     console.log(`📌 createTag(${tagData.tagType}) 요청 데이터:`, payload);
-
-//     await api.post(`/schedule/tag/${tagData.tagType}`, payload, getAxiosConfig());
-
-//     console.log(`✅ 태그(${tagData.tagName}) 생성 성공`);
-//   } catch (error) {
-//     console.error(`❌ createTag 실패:`, error.response?.data || error);
-//     throw error;
-//   }
-// };
-
 // ✅ 태그 생성 API (태그 색깔 포함)
 export const createTag = async (wsId, tagData) => {
   if (!wsId || !tagData.tagName || !tagData.tagType) {
@@ -220,10 +191,10 @@ export const deleteSmallTag = async (smallTagNumber) => {
 };
 
 // ✅ 대분류 태그 수정 API
-export const updateLargeTag = async (wsId, largeTagNumber, newTagName, newTagColor) => {
-  console.log("📌 updateLargeTag 요청 데이터:", { wsId, largeTagNumber, newTagName, newTagColor });
+export const updateLargeTag = async (wsId, largeTagNumber, currentTagName, newTagName, newTagColor) => {
+  console.log("📌 updateLargeTag 요청 데이터:", { wsId, largeTagNumber, tagName: currentTagName, newTagName, newTagColor });
 
-  if (!wsId || !largeTagNumber || !newTagName) {
+  if (!wsId || !largeTagNumber || !currentTagName || !newTagName) {
     console.warn("🚨 updateLargeTag: 필요한 데이터가 없습니다.");
     return;
   }
@@ -232,8 +203,9 @@ export const updateLargeTag = async (wsId, largeTagNumber, newTagName, newTagCol
     const response = await api.put("/schedule/tag/large", {
       wsId,
       largeTagNumber,
+      tagName: currentTagName,  // ✅ 기존 태그 이름 추가
       newTagName,
-      newTagColor,
+      newTagColor
     }, getAxiosConfig());
 
     console.log(`✅ 대분류 태그 수정 완료: ${newTagName}`);
@@ -243,6 +215,8 @@ export const updateLargeTag = async (wsId, largeTagNumber, newTagName, newTagCol
     throw error;
   }
 };
+
+
 
 // ✅ 중분류 태그 수정 API
 export const updateMediumTag = async (largeTagNumber, mediumTagNumber, newTagName) => {
