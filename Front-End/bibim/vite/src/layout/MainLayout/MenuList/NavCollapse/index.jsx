@@ -223,7 +223,7 @@ export default function NavCollapse({ menu, level, parentId }) {
                   sx={{
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    width: 120
+                    width: 140
                   }}
                 >
                   {menu.title}

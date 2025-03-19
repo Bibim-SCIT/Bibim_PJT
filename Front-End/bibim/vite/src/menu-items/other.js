@@ -17,14 +17,14 @@ const other = {
       url: '/ws-setting',
       icon: icons.IconFolderCog,
       breadcrumbs: false
-    },
-    {
-      id: 'landing',
-      title: '랜딩페이지',
-      type: 'item',
-      url: '/landing',
-      icon: icons.IconBrandChrome,
-      breadcrumbs: false
+    // },
+    // {
+    //   id: 'landing',
+    //   title: '랜딩페이지',
+    //   type: 'item',
+    //   url: '/landing',
+    //   icon: icons.IconBrandChrome,
+    //   breadcrumbs: false
     }
   ]
 };

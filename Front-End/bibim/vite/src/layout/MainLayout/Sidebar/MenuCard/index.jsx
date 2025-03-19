@@ -267,7 +267,8 @@ function MenuCard() {
       <Card
         sx={{
           bgcolor: 'primary.light',
-          mb: 0,
+          mb: 3,
+          mt: 2,
           overflow: 'hidden',
           position: 'relative',
           '&:after': {
