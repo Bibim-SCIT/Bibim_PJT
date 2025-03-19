@@ -4,14 +4,39 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import InsertChartIcon from '@mui/icons-material/InsertChart';
 import MyCalendar from './MyCalendar';
 import MyGanttChart from './MyGanttChart';
-import { getMySchedule, convertToCalendarFormat, convertToGanttFormat } from '../../../api/mypage';
+import { getMySchedule, convertToCalendarFormat, convertToGanttFormat, getValidImageUrl } from '../../../api/mypage';
 
-const MySchedule = () => {
+const MySchedule = ({ workspaces = [] }) => {
   const [view, setView] = useState("calendar"); // 현재 선택된 뷰 (calendar 또는 gantt)
   const [ganttTasks, setGanttTasks] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // 워크스페이스 ID를 기반으로 워크스페이스 이미지를 찾는 함수
+  const getWorkspaceImageById = useCallback((wsId) => {
+    if (!wsId || !workspaces || !workspaces.length) return null;
+    
+    const workspace = workspaces.find(ws => ws.wsId === wsId || ws.wsId === parseInt(wsId, 10));
+    return workspace ? getValidImageUrl(workspace.wsImg) : null;
+  }, [workspaces]);
+
+  // 스케줄에 워크스페이스 이미지 정보 추가
+  const enrichScheduleWithWorkspaceData = useCallback((scheduleList) => {
+    if (!scheduleList || !scheduleList.length) return [];
+    
+    return scheduleList.map(schedule => {
+      // 이미 wsImg가 있으면 검증만 하고, 없으면 워크스페이스 목록에서 찾아서 추가
+      const wsImg = schedule.wsImg 
+        ? getValidImageUrl(schedule.wsImg) 
+        : getWorkspaceImageById(schedule.wsId);
+      
+      return {
+        ...schedule,
+        wsImg: wsImg
+      };
+    });
+  }, [getWorkspaceImageById]);
   
   // API에서 스케줄 데이터 가져오기
   const fetchScheduleData = useCallback(async () => {
@@ -23,12 +48,16 @@ const MySchedule = () => {
       
       // 응답 형식 확인 및 데이터 처리
       if (result && result.data && Array.isArray(result.data)) {
+        // 워크스페이스 이미지 정보 보강
+        const enrichedSchedules = enrichScheduleWithWorkspaceData(result.data);
+        console.log('워크스페이스 정보가 보강된 스케줄:', enrichedSchedules);
+        
         // 간트차트 형식으로 변환
-        const ganttData = convertToGanttFormat(result.data);
+        const ganttData = convertToGanttFormat(enrichedSchedules);
         setGanttTasks(ganttData);
         
         // 캘린더 형식으로 변환
-        const calendarData = convertToCalendarFormat(result.data);
+        const calendarData = convertToCalendarFormat(enrichedSchedules);
         setCalendarEvents(calendarData);
       } else {
         console.warn('스케줄 데이터가 없거나 형식이 올바르지 않습니다:', result);
@@ -43,12 +72,12 @@ const MySchedule = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [enrichScheduleWithWorkspaceData]);
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
     fetchScheduleData();
-  }, [fetchScheduleData]);
+  }, [fetchScheduleData, workspaces]); // workspaces가 변경될 때도 다시 로드
 
   // 캘린더 이벤트 클릭 핸들러 - useCallback으로 메모이제이션
   const handleCalendarEventClick = useCallback((clickInfo) => {
@@ -65,7 +94,7 @@ const MySchedule = () => {
   const handleScheduleUpdate = useCallback(() => {
     // 데이터 다시 불러오기
     fetchScheduleData();
-  }, []);
+  }, [fetchScheduleData]);
 
   // 뷰 변경 핸들러 - useCallback으로 메모이제이션
   const handleViewChange = useCallback((event, newView) => {
@@ -175,11 +204,13 @@ const MySchedule = () => {
             scheduleData={calendarEvents} 
             onEventClick={handleCalendarEventClick} 
             onDeleteSuccess={handleScheduleUpdate}
+            workspaces={workspaces}
           />
         ) : (
           <MyGanttChart 
             tasks={ganttTasks} 
             onTaskClick={handleGanttTaskClick} 
+            workspaces={workspaces}
           />
         )}
       </Box>
