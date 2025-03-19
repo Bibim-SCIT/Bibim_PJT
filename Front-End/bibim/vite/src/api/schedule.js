@@ -27,6 +27,14 @@ const statusMappingReverse = {
   "ON_HOLD": "backlog"  // "보류" 상태
 };
 
+// ✅ 🔥 스케줄 상세 모달에서 사용할 상태 코드 매핑 (백엔드 ENUM → 코드)
+const statusMappingForDetail = {
+  UNASSIGNED: '1',
+  IN_PROGRESS: '2',
+  COMPLETED: '3',
+  ON_HOLD: '4'
+};
+
 // ✅ [공통] 칸반 보드 목록 조회
 export const fetchKanbanTasks = async (wsId) => {
   if (!wsId) {
@@ -178,6 +186,8 @@ export const updateKanbanTaskStatus = async (taskId, newStatus) => {
     return;
   }
 
+  console.log("변경 상태값", newStatus);
+
   const statusCode = statusMapping[newStatus]; // ✅ 변환된 값 사용
   if (!statusCode) {
     console.error(`❌ updateKanbanTaskStatus: 잘못된 상태 값 (${newStatus})`);
@@ -224,6 +234,36 @@ export const assignScheduleDetail = async (scheduleNumber, email) => {
   }
 };
 
+// ✅ 스케줄 상세 모달에서 상태 변경 API
+export const updateScheduleStatus = async (scheduleNumber, newStatus) => {
+  if (!scheduleNumber || !newStatus) {
+    console.warn("🚨 updateScheduleStatus: 잘못된 입력 값 (scheduleNumber, newStatus)");
+    return;
+  }
+
+  console.log("변경 상태값", newStatus);
+
+  const statusCode = statusMappingForDetail[newStatus]; // ✅ 백엔드 ENUM 값을 숫자로 변환
+  if (!statusCode) {
+    console.error(`❌ updateScheduleStatusForDetail: 잘못된 상태 값 (${newStatus})`);
+    return;
+  }
+
+  try {
+    console.log(`📌 updateScheduleStatus(${scheduleNumber}) → ${statusCode} 요청`);
+
+    await api.put(`/schedule/${scheduleNumber}/status`, null, {
+      params: { status: statusCode },
+      ...getAxiosConfig(),
+    });
+
+    console.log(`✅ ${scheduleNumber} 상태 변경 완료 (${newStatus})`);
+  } catch (error) {
+    console.error(`❌ ${scheduleNumber} 상태 변경 실패 (${newStatus}):`, error.response?.data || error.message);
+    throw error;
+  }
+};
+
 
 
 // ✅ 수정된 `fetchKanbanTasks`로 변경
@@ -236,4 +276,5 @@ export default {
   assignSchedule,
   updateKanbanTaskStatus, // ✅ 칸반 보드 상태 업데이트 추가
   assignScheduleDetail,
+  updateScheduleStatus, // 스케줄 상세 모달에서 상태 업데이트 
 };

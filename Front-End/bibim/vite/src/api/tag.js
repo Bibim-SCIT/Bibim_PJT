@@ -65,7 +65,7 @@ export const fetchSmallTags = async (wsId, largeTagNumber, mediumTagNumber) => {
   }
 
   try {
-    console.log(`📌 fetchSmallTags(wsId: ${wsId}, largeTagNumber: ${largeTagNumber}, mediumTagNumber: ${mediumTagNumber}) API 요청 시작...`);
+    // console.log(`📌 fetchSmallTags(wsId: ${wsId}, largeTagNumber: ${largeTagNumber}, mediumTagNumber: ${mediumTagNumber}) API 요청 시작...`);
 
     const response = await api.get("/schedule/tag/small", {
       params: { wsId, largeTagNumber, mediumTagNumber },
