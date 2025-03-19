@@ -6,7 +6,8 @@ import {
     IconButton, 
     Typography,
     Box,
-    Avatar
+    Avatar,
+    Badge
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import CloseIcon from '@mui/icons-material/Close';
@@ -83,63 +84,38 @@ const MemberStatusItem = styled('div')(({ theme, statusType }) => ({
   opacity: statusType === 'offline' ? 0.7 : 1,
 }));
 
-const AvatarContainer = styled('div')({
-  position: 'relative',
-  marginRight: '12px',
-});
-
-/**
- * 사용자의 온라인/오프라인 상태를 나타내는 상태 표시기 스타일 컴포넌트
- * 온라인 상태일 경우 초록색 원형 표시기와 깜빡이는 애니메이션 효과를 적용
- * 오프라인 상태일 경우 회색 원형 표시기를 적용
- */
-const StatusIndicator = styled('div')(({ theme, statusType }) => ({
-  // 아바타 이미지의 우측 하단에 위치하도록 설정
-  position: 'absolute',
-  bottom: 0,
-  right: 0,
-  
-  // 상태 표시기의 크기와 모양 설정
-  width: '10px', // 원의 너비
-  height: '10px', // 원의 높이
-  borderRadius: '50%', // 완전한 원형 모양을 위해 50% 설정
-  border: '2px solid white', // 흰색 테두리로 시각적 구분 제공
-  zIndex: 1, // 다른 요소 위에 표시되도록 z-index 설정
-  boxSizing: 'border-box', // 테두리를 포함한 크기 계산 방식 적용
-  
-  // 온라인/오프라인 상태에 따른 배경색 설정
-  backgroundColor: statusType === 'online' ? '#44b700' : '#9ca3af', // 온라인일 경우 초록색, 오프라인일 경우 회색
-
-  // 온라인 상태일 경우에만 적용되는 추가 스타일 (깜빡이는 애니메이션 효과)
-  ...(statusType === 'online' && {
+// 로그인 중 표시 (아바타위 초록불)
+const StyledBadge = styled(Badge)(({ theme }) => ({
+  '& .MuiBadge-badge': {
+    backgroundColor: '#44b700',
+    color: '#44b700',
+    boxShadow: `0 0 0 2px white`,
+    width: 8,
+    height: 8,
+    minWidth: 8,
+    minHeight: 8,
+    padding: 0,
+    borderRadius: '50%',
     '&::after': {
-      // 애니메이션 효과를 위한 가상 요소의 위치 및 크기 설정
       position: 'absolute',
-      top: -4, // 상태 표시기를 중심으로 배치하기 위한 위쪽 간격
-      left: -4, // 상태 표시기를 중심으로 배치하기 위한 왼쪽 간격
-      width: '14px', // 애니메이션 원의 너비 (본체보다 크게 설정)
-      height: '14px', // 애니메이션 원의 높이 (본체보다 크게 설정)
-      borderRadius: '50%', // 완전한 원형 모양
-      
-      // ripple 애니메이션 적용 (1.2초마다 무한 반복, ease-in-out 타이밍 함수)
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      borderRadius: '50%',
       animation: 'ripple 1.2s infinite ease-in-out',
-      
-      // 애니메이션 원의 테두리 스타일 설정
-      border: '2px solid #44b700', // 초록색 테두리
-      content: '""', // 가상 요소에 필요한 content 속성
-      boxSizing: 'border-box', // 테두리를 포함한 크기 계산 방식 적용
+      border: '1px solid currentColor',
+      content: '""',
     }
-  }),
-
-  // ripple 애니메이션 키프레임 정의
+  },
   '@keyframes ripple': {
-    '0%': { // 애니메이션 시작 시점
-      transform: 'scale(1)', // 원래 크기
-      opacity: 1, // 완전 불투명
+    '0%': {
+      transform: 'scale(.8)',
+      opacity: 1,
     },
-    '100%': { // 애니메이션 종료 시점
-      transform: 'scale(2.4)', // 원래 크기의 2.4배로 확대
-      opacity: 0, // 완전 투명
+    '100%': {
+      transform: 'scale(2.4)',
+      opacity: 0,
     },
   },
 }));
@@ -319,6 +295,58 @@ const MemberStatusModal = ({ open, onClose, workspaceId }) => {
             );
         }
 
+        // 온라인 유저 항목 렌더링
+        const renderUserItem = (user, index, isOnline) => {
+            const avatarContent = user.profileImage ? (
+                <Avatar 
+                    src={user.profileImage} 
+                    sx={{ width: 40, height: 40 }} 
+                />
+            ) : (
+                <Avatar 
+                    sx={{ 
+                        width: 40, 
+                        height: 40, 
+                        bgcolor: isOnline ? '#007AFF' : '#9ca3af'
+                    }}
+                >
+                    {user.email.charAt(0).toUpperCase()}
+                </Avatar>
+            );
+
+            return (
+                <MemberStatusItem key={index} statusType={isOnline ? 'online' : 'offline'}>
+                    {isOnline ? (
+                        <StyledBadge
+                            overlap="circular"
+                            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                            variant="dot"
+                            sx={{ mr: 1.5 }}
+                        >
+                            {avatarContent}
+                        </StyledBadge>
+                    ) : (
+                        <Box sx={{ mr: 1.5 }}>
+                            {avatarContent}
+                        </Box>
+                    )}
+                    {/* 사용자 정보 */}
+                    <MemberInfo>
+                        <MemberName>
+                            {user.nickname || user.email.split('@')[0]}
+                        </MemberName>
+                        <MemberEmail>
+                            {user.email}
+                        </MemberEmail>
+                    </MemberInfo>
+                    {/* 역할 표시 */}
+                    <RoleBadge role={user.wsRole}>
+                        {user.wsRole === 'owner' ? '오너' : '멤버'}
+                    </RoleBadge>
+                </MemberStatusItem>
+            );
+        };
+
         return (
             <MemberStatusContainer>
                 {/* 온라인 유저 */}
@@ -332,35 +360,7 @@ const MemberStatusModal = ({ open, onClose, workspaceId }) => {
                             <Typography variant="body2">온라인 멤버가 없습니다.</Typography>
                         </EmptyContainer>
                     ) : (
-                        onlineUsers.map((user, index) => (
-                            <MemberStatusItem key={index} statusType="online">
-                                <AvatarContainer>
-                                    {/* 아바타 */}
-                                    {user.profileImage ? (
-                                        <Avatar src={user.profileImage} sx={{ width: 36, height: 36 }} />
-                                    ) : (
-                                        <Avatar sx={{ width: 36, height: 36, bgcolor: '#007AFF' }}>
-                                            {user.email.charAt(0).toUpperCase()}
-                                        </Avatar>
-                                    )}
-                                    {/* 온라인 상태 표시 */}
-                                    <StatusIndicator statusType="online" />
-                                </AvatarContainer>
-                                {/* 사용자 정보 */}
-                                <MemberInfo>
-                                    <MemberName>
-                                        {user.nickname || user.email.split('@')[0]}
-                                    </MemberName>
-                                    <MemberEmail>
-                                        {user.email}
-                                    </MemberEmail>
-                                </MemberInfo>
-                                {/* 역할 표시 */}
-                                <RoleBadge role={user.wsRole}>
-                                    {user.wsRole === 'owner' ? '오너' : '멤버'}
-                                </RoleBadge>
-                            </MemberStatusItem>
-                        ))
+                        onlineUsers.map((user, index) => renderUserItem(user, index, true))
                     )}
                 </div>
 
@@ -375,35 +375,7 @@ const MemberStatusModal = ({ open, onClose, workspaceId }) => {
                             <Typography variant="body2">오프라인 멤버가 없습니다.</Typography>
                         </EmptyContainer>
                     ) : (
-                        offlineUsers.map((user, index) => (
-                            <MemberStatusItem key={index} statusType="offline">
-                                <AvatarContainer>
-                                    {/* 아바타 */}
-                                    {user.profileImage ? (
-                                        <Avatar src={user.profileImage} sx={{ width: 36, height: 36 }} />
-                                    ) : (
-                                        <Avatar sx={{ width: 36, height: 36, bgcolor: '#9ca3af' }}>
-                                            {user.email.charAt(0).toUpperCase()}
-                                        </Avatar>
-                                    )}
-                                    {/* 오프라인 상태 표시 */}
-                                    <StatusIndicator statusType="offline" />
-                                </AvatarContainer>
-                                {/* 사용자 정보 */}
-                                <MemberInfo>
-                                    <MemberName>
-                                        {user.nickname || user.email.split('@')[0]}
-                                    </MemberName>
-                                    <MemberEmail>
-                                        {user.email}
-                                    </MemberEmail>
-                                </MemberInfo>
-                                {/* 역할 표시 */}
-                                <RoleBadge role={user.wsRole}>
-                                    {user.wsRole === 'owner' ? '오너' : '멤버'}
-                                </RoleBadge>
-                            </MemberStatusItem>
-                        ))
+                        offlineUsers.map((user, index) => renderUserItem(user, index, false))
                     )}
                 </div>
             </MemberStatusContainer>
@@ -419,7 +391,7 @@ const MemberStatusModal = ({ open, onClose, workspaceId }) => {
         >
             <DialogHeader>
                 <HeaderContent>
-                    <Typography variant="h5" component="div">
+                    <Typography variant="h4" component="div">
                         워크스페이스 멤버 접속 현황
                     </Typography>
                     <CloseButton

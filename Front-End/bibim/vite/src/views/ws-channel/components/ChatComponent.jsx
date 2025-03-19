@@ -5,24 +5,21 @@ import { Client } from "@stomp/stompjs";
 import { ConfigContext } from "../../../contexts/ConfigContext";
 import { FaPaperPlane, FaPlus } from "react-icons/fa";
 import TagIcon from '@mui/icons-material/Tag';
-import PersonIcon from '@mui/icons-material/Person';
-import { fetchWorkspaceUsers, fetchWorkspaceMembersStatus } from "../../../api/workspaceApi";
-import "./ChatComponent.css";
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
 import { Drawer, List, ListItem, ListItemText, Button, IconButton, Typography } from "@mui/material";
 import SettingsIcon from '@mui/icons-material/Settings';
 import { getWorkspaceChannels } from "../../../api/channel";
 import { useSelector } from 'react-redux';
 import ChannelEditModal from "./ChannelEditModal";
 import ChannelCreateModal from "./ChannelCreateModal";
-import ChannelLoading2 from "./ChannelLoading2"; // ✅ 로딩 컴포넌트 추가
-// 번역관련 api 호출
+import ChannelLoading2 from "./ChannelLoading2";
 import { translateText } from "../../../api/translate";
-import TranslateIcon from '@mui/icons-material/Translate'; // 번역 아이콘 추가
-// 멤버 상태 모달 컴포넌트 추가
+import TranslateIcon from '@mui/icons-material/Translate';
 import MemberStatusModal from './MemberStatusModal';
+import ActiveUsersComponent from './ActiveUsersComponent';
+import "./ChatComponent.css";
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 
 /**
  * LocalDateTime을 Asia/Seoul 시간대로 변환하고 포맷팅하는 함수
@@ -58,9 +55,6 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
     const [input, setInput] = useState("");      // 입력창 텍스트
     const [file, setFile] = useState(null);      // 선택된 파일
     const [isUploading, setIsUploading] = useState(false); // 파일 업로드 상태
-    const [activeUsers, setActiveUsers] = useState([]); // 접속 중인 사용자 목록
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [isChatLoading, setIsChatLoading] = useState(false); // ✅ 채팅 로딩 상태 추가
     
     // 멤버 상태 모달 관련 상태 추가
@@ -548,68 +542,6 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
         return msg.Number || `message-${index}`;  // ✅ dmNumber 사용, 없을 경우 index 사용
     };
 
-    /**
-     * ✅ 워크스페이스 멤버 목록과 접속 상태를 가져오는 함수
-     */
-    const fetchMembersStatus = useCallback(async () => {
-        if (!WSID) return;
-        
-        setIsLoading(true);
-        try {
-            // 1. 워크스페이스 멤버 목록 가져오기
-            const usersData = await fetchWorkspaceUsers(WSID);
-            
-            // 2. 워크스페이스 멤버의 접속 상태 가져오기
-            const statusData = await fetchWorkspaceMembersStatus(WSID);
-            
-            if (!statusData || statusData.length === 0) {
-                // 접속 상태 데이터가 없는 경우 모든 사용자를 오프라인으로 표시
-                const offlineUsers = usersData.map(user => ({
-                    ...user,
-                    loginStatus: false
-                }));
-                setActiveUsers(offlineUsers);
-                return;
-            }
-            
-            // 3. usersData에 statusData를 매핑하여 온라인/오프라인 상태 추가
-            const updatedUsers = usersData.map(user => {
-                // 이메일로 상태 데이터 찾기
-                const userStatus = statusData.find(status => status.email === user.email);
-                
-                // 상태 데이터가 있으면 해당 상태 사용, 없으면 오프라인으로 설정
-                return {
-                    ...user,
-                    loginStatus: userStatus?.status === 'online'
-                };
-            });
-            
-            setActiveUsers(updatedUsers);
-        } catch (error) {
-            console.error("🚨 사용자 목록 및 접속 상태 불러오기 실패:", error);
-            setError("멤버 정보를 불러오는데 실패했습니다");
-        } finally {
-            setIsLoading(false);
-        }
-    }, [WSID]);
-
-    /**
-     * ✅ 워크스페이스 ID 변경 시 멤버 접속 상태 가져오기
-     */
-    useEffect(() => {
-        fetchMembersStatus();
-        
-        // 5분마다 멤버 접속 상태 갱신
-        const intervalId = setInterval(fetchMembersStatus, 5 * 60 * 1000);
-        
-        return () => clearInterval(intervalId);
-    }, [WSID, fetchMembersStatus]);
-
-    // 멤버 상태 모달 토글 함수 추가
-    const toggleMemberStatusModal = () => {
-        setMemberStatusModalOpen(!memberStatusModalOpen);
-    };
-
     console.log(channels);
     console.log("채널 id와 채널명", channelId, channelName);
 
@@ -629,40 +561,11 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                         채널 변경
                     </Button>
                 </div>
-                <div className="active-users" onClick={toggleMemberStatusModal}>
-                    <PersonIcon sx={{ color: '#6b7280', fontSize: 20 }} />
-                    {isLoading ? (
-                        <span>멤버 정보 로딩 중...</span>
-                    ) : error ? (
-                        <span className="error-text">{error}</span>
-                    ) : (
-                        <>
-                            <span>{activeUsers.length}명의 멤버</span>
-                            <div className="active-users-list">
-                                {activeUsers.map((member, index) => (
-                                    <div key={index} className="active-user">
-                                        <div className="user-avatar">
-                                            {member.profileImage ? (
-                                                <img src={member.profileImage} alt={member.email} />
-                                            ) : (
-                                                <div className="default-avatar">
-                                                    {member.email.charAt(0).toUpperCase()}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="user-info">
-                                            <span className="user-email">{member.email}</span>
-                                            {member.nickname && <span className="user-nickname">({member.nickname})</span>}
-                                        </div>
-                                        <div className="user-status">
-                                            <span className={`status-dot ${member.loginStatus ? 'online' : 'offline'}`} />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </>
-                    )}
-                </div>
+                {/* 멤버 접속 상태 컴포넌트 */}
+                <ActiveUsersComponent 
+                    workspaceId={WSID} 
+                    toggleMemberStatusModal={() => setMemberStatusModalOpen(!memberStatusModalOpen)} 
+                />
             </div>
 
             {/* 메시지 목록 */}
