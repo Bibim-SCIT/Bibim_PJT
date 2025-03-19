@@ -103,7 +103,14 @@ const WorkspaceSelector = () => {
                         // ✅ 로딩이 끝났고 워크스페이스가 있을 때 표시
                         <>
                             {/* ✅ 현재 선택된 워크스페이스 이름 표시 */}
-                            <Typography variant="subtitle1">
+                            <Typography
+                                variant="subtitle1"
+                            // sx={{
+                            //     fontFamily: '"NanumBarunGothic", sans-serif',
+                            //     fontWeight: "bold",
+                            //     fontSize: "30px"
+                            // }}
+                            >
                                 {activeWorkspace ? activeWorkspace.wsName : '워크스페이스 선택'}
                             </Typography>
 
@@ -112,10 +119,10 @@ const WorkspaceSelector = () => {
                                 variant="outlined"
                                 fullWidth
                                 onClick={handleClick} // 클릭 시 메뉴 열기
-                                sx={{ 
-                                    height: 36, 
-                                    textTransform: 'none', 
-                                    color: '#3F72AF', 
+                                sx={{
+                                    height: 36,
+                                    textTransform: 'none',
+                                    color: '#3F72AF',
                                     borderColor: '#3F72AF',
                                     bgcolor: 'white',
                                     '&:hover': {

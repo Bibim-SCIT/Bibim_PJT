@@ -84,18 +84,18 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
           ...(!drawerOpen && { pl: 1.25 }),
           ...(drawerOpen &&
             level === 1 && {
+            '&:hover': {
+              bgcolor: 'secondary.light'
+            },
+            '&.Mui-selected': {
+              bgcolor: 'secondary.light',
+              color: iconSelectedColor,
               '&:hover': {
-                bgcolor: 'secondary.light'
-              },
-              '&.Mui-selected': {
-                bgcolor: 'secondary.light',
                 color: iconSelectedColor,
-                '&:hover': {
-                  color: iconSelectedColor,
-                  bgcolor: 'secondary.light'
-                }
+                bgcolor: 'secondary.light'
               }
-            }),
+            }
+          }),
           ...((!drawerOpen || level !== 1) && {
             py: level === 1 ? 0 : 1,
             '&:hover': {
@@ -119,21 +119,21 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
               color: isSelected ? iconSelectedColor : 'text.primary',
               ...(!drawerOpen &&
                 level === 1 && {
-                  borderRadius: `${borderRadius}px`,
-                  width: 46,
-                  height: 46,
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                borderRadius: `${borderRadius}px`,
+                width: 46,
+                height: 46,
+                alignItems: 'center',
+                justifyContent: 'center',
+                '&:hover': {
+                  bgcolor: 'secondary.light'
+                },
+                ...(isSelected && {
+                  bgcolor: 'secondary.light',
                   '&:hover': {
                     bgcolor: 'secondary.light'
-                  },
-                  ...(isSelected && {
-                    bgcolor: 'secondary.light',
-                    '&:hover': {
-                      bgcolor: 'secondary.light'
-                    }
-                  })
+                  }
                 })
+              })
             }}
           >
             {itemIcon}
@@ -144,15 +144,18 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
           <Tooltip title={item.title} disableHoverListener={!hoverStatus}>
             <ListItemText
               primary={
+                // 메인 사이드바 글자 CSS (메뉴글자)
                 <Typography
                   ref={ref}
                   noWrap
-                  variant={isSelected ? 'h5' : 'body1'}
+                  variant={isSelected ? 'h4' : 'h5'}
                   color="inherit"
                   sx={{
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    width: 140
+                    width: 140,
+                    fontWeight: 'bold',
+                    // fontFamily: '"NanumBarunGothic", sans-serif', // 정확한 폰트 이름
                   }}
                 >
                   {item.title}
