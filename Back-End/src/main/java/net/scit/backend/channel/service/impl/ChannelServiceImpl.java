@@ -136,12 +136,7 @@ public class ChannelServiceImpl implements ChannelService {
                 .fileName(file.getOriginalFilename()) // 원본 파일명 저장
                 .build();
         messageReposittory.save(messageEntity);
-
-        WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(
-                        workspaceChannelEntity.getWorkspace().getWsId(),
-                        sender)
-                .orElseThrow(() -> new CustomException(ErrorCode.IMAGE_NOT_FOUND));
-
+        
         // 저장된 데이터를 DTO 형태로 반환
         return MessageDTO.builder()
                 .messageOrFile(true) // 파일 메시지 여부
