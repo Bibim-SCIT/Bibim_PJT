@@ -83,7 +83,13 @@ public class ChannelServiceImpl implements ChannelService {
 
         // 채널 엔티티 가져오기
         WorkspaceChannelEntity workspaceChannelEntity = getWorkspaceChannelById(messageDTO.getChannelNumber());
-
+        
+        // 프로필 이미지와 닉네임 가져오기 위해 사용
+        WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(
+                                                    workspaceChannelEntity.getWorkspace().getWsId(),
+                                                    messageDTO.getSender())
+                                                    .orElseThrow(() -> new CustomException(ErrorCode.IMAGE_NOT_FOUND));
+        
         // 메시지 엔티티 생성 및 저장
         MessageEntity messageEntity = MessageEntity.builder()
                 .workspaceChannelEntity(workspaceChannelEntity)
@@ -92,6 +98,9 @@ public class ChannelServiceImpl implements ChannelService {
                 .messageOrFile(false) // 텍스트 메시지임을 명시
                 .build();
         messageReposittory.save(messageEntity);
+        
+        messageDTO.setNickname(workspaceMember.getNickname());
+        messageDTO.setProfileImage(workspaceMember.getProfileImage()); 
 
         // 입력된 DTO 데이터를 그대로 반환
         return messageDTO;
