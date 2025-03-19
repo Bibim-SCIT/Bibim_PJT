@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import LogoSection from 'layout/MainLayout/LogoSection';
 import LandingHeader from './components/LandingHeader';
 import ProfileSection from 'layout/MainLayout/Header/ProfileSection';
-import { IconMenu2, IconUsers, IconMessage, IconCalendarEvent, IconFileAnalytics, IconBrandGithub } from '@tabler/icons-react';
+import { IconUsers, IconMessage, IconCalendarEvent, IconFileAnalytics } from '@tabler/icons-react';
 
 // 스타일 컴포넌트
 const GradientText = styled('span')(({ theme }) => ({
