@@ -60,8 +60,6 @@ public class DMController {
         // 대상 클라이언트에게 메시지 전송
         String destination = "/exchange/dm-exchange/msg." + roomId;
         messagingTemplate.convertAndSend(destination, savedMessage);
-
-        log.info("✅ 메시지 전송 완료: roomId={}, sender={}, receiver={}", roomId, messageDTO.getSender(), messageDTO.getReceiver());
     }
 
     /**

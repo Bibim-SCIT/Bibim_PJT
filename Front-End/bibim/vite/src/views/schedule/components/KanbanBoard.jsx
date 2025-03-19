@@ -42,7 +42,7 @@ const columnColors = {
   backlog: "#E6FFFA", // 보류
 };
 
-const KanbanBoard = ({ wsId, setSchedules, setGanttTasks }) => {
+const KanbanBoard = ({ wsId, setSchedules, setGanttTasks, onKanbanUpdated, forceRender }) => {
   const [tasks, setTasks] = useState([]);
 
   // ✅ 기존 useEffect (유지)
@@ -60,7 +60,7 @@ const KanbanBoard = ({ wsId, setSchedules, setGanttTasks }) => {
     };
 
     loadTasks();
-  }, [wsId]);
+  }, [wsId, forceRender]);
 
   // ✅ 새롭게 추가할 useEffect (tasks가 변경될 때 실행)
   useEffect(() => {
@@ -118,6 +118,22 @@ const KanbanBoard = ({ wsId, setSchedules, setGanttTasks }) => {
       return;
     }
 
+    // ✅ 기존 상태 저장 (API 실패 시 롤백을 위해)
+    const prevTasks = [...tasks];
+
+    // ✅ 낙관적 UI 업데이트 (즉시 상태 변경)
+    setTasks(prevTasks =>
+      prevTasks.map(task =>
+        task.id === movedTask.id
+          ? {
+            ...task,
+            status: newMappedStatus,
+            extendedProps: newMappedStatus === "unassigned" ? {} : task.extendedProps, // 할 일로 이동하면 담당자 제거
+          }
+          : task
+      )
+    );
+
     try {
       if (currentStatus === "unassigned" && newMappedStatus === "inProgress") {
         console.log(`🔄 담당자 자동 배정 실행: scheduleNumber=${movedTask.id}`);
@@ -149,15 +165,20 @@ const KanbanBoard = ({ wsId, setSchedules, setGanttTasks }) => {
 
       console.log("📌 캘린더 & 간트차트 데이터 강제 업데이트 완료!", mergedTasks);
 
+      onKanbanUpdated(); // ✅ 상위 컴포넌트에서 리렌더링 실행
+
     } catch (error) {
       console.error(`❌ 상태 변경 실패 (${movedTask.id} → ${newMappedStatus}):`, error);
+
+      // ❌ API 실패 시 이전 상태로 롤백
+      setTasks(prevTasks);
     }
   };
 
   return (
     <KanbanWrapper>
       {/* <h2>📌 칸반 보드 (wsId: {wsId})</h2> */}
-      <h2>📌 칸반 보드</h2>
+      <Typography variant="h2" sx={{ textAlign: "center", mb: 2 }}>📌 칸반 보드</Typography>
       <DragDropContext onDragEnd={onDragEnd}>
         <Box display="flex" justifyContent="space-around">
           {Object.entries(columns).map(([columnId, columnTitle]) => (
@@ -210,7 +231,7 @@ const KanbanBoard = ({ wsId, setSchedules, setGanttTasks }) => {
                             {task.extendedProps?.profileImage && (
                               <Avatar
                                 src={task.extendedProps.profileImage}
-                                alt={task.extendedProps.nickname}
+                                alt={task.extendedProps.nickname || "담당자 없음"}
                                 sx={{
                                   width: "30px",
                                   height: "30px",

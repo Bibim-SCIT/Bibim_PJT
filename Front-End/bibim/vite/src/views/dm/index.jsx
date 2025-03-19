@@ -267,7 +267,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                 const parsedMessage = JSON.parse(message.body);
                 // 자기 자신의 메시지인지 확인하여 필터링
                 if (parsedMessage.sender !== user?.email) {
-                    setMessages((prev) => [...prev, parsedMessage]); // 실시간 메시지 추가
+                     // setMessages((prev) => [...prev, parsedMessage]); // 실시간 메시지 추가
                 }
 
                 // 상대방 메시지인 경우 프로필 이미지 추가
@@ -295,6 +295,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
 
     // ✅ 메시지 전송 함수
     const sendMessage = () => {
+
         if (!message.trim() || !stompClient) return;
 
         const messageDTO = {
@@ -395,10 +396,10 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                         </Avatar>
                     )}
                 </div>
-
+                
                 <div className="dm-chat-header-info">
                     <div className="dm-chat-header-name">
-                        {receiverInfo?.nickname || receiverId.split('@')[0]}
+                        {receiverInfo?.nickame || receiverId.split('@')[0]}
                     </div>
                     <div className="dm-chat-header-email">{receiverId}</div>
                 </div>
@@ -412,7 +413,6 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                 <div className="dm-chat-messages">
                     {messages.map((msg, index) => {
                         const messageKey = getMessageKey(msg, index); // ✅ 고유 key 생성
-                        // console.log("메시지키 확인", messageKey);
                         return (
                             <div
                                 // key={index}
@@ -445,7 +445,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                                                 )}
                                             </div>
                                             <span className="dm-sender-name">
-                                                {msg.sender.split('@')[0]}
+                                                {msg.nickname}
                                             </span>
                                         </>
                                     )}
@@ -540,7 +540,7 @@ export default function DmPage() {
 
     // ✅ WebSocket 클라이언트 초기화 및 연결 설정
     useEffect(() => {
-        const socket = new SockJS(`${API_BASE_URL2}/ws/chat`);
+        const socket = new SockJS(`${API_BASE_URL}/ws/chat`);
         const client = new Client({
             webSocketFactory: () => socket,
             connectHeaders: { Authorization: `Bearer ${localStorage.getItem("token")}` },

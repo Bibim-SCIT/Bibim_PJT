@@ -37,7 +37,6 @@ public class MessageEntity
 
     @Column(length = 50) // 최대 길이 100으로 설정
     private String sender;
-    
 
     private String content;
 

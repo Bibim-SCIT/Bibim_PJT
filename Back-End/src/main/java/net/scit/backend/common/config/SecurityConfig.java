@@ -96,6 +96,11 @@ public class SecurityConfig {
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")); // ✅ 허용할 HTTP 메소드
         config.setAllowedHeaders(List.of("*")); // ✅ 모든 헤더 허용
         config.setAllowCredentials(true);
+
+        // ✅ SSE 관련 헤더 추가
+        config.addExposedHeader("X-Accel-Buffering");
+        config.addExposedHeader("Cache-Control");
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;

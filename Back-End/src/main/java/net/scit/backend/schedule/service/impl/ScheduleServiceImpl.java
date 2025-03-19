@@ -324,10 +324,12 @@ public class ScheduleServiceImpl implements ScheduleService {
         // 해당 스케줄 권한이 있는 확인
         if (scheduleEntity.getMember() == null) { // 담장자가 없을 때
             scheduleEntity.setMember(updateMember);
+			scheduleRepository.save(scheduleEntity);
         } else { // 해당 스케줄의 권한이 있는지 확인
             if (workspaceMemberEntity.getWsRole().equals("owner")
                     || scheduleEntity.getMember().getEmail().equals(currentEmail)) {
                 scheduleEntity.setMember(updateMember);
+				scheduleRepository.save(scheduleEntity);
             }
         }
 

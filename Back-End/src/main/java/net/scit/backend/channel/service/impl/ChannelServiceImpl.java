@@ -50,10 +50,10 @@ public class ChannelServiceImpl implements ChannelService {
 
     private final MessageReposittory messageReposittory; // 메시지 관련 데이터 처리
     private final WorkspaceChannelRepository workspaceChannelRepository; // 워크스페이스 채널 관련 데이터 처리
+    private final WorkspaceMemberRepository workspaceMemberRepository;
     private final S3Uploader s3Uploader; // S3 파일 업로드 기능 제공 컴포넌트
     private final MemberRepository memberRepository;
     private final OpenAiClient openAiClient;
-    private final WorkspaceMemberRepository workspaceMemberRepository;
     private final WorkdataRepository workdataRepository;
     private final WorkdataFileRepository workdataFileRepository;
     private final WorkdataFileTagRepository workdataFileTagRepository;
@@ -104,14 +104,16 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public MessageDTO processMessage(MessageDTO messageDTO) {
         // 파일 메시지는 여기서 처리하지 않으므로 바로 반환
-        if (messageDTO.getMessageOrFile()) {
-            log.info("📂 파일 메시지는 processMessage에서 처리하지 않음.");
-            return messageDTO;
-        }
 
         // 채널 엔티티 가져오기
         WorkspaceChannelEntity workspaceChannelEntity = getWorkspaceChannelById(messageDTO.getChannelNumber());
-
+        
+        // 프로필 이미지와 닉네임 가져오기 위해 사용
+        WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(
+                                                    workspaceChannelEntity.getWorkspace().getWsId(),
+                                                    messageDTO.getSender())
+                                                    .orElseThrow(() -> new CustomException(ErrorCode.IMAGE_NOT_FOUND));
+        
         // 메시지 엔티티 생성 및 저장
         MessageEntity messageEntity = MessageEntity.builder()
                 .workspaceChannelEntity(workspaceChannelEntity)
@@ -120,6 +122,9 @@ public class ChannelServiceImpl implements ChannelService {
                 .messageOrFile(false) // 텍스트 메시지임을 명시
                 .build();
         messageReposittory.save(messageEntity);
+        
+        messageDTO.setNickname(workspaceMember.getNickname());
+        messageDTO.setProfileImage(workspaceMember.getProfileImage()); 
 
         // 입력된 DTO 데이터를 그대로 반환
         return messageDTO;
@@ -140,6 +145,11 @@ public class ChannelServiceImpl implements ChannelService {
 
         // 채널 엔티티 가져오기
         WorkspaceChannelEntity workspaceChannelEntity = getWorkspaceChannelById(channelId);
+        // 프로필 이미지와 닉네임 가져오기 위해 사용
+        WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(
+                        workspaceChannelEntity.getWorkspace().getWsId(),
+                        sender)
+                .orElseThrow(() -> new CustomException(ErrorCode.IMAGE_NOT_FOUND));
 
         // 파일 메시지 엔티티 생성 및 저장
         MessageEntity messageEntity = MessageEntity.builder()
@@ -155,6 +165,8 @@ public class ChannelServiceImpl implements ChannelService {
         return MessageDTO.builder()
                 .messageOrFile(true) // 파일 메시지 여부
                 .channelNumber(channelId)
+                .nickname(workspaceMember.getNickname())
+                .profileImage(workspaceMember.getProfileImage())
                 .sender(sender)
                 .content(imageUrl) // 클라이언트에게 반환할 URL
                 .fileName(file.getOriginalFilename())
@@ -182,9 +194,17 @@ public class ChannelServiceImpl implements ChannelService {
      * @return MessageDTO
      */
     private MessageDTO convertToDTO(MessageEntity messageEntity) {
+
+        // 프로필 사진을 찾기 위한 워크스페이스 아이디 찾기
+        WorkspaceChannelEntity workspaceChannelEntity = messageEntity.getWorkspaceChannelEntity();
+        WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(workspaceChannelEntity.getWorkspace().getWsId(),messageEntity.getSender())
+                                                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
         return MessageDTO.builder()
                 .channelNumber(messageEntity.getWorkspaceChannelEntity().getChannelNumber())
                 .sender(messageEntity.getSender())
+                .nickname(workspaceMember.getNickname())
+                .profileImage(workspaceMember.getProfileImage())
                 .messageOrFile(messageEntity.getMessageOrFile())
                 .content(messageEntity.getContent())
                 .sendTime(messageEntity.getSendTime())

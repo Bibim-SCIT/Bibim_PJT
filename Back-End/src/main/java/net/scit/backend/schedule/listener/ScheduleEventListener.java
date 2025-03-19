@@ -32,8 +32,7 @@ public class ScheduleEventListener {
                 event.getEventType(), workspaceId, notificationMessage);
 
         // 모든 경우에 동일한 URL 설정
-        final String baseUrl = "http://localhost:3000/schedule";
-        String notificationUrl = baseUrl;
+        final String baseUrl = "https://dev.bibim.shop/schedule";
 
         // 특정 워크스페이스의 모든 멤버 조회
         List<WorkspaceMemberEntity> workspaceMembers =
@@ -41,7 +40,7 @@ public class ScheduleEventListener {
 
         // 각 워크스페이스 멤버에게 알림 전송
         workspaceMembers.forEach(member -> {
-            NotificationEntity notification = buildNotificationEntity(event, member, workspaceId, notificationMessage, notificationUrl);
+            NotificationEntity notification = buildNotificationEntity(event, member, workspaceId, notificationMessage, baseUrl);
             NotificationResponseDTO response = notificationService.createAndSendNotification(notification);
             log.info("📢 알림 전송 및 저장 완료 - NotificationNumber: {}", response.getNotificationNumber());
         });
