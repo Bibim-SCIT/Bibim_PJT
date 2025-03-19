@@ -208,7 +208,6 @@ export default function NotificationSection() {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
     }
-    // SSE 요청 시 토큰을 쿼리 파라미터로 포함
     const newSSE = new EventSource(`${API_BASE_URL}/notification/subscribe?token=${token}`);
     console.log("📡 SSE 연결 요청:", `${API_BASE_URL}/notification/subscribe?token=${token}`);
 
@@ -217,16 +216,21 @@ export default function NotificationSection() {
         const newNotification = JSON.parse(event.data);
         console.log("📩 새 알림 수신:", newNotification);
 
-        setNotifications((prev) => {
-          if (!prev.some((n) => n.notificationNumber === newNotification.notificationNumber)) {
-            return [newNotification, ...prev];
-          }
-          return prev;
-        });
+        // 예: 현재 사용자의 이메일이 user.email에 저장되어 있다고 가정
+        if (newNotification.receiverEmail === user.email) {
+          setNotifications((prev) => {
+            if (!prev.some((n) => n.notificationNumber === newNotification.notificationNumber)) {
+              return [newNotification, ...prev];
+            }
+            return prev;
+          });
 
-        // unreadCount는 오직 "안 읽은" 필터에서만 증가
-        if (filterValue === "unread" && !newNotification.notificationStatus) {
-          setUnreadCount((prevCount) => prevCount + 1);
+          // "안 읽은" 필터일 때만 unreadCount 증가
+          if (filterValue === "unread" && !newNotification.notificationStatus) {
+            setUnreadCount((prevCount) => prevCount + 1);
+          }
+        } else {
+          console.warn("⚠️ 수신된 알림이 현재 사용자의 알림이 아님:", newNotification.receiverEmail);
         }
       } catch (err) {
         console.error('❌ SSE 데이터 처리 중 오류 발생:', err);
@@ -241,6 +245,7 @@ export default function NotificationSection() {
 
     eventSourceRef.current = newSSE;
   };
+
 
 
 

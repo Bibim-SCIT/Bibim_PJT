@@ -93,18 +93,24 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public NotificationEntity sendNotification(NotificationEntity notification) {
-        for (Map.Entry<String, SseEmitter> entry : emitters.entrySet()) {
-            String key = entry.getKey();
-            SseEmitter emitter = entry.getValue();
+        String receiverEmail = notification.getReceiverEmail();  // 알림의 수신자 이메일
+        SseEmitter emitter = emitters.get(receiverEmail);         // 해당 이메일에 등록된 emitter 가져오기
+
+        if (emitter != null) {
             try {
                 emitter.send(SseEmitter.event().name("notification").data(notification));
+                log.info("✅ 알림 전송 완료: {} -> {}", notification.getNotificationName(), receiverEmail);
             } catch (IOException e) {
                 emitter.completeWithError(e);
-                emitters.remove(key);
+                emitters.remove(receiverEmail);
+                log.error("❌ SSE 알림 전송 실패: {}", e.getMessage());
             }
+        } else {
+            log.warn("⚠️ 해당 사용자 SSE 연결 없음: {}", receiverEmail);
         }
         return notification;
     }
+
 
     @Override
     public List<NotificationEntity> getUnreadNotifications(String receiverEmail) {
