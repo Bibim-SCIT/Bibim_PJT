@@ -656,7 +656,6 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                                         </div>
                                         <div className="user-status">
                                             <span className={`status-dot ${member.loginStatus ? 'online' : 'offline'}`} />
-                                            <span className="member-role">{member.role}</span>
                                         </div>
                                     </div>
                                 ))}
