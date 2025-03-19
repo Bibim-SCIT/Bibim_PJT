@@ -237,9 +237,8 @@ export default function NotificationSection() {
               : [newNotification, ...prev]
           );
 
-          if (filterValue === "unread" && !newNotification.notificationStatus) {
-            setUnreadCount((prevCount) => prevCount + 1);
-          }
+          // ✅ 새 알림이 오면 즉시 unreadCount 증가
+          setUnreadCount((prevCount) => prevCount + 1);
         } else {
           console.warn("⚠️ 수신된 알림이 현재 사용자의 것이 아님:", newNotification.receiverEmail);
         }
@@ -268,7 +267,6 @@ export default function NotificationSection() {
     // ✅ 새로운 SSE 연결을 저장
     eventSourceRef.current = newSSE;
   };
-
 
 
   // 최초 마운트 시 실행
