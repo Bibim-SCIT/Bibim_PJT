@@ -4,7 +4,7 @@ import { Gantt, ViewMode } from "gantt-task-react";
 import "gantt-task-react/dist/index.css";
 import dayjs from "dayjs";
 import { styled } from "@mui/material/styles";
-import MyScheduleDetailModal from './MyScheduleDetailModal';
+import MyGanttScheduleDetailModal from './MyGanttScheduleDetailModal';
 
 // GanttWrapper 정의 업데이트
 const GanttWrapper = styled(Box)({
@@ -175,7 +175,7 @@ const transformTaskData = (task) => {
   // 디버깅을 위한 로그 추가
   console.log("변환 전 task 데이터:", task);
   
-  // 간트차트 task 데이터를 MyScheduleDetailModal에서 사용하는 형식으로 변환
+  // 간트차트 task 데이터를 MyGanttScheduleDetailModal에서 사용하는 형식으로 변환
   const transformedData = {
     scheduleNumber: task.id,
     scheduleTitle: task.name,
@@ -318,11 +318,10 @@ const MyGanttChart = ({ tasks, onTaskClick }) => {
 
         {/* 스케줄 상세 모달 */}
         {isModalOpen && (
-          <MyScheduleDetailModal
+          <MyGanttScheduleDetailModal
             open={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             schedule={selectedTask}
-            skipLoading={true} // API 호출을 건너뛰도록 설정
             onUpdate={(updatedSchedule) => {
               console.log("업데이트된 스케줄:", updatedSchedule);
               setIsModalOpen(false);

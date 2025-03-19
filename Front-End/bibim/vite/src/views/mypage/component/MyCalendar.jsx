@@ -3,7 +3,7 @@ import { Box, Paper, Avatar, Typography, Tooltip } from '@mui/material';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import MyScheduleDetailModal from './MyScheduleDetailModal';
+import MyCalendarScheduleDetailModal from './MyCalendarScheduleDetailModal';
 
 const MyCalendar = ({ scheduleData, onEventClick, onDeleteSuccess }) => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -225,7 +225,7 @@ const MyCalendar = ({ scheduleData, onEventClick, onDeleteSuccess }) => {
       </Box>
       
       {/* 일정 상세 모달 */}
-      <MyScheduleDetailModal
+      <MyCalendarScheduleDetailModal
         open={modalOpen}
         onClose={() => {
           setModalOpen(false);

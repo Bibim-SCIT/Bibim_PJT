@@ -51,10 +51,14 @@ const statusMapping = {
   ON_HOLD: { label: "보류", icon: <PauseCircleIcon />, color: "warning" },
 };
 
-const MyScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSuccess, skipLoading = false }) => {
+/**
+ * 간트 차트용 스케줄 상세 모달
+ * 워크스페이스 정보를 직접 처리합니다.
+ */
+const MyGanttScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSuccess }) => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [localSchedule, setLocalSchedule] = useState(schedule);
-  const [loading, setLoading] = useState(!skipLoading);
+  const [loading, setLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   
   // 스낵바 상태
@@ -67,39 +71,8 @@ const MyScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSucc
   // 스케줄 정보 업데이트
   useEffect(() => {
     setLocalSchedule(schedule);
-    if (skipLoading) {
-      setLoading(false);
-    }
-  }, [schedule, skipLoading]);
-
-  // 모달이 열릴 때마다 최신 데이터 가져오기
-  useEffect(() => {
-    // skipLoading이 true인 경우 API 호출을 건너뜁니다
-    if (skipLoading) {
-      console.log("API 호출 건너뛰기 (skipLoading=true)");
-      setLoading(false);
-      return;
-    }
-
-    if (open && schedule?.scheduleNumber) {
-      setLoading(true);
-      console.log(`최신 스케줄 데이터 다시 불러오기: scheduleNumber=${schedule.scheduleNumber}`);
-
-      getSchedule(schedule.scheduleNumber)
-        .then((updatedSchedule) => {
-          console.log("최신 스케줄 데이터 가져옴:", updatedSchedule);
-          setLocalSchedule(updatedSchedule.data);
-        })
-        .catch((error) => {
-          console.error("스케줄 데이터를 불러오지 못함:", error);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    } else {
-      console.log("스케줄 데이터가 유효하지 않음 또는 모달이 열리지 않음");
-    }
-  }, [open, schedule, skipLoading]);
+    setLoading(false);
+  }, [schedule]);
 
   if (!localSchedule) return null;
 
@@ -179,7 +152,7 @@ const MyScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSucc
       <StyledDialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
         {/* 모달 헤더 */}
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h3" fontWeight="bold">내 일정 상세 정보</Typography>
+          <Typography variant="h3" fontWeight="bold">일정 상세 정보</Typography>
           <IconButton onClick={onClose} size="small">
             <CloseIcon />
           </IconButton>
@@ -310,4 +283,4 @@ const MyScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSucc
   );
 };
 
-export default MyScheduleDetailModal; 
+export default MyGanttScheduleDetailModal; 
