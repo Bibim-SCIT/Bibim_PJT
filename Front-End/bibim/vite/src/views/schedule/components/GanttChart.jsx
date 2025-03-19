@@ -34,6 +34,26 @@ const statusMapping = {
   backlog: { label: "보류", icon: <PauseCircleIcon /> },  // "backlog"도 "보류"로 매핑
 };
 
+// 상태별 진행률 설정
+const getProgressByStatus = (status) => {
+  switch (status) {
+    case "UNASSIGNED":
+    case "unassigned":
+      return 0; // 미배정 -> 0%
+    case "IN_PROGRESS":
+    case "inProgress":
+      return 50; // 진행 중 -> 50%
+    case "COMPLETED":
+    case "completed":
+      return 100; // 완료 -> 100%
+    case "ON_HOLD":
+    case "backlog":
+      return 25; // 보류 -> 25%
+    default:
+      return 0; // 기본값 (알 수 없음)
+  }
+};
+
 
 // ✅ 커스텀 툴팁 컴포넌트 (기본 툴팁 오버라이드)
 const CustomTooltip = ({ task }) => {
@@ -116,22 +136,38 @@ const GanttChart = ({ tasks, onDeleteSuccess }) => {
 
     const formattedTasks = tasks
       .filter(task => task.start && task.end) // 필수 필드가 없는 데이터 필터링
-      .map(task => ({
-        id: task.id || `task-${Math.random()}`, // 기본 ID 설정
-        name: task.title || "이름 없음",
-        // start: new Date(task.start), // 날짜 변환
-        // end: new Date(task.end),
-        start: dayjs(task.start).toDate(), // ✅ Date 객체 유지
-        end: dayjs(task.end).toDate(),
-        progress: task.progress || 0, // 기본 진행률 0
-        dependencies: task.dependencies || [], // 기본 의존성 []
-        type: task.type || "task", // 기본 타입 설정
-        status: task.status,
-        extendedProps: task, // ✅ 원본 데이터 유지하여 모달에서 활용 가능하도록 추가
-      }));
+      .map(task => {
+        // console.log("간트필터 task", task.extendedProps.color);
+        const barColor = task.extendedProps?.color || "#3788d8"; // ✅ 색상 적용
+        const progress2 = getProgressByStatus(task.status); // ✅ 진행률 적용
+        console.log(`🎨 Task: ${task.title}, Color: ${barColor}, Progress: ${progress2}`);
+
+        return {
+          id: task.id || `task-${Math.random()}`,
+          name: task.title || "이름 없음",
+          start: dayjs(task.start).toDate(),
+          end: dayjs(task.end).toDate(),
+          progress: progress2,
+          dependencies: task.dependencies || [],
+          type: task.type || "task",
+          status: task.status,
+          styles: { // ✅ 개별 태스크 스타일 설정
+            backgroundColor: barColor,
+            progressColor: barColor,
+            backgroundSelectedColor: barColor,
+            progressSelectedColor: barColor,
+          },
+          extendedProps: task, // ✅ 원본 데이터 유지
+        };
+      });
 
     setGanttTasks(formattedTasks);
   }, [tasks]);
+
+  console.log("간트차트 task", ganttTasks);
+  // console.log("간트 상세", ganttTasks[0]);
+  // console.log("간트 상세 색깔", ganttTasks[0]?.extendedProps.extendedProps.color);
+  // console.log("색깔 확인", ganttTasks[0]?.barColor);
 
   // ✅ `selectedTask` 변경될 때 모니터링
   useEffect(() => {
@@ -172,7 +208,7 @@ const GanttChart = ({ tasks, onDeleteSuccess }) => {
   return (
     <Paper
       elevation={0}
-      sx={{ 
+      sx={{
         width: '100%',
         maxWidth: '1200px',
         margin: '0 auto',
@@ -200,7 +236,7 @@ const GanttChart = ({ tasks, onDeleteSuccess }) => {
                 py: 0.8,
                 px: 2,
                 '&.Mui-selected': {
-                  backgroundColor: '#1976d2',
+                  backgroundColor: '#3F72AF',
                   color: 'white',
                   '&:hover': {
                     backgroundColor: '#1565c0',
@@ -232,7 +268,6 @@ const GanttChart = ({ tasks, onDeleteSuccess }) => {
             viewDate={new Date()} // ✅ 기본 표시 날짜 설정 (오늘 날짜 기준)
             listCellWidth="120px" // ✅ 왼쪽 Task List 너비 조절 (기본값: "155px")
             TaskListHeader={CustomTaskListHeader}
-            // TaskListTable={CustomTaskListTable}
             TaskListTable={(props) => <CustomTaskListTable {...props} onTaskClick={handleTaskClick} />} // ✅ Task 클릭 핸들러 추가
           />
         ) : (

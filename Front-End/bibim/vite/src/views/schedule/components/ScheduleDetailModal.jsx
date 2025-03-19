@@ -530,7 +530,7 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSucces
 
       {/* 담당자 변경 재확인 */}
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-        <DialogTitle>
+        <DialogTitle sx={{ fontSize: 15 }}>
           정말로 {selectedMember?.nickname} 님을 담당자로 지정하시겠습니까?
         </DialogTitle>
         <DialogActions>
@@ -539,6 +539,9 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSucces
             onClick={() => handleAssignConfirm()}
             color="primary"
             variant="contained"
+            sx={{
+              backgroundColor: '#3F72AF'
+            }}
           >
             확인
           </Button>
