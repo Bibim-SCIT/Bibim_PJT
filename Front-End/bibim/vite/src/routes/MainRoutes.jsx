@@ -71,7 +71,7 @@ const MainRoutes = {
       element: <ChannelPage />
     },
     {
-      path: '/ws-select',
+      path: '/',
       element: <WsSelectPage />
     },
     {
