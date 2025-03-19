@@ -189,7 +189,7 @@ const MyCalendar = ({ scheduleData, onEventClick, onDeleteSuccess, workspaces = 
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  height: '18px', // 높이 고정
+                  height: '20px', // 높이 고정
                   backgroundColor: eventColor,
                   color: '#FFFFFF', // 흰색으로 변경
                   borderRadius: '3px',
@@ -218,8 +218,8 @@ const MyCalendar = ({ scheduleData, onEventClick, onDeleteSuccess, workspaces = 
                         alt={wsName || '워크스페이스'}
                         variant="rounded"
                         sx={{
-                          width: 12,
-                          height: 12,
+                          width: 20,
+                          height: 20,
                           border: '1px solid rgba(255,255,255,0.5)',
                           flexShrink: 0,
                           marginRight: '2px',
