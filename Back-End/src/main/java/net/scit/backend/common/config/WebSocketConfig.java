@@ -1,4 +1,4 @@
-package net.scit.backend.config;
+package net.scit.backend.common.config;
 
 import lombok.RequiredArgsConstructor;
 import net.scit.backend.channel.handler.StompHandler;

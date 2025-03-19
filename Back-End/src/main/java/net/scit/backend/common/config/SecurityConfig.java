@@ -1,4 +1,4 @@
-package net.scit.backend.config;
+package net.scit.backend.common.config;
 
 import java.util.List;
 
@@ -67,7 +67,9 @@ public class SecurityConfig {
                         .requestMatchers("/user/**", "/schedule/**", "/members/myinfo", "/members/changeinfo",
                                 "/members/withdraw",
                                 "/workspace/**",
-                                "/mypage/**")
+                                "/mypage/**",
+                                "/api/chat/summarize",
+                                "/api/chat/summarize/**")
                         .hasRole("USER") // 사용자 전용
                         .requestMatchers("/notification/{notificationId}", "/notification/subscribe").permitAll() // ✅ SSE 및 리다이렉트 허용
                         .requestMatchers("/notification/unread", "/notification/read-single",

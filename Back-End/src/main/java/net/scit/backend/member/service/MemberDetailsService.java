@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.scit.backend.common.ResultDTO;
+import net.scit.backend.common.dto.ResultDTO;
 import net.scit.backend.jwt.JwtTokenProvider;
 import net.scit.backend.member.dto.LoginMemberDetail;
 import net.scit.backend.member.dto.TokenDTO;

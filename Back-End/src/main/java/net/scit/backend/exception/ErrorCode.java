@@ -49,6 +49,7 @@ public enum ErrorCode {
     EMAIL_NOT_VERIFIED("이메일 인증이 완료되지 않았습니다.", HttpStatus.UNAUTHORIZED),
     INVALID_EMAIL_CODE("인증 코드가 잘못되었습니다.", HttpStatus.BAD_REQUEST),
     INVALID_TOKEN("잘못된 토큰 입니다.", HttpStatus.UNAUTHORIZED),
+    FILE_CREATION_FAILED("임시 파일 생성 중 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR),
 
     // Redis 관련 예외 추가
     REDIS_CONNECTION_FAILED("Redis 서버에 연결할 수 없습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
@@ -59,6 +60,9 @@ public enum ErrorCode {
     CHANNEL_DELETE_FORBIDDEN("채널 삭제 권한이 없습니다.", HttpStatus.FORBIDDEN),
     CHANNEL_UPDATE_FORBIDDEN("채널 수정 권한이 없습니다.", HttpStatus.FORBIDDEN ),
     ROLE_NOT_FOUND("해당 역할을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    SUMMARY_FAILURE("요약에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    SUMMARY_EMPTY_CONTENT("요약할 수 있는 데이터가 없습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    SUMMARY_API_ERROR("요약 API 호출 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
     // Notification
     NOTIFICATION_NOT_FOUND("해당 알림을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
@@ -67,7 +71,9 @@ public enum ErrorCode {
 
     // Workdata
     INVALID_WORKSPACE_ACCESS("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
-    TAGS_NOT_FOUND("해당 워크스페이스에 등록된 태그가 없습니다.", HttpStatus.NOT_FOUND);
+    TAGS_NOT_FOUND("해당 워크스페이스에 등록된 태그가 없습니다.", HttpStatus.NOT_FOUND),
+    WORKDATA_NOT_FOUND("자료글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    FILE_UPLOAD_FAILED("파일 업로드 중 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR),;
 
     String message;
     HttpStatus status;

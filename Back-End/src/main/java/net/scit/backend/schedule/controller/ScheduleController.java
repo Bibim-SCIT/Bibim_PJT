@@ -2,8 +2,8 @@ package net.scit.backend.schedule.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.scit.backend.common.ResultDTO;
-import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.common.dto.ResultDTO;
+import net.scit.backend.common.dto.SuccessDTO;
 import net.scit.backend.schedule.dto.*;
 import net.scit.backend.schedule.service.ScheduleService;
 import org.springframework.http.ResponseEntity;

@@ -1,6 +1,6 @@
 package net.scit.backend.mypage.service;
 
-import net.scit.backend.common.ResultDTO;
+import net.scit.backend.common.dto.ResultDTO;
 import net.scit.backend.mypage.dto.AllWorkspaceDataDTO;
 import net.scit.backend.mypage.dto.MyScheduleDTO;
 import org.springframework.stereotype.Service;
