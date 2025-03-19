@@ -187,6 +187,8 @@ const transformTaskData = (task) => {
     // 워크스페이스 정보 추출 - 여러 가능한 위치에서 찾기
     wsName: task.wsName || task.extendedProps?.wsName || "미지정",
     wsId: task.wsId || task.extendedProps?.wsId,
+    // 워크스페이스 이미지 정보 추가
+    wsImg: task.wsImg || task.extendedProps?.wsImg || "",
     // 태그 정보
     tag1: task.extendedProps?.tag1 || "",
     tag2: task.extendedProps?.tag2 || "",

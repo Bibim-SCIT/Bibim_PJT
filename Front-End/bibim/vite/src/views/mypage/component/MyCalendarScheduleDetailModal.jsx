@@ -12,6 +12,7 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
+  Avatar
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
@@ -23,6 +24,7 @@ import PauseCircleIcon from '@mui/icons-material/PauseCircle'; // 보류
 import { styled } from '@mui/material/styles';
 import { getSchedule, deleteSchedule } from '../../../api/schedule';
 import MyScheduleEditModal from './MyScheduleEditModal';
+import defaultWorkspaceIcon from "assets/images/icons/bibimsero.png"; // 기본 워크스페이스 이미지 추가
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
@@ -95,6 +97,8 @@ const MyCalendarScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDe
             // 기존 스케줄에 워크스페이스 정보가 있다면 보존
             wsName: updatedSchedule.data.wsName || schedule.wsName,
             wsId: updatedSchedule.data.wsId || schedule.wsId,
+            // 워크스페이스 이미지 정보 보존
+            wsImg: updatedSchedule.data.wsImg || schedule.wsImg
           };
           setLocalSchedule(mergedSchedule);
         })
@@ -132,7 +136,8 @@ const MyCalendarScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDe
     const mergedSchedule = {
       ...updatedSchedule,
       wsName: updatedSchedule.wsName || localSchedule.wsName,
-      wsId: updatedSchedule.wsId || localSchedule.wsId
+      wsId: updatedSchedule.wsId || localSchedule.wsId,
+      wsImg: updatedSchedule.wsImg || localSchedule.wsImg
     };
     setLocalSchedule(mergedSchedule);
     if (onUpdate) {
@@ -186,6 +191,20 @@ const MyCalendarScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDe
   // 상태값에 따른 아이콘과 라벨 가져오기
   const scheduleStatus = statusMapping[localSchedule.scheduleStatus] || { label: "알 수 없음", icon: null, color: "default" };
 
+  // 워크스페이스 이미지 URL 검증 함수
+  const getValidImageUrl = (imageUrl) => {
+    if (!imageUrl || imageUrl === 'null' || imageUrl === 'undefined' || imageUrl === '') {
+      return defaultWorkspaceIcon;
+    }
+    
+    // URL이 http:// 또는 https://로 시작하는지 확인
+    if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('/')) {
+      return defaultWorkspaceIcon;
+    }
+    
+    return imageUrl;
+  };
+
   return (
     <>
       <StyledDialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -221,7 +240,22 @@ const MyCalendarScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDe
               {/* 워크스페이스 정보 - Paper로 눈에 띄게 표시 */}
               <Paper elevation={2} sx={{ p: 2, mb: 2, borderRadius: '8px', display: 'flex', alignItems: 'center', gap: 2, bgcolor: '#ffffff' }}>
                 <Typography fontWeight="600" minWidth="80px">워크스페이스</Typography>
-                <Typography>{localSchedule.wsName || schedule?.wsName || '정보 없음'}</Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Avatar
+                    src={getValidImageUrl(localSchedule.wsImg)}
+                    alt={localSchedule.wsName || '워크스페이스'}
+                    variant="rounded"
+                    sx={{ 
+                      width: 32, 
+                      height: 32, 
+                      border: '1px solid #eee' 
+                    }}
+                    onError={(e) => {
+                      e.target.src = defaultWorkspaceIcon;
+                    }}
+                  />
+                  <Typography>{localSchedule.wsName || schedule?.wsName || '정보 없음'}</Typography>
+                </Box>
               </Paper>
 
               <InfoBox>

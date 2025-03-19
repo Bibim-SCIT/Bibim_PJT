@@ -1,6 +1,7 @@
 /* eslint-disable prettier/prettier */
 import axios from 'axios';
 import { api } from './auth';
+import defaultWorkspaceIcon from "assets/images/icons/bibimsero.png"; // 기본 워크스페이스 이미지 추가
 
 // 워크스페이스 색상 저장용 맵 (wsId -> color)
 const workspaceColorMap = new Map();
@@ -125,6 +126,24 @@ export const getMyWorkspaceData = async () => {
 };
 
 /**
+ * 이미지 URL이 유효한지 확인하는 헬퍼 함수
+ * @param {string} imageUrl 검증할 이미지 URL
+ * @returns {string} 유효한 URL 또는 기본 이미지 URL
+ */
+export const getValidImageUrl = (imageUrl) => {
+  if (!imageUrl || imageUrl === 'null' || imageUrl === 'undefined' || imageUrl === '') {
+    return defaultWorkspaceIcon;
+  }
+  
+  // URL이 http:// 또는 https://로 시작하는지 확인
+  if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('/')) {
+    return defaultWorkspaceIcon;
+  }
+  
+  return imageUrl;
+};
+
+/**
  * 내 스케줄 데이터를 간트차트 형식으로 변환하는 함수
  * @param {Array} scheduleList 내 스케줄 목록
  * @returns {Array} 간트차트 형식으로 변환된 데이터
@@ -138,6 +157,9 @@ export const convertToGanttFormat = (scheduleList) => {
     // 워크스페이스 ID를 기반으로 색상 생성
     const wsColor = getWorkspaceColor(schedule.wsId);
     
+    // 워크스페이스 이미지 URL 검증
+    const wsImg = getValidImageUrl(schedule.wsImg);
+    
     return {
       id: schedule.scheduleNumber.toString(),
       name: schedule.scheduleTitle,
@@ -148,6 +170,8 @@ export const convertToGanttFormat = (scheduleList) => {
       type: "task",
       status: schedule.scheduleStatus,
       wsName: schedule.wsName,
+      wsId: schedule.wsId,
+      wsImg: wsImg, // 검증된 워크스페이스 이미지
       // 워크스페이스 색상 적용
       styles: { 
         backgroundColor: wsColor,
@@ -158,6 +182,7 @@ export const convertToGanttFormat = (scheduleList) => {
         content: schedule.scheduleContent,
         wsName: schedule.wsName,
         wsId: schedule.wsId,
+        wsImg: wsImg, // 검증된 워크스페이스 이미지
         status: schedule.scheduleStatus,
         tag1: schedule.tag1,
         tag2: schedule.tag2,
@@ -196,6 +221,9 @@ export const convertToCalendarFormat = (scheduleList) => {
     // 워크스페이스 ID를 기반으로 색상 생성
     const wsColor = getWorkspaceColor(schedule.wsId);
     
+    // 워크스페이스 이미지 URL 검증
+    const wsImg = getValidImageUrl(schedule.wsImg);
+    
     return {
       id: schedule.scheduleNumber.toString(),
       title: schedule.scheduleTitle,
@@ -218,6 +246,7 @@ export const convertToCalendarFormat = (scheduleList) => {
         // 워크스페이스 정보
         wsName: schedule.wsName,
         wsId: schedule.wsId,
+        wsImg: wsImg, // 검증된 워크스페이스 이미지
         
         // 태그 정보
         tag1: schedule.tag1,
@@ -259,13 +288,9 @@ export const getMyWorkspaces = async () => {
                          (response.data.data && Array.isArray(response.data.data)) ? response.data.data : [];
     
     // 각 워크스페이스 데이터 검증 및 보완
-    const defaultWorkspaceIcon = "assets/images/icons/bibimsero.png";  // 기본 이미지 경로
-    
     const enrichedWorkspaceList = workspaceList.map(workspace => ({
       ...workspace,
-      wsImg: workspace.wsImg && workspace.wsImg !== 'null' && workspace.wsImg !== 'undefined' 
-        ? workspace.wsImg 
-        : defaultWorkspaceIcon
+      wsImg: getValidImageUrl(workspace.wsImg)
     }));
     
     console.log('보강된 워크스페이스 데이터:', enrichedWorkspaceList);

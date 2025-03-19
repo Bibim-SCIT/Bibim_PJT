@@ -4,6 +4,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import MyCalendarScheduleDetailModal from './MyCalendarScheduleDetailModal';
+import defaultWorkspaceIcon from "assets/images/icons/bibimsero.png"; // 기본 워크스페이스 이미지 추가
 
 const MyCalendar = ({ scheduleData, onEventClick, onDeleteSuccess }) => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -22,7 +23,14 @@ const MyCalendar = ({ scheduleData, onEventClick, onDeleteSuccess }) => {
   
   // 이벤트 클릭 핸들러
   const handleEventClick = (clickInfo) => {
-    setSelectedSchedule(clickInfo.event.extendedProps);
+    // 워크스페이스 이미지 정보가 포함되도록 이벤트 데이터를 가공
+    const scheduleData = {
+      ...clickInfo.event.extendedProps,
+      // 워크스페이스 이미지가 extendedProps에 있는지 확인
+      wsImg: clickInfo.event.extendedProps.wsImg || null
+    };
+    
+    setSelectedSchedule(scheduleData);
     setModalOpen(true);
     
     // 상위 컴포넌트에 클릭 이벤트를 전달
@@ -141,7 +149,7 @@ const MyCalendar = ({ scheduleData, onEventClick, onDeleteSuccess }) => {
             info.el.addEventListener('mouseleave', () => handleEventHover(scheduleId, false));
           }}
           eventContent={(arg) => {
-            const { scheduleStatus, profileImage, wsName } = arg.event.extendedProps;
+            const { scheduleStatus, profileImage, wsName, wsImg } = arg.event.extendedProps;
             const eventColor = arg.event.extendedProps.color || arg.event.backgroundColor || '#38B3FB';
             
             // 제목과 워크스페이스 이름 결합한 툴팁 텍스트
@@ -174,6 +182,26 @@ const MyCalendar = ({ scheduleData, onEventClick, onDeleteSuccess }) => {
                     flex: 1,
                     gap: '4px',
                   }}>
+                    {/* 워크스페이스 이미지 (있는 경우만 표시) */}
+                    {wsImg && (
+                      <Avatar
+                        src={wsImg}
+                        alt={wsName || '워크스페이스'}
+                        variant="rounded"
+                        sx={{
+                          width: 12,
+                          height: 12,
+                          border: '1px solid rgba(255,255,255,0.5)',
+                          flexShrink: 0,
+                          marginRight: '2px',
+                        }}
+                        onError={(e) => {
+                          console.error('캘린더 이벤트 이미지 로딩 오류:', wsImg);
+                          e.target.src = defaultWorkspaceIcon;
+                        }}
+                      />
+                    )}
+                    
                     {/* 일정 제목 */}
                     <Typography 
                       noWrap 
