@@ -60,6 +60,15 @@ public class ScheduleController {
         return ResponseEntity.ok(result);
     }
 
+    // ✅ [추가] 스케줄 상세 모달에서 상태 변경 (기존 API 재활용)
+    // @PutMapping("/{scheduleNumber}/status/detail")
+    // public ResponseEntity<ResultDTO<SuccessDTO>> changeScheduleStatusFromDetail(
+    // @PathVariable Long scheduleNumber, @RequestParam char status) {
+    // ResultDTO<SuccessDTO> result =
+    // scheduleService.changeScheduleStatus(scheduleNumber, status);
+    // return ResponseEntity.ok(result);
+    // }
+
     @PutMapping("/{scheduleNumber}")
     public ResponseEntity<ResultDTO<SuccessDTO>> changeSchedule(@PathVariable Long scheduleNumber,
             @RequestBody ChangeScheduleDTO changeScheduleDTO) {
