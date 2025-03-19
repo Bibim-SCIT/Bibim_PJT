@@ -51,10 +51,10 @@ const statusMapping = {
   ON_HOLD: { label: "보류", icon: <PauseCircleIcon />, color: "warning" },
 };
 
-const MyScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSuccess }) => {
+const MyScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSuccess, skipLoading = false }) => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [localSchedule, setLocalSchedule] = useState(schedule);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!skipLoading);
   const [isDeleting, setIsDeleting] = useState(false);
   
   // 스낵바 상태
@@ -67,10 +67,20 @@ const MyScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSucc
   // 스케줄 정보 업데이트
   useEffect(() => {
     setLocalSchedule(schedule);
-  }, [schedule]);
+    if (skipLoading) {
+      setLoading(false);
+    }
+  }, [schedule, skipLoading]);
 
   // 모달이 열릴 때마다 최신 데이터 가져오기
   useEffect(() => {
+    // skipLoading이 true인 경우 API 호출을 건너뜁니다
+    if (skipLoading) {
+      console.log("API 호출 건너뛰기 (skipLoading=true)");
+      setLoading(false);
+      return;
+    }
+
     if (open && schedule?.scheduleNumber) {
       setLoading(true);
       console.log(`최신 스케줄 데이터 다시 불러오기: scheduleNumber=${schedule.scheduleNumber}`);
@@ -86,8 +96,10 @@ const MyScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSucc
         .finally(() => {
           setLoading(false);
         });
+    } else {
+      console.log("스케줄 데이터가 유효하지 않음 또는 모달이 열리지 않음");
     }
-  }, [open, schedule]);
+  }, [open, schedule, skipLoading]);
 
   if (!localSchedule) return null;
 

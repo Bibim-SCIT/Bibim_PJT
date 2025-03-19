@@ -13,10 +13,11 @@ import {
   Chip,
   CircularProgress,
   ToggleButton, 
-  ToggleButtonGroup
+  ToggleButtonGroup,
+  Avatar
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { getMyWorkspaceData } from '../../../api/mypage';
+import { getMyWorkspaceData, getMyWorkspaces } from '../../../api/mypage';
 import TableChartIcon from "@mui/icons-material/TableChart";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import DescriptionIcon from '@mui/icons-material/Description';
@@ -30,6 +31,7 @@ import excelIcon from "assets/images/icons/excel.png";
 import pptIcon from "assets/images/icons/ppt.png";
 import txtIcon from "assets/images/icons/txt.png";
 import fileIcon from "assets/images/icons/file.png";
+import defaultWorkspaceIcon from "assets/images/icons/bibimsero.png"; // 기본 워크스페이스 이미지 추가
 
 // 확장자별 이미지 매핑
 const fileTypeIcons = {
@@ -54,6 +56,7 @@ const tagColors = {
 const MyWorkData = () => {
   const navigate = useNavigate();
   const [files, setFiles] = useState([]);
+  const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState("table"); // "table" or "card"
@@ -62,28 +65,169 @@ const MyWorkData = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [openModal, setOpenModal] = useState(false);
 
-  // 내가 작성한 자료 데이터 가져오기
-  const fetchMyWorkData = async () => {
+  // 모든 워크스페이스 데이터 가져오기
+  const fetchWorkspaces = async () => {
     try {
-      setLoading(true);
+      const response = await getMyWorkspaces();
+      
+      // 이미지 URL이 유효한지 확인하는 헬퍼 함수
+      const getValidImageUrl = (imageUrl) => {
+        if (!imageUrl || imageUrl === 'null' || imageUrl === 'undefined' || imageUrl === '') {
+          return defaultWorkspaceIcon;
+        }
+        
+        // URL이 http:// 또는 https://로 시작하는지 확인
+        if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('/')) {
+          return defaultWorkspaceIcon;
+        }
+        
+        return imageUrl;
+      };
+
+      // ID를 일관되게 처리하는 함수 추가
+      const normalizeId = (id) => {
+        return typeof id === 'string' ? parseInt(id, 10) : (id || 0);
+      };
+      
+      // response가 바로 배열인 경우
+      if (Array.isArray(response)) {
+        const workspaceList = response.map(ws => ({
+          wsId: normalizeId(ws.wsId),
+          wsName: ws.wsName,
+          wsImg: getValidImageUrl(ws.wsImg)
+        }));
+        setWorkspaces(workspaceList);
+        return workspaceList;
+      } 
+      // response.data가 배열인 경우
+      else if (response && response.data && Array.isArray(response.data)) {
+        const workspaceList = response.data.map(ws => ({
+          wsId: normalizeId(ws.wsId),
+          wsName: ws.wsName,
+          wsImg: getValidImageUrl(ws.wsImg)
+        }));
+        setWorkspaces(workspaceList);
+        return workspaceList;
+      } 
+      // 데이터 형식이 예상과 다른 경우
+      else {
+        console.warn('워크스페이스 데이터 형식이 예상과 다릅니다:', response);
+        setWorkspaces([]);
+        return [];
+      }
+    } catch (error) {
+      console.error('워크스페이스 목록 조회 실패:', error);
+      setWorkspaces([]);
+      return [];
+    }
+  };
+
+  // 컴포넌트 마운트 시 워크스페이스 목록 먼저 로드
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        
+        // 1. 워크스페이스 데이터 로드
+        const workspaceData = await fetchWorkspaces();
+        
+        // 워크스페이스 데이터가 있는지 확인
+        if (workspaceData && workspaceData.length > 0) {
+          // 워크스페이스 상태 설정
+          setWorkspaces(workspaceData);
+          
+          // 2. 자료 데이터 로드 - 워크스페이스 데이터를 직접 전달
+          await fetchMyWorkData(workspaceData);
+        } else {
+          console.warn('워크스페이스 데이터 로드 실패 또는 워크스페이스 없음');
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('데이터 로드 중 오류 발생:', error);
+        setError('데이터를 불러오는 중 오류가 발생했습니다.');
+        setLoading(false);
+      }
+    };
+    
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 내가 작성한 자료 데이터 가져오기
+  const fetchMyWorkData = async (workspaceList) => {
+    try {
+      // 직접 전달받은 워크스페이스 목록 사용 (매개변수 또는 상태)
+      const currentWorkspaces = workspaceList || workspaces;
+      
+      // 자료 데이터 가져오기
       const result = await getMyWorkspaceData();
-      console.log('내 자료 데이터:', result);
+      
+      // 이미지 URL이 유효한지 확인하는 헬퍼 함수
+      const getValidImageUrl = (imageUrl) => {
+        if (!imageUrl || imageUrl === 'null' || imageUrl === 'undefined' || imageUrl === '') {
+          return defaultWorkspaceIcon;
+        }
+        
+        // URL이 http:// 또는 https://로 시작하는지 확인
+        if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('/')) {
+          return defaultWorkspaceIcon;
+        }
+        
+        return imageUrl;
+      };
+
+      // ID를 일관되게 처리하는 함수
+      const normalizeId = (id) => {
+        return typeof id === 'string' ? parseInt(id, 10) : (id || 0);
+      };
       
       // API 응답 구조 확인: result.data에 자료 데이터 배열이 있음
       if (result && result.data && Array.isArray(result.data)) {
-        const formattedData = result.data.map((item) => ({
-          id: item.dataNumber,
-          title: item.title,
-          files: item.fileNames || ["파일 없음"],
-          date: item.regDate.split("T")[0],
-          uploader: item.nickname,
-          writer: item.email, // 작성자 이메일 추가
-          wsName: item.workspaceName, // workspaceName 필드 사용
-          wsId: item.workspaceNumber, // workspaceNumber 필드 사용
-          content: item.content,
-          fileUrls: item.fileUrls,
-          tags: item.tags || []
-        }));
+        const formattedData = result.data.map((item) => {
+          // 데이터 유형 확인 및 변환 (문자열 ID를 숫자로 변환)
+          const workspaceId = normalizeId(item.workspaceNumber);
+          
+          // 매칭할 워크스페이스 찾기
+          let matchingWorkspace = null;
+          
+          // 각 워크스페이스 ID 비교
+          for (const workspace of currentWorkspaces) {
+            const wsId = normalizeId(workspace.wsId);
+            
+            if (wsId === workspaceId) {
+              matchingWorkspace = workspace;
+              break;
+            }
+          }
+          
+          // 워크스페이스 이미지 URL 처리
+          let workspaceImageUrl = defaultWorkspaceIcon;
+          
+          // 매칭된 워크스페이스에서 이미지를 가져오는 것이 가장 우선
+          if (matchingWorkspace && matchingWorkspace.wsImg) {
+            workspaceImageUrl = matchingWorkspace.wsImg; // 이미 getValidImageUrl을 통과한 값
+          } 
+          // 자료 데이터에 워크스페이스 이미지가 있으면 사용
+          else if (item.wsImg) {
+            workspaceImageUrl = getValidImageUrl(item.wsImg);
+          }
+
+          return {
+            id: item.dataNumber,
+            title: item.title,
+            files: item.fileNames || ["파일 없음"],
+            date: item.regDate.split("T")[0],
+            uploader: item.nickname,
+            writer: item.writer,
+            wsName: item.workspaceName,
+            wsId: workspaceId,
+            wsImg: workspaceImageUrl,
+            content: item.content,
+            fileUrls: item.fileUrls,
+            tags: item.tags || []
+          };
+        });
+        
         setFiles(formattedData);
       } else {
         console.error("API로부터 받은 데이터가 올바른 형식이 아님:", result);
@@ -97,10 +241,6 @@ const MyWorkData = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchMyWorkData();
-  }, []);
 
   // 파일 삭제 후 처리 함수
   const handleDeleteSuccess = async (deletedFile) => {
@@ -261,12 +401,12 @@ const MyWorkData = () => {
                     제목 {sortField === "title" && (sortOrder === "asc" ? "⬆️" : "⬇️")}
                   </TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>파일명</TableCell>
+                  <TableCell onClick={() => handleSort("wsName")} sx={{ cursor: "pointer", fontWeight: 'bold' }}>
+                    워크스페이스 {sortField === "wsName" && (sortOrder === "asc" ? "⬆️" : "⬇️")}
+                  </TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>태그</TableCell>
                   <TableCell onClick={() => handleSort("date")} sx={{ cursor: "pointer", fontWeight: 'bold' }}>
                     업로드 날짜 {sortField === "date" && (sortOrder === "asc" ? "⬆️" : "⬇️")}
-                  </TableCell>
-                  <TableCell onClick={() => handleSort("wsName")} sx={{ cursor: "pointer", fontWeight: 'bold' }}>
-                    워크스페이스 {sortField === "wsName" && (sortOrder === "asc" ? "⬆️" : "⬇️")}
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -320,6 +460,27 @@ const MyWorkData = () => {
                       </Box>
                     </TableCell>
                     <TableCell>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Avatar
+                          src={file.wsImg}
+                          alt={file.wsName}
+                          variant="rounded"
+                          sx={{ 
+                            width: 28, 
+                            height: 28, 
+                            border: '1px solid #eee' 
+                          }}
+                          onError={(e) => {
+                            console.error('테이블 뷰 이미지 로딩 오류:', file.wsImg);
+                            e.target.src = defaultWorkspaceIcon;
+                          }}
+                        />
+                        <Typography>
+                          {file.wsName}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
                       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                         {file.tags && file.tags.map((tag, idx) => (
                           <Chip
@@ -333,7 +494,6 @@ const MyWorkData = () => {
                       </Box>
                     </TableCell>
                     <TableCell>{file.date}</TableCell>
-                    <TableCell>{file.wsName}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -399,9 +559,25 @@ const MyWorkData = () => {
                   </Box>
                   
                   <Box sx={{ mt: 'auto', pt: 2, borderTop: '1px solid #eee' }}>
-                    <Typography variant="body2" color="text.secondary" align="center">
-                      {file.wsName}
-                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 1 }}>
+                      <Avatar
+                        src={file.wsImg}
+                        alt={file.wsName}
+                        variant="rounded"
+                        sx={{ 
+                          width: 24, 
+                          height: 24, 
+                          border: '1px solid #eee' 
+                        }}
+                        onError={(e) => {
+                          console.error('카드 뷰 이미지 로딩 오류:', file.wsImg);
+                          e.target.src = defaultWorkspaceIcon;
+                        }}
+                      />
+                      <Typography variant="body2" color="text.secondary">
+                        {file.wsName}
+                      </Typography>
+                    </Box>
                     <Typography variant="caption" color="text.secondary" align="center" display="block">
                       {file.date}
                     </Typography>

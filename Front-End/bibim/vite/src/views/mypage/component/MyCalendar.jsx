@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Paper, Avatar } from '@mui/material';
+import { Box, Paper, Avatar, Typography, Tooltip } from '@mui/material';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -87,10 +87,13 @@ const MyCalendar = ({ scheduleData, onEventClick, onDeleteSuccess }) => {
             },
           },
           '& .fc-event': {
-            borderRadius: 1,
-            padding: '2px 4px',
+            borderRadius: 0,
+            padding: '1px 2px',
             transition: 'all 0.2s ease-in-out',
             cursor: 'pointer',
+            height: 'auto',
+            lineHeight: '1.1',
+            border: 'none',
           },
           '& .fc-day-today': {
             backgroundColor: '#F8F9FA !important',
@@ -101,6 +104,12 @@ const MyCalendar = ({ scheduleData, onEventClick, onDeleteSuccess }) => {
           '& .fc-daygrid-day-number': {
             padding: '4px 8px',
             fontSize: '14px',
+          },
+          '& .schedule-highlight': {
+            transform: 'scale(1.008)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            zIndex: 5,
+            opacity: 0.95,
           },
         }}
       >
@@ -120,51 +129,92 @@ const MyCalendar = ({ scheduleData, onEventClick, onDeleteSuccess }) => {
             const scheduleId = info.event.id;
             info.el.setAttribute('data-schedule-id', scheduleId);
             
-            // 이벤트 색상 적용
-            const eventColor = info.event.extendedProps.color || '#3788d8';
+            // 이벤트 색상 적용 - 항상 extendedProps.color 또는 backgroundColor 사용
+            const eventColor = info.event.extendedProps.color || info.event.backgroundColor || '#38B3FB';
             info.el.style.backgroundColor = eventColor;
             info.el.style.borderColor = eventColor;
-            info.el.style.color = 'white';
+            
+            // 글자색을 흰색으로 설정
+            info.el.style.color = '#FFFFFF';
 
             info.el.addEventListener('mouseenter', () => handleEventHover(scheduleId, true));
             info.el.addEventListener('mouseleave', () => handleEventHover(scheduleId, false));
           }}
           eventContent={(arg) => {
-            const { scheduleStatus, profileImage } = arg.event.extendedProps;
+            const { scheduleStatus, profileImage, wsName } = arg.event.extendedProps;
+            const eventColor = arg.event.extendedProps.color || arg.event.backgroundColor || '#38B3FB';
+            
+            // 제목과 워크스페이스 이름 결합한 툴팁 텍스트
+            const tooltipText = `${arg.event.title} [${wsName || '워크스페이스 미지정'}]`;
             
             return (
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
-                  backgroundColor: arg.event.extendedProps.color || '#3788d8',
-                  color: 'white',
-                  borderRadius: '5px',
-                  padding: '2px 6px',
-                  fontSize: '13px',
-                  lineHeight: '1.2',
+                  height: '18px', // 높이 고정
+                  backgroundColor: eventColor,
+                  color: '#FFFFFF', // 흰색으로 변경
+                  borderRadius: '3px',
+                  padding: '1px 4px',
+                  fontSize: '12px',
+                  lineHeight: '1',
+                  width: '100%',
+                  justifyContent: 'space-between',
                 }}
               >
-                {/* 일정 제목 */}
-                <span>{arg.event.title}</span>
-                
-                {/* 워크스페이스 정보 */}
-                {arg.event.extendedProps.wsName && (
-                  <span style={{ fontSize: '11px', opacity: 0.8 }}>
-                    [{arg.event.extendedProps.wsName}]
-                  </span>
-                )}
+                {/* 왼쪽 섹션: 일정 제목과 워크스페이스 이름 */}
+                <Tooltip title={tooltipText} arrow>
+                  <Box sx={{ 
+                    display: 'flex',
+                    alignItems: 'center',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    flex: 1,
+                    gap: '4px',
+                  }}>
+                    {/* 일정 제목 */}
+                    <Typography 
+                      noWrap 
+                      component="span" 
+                      sx={{ 
+                        fontWeight: 'medium', 
+                        fontSize: '12px',
+                        color: '#FFFFFF', // 흰색으로 변경
+                      }}
+                    >
+                      {arg.event.title}
+                    </Typography>
+                    
+                    {/* 워크스페이스 정보 - 인라인으로 표시 */}
+                    {wsName && (
+                      <Typography 
+                        component="span" 
+                        sx={{ 
+                          fontSize: '10px', 
+                          opacity: 0.85,
+                          fontStyle: 'italic',
+                          color: '#FFFFFF', // 흰색으로 변경
+                        }}
+                      >
+                        [{wsName}]
+                      </Typography>
+                    )}
+                  </Box>
+                </Tooltip>
 
-                {/* 담당자 프로필 이미지 */}
+                {/* 오른쪽 섹션: 담당자 프로필 이미지 */}
                 {scheduleStatus !== 'UNASSIGNED' && profileImage && (
                   <Avatar
                     src={profileImage || ''}
                     sx={{
                       width: 14,
                       height: 14,
-                      border: '1px solid white',
-                      backgroundColor: profileImage ? 'transparent' : 'gray',
+                      border: '1px solid rgba(255,255,255,0.5)', // 테두리 색상을 흰색 반투명으로 변경
+                      backgroundColor: profileImage ? 'transparent' : 'rgba(255,255,255,0.2)', // 배경색도 흰색 계열로 변경
+                      flexShrink: 0,
+                      marginLeft: '2px',
                     }}
                   />
                 )}
