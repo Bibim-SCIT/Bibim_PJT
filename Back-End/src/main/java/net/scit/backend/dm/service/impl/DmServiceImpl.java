@@ -65,7 +65,7 @@ public class DmServiceImpl implements DmService {
         //프로필 사진과 닉네임 바로 전달
         WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_WsIdAndMember_Email(
                                                 messageDTO.getWsId(),messageDTO.getSender())
-                                                .orElseThrow(() -> new CustomException(ErrorCode.IMAGE_NOT_FOUND));
+                                                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         dmRepository.save(messageEntity);
 
         messageDTO.setNickname(workspaceMember.getNickname());
@@ -109,7 +109,15 @@ public class DmServiceImpl implements DmService {
 
         dmRepository.save(messageEntity);
 
-        return mapToDTO(messageEntity); // Entity -> DTO 변환
+        DmMessageDTO dto = mapToDTO(messageEntity);// Entity -> DTO 변환
+
+        WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_WsIdAndMember_Email(wsId,sender)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        dto.setProfileImage(workspaceMember.getProfileImage());
+        dto.setNickname(workspaceMember.getNickname());
+
+        return dto;
     }
 
     /**

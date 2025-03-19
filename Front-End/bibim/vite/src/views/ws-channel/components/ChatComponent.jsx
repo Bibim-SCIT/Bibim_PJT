@@ -61,7 +61,6 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
     const [memberStatusModalOpen, setMemberStatusModalOpen] = useState(false);
 
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
-    console.log("몇번", activeWorkspace)
     const WSID = activeWorkspace.wsId;
 
     const [drawerOpen, setDrawerOpen] = useState(false);
