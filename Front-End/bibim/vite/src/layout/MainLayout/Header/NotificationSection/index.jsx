@@ -205,47 +205,69 @@ export default function NotificationSection() {
       console.warn("❗ SSE 연결 중단: 토큰 없음");
       return;
     }
+
+    // ✅ 기존 SSE 연결이 열려 있다면 안전하게 닫기
     if (eventSourceRef.current) {
+      console.log("🔌 기존 SSE 연결 종료");
       eventSourceRef.current.close();
     }
+
+    // ✅ 새로운 SSE 연결 생성
     const newSSE = new EventSource(`${API_BASE_URL}/notification/subscribe?token=${token}`);
     console.log("📡 SSE 연결 요청:", `${API_BASE_URL}/notification/subscribe?token=${token}`);
 
+    // ✅ SSE에서 알림 수신 시 처리
     newSSE.addEventListener('notification', (event) => {
       try {
         const newNotification = JSON.parse(event.data);
         console.log("📩 새 알림 수신:", newNotification);
 
-        // 예: 현재 사용자의 이메일이 user.email에 저장되어 있다고 가정
-        if (newNotification.receiverEmail === user.email) {
-          setNotifications((prev) => {
-            if (!prev.some((n) => n.notificationNumber === newNotification.notificationNumber)) {
-              return [newNotification, ...prev];
-            }
-            return prev;
-          });
+        // ✅ 현재 로그인한 사용자 정보 가져오기 (로그인 상태 확인)
+        const loggedInUser = JSON.parse(localStorage.getItem("user"));
+        if (!loggedInUser || !loggedInUser.email) {
+          console.warn("⚠️ 로그인 사용자 정보 없음, SSE 데이터 무시");
+          return;
+        }
 
-          // "안 읽은" 필터일 때만 unreadCount 증가
+        // ✅ 현재 사용자의 이메일과 수신된 알림의 receiverEmail 비교
+        if (newNotification.receiverEmail === loggedInUser.email) {
+          setNotifications((prev) =>
+            prev.some(n => n.notificationNumber === newNotification.notificationNumber)
+              ? prev
+              : [newNotification, ...prev]
+          );
+
           if (filterValue === "unread" && !newNotification.notificationStatus) {
             setUnreadCount((prevCount) => prevCount + 1);
           }
         } else {
-          console.warn("⚠️ 수신된 알림이 현재 사용자의 알림이 아님:", newNotification.receiverEmail);
+          console.warn("⚠️ 수신된 알림이 현재 사용자의 것이 아님:", newNotification.receiverEmail);
         }
       } catch (err) {
         console.error('❌ SSE 데이터 처리 중 오류 발생:', err);
       }
     });
 
-    newSSE.onerror = () => {
-      console.error('🚨 SSE 연결 오류: 5초 후 재연결 시도');
+    // ✅ Heartbeat 이벤트 무시
+    newSSE.addEventListener('heartbeat', (event) => {
+      console.log("💓 SSE Heartbeat 수신:", event.data);
+    });
+
+    // ✅ SSE 연결 오류 처리
+    newSSE.onerror = (error) => {
+      console.error('🚨 SSE 연결 오류 발생:', error);
       newSSE.close();
-      setTimeout(reconnectSSE, 5000);
+
+      // ✅ 일정 횟수 이상 재연결 방지 및 재연결 로직 추가
+      if (!eventSourceRef.current || eventSourceRef.current.readyState === EventSource.CLOSED) {
+        console.warn("🔄 SSE 재연결 시도 중...");
+        setTimeout(reconnectSSE, 5000);
+      }
     };
 
+    // ✅ 새로운 SSE 연결을 저장
     eventSourceRef.current = newSSE;
   };
-
 
 
 

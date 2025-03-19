@@ -45,15 +45,17 @@ public class NotificationController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized user");
         }
 
-        // CORS 및 SSE 관련 헤더 추가
-        response.setHeader("Access-Control-Allow-Origin", "https://dev.bibim.shop");
+        // 🔹 CORS 헤더 추가 (SSE 응답에 포함)
+        response.setHeader("Access-Control-Allow-Origin", "https://dev.bibim.shop"); // 로컬에서는 http://localhost:3000
         response.setHeader("Access-Control-Allow-Credentials", "true");
         response.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS");
         response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
-        response.setHeader("X-Accel-Buffering", "no");
-        response.setHeader("Cache-Control", "no-cache");
 
-        // 서비스에서 subscribe() 호출하여 SSEEmitter 생성 및 등록
+        // 🔹 SSE 관련 헤더 추가
+        response.setHeader("X-Accel-Buffering", "no");  // Nginx에서 SSE 지원을 위한 설정
+        response.setHeader("Cache-Control", "no-cache"); // 캐싱 방지
+
+        // SSEEmitter 생성 및 등록
         SseEmitter emitter = notificationService.subscribe(email);
 
         // 기존 안 읽은 알림을 초기 데이터로 전송
@@ -70,8 +72,6 @@ public class NotificationController {
 
         return emitter;
     }
-
-
 
 
     @PostMapping("/logout")

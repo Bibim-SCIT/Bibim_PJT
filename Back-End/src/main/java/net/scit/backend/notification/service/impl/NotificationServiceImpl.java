@@ -30,19 +30,30 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public SseEmitter subscribe(String email) {
-        // SSE 연결 유지 시간을 10분(600,000ms)으로 설정
-        SseEmitter emitter = new SseEmitter(600_000L);
+        SseEmitter emitter = new SseEmitter(600_000L); // 10분 유지
 
-        // 🔹 기존 연결이 있다면 제거 후 새 연결 추가
-        removeEmitter(email);
+        removeEmitter(email); // 기존 연결 제거
         emitters.put(email, emitter);
 
-        // 🔹 클라이언트가 연결을 닫거나 타임아웃 시 Emitter 제거
-        emitter.onCompletion(() -> removeEmitter(email));
-        emitter.onTimeout(() -> removeEmitter(email));
+        // ✅ 클라이언트가 연결을 닫거나 타임아웃 시 안전하게 Emitter 제거
+        emitter.onCompletion(() -> {
+            log.info("🛑 SSE 연결 종료: {}", email);
+            removeEmitter(email);
+        });
+
+        emitter.onTimeout(() -> {
+            log.warn("⚠️ SSE 타임아웃 발생: {}", email);
+            removeEmitter(email);
+        });
+
+        emitter.onError((ex) -> {
+            log.error("🚨 SSE 오류 발생: {} - {}", email, ex.getMessage());
+            removeEmitter(email);
+        });
 
         return emitter;
     }
+
 
 //    // 🔹 SSE Emitter 추가 (addEmitter)
 //    @Override
@@ -55,9 +66,14 @@ public class NotificationServiceImpl implements NotificationService {
     public void removeEmitter(String email) {
         SseEmitter emitter = emitters.remove(email);
         if (emitter != null) {
-            emitter.complete();
+            try {
+                emitter.complete();
+            } catch (Exception e) {
+                log.warn("⚠️ Emitter 제거 중 오류 발생: {}", e.getMessage());
+            }
         }
     }
+
 
     @Override
     public void unsubscribe(String receiverEmail) {
@@ -93,23 +109,27 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public NotificationEntity sendNotification(NotificationEntity notification) {
-        String receiverEmail = notification.getReceiverEmail();  // 알림의 수신자 이메일
-        SseEmitter emitter = emitters.get(receiverEmail);         // 해당 이메일에 등록된 emitter 가져오기
+        String receiverEmail = notification.getReceiverEmail();
+        SseEmitter emitter = emitters.get(receiverEmail);
 
         if (emitter != null) {
             try {
                 emitter.send(SseEmitter.event().name("notification").data(notification));
                 log.info("✅ 알림 전송 완료: {} -> {}", notification.getNotificationName(), receiverEmail);
             } catch (IOException e) {
+                log.error("❌ SSE 알림 전송 실패 (연결 종료): {}", receiverEmail);
                 emitter.completeWithError(e);
-                emitters.remove(receiverEmail);
-                log.error("❌ SSE 알림 전송 실패: {}", e.getMessage());
+                removeEmitter(receiverEmail); // 🚀 연결이 종료된 경우 안전하게 제거
+            } catch (IllegalStateException e) {
+                log.warn("⚠️ SSEEmitter가 이미 종료됨: {}", receiverEmail);
+                removeEmitter(receiverEmail); // 🚀 이미 종료된 경우 안전하게 제거
             }
         } else {
             log.warn("⚠️ 해당 사용자 SSE 연결 없음: {}", receiverEmail);
         }
         return notification;
     }
+
 
 
     @Override
