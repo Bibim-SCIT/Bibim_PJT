@@ -56,7 +56,7 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
     const [file, setFile] = useState(null);      // 선택된 파일
     const [isUploading, setIsUploading] = useState(false); // 파일 업로드 상태
     const [isChatLoading, setIsChatLoading] = useState(false); // ✅ 채팅 로딩 상태 추가
-    
+
     // 멤버 상태 모달 관련 상태 추가
     const [memberStatusModalOpen, setMemberStatusModalOpen] = useState(false);
 
@@ -561,9 +561,9 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                     </Button>
                 </div>
                 {/* 멤버 접속 상태 컴포넌트 */}
-                <ActiveUsersComponent 
-                    workspaceId={WSID} 
-                    toggleMemberStatusModal={() => setMemberStatusModalOpen(!memberStatusModalOpen)} 
+                <ActiveUsersComponent
+                    workspaceId={WSID}
+                    toggleMemberStatusModal={() => setMemberStatusModalOpen(!memberStatusModalOpen)}
                 />
             </div>
 
@@ -684,7 +684,10 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                         variant="contained"
                         color="primary"
                         fullWidth
-                        sx={{ marginTop: "16px" }}
+                        sx={{
+                            marginTop: "16px",
+                            backgroundColor: "#3F72AF",
+                        }}
                         onClick={() => setCreateModalOpen(true)}
                     >
                         + 채널 생성
@@ -708,9 +711,9 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                 workspaceId={workspaceId}
                 onChannelCreated={handleChannelCreated}
             />
-            
+
             {/* 멤버 상태 모달 추가 */}
-            <MemberStatusModal 
+            <MemberStatusModal
                 open={memberStatusModalOpen}
                 onClose={() => setMemberStatusModalOpen(false)}
                 workspaceId={WSID}
