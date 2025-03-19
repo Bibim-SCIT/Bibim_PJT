@@ -267,7 +267,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                 const parsedMessage = JSON.parse(message.body);
                 // 자기 자신의 메시지인지 확인하여 필터링
                 if (parsedMessage.sender !== user?.email) {
-                    setMessages((prev) => [...prev, parsedMessage]); // 실시간 메시지 추가
+                     // setMessages((prev) => [...prev, parsedMessage]); // 실시간 메시지 추가
                 }
 
                 // 상대방 메시지인 경우 프로필 이미지 추가
@@ -396,7 +396,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                         </Avatar>
                     )}
                 </div>
-
+                
                 <div className="dm-chat-header-info">
                     <div className="dm-chat-header-name">
                         {receiverInfo?.nickame || receiverId.split('@')[0]}
@@ -413,7 +413,6 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                 <div className="dm-chat-messages">
                     {messages.map((msg, index) => {
                         const messageKey = getMessageKey(msg, index); // ✅ 고유 key 생성
-                        // console.log("메시지키 확인", messageKey);
                         return (
                             <div
                                 // key={index}
@@ -453,6 +452,9 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                                     <span className="dm-message-time">
                                         {formatToKoreanTime(msg.sendTime)}
                                     </span>
+                                </div>
+                                <div className="dm-message-isRead">
+                                    {}
                                 </div>
                                 <div className="dm-message-content-container">
                                     <div key={messageKey} className={`dm-message-content ${(msg.file && isImage(msg.fileName)) || isYouTubeLink(msg.dmContent) ? "has-media" : ""}`}>
