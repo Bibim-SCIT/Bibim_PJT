@@ -76,10 +76,6 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public MessageDTO processMessage(MessageDTO messageDTO) {
         // 파일 메시지는 여기서 처리하지 않으므로 바로 반환
-        if (messageDTO.getMessageOrFile()) {
-            log.info("📂 파일 메시지는 processMessage에서 처리하지 않음.");
-            return messageDTO;
-        }
 
         // 채널 엔티티 가져오기
         WorkspaceChannelEntity workspaceChannelEntity = getWorkspaceChannelById(messageDTO.getChannelNumber());
@@ -136,7 +132,7 @@ public class ChannelServiceImpl implements ChannelService {
                 .fileName(file.getOriginalFilename()) // 원본 파일명 저장
                 .build();
         messageReposittory.save(messageEntity);
-        
+
         // 저장된 데이터를 DTO 형태로 반환
         return MessageDTO.builder()
                 .messageOrFile(true) // 파일 메시지 여부
