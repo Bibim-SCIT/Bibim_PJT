@@ -31,7 +31,7 @@ public class WorkdataEventListener {
         log.info("📢 Workdata 이벤트 감지: {} | 워크스페이스 ID: {} | 메시지: {}",
                 event.getEventType(), workspaceId, notificationMessage);
 
-        final String notificationUrl = "http://localhost:3000/workdata";
+        final String notificationUrl = "https://dev.bibim.shop/workdata";
 
 
         // 특정 워크스페이스의 모든 멤버 조회

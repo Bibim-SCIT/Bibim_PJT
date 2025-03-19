@@ -10,9 +10,11 @@ import {
     Select,
     MenuItem,
     InputLabel,
+    Popover,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { styled } from "@mui/material/styles";
+import { SketchPicker } from "react-color"; // 🎨 색상 선택기 추가
 import { useSelector } from "react-redux";
 import {
     fetchAllTags, updateLargeTag, updateMediumTag, updateSmallTag,
@@ -39,27 +41,56 @@ const TagEditModal = ({ open, onClose }) => {
     const [selectedMediumTag, setSelectedMediumTag] = useState(null);
     const [selectedSmallTag, setSelectedSmallTag] = useState(null);
     const [newTagName, setNewTagName] = useState("");
+    const [tagColor, setTagColor] = useState("#000000"); // 🎨 기본 색상
+    const [colorPickerAnchor, setColorPickerAnchor] = useState(null); // 색상 선택기 위치 상태
+    const [currentTagName, setCurrentTagName] = useState(""); // ✅ 기존 태그명 저장
 
     // ✅ 태그 목록 가져오기
     useEffect(() => {
         if (wsId && open) {
-            fetchAllTags(wsId).then((data) => {
-                setTags(data);
-                setLargeTags(data.filter(tag => tag.largeTagNumber !== null)); // ✅ 대분류 태그만 필터링
+            fetchAllTags(wsId).then((response) => {
+                console.log("📌 전체 태그 데이터 로드됨:", response);
+                if (response && response.largeTags) {
+                    setLargeTags(response.largeTags);
+                }
+                if (response && response.mediumTags) {
+                    setMediumTags(response.mediumTags);
+                }
+                if (response && response.smallTags) {
+                    setSmallTags(response.smallTags);
+                }
+            }).catch(error => {
+                console.error("❌ 태그 데이터 불러오기 실패:", error);
+                setLargeTags([]);
+                setMediumTags([]);
+                setSmallTags([]);
             });
         }
     }, [wsId, open]);
 
-    // ✅ 중분류 태그 필터링
+    // ✅ 대분류 태그 선택 시 색상 설정
     useEffect(() => {
         if (selectedLargeTag) {
-            setMediumTags(tags.filter(tag => tag.largeTagNumber === selectedLargeTag.largeTagNumber && tag.mediumTagNumber !== null));
+            setTagColor(selectedLargeTag.tagColor || "#000000");
+            setCurrentTagName(selectedLargeTag.tagName || "");  // ✅ 기존 태그명 저장
+            setMediumTags([]);
+            setSmallTags([]);
+            setSelectedMediumTag(null);
+            setSelectedSmallTag(null);
+        }
+    }, [selectedLargeTag]);
+
+    // ✅ 중분류 태그 필터링 (선택된 대분류의 중분류만 표시)
+    useEffect(() => {
+        if (selectedLargeTag) {
+            setMediumTags(mediumTags.filter(tag => tag.largeTagNumber === selectedLargeTag.largeTagNumber));
             setSelectedMediumTag(null);
             setSelectedSmallTag(null);
         } else {
             setMediumTags([]);
         }
-    }, [selectedLargeTag, tags]);
+    }, [selectedLargeTag]);
+
 
     // ✅ 소분류 태그 필터링
     useEffect(() => {
@@ -96,7 +127,7 @@ const TagEditModal = ({ open, onClose }) => {
 
         try {
             if (tagType === "large") {
-                await updateLargeTag(wsId, tagId, newTagName);
+                await updateLargeTag(wsId, selectedLargeTag.largeTagNumber, currentTagName, newTagName, tagColor);
             } else if (tagType === "medium") {
                 await updateMediumTag(selectedLargeTag.largeTagNumber, tagId, newTagName);
             } else if (tagType === "small") {
@@ -174,10 +205,39 @@ const TagEditModal = ({ open, onClose }) => {
                     <InputLabel>대분류 태그 선택</InputLabel>
                     <Select value={selectedLargeTag || ""} onChange={(e) => setSelectedLargeTag(e.target.value)}>
                         {largeTags.map(tag => (
-                            <MenuItem key={tag.largeTagNumber} value={tag}>{tag.largeTagName}</MenuItem>
+                            <MenuItem key={tag.largeTagNumber} value={tag}>{tag.tagName}</MenuItem>
                         ))}
                     </Select>
                 </FormControl>
+
+                {/* ✅ 태그 색상 선택 (대분류 태그일 경우) */}
+                {selectedLargeTag && (
+                    <Box mt={2}>
+                        <Typography variant="subtitle2">태그 색상 선택</Typography>
+                        <Button
+                            variant="outlined"
+                            onClick={(e) => setColorPickerAnchor(e.currentTarget)}
+                            sx={{
+                                minWidth: 30,
+                                height: 30,
+                                borderRadius: "50%",
+                                bgcolor: tagColor,
+                                border: "2px solid gray"
+                            }}
+                        />
+                        <Popover
+                            open={Boolean(colorPickerAnchor)}
+                            anchorEl={colorPickerAnchor}
+                            onClose={() => setColorPickerAnchor(null)}
+                            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                        >
+                            <SketchPicker
+                                color={tagColor}
+                                onChangeComplete={(color) => setTagColor(color.hex)}
+                            />
+                        </Popover>
+                    </Box>
+                )}
 
                 {/* ✅ 중분류 태그 선택 */}
                 {selectedLargeTag && (

@@ -1,15 +1,21 @@
 import React from "react";
 import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 
-const Filter = ({ selectedTag, setSelectedTag }) => {
+const Filter = ({ selectedTag, setSelectedTag, tags }) => {
     return (
-        <FormControl fullWidth sx={{ marginBottom: 2 }}>
-            <InputLabel>태그 필터</InputLabel>
-            <Select value={selectedTag} onChange={(e) => setSelectedTag(e.target.value)}>
-                <MenuItem value="전체">전체</MenuItem>
-                <MenuItem value="문서">문서</MenuItem>
-                <MenuItem value="디자인">디자인</MenuItem>
-                <MenuItem value="사진">사진</MenuItem>
+        <FormControl
+            fullWidth
+            variant="outlined"
+            sx={{ marginBottom: 2 }}
+        >
+            <InputLabel shrink>태그 필터</InputLabel>
+            <Select
+                value={selectedTag}
+                onChange={(event) => setSelectedTag(event.target.value)}
+            >
+                {tags.map((tag) => (
+                    <MenuItem key={tag} value={tag}>{tag}</MenuItem>
+                ))}
             </Select>
         </FormControl>
     );

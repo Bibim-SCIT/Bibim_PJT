@@ -23,4 +23,6 @@ public class DmMessageDTO
     private boolean isRead;
     private LocalDateTime sendTime;
     private String roomId;
+    private String nickname;
+    private String profileImage;
 }

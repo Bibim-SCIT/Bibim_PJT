@@ -1,5 +1,6 @@
 package net.scit.backend.notification.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.jwt.AuthUtil;
@@ -30,22 +31,45 @@ public class NotificationController {
 
 
     @GetMapping("/subscribe")
-    public SseEmitter subscribe(@RequestParam("token") String token) {
+    public SseEmitter subscribe(@RequestParam("token") String token, HttpServletResponse response) {
+        log.info("📡 SSE 구독 요청 시작: token={}", token);
+
         if (!jwtTokenProvider.validateToken(token)) {
+            log.error("❌ SSE 구독 실패: Invalid token");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
         }
+
         String email = jwtTokenProvider.getEmailFromToken(token);
         if (email == null) {
+            log.error("❌ SSE 구독 실패: Unauthorized user");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized user");
         }
 
+        // 🔹 CORS 헤더 추가 (SSE 응답에 포함)
+        response.setHeader("Access-Control-Allow-Origin", "https://dev.bibim.shop"); // 로컬에서는 http://localhost:3000
+        response.setHeader("Access-Control-Allow-Credentials", "true");
+        response.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS");
+        response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
+
+        // 🔹 SSE 관련 헤더 추가
+        response.setHeader("X-Accel-Buffering", "no");  // Nginx에서 SSE 지원을 위한 설정
+        response.setHeader("Cache-Control", "no-cache"); // 캐싱 방지
+
+        // SSEEmitter 생성 및 등록
         SseEmitter emitter = notificationService.subscribe(email);
+
+        // 기존 안 읽은 알림을 초기 데이터로 전송
         List<NotificationEntity> unreadNotifications = notificationService.getUnreadNotifications(email);
         try {
-            emitter.send(SseEmitter.event().name("HISTORY").data(unreadNotifications));
+            if (unreadNotifications != null && !unreadNotifications.isEmpty()) {
+                emitter.send(SseEmitter.event().name("HISTORY").data(unreadNotifications));
+                log.info("✅ 초기 알림 데이터 전송 완료 ({}개)", unreadNotifications.size());
+            }
         } catch (IOException e) {
+            log.error("❌ SSE 데이터 전송 오류: {}", e.getMessage());
             emitter.completeWithError(e);
         }
+
         return emitter;
     }
 
@@ -110,6 +134,22 @@ public class NotificationController {
     }
 
 
+    @DeleteMapping("/delete-read")
+    public ResponseEntity<String> deleteAllReadNotifications(@RequestHeader("Authorization") String token) {
+        String email = AuthUtil.getLoginUserId();
+        boolean result = notificationService.deleteAllRead(email);
+        return result ? ResponseEntity.ok("읽은 알림 전체 삭제 완료")
+                : ResponseEntity.badRequest().body("삭제할 읽은 알림이 없습니다.");
+    }
+
+    @DeleteMapping("/delete-unread")
+    public ResponseEntity<String> deleteAllUnreadNotifications(@RequestHeader("Authorization") String token) {
+        String email = AuthUtil.getLoginUserId();
+        boolean result = notificationService.deleteAllUnread(email);
+        return result ? ResponseEntity.ok("안 읽은 알림 전체 삭제 완료")
+                : ResponseEntity.badRequest().body("삭제할 안 읽은 알림이 없습니다.");
+    }
+
     @GetMapping("/{notificationId}")
     public ResponseEntity<Void> redirectToNotificationUrl(@PathVariable Long notificationId) {
         String url = notificationService.getNotificationUrl(notificationId);
@@ -117,4 +157,6 @@ public class NotificationController {
         headers.add("Location", url);
         return new ResponseEntity<>(headers, HttpStatus.FOUND);
     }
+
+
 }

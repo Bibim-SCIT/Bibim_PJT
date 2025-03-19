@@ -46,5 +46,12 @@ public class MessageDTO
     private LocalDateTime sendTime;
 
     private String fileName;
+
+    /**
+     * - 해당 워크스페이스의 닉네임
+     */
+    private String nickname;
+
+    private String profileImage;
 }
 

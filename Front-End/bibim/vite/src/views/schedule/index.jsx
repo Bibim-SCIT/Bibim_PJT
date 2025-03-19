@@ -36,11 +36,11 @@ const StyledToggleButton = styled(ToggleButton)(({ theme }) => ({
   fontSize: "14px",
   fontWeight: "bold",
   "&.Mui-selected": {
-    backgroundColor: theme.palette.primary.main,
+    backgroundColor: "#3F72AF",
     color: "#fff",
   },
   "&.Mui-selected:hover": {
-    backgroundColor: theme.palette.primary.dark,
+    backgroundColor: "#3F72AF",
   },
 }));
 
@@ -57,6 +57,7 @@ const SchedulePage = () => {
   const [loading, setLoading] = useState(true); // ✅ 로딩 상태
   const [error, setError] = useState(null); // ✅ 에러 상태
   const wsId = activeWorkspace?.wsId;
+  const [forceRender, setForceRender] = useState(false); // ✅ 강제 리렌더링 상태 추가
 
   // ✅ 일정 데이터 불러오는 함수
   const fetchSchedules = async () => {
@@ -85,6 +86,13 @@ const SchedulePage = () => {
   // ✅ 새 일정이 생성되거나 삭제되면 일정 다시 불러오기
   const handleSchedulesUpdated = () => {
     fetchSchedules();
+  };
+
+  // ✅ KanbanBoard에서 상태 변경이 발생하면 호출됨
+  const handleKanbanUpdated = () => {
+    console.log("🔄 KanbanBoard에서 상태가 변경됨, SchedulePage 리렌더링 실행");
+    fetchSchedules();
+    setForceRender(prev => !prev); // ✅ 강제 리렌더링
   };
 
   // ✅ 새 일정이 생성되면 전체 리스트를 다시 불러오는 함수
@@ -124,6 +132,9 @@ const SchedulePage = () => {
         <Button
           variant="contained"
           color="primary"
+          sx={{
+            backgroundColor: '#3F72AF'
+          }}
           startIcon={<AddCircleOutlineIcon />}
           onClick={() => setModalOpen(true)}
         >
@@ -143,11 +154,13 @@ const SchedulePage = () => {
             </ToggleButton>
           </ToggleButtonGroup> */}
           <StyledToggleButtonGroup value={view} exclusive onChange={handleViewChange}>
-            <StyledToggleButton value="calendar">
+            <StyledToggleButton
+              value="calendar"
+            >
               <CalendarMonthIcon sx={{ mr: 1 }} /> 캘린더뷰
             </StyledToggleButton>
             <StyledToggleButton value="gantt">
-              <InsertChartIcon sx={{ mr: 1 }} /> 간트차트 뷰
+              <InsertChartIcon sx={{ mr: 1, transform: 'rotate(90deg)' }} /> 간트차트 뷰
             </StyledToggleButton>
           </StyledToggleButtonGroup>
         </Box>
@@ -174,14 +187,14 @@ const SchedulePage = () => {
         <Button
           variant="contained"
           color="primary"
+          sx={{
+            backgroundColor: '#3F72AF'
+          }}
           startIcon={<AddCircleOutlineIcon />}
           onClick={() => setModalOpen(true)}
         >
           일정 생성
         </Button>
-        {/* <Button variant="contained" color="primary" onClick={() => setModalOpen2(true)}>
-          일정 수정
-        </Button> */}
         <Button variant="contained" color="secondary" onClick={() => setTagCreateModalOpen(true)}>
           태그 생성
         </Button>
@@ -190,7 +203,13 @@ const SchedulePage = () => {
         </Button>
       </Box>
       {/* ✅ setSchedules, setGanttTasks를 KanbanBoard에 전달 */}
-      <KanbanBoard wsId={wsId} setSchedules={setSchedules} setGanttTasks={setGanttTasks} />
+      <KanbanBoard
+        wsId={wsId}
+        setSchedules={setSchedules}
+        setGanttTasks={setGanttTasks}
+        onKanbanUpdated={handleKanbanUpdated} // ✅ 이 함수가 KanbanBoard에서 호출됨
+        forceRender={forceRender} // ✅ 리렌더링 트리거
+      />
       {/* 일정 생성 모달 추가 */}
       <ScheduleCreateModal
         open={isModalOpen}
