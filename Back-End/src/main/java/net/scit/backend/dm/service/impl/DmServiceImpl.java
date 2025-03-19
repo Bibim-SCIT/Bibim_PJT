@@ -62,7 +62,15 @@ public class DmServiceImpl implements DmService {
         DmMessageEntity messageEntity = mapToEntity(messageDTO, roomId); // DTO -> Entity 변환
         messageEntity.setRead(false); // 기본값으로 읽지 않음 설정
 
+        //프로필 사진과 닉네임 바로 전달
+        WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_WsIdAndMember_Email(
+                                                messageDTO.getWsId(),messageDTO.getSender())
+                                                .orElseThrow(() -> new CustomException(ErrorCode.IMAGE_NOT_FOUND));
         dmRepository.save(messageEntity);
+
+        messageDTO.setNickname(workspaceMember.getNickname());
+        messageDTO.setProfileImage(workspaceMember.getProfileImage());
+
         return messageDTO;
     }
 

@@ -24,4 +24,5 @@ public class DmMessageDTO
     private LocalDateTime sendTime;
     private String roomId;
     private String nickname;
+    private String profileImage;
 }
