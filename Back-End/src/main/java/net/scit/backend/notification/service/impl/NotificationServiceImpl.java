@@ -64,15 +64,22 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void removeEmitter(String email) {
+        if (!emitters.containsKey(email)) {
+            log.warn("⚠️ 제거할 Emitter가 존재하지 않음: {}", email);
+            return;
+        }
+
         SseEmitter emitter = emitters.remove(email);
         if (emitter != null) {
             try {
                 emitter.complete();
+                log.info("🛑 SSE Emitter 제거 완료: {}", email);
             } catch (Exception e) {
                 log.warn("⚠️ Emitter 제거 중 오류 발생: {}", e.getMessage());
             }
         }
     }
+
 
 
     @Override
@@ -114,22 +121,21 @@ public class NotificationServiceImpl implements NotificationService {
 
         if (emitter != null) {
             try {
+                if (!emitters.containsKey(receiverEmail)) {
+                    log.warn("⚠️ 알림 전송 실패: Emitter가 이미 닫혀 있음 - {}", receiverEmail);
+                    return notification;
+                }
                 emitter.send(SseEmitter.event().name("notification").data(notification));
                 log.info("✅ 알림 전송 완료: {} -> {}", notification.getNotificationName(), receiverEmail);
-            } catch (IOException e) {
-                log.error("❌ SSE 알림 전송 실패 (연결 종료): {}", receiverEmail);
-                emitter.completeWithError(e);
-                removeEmitter(receiverEmail); // 🚀 연결이 종료된 경우 안전하게 제거
-            } catch (IllegalStateException e) {
-                log.warn("⚠️ SSEEmitter가 이미 종료됨: {}", receiverEmail);
-                removeEmitter(receiverEmail); // 🚀 이미 종료된 경우 안전하게 제거
+            } catch (IOException | IllegalStateException e) {
+                log.error("❌ SSE 알림 전송 실패: {} - {}", receiverEmail, e.getMessage());
+                removeEmitter(receiverEmail); // 🚀 에러 발생 시 안전하게 제거
             }
         } else {
             log.warn("⚠️ 해당 사용자 SSE 연결 없음: {}", receiverEmail);
         }
         return notification;
     }
-
 
 
     @Override
@@ -214,4 +220,11 @@ public class NotificationServiceImpl implements NotificationService {
         log.info("notificationUrl : {}", notificationUrl);
         return notificationUrl;
     }
+
+
+    @Override
+    public boolean hasEmitter(String email) {
+        return emitters.containsKey(email);
+    }
+
 }
