@@ -10,6 +10,9 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import net.scit.backend.member.dto.MemberLoginStatusDTO;
+import net.scit.backend.schedule.entity.ScheduleEntity;
+import net.scit.backend.schedule.repository.ScheduleRepository;
+import net.scit.backend.schedule.type.ScheduleStatus;
 import net.scit.backend.workspace.event.WorkspaceEvent;
 import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
 import org.springframework.context.ApplicationEventPublisher;
@@ -69,6 +72,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     private static final String DEFAULT_ROLE = "None";
     private static final String OWNER_ROLE = "owner";
     private static final String USER_ROLE = "user";
+    private final ScheduleRepository scheduleRepository;
 
     // 이미지 업로드 메소드
     private String uploadImage(MultipartFile file) {
@@ -325,7 +329,15 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
         String workspaceName = workspaceEntity.getWsName(); // 워크스페이스 이름을 미리 저장
 
+        // 멤버 탈퇴
         workspaceMemberRepository.deleteByWorkspace_wsIdAndMember_Email(wsId, senderEmail);
+
+        // 담당했던 스케줄 해제
+        List<ScheduleEntity> scheduleEntities = scheduleRepository.findAllByMember(member.getMember());
+        for (ScheduleEntity scheduleEntity : scheduleEntities) {
+            scheduleEntity.setMember(null);
+            scheduleEntity.setScheduleStatus(ScheduleStatus.fromCode('1'));
+        }
 
         List<WorkspaceMemberEntity> remainingMembers = workspaceMemberRepository.findAllByWorkspace_WsId(wsId);
 
