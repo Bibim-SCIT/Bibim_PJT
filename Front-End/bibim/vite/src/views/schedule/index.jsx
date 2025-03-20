@@ -141,7 +141,7 @@ const SchedulePage = () => {
         border: '1px solid #E3F2FD'
       }}>
         <Typography variant="body1" color="text.primary">
-          📅 워크스페이스의 일정을 관리하고 조율하세요. 캘린더뷰와 간트차트뷰로 일정을 확인할 수 있습니다.
+          📅 워크스페이스의 일정을 관리하고 조율하세요. 캘린더뷰와 간트차트뷰로 일정을 확인하고, 칸반 보드로 작업을 할당할 수 있습니다.
         </Typography>
       </Box>
       
