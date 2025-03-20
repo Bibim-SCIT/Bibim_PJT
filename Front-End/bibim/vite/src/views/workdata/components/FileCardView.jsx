@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-    Card, CardContent, Typography, Grid, Avatar, Chip, Box, IconButton, Menu, MenuItem, Dialog,
-    DialogTitle, DialogContent, DialogActions, Button, List, ListItem, ListItemIcon, ListItemText
+    Card, CardContent, Typography, Grid, Avatar, Chip, Box, IconButton, Menu, MenuItem, Dialog, Divider,
+    DialogTitle, DialogContent, DialogActions, Button, List, ListItem, ListItemIcon, ListItemText, Snackbar, Alert
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -10,6 +10,9 @@ import { deleteWorkdata } from "../../../api/workdata";
 import LoadingScreen from './LoadingScreen';
 import { useContext } from 'react';
 import { ConfigContext } from '../../../contexts/ConfigContext';
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import DownloadIcon from "@mui/icons-material/Download";
 
 // 파일 아이콘 import
 import pdfIcon from "assets/images/icons/pdf.png";
@@ -51,6 +54,10 @@ const FileCardView = ({ files, setFiles, loading }) => {
     const { user } = useContext(ConfigContext); // ✅ Context에서 로그인 유저 정보 가져오기
     const currentUser = user.email;
 
+    // 스낵바
+    const [openSnackbar, setOpenSnackbar] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState("");
+
     // 점 3개 버튼 클릭 (메뉴 열기)
     const handleMenuOpen = (event, file) => {
         event.stopPropagation(); // 카드 클릭 이벤트 방지
@@ -79,13 +86,6 @@ const FileCardView = ({ files, setFiles, loading }) => {
     };
 
     // 파일 삭제 기능 (일반 상태)
-    // const handleDelete = () => {
-    //     const confirmDelete1 = window.confirm(`해당 파일을(를) 정말 삭제하시겠습니까?`);
-    //     if (confirmDelete1) {
-    //         setFiles((prevFiles) => prevFiles.filter((file) => file.id !== selectedFile.id));
-    //         handleMenuClose();
-    //     }
-    // };
     const handleDelete = async () => {
         if (!selectedFile) return;
 
@@ -141,6 +141,39 @@ const FileCardView = ({ files, setFiles, loading }) => {
     // 모달 닫기
     const handleCloseModal = () => {
         setOpenModal(false);
+    };
+
+    // 2025.03.19 버전 다운로드 
+    const handleDownload = async (url, fileName) => {
+        try {
+            const response = await fetch(url, {
+                method: "GET",
+                mode: "cors",
+            });
+
+            if (!response.ok) throw new Error("파일 다운로드 실패");
+
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+
+            const link = document.createElement("a");
+            link.href = blobUrl;
+            link.setAttribute("download", fileName); // 다운로드 창을 유도
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            window.URL.revokeObjectURL(blobUrl); // 메모리 해제
+        } catch (error) {
+            console.error("다운로드 실패:", error);
+
+            // MUI Snackbar를 이용한 Alert 표시
+            setSnackbarMessage("해당 파일은 새 창에서 열립니다.");
+            setOpenSnackbar(true);
+
+            // 다운로드가 실패하면 파일을 새 창에서 열기
+            window.open(url, "_blank");
+        }
     };
 
     // 로딩 상태일 때 커스텀 로딩 컴포넌트 렌더링
@@ -244,25 +277,27 @@ const FileCardView = ({ files, setFiles, loading }) => {
                                     </Box>
 
                                     {/* 🏷️ 태그 */}
-                                    <Box sx={{ display: "flex", justifyContent: "center", marginTop: 1 }}>
-                                        {/* <Chip label={file.tag} color={tagColors[file.tag] || "default"} /> */}
-                                        {file.tags.slice(0, 3).map((tag, idx) => (
-                                            <Chip
-                                                key={idx}
-                                                label={tag}
-                                                color={tagColors[tag] || "default"}
-                                                sx={{
-                                                    m: 0.5,
-                                                    backgroundColor: '#DBE2EF',
-                                                    color: "black",
-                                                    borderRadius: "12px",
-                                                    transition: "transform 0.2s ease-in-out",
-                                                    "&:hover": {
-                                                        transform: "scale(1.1)",
-                                                        boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
-                                                    }
-                                                }}
-                                            />))}
+                                    <Box sx={{ display: "flex", justifyContent: "center", marginTop: 1, minHeight: '32px' }}>
+                                        {file.tags && file.tags.length > 0 ? (
+                                            file.tags.slice(0, 3).map((tag, idx) => (
+                                                <Chip
+                                                    key={idx}
+                                                    label={tag}
+                                                    color={tagColors[tag] || "default"}
+                                                    sx={{
+                                                        m: 0.5,
+                                                        backgroundColor: '#DBE2EF',
+                                                        color: "black",
+                                                        borderRadius: "12px",
+                                                        transition: "transform 0.2s ease-in-out",
+                                                        "&:hover": {
+                                                            transform: "scale(1.1)",
+                                                            boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
+                                                        }
+                                                    }}
+                                                />
+                                            ))
+                                        ) : null}
                                     </Box>
                                 </CardContent>
                             </Card>
@@ -288,27 +323,62 @@ const FileCardView = ({ files, setFiles, loading }) => {
                 onClose={handleCloseModal}
                 fullWidth
                 maxWidth="sm" // 고정된 모달 크기 설정 (small 크기)
+                PaperProps={{
+                    sx: {
+                        borderRadius: 1,
+                        boxShadow: 24,
+                        overflow: 'hidden'
+                    }
+                }}
             >
-                <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    📁 파일 정보
-                    <IconButton onClick={handleCloseModal}>
+                {/* 모달 헤더 */}
+                <Box sx={{ p: 3, pb: 1.5 }}>
+                    <IconButton
+                        onClick={handleCloseModal}
+                        sx={{
+                            position: 'absolute',
+                            right: 8,
+                            top: 8
+                        }}
+                    >
                         <CloseIcon />
                     </IconButton>
-                </DialogTitle>
+
+                    <Typography
+                        variant="h3"
+                        sx={{
+                            fontWeight: 400,
+                            mb: 2
+                        }}
+                    >
+                        파일 정보
+                    </Typography>
+                </Box>
+
+                <Divider sx={{ borderColor: '#e0e0e0' }} />
+
                 <DialogContent>
                     {selectedFile && (
                         <Box>
                             {/* 파일 아이콘 또는 이미지 미리보기 */}
-                            <Box sx={{ textAlign: "center", marginBottom: 2 }}>
+                            <Box sx={{ textAlign: "center", marginBottom: 4 }}>
                                 {(() => {
                                     const firstFileExt = selectedFile.files[0].split(".").pop().toLowerCase();
                                     const isImageFile = ["png", "jpg", "jpeg", "gif"].includes(firstFileExt);
                                     return isImageFile ? (
-                                        <img
-                                            src={selectedFile.fileUrls[0]} // 파일의 URL로 이미지 미리보기
-                                            alt="파일 미리보기"
-                                            style={{ width: "100%", maxWidth: "200px", height: "auto", borderRadius: "8px" }}
-                                        />
+                                        <Box sx={{
+                                            p: 1,
+                                            border: '1px solid #eee',
+                                            borderRadius: 1,
+                                            display: 'inline-block',
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                                        }}>
+                                            <img
+                                                src={selectedFile.fileUrls[0]}
+                                                alt="파일 미리보기"
+                                                style={{ width: "100%", maxWidth: "300px", height: "auto", borderRadius: "4px" }}
+                                            />
+                                        </Box>
                                     ) : (
                                         <img
                                             src={fileTypeIcons[firstFileExt] || fileTypeIcons["default"]}
@@ -320,7 +390,15 @@ const FileCardView = ({ files, setFiles, loading }) => {
                             </Box>
 
                             {/* 항목별 2:10 Grid 레이아웃 적용 */}
-                            <Box sx={{ display: "grid", gridTemplateColumns: "2fr 10fr", gap: 1, padding: 2, alignItems: "center" }}>
+                            <Box
+                                sx={{
+                                    display: "grid",
+                                    gridTemplateColumns: { xs: "1fr", sm: "130px 1fr" },
+                                    gap: 3,
+                                    rowGap: 2,
+                                    padding: 1,
+                                    alignItems: "center"
+                                }}>
                                 <Typography variant="body1" sx={{ fontWeight: "bold" }}>제목:</Typography>
                                 <Typography>{selectedFile.title}</Typography>
 
@@ -336,11 +414,13 @@ const FileCardView = ({ files, setFiles, loading }) => {
                                             onClick={() => {
                                                 // fileUrls 배열이 있을 경우 해당 파일 URL로 이동
                                                 if (selectedFile.fileUrls && selectedFile.fileUrls[idx]) {
-                                                    window.open(selectedFile.fileUrls[idx], '_blank');
+                                                    // window.open(selectedFile.fileUrls[idx], '_blank');
+                                                    handleDownload(selectedFile.fileUrls[idx], fileName);
                                                 } else {
                                                     alert("다운로드 URL이 없습니다.");
                                                 }
-                                            }}>
+                                            }}
+                                        >
                                             <ListItemIcon>
                                                 <img
                                                     src={fileTypeIcons[fileName.split(".").pop().toLowerCase()] || fileTypeIcons.default}
@@ -372,8 +452,20 @@ const FileCardView = ({ files, setFiles, loading }) => {
                                         <Chip
                                             key={idx}
                                             label={tag}
-                                            color={tagColors[tag] || "default"}
-                                            sx={{ m: 0.5, width: 80, justifyContent: "center" }} // 칩 크기 고정
+                                            color="default"
+                                            size="small"
+                                            sx={{
+                                                m: 0.5,
+                                                backgroundColor: '#DBE2EF',
+                                                borderRadius: "12px",
+                                                transition: "transform 0.2s ease-in-out",
+                                                "&:hover": {
+                                                    transform: "scale(1.1)",
+                                                    boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
+                                                    cursor: "pointer"
+                                                }
+                                            }}
+
                                         />
                                     ))}
                                 </Box>
@@ -384,24 +476,64 @@ const FileCardView = ({ files, setFiles, loading }) => {
                 </DialogContent>
 
                 <DialogActions>
-                    <Button variant="contained" color="primary" onClick={() => setOpenDownloadDialog2(true)}>📥 파일 다운로드</Button>
                     <Button
                         variant="contained"
-                        color="warning"
-                        onClick={() => {
-                            // 수정 버튼 클릭 시 workdata/update 페이지로 이동
-                            navigate(`/workdata/update/${selectedFile.wsId}/${selectedFile.id}`); // ✅ 워크스페이스 ID와 자료 ID 전달
+                        startIcon={<DeleteIcon />}
+                        onClick={() => modalhandleDelete(selectedFile)}
+                        disabled={selectedFile && selectedFile.writer !== currentUser}
+                        sx={{
+                            bgcolor: '#f44336',
+                            boxShadow: 'none',
+                            '&:hover': {
+                                bgcolor: '#d32f2f',
+                                boxShadow: 'none'
+                            },
+                            '&.Mui-disabled': {
+                                bgcolor: '#ffcdd2',
+                                color: '#ffffff'
+                            }
                         }}
-                        disabled={selectedFile && selectedFile.writer !== currentUser} // 모달에서도 동일한 조건 적용
                     >
-                        ✏️ 수정
+                        삭제
                     </Button>
                     <Button
                         variant="contained"
-                        color="error"
-                        onClick={() => modalhandleDelete(selectedFile)}
-                        disabled={selectedFile && selectedFile.writer !== currentUser} // 모달에서도 동일한 조건 적용
-                    >🗑️ 파일 삭제</Button>
+                        startIcon={<EditIcon />}
+                        onClick={() => {
+                            navigate(`/workdata/update/${selectedFile.wsId}/${selectedFile.id}`);
+                            handleCloseModal();
+                        }}
+                        disabled={selectedFile && selectedFile.writer !== currentUser}
+                        sx={{
+                            bgcolor: '#ff9800',
+                            boxShadow: 'none',
+                            '&:hover': {
+                                bgcolor: '#f57c00',
+                                boxShadow: 'none'
+                            },
+                            '&.Mui-disabled': {
+                                bgcolor: '#ffe0b2',
+                                color: '#ffffff'
+                            }
+                        }}
+                    >
+                        수정
+                    </Button>
+                    <Button
+                        variant="contained"
+                        startIcon={<DownloadIcon />}
+                        onClick={() => setOpenDownloadDialog2(true)}
+                        sx={{
+                            bgcolor: '#1976d2',
+                            boxShadow: 'none',
+                            '&:hover': {
+                                bgcolor: '#1565c0',
+                                boxShadow: 'none'
+                            }
+                        }}
+                    >
+                        다운로드
+                    </Button>
                 </DialogActions>
             </Dialog>
 
@@ -420,7 +552,8 @@ const FileCardView = ({ files, setFiles, loading }) => {
                                 sx={{ cursor: "pointer" }}
                                 onClick={() => {
                                     if (selectedFile.fileUrls && selectedFile.fileUrls[idx]) {
-                                        window.open(selectedFile.fileUrls[idx], '_blank');
+                                        // window.open(selectedFile.fileUrls[idx], '_blank');
+                                        handleDownload(selectedFile.fileUrls[idx], fileName);
                                     } else {
                                         alert("다운로드 URL이 없습니다.");
                                     }
@@ -461,7 +594,8 @@ const FileCardView = ({ files, setFiles, loading }) => {
                                 }}
                                 onClick={() => {
                                     if (selectedFile.fileUrls && selectedFile.fileUrls[idx]) {
-                                        window.open(selectedFile.fileUrls[idx], '_blank');
+                                        // window.open(selectedFile.fileUrls[idx], '_blank');
+                                        handleDownload(selectedFile.fileUrls[idx], fileName);
                                     } else {
                                         alert("다운로드 URL이 없습니다.");
                                     }
@@ -484,6 +618,22 @@ const FileCardView = ({ files, setFiles, loading }) => {
                     </Button>
                 </DialogActions>
             </Dialog >
+
+            {/* 다운로드 실패 시 알림 */}
+            <Snackbar
+                open={openSnackbar}
+                autoHideDuration={3000} // 3초 후 자동 닫힘
+                onClose={() => setOpenSnackbar(false)}
+                anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            >
+                <Alert
+                    onClose={() => setOpenSnackbar(false)}
+                    severity="error"
+                    variant="filled"
+                >
+                    {snackbarMessage}
+                </Alert>
+            </Snackbar>
         </>
     );
 };

@@ -1,6 +1,7 @@
 package net.scit.backend.channel.controller;
 
 import net.scit.backend.channel.DTO.ChatRequestDTO;
+import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.channel.DTO.MessageDTO;
 import net.scit.backend.channel.DTO.SummaryDTO;
 import net.scit.backend.channel.service.ChannelService;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import lombok.RequiredArgsConstructor;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/chat")

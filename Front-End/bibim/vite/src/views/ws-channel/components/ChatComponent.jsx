@@ -16,6 +16,7 @@ import { translateText } from "../../../api/translate";
 import TranslateIcon from '@mui/icons-material/Translate';
 import MemberStatusModal from './MemberStatusModal';
 import ActiveUsersComponent from './ActiveUsersComponent';
+import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import "./ChatComponent.css";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -56,7 +57,7 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
     const [file, setFile] = useState(null);      // 선택된 파일
     const [isUploading, setIsUploading] = useState(false); // 파일 업로드 상태
     const [isChatLoading, setIsChatLoading] = useState(false); // ✅ 채팅 로딩 상태 추가
-    
+
     // 멤버 상태 모달 관련 상태 추가
     const [memberStatusModalOpen, setMemberStatusModalOpen] = useState(false);
 
@@ -554,16 +555,26 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                     <Button
                         variant="outlined"
                         size="small"
-                        sx={{ marginLeft: "10px" }}
+                        sx={{ 
+                            marginLeft: "10px",
+                            borderColor: "#3F72AF",
+                            color: "#3F72AF",
+                            borderRadius: "20px",
+                            padding: "4px 12px",
+                            '&:hover': {
+                                borderColor: "#3F72AF",
+                                backgroundColor: "rgba(63, 114, 175, 0.04)"
+                            }
+                        }}
                         onClick={() => setDrawerOpen(true)}
                     >
                         채널 변경
                     </Button>
                 </div>
                 {/* 멤버 접속 상태 컴포넌트 */}
-                <ActiveUsersComponent 
-                    workspaceId={WSID} 
-                    toggleMemberStatusModal={() => setMemberStatusModalOpen(!memberStatusModalOpen)} 
+                <ActiveUsersComponent
+                    workspaceId={WSID}
+                    toggleMemberStatusModal={() => setMemberStatusModalOpen(!memberStatusModalOpen)}
                 />
             </div>
 
@@ -572,7 +583,13 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                 {isChatLoading ? (
                     <ChannelLoading2 /> // ✅ 로딩 화면 추가
                 ) : messages.length === 0 ? (
-                    <div className="empty-chat-message">채널이 생성되었습니다! 채팅을 입력해보세요!</div> // ✅ 안내 메시지 표시
+                    <div className="empty-chat-container">
+                        <div className="empty-chat-image">
+                            <QuestionAnswerIcon style={{ width: 120, height: 120, color: '#ABB2BF' }} />
+                        </div>
+                        <div className="empty-chat-text">채팅이 없습니다</div>
+                        <div className="empty-chat-subtext">새로운 대화를 시작해보세요!</div>
+                    </div>
                 ) : (messages.map((msg, index) => {
                     const messageKey = getMessageKey(msg, index); // ✅ 고유 key 생성
                     console.log("메시지키 확인", messageKey);
@@ -682,9 +699,14 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                     </List>
                     <Button
                         variant="contained"
-                        color="primary"
                         fullWidth
-                        sx={{ marginTop: "16px" }}
+                        sx={{ 
+                            marginTop: "16px",
+                            backgroundColor: "#3F72AF",
+                            '&:hover': {
+                                backgroundColor: "#2E5A8B"
+                            }
+                        }}
                         onClick={() => setCreateModalOpen(true)}
                     >
                         + 채널 생성
@@ -708,9 +730,9 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                 workspaceId={workspaceId}
                 onChannelCreated={handleChannelCreated}
             />
-            
+
             {/* 멤버 상태 모달 추가 */}
-            <MemberStatusModal 
+            <MemberStatusModal
                 open={memberStatusModalOpen}
                 onClose={() => setMemberStatusModalOpen(false)}
                 workspaceId={WSID}

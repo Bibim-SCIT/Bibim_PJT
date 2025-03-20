@@ -104,6 +104,10 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public MessageDTO processMessage(MessageDTO messageDTO) {
         // 파일 메시지는 여기서 처리하지 않으므로 바로 반환
+        if (messageDTO.getMessageOrFile()) {
+            log.info("📂 파일 메시지는 processMessage에서 처리하지 않음.");
+            return messageDTO;
+        }
 
         // 채널 엔티티 가져오기
         WorkspaceChannelEntity workspaceChannelEntity = getWorkspaceChannelById(messageDTO.getChannelNumber());

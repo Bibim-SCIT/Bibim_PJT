@@ -270,7 +270,7 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: #007AFF;
+    background-color: #3F72AF;
     color: white;
     border: none;
     cursor: pointer;
@@ -278,7 +278,7 @@
 }
 
 .send-btn:hover {
-    background-color: #0056b3;
+    background-color: #2E5A8B;
     transform: scale(1.05);
 }
 
@@ -316,6 +316,36 @@
     color: #6b7280;
     font-size: 16px;
     margin-top: 20px;
+}
+
+/* 빈 채팅 컨테이너 */
+.empty-chat-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 30px;
+}
+
+/* 빈 채팅 이미지 */
+.empty-chat-image {
+    margin-bottom: 20px;
+    opacity: 0.7;
+}
+
+/* 빈 채팅 텍스트 */
+.empty-chat-text {
+    font-size: 20px;
+    font-weight: 500;
+    color: #4b5563;
+    margin-bottom: 8px;
+}
+
+/* 빈 채팅 서브텍스트 */
+.empty-chat-subtext {
+    font-size: 14px;
+    color: #9ca3af;
 }
 
 /* ✅ 메시지 전체 감싸는 컨테이너 */
