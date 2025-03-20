@@ -161,6 +161,10 @@ export default function AuthRegister() {
       alert("비밀번호가 일치하지 않습니다.");
       return;
     }
+    if (password.length < 8) {
+      alert("비밀번호는 8자 이상이어야 합니다.");
+      return;
+    }
 
     const formData = new FormData();
 
@@ -207,7 +211,7 @@ export default function AuthRegister() {
   return (
     <>
       {/* 이메일 입력 및 인증 */}
-      <Grid container spacing={1} alignItems="center" >
+      <Grid container spacing={1} alignItems="center">
         <Grid item xs={10} sx={{ width: '70%' }}>
           <FormControl fullWidth
             sx={{ ...theme.typography.customInput }}
@@ -230,7 +234,7 @@ export default function AuthRegister() {
       </Grid>
 
       {/* 인증코드 입력 */}
-      <Grid container spacing={1} sx={{ mt: 1 }} alignItems="center">
+      <Grid container spacing={1} sx={{ mt: 1.5 }} alignItems="center">
         <Grid item xs={10} sx={{ width: '70%' }}>
           <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
             <InputLabel htmlFor="verification-code">인증코드</InputLabel>
@@ -258,14 +262,15 @@ export default function AuthRegister() {
       </Grid>
 
       {/* 비밀번호 입력 */}
-      <FormControl fullWidth sx={{ ...theme.typography.customInput, mt: 2 }}>
+      <FormControl fullWidth sx={{ ...theme.typography.customInput, mt: 2.5 }}>
         <InputLabel htmlFor="outlined-adornment-password-register">비밀번호</InputLabel>
         <OutlinedInput
           id="outlined-adornment-password-register"
           type={showPassword ? 'text' : 'password'}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="비밀번호를 입력하세요"
+          placeholder="비밀번호를 입력하세요 (8자 이상)"
+          error={password.length > 0 && password.length < 8}
           endAdornment={
             <InputAdornment position="end">
               <IconButton onClick={handleClickShowPassword} onMouseDown={handleMouseDownPassword}>
@@ -274,10 +279,15 @@ export default function AuthRegister() {
             </InputAdornment>
           }
         />
+        {password.length > 0 && password.length < 8 && (
+          <Typography color="error" variant="caption" sx={{ mt: 1, ml: 1 }}>
+            비밀번호는 8자 이상이어야 합니다.
+          </Typography>
+        )}
       </FormControl>
 
       {/* 비밀번호 확인 */}
-      <FormControl fullWidth sx={{ ...theme.typography.customInput, mt: 2 }}>
+      <FormControl fullWidth sx={{ ...theme.typography.customInput, mt: 2.5 }}>
         <InputLabel htmlFor="outlined-adornment-confirm-password">비밀번호 확인</InputLabel>
         <OutlinedInput
           id="outlined-adornment-confirm-password"
@@ -297,7 +307,7 @@ export default function AuthRegister() {
       </FormControl>
 
       {/* 이름 입력 */}
-      <FormControl fullWidth sx={{ ...theme.typography.customInput, mt: 2 }}>
+      <FormControl fullWidth sx={{ ...theme.typography.customInput, mt: 2.5 }}>
         <InputLabel>이름</InputLabel>
         <OutlinedInput
           id="name"
@@ -309,9 +319,35 @@ export default function AuthRegister() {
       </FormControl>
 
       {/* 국적 선택 (SelectBox) */}
-      <FormControl fullWidth sx={{ mt: 3 }}>
-        <InputLabel shrink>국적 선택</InputLabel>
-        <Select value={nationality} onChange={(e) => setNationality(e.target.value)}>
+      <FormControl fullWidth sx={{ 
+        ...theme.typography.customInput, 
+        mt: 2.5,
+        '& .MuiInputLabel-root': {
+          top: 5,
+          left: 0,
+          color: theme.palette.grey[500],
+          '&[data-shrink="true"]': {
+            top: -9,
+           
+            transform: 'scale(0.75)',
+            background: 'white',
+            padding: '0 8px'
+          }
+        },
+        '& .MuiOutlinedInput-root': {
+          borderRadius: '12px'
+        },
+        '& .MuiSelect-select': {
+          padding: '30.5px 14px 11.5px !important',
+          fontSize: '0.875rem'
+        }
+      }}>
+        <InputLabel>국적 선택</InputLabel>
+        <Select
+          value={nationality}
+          onChange={(e) => setNationality(e.target.value)}
+          placeholder="국적을 선택하세요"
+        >
           <MenuItem value="KR">대한민국 / Republic of Korea</MenuItem>
           <MenuItem value="US">미국 / America</MenuItem>
           <MenuItem value="JP">일본 / Japan</MenuItem>
@@ -319,42 +355,112 @@ export default function AuthRegister() {
       </FormControl>
 
       {/* 사용 언어 선택 (SelectBox) */}
-      <FormControl fullWidth sx={{ mt: 3 }}>
-        <InputLabel shrink>사용 언어 선택</InputLabel>
-        <Select value={language} onChange={(e) => setLanguage(e.target.value)}>
+      <FormControl fullWidth sx={{ 
+        ...theme.typography.customInput, 
+        mt: 2.5,
+        '& .MuiInputLabel-root': {
+          top: 5,
+          left: 0,
+          color: theme.palette.grey[500],
+          '&[data-shrink="true"]': {
+            top: -9,
+            left: -5,
+            transform: 'scale(0.75)',
+            background: 'white',
+            padding: '0 8px'
+          }
+        },
+        '& .MuiOutlinedInput-root': {
+          borderRadius: '12px'
+        },
+        '& .MuiSelect-select': {
+          padding: '30.5px 14px 11.5px !important',
+          fontSize: '0.875rem'
+        }
+      }}>
+        <InputLabel>사용 언어 선택</InputLabel>
+        <Select
+          value={language}
+          onChange={(e) => setLanguage(e.target.value)}
+          placeholder="언어를 선택하세요"
+        >
           <MenuItem value="ko">한국어 / Korean</MenuItem>
           <MenuItem value="en">영어 / English</MenuItem>
           <MenuItem value="jp">일본어 / Japanese</MenuItem>
         </Select>
       </FormControl>
 
-      <Divider sx={{ mt: 3, mb: 3 }} />
+      <Divider sx={{ mt: 3.5, mb: 3 }} />
 
       {/* 프로필 이미지 업로드 */}
-      <Typography variant="h4" sx={{ mt: 3, mb: 1 }}>프로필 이미지</Typography>
-      <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Typography variant="h4" sx={{ mb: 2 }}>프로필 이미지</Typography>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
         <Avatar
-          // src={profileImage}
-          src={previewImage}  // ✅ 미리보기 URL 적용
-          sx={{ width: 80, height: 80, backgroundColor: '#ccc' }}
+          src={previewImage}
+          sx={{ 
+            width: 110, 
+            height: 110, 
+            mb: 2, 
+            bgcolor: '#f0f0f0',
+            border: '1px solid #e0e0e0',
+            cursor: 'pointer'
+          }}
+          onClick={() => document.getElementById('profile-image-input').click()}
         >
-          {/* {!profileImage && <CameraAltIcon />} */}
-          {!previewImage && <CameraAltIcon />}
+          {!previewImage && <CameraAltIcon sx={{ fontSize: 40, color: '#9e9e9e' }} />}
         </Avatar>
-        <Box sx={{ mt: 1 }}>
-          <Button variant="contained" component="label">
-            사진 업로드
-            <input type="file" hidden accept="image/*" onChange={handleProfileImageUpload} />
+        
+        {/* 이미지 관련 버튼 */}
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <Button 
+            variant="outlined"
+            size="small" 
+            sx={{ 
+              color: theme.palette.secondary.main,
+              borderColor: theme.palette.secondary.main,
+              bgcolor: 'white',
+              boxShadow: 'none',
+              px: 2,
+              py: 0.7,
+              fontSize: '0.85rem',
+              '&:hover': {
+                borderColor: theme.palette.secondary.dark,
+                color: theme.palette.secondary.dark,
+                bgcolor: 'white'
+              }
+            }}
+            onClick={removeProfileImage}
+            disabled={!profileImage}
+          >
+            이미지 삭제
           </Button>
-          {profileImage && (
-            <Button color="error" onClick={removeProfileImage} sx={{ ml: 1 }}>
-              사진 제거
-            </Button>
-          )}
+          
+          <Button 
+            variant="contained"
+            size="small"
+            color="secondary"
+            component="label"
+            sx={{ 
+              boxShadow: 'none',
+              px: 2,
+              py: 0.7,
+              fontSize: '0.85rem',
+            }}
+          >
+            이미지 설정
+            <input 
+              id="profile-image-input"
+              type="file" 
+              hidden 
+              accept="image/*" 
+              onChange={handleProfileImageUpload} 
+              key={fileInputKey}
+            />
+          </Button>
         </Box>
       </Box>
 
-      <Divider sx={{ mt: 3, mb: 3 }} />
+      <Divider sx={{ mt: 3.5, mb: 3.5 }} />
 
       <Box sx={{ mt: 2 }}>
         <AnimateButton>

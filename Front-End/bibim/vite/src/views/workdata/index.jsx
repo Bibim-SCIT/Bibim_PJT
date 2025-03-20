@@ -158,13 +158,13 @@ export default function WorkDataPage() {
     };
 
     return (
-        <MainCard4 title="의 자료실" wsname={activeWorkspace.wsName}>
+        <MainCard4 title="의 자료실" wsname={activeWorkspace?.wsName}>
             {/* 헤더 영역: 설명 텍스트와 간략한 안내 */}
             <Fade in={true} timeout={800}>
-                <Box sx={{ 
-                    mb: 4, 
-                    p: 2, 
-                    borderRadius: 2, 
+                <Box sx={{
+                    mb: 4,
+                    p: 2,
+                    borderRadius: 2,
                     bgcolor: '#F8FAFF',
                     border: '1px solid #E3F2FD'
                 }}>
@@ -175,29 +175,29 @@ export default function WorkDataPage() {
             </Fade>
 
             {/* 검색 및 필터링 영역 */}
-            <Box 
-                sx={{ 
-                    display: "flex", 
+            <Box
+                sx={{
+                    display: "flex",
                     flexWrap: "wrap",
                     gap: 2,
-                    justifyContent: "space-between", 
+                    justifyContent: "space-between",
                     mb: 3,
                     alignItems: "center"
                 }}
             >
                 {/* 왼쪽: 태그 필터와 검색바 (순서 변경) */}
-                <Box sx={{ 
-                    display: 'flex', 
+                <Box sx={{
+                    display: 'flex',
                     gap: 2,
                     alignItems: 'center',
                     flexBasis: { xs: '100%', md: '50%' },
                     maxWidth: { xs: '100%', md: '50%' }
                 }}>
                     {/* 태그 선택기를 먼저 배치 */}
-                    <FormControl 
-                        variant="outlined" 
+                    <FormControl
+                        variant="outlined"
                         size="small"
-                        sx={{ 
+                        sx={{
                             width: { xs: '40%', sm: '30%' },
                             '& .MuiOutlinedInput-root': {
                                 borderRadius: 2,
@@ -234,12 +234,12 @@ export default function WorkDataPage() {
                     </FormControl>
 
                     {/* 검색창을 두 번째로 배치 */}
-                    <Paper 
+                    <Paper
                         elevation={0}
-                        sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            p: '4px 12px', 
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            p: '4px 12px',
                             borderRadius: 2,
                             width: { xs: '60%', sm: '70%' },
                             border: '2px solid rgba(0, 0, 0, 0.23)',
@@ -261,9 +261,9 @@ export default function WorkDataPage() {
                 </Box>
 
                 {/* 오른쪽: 뷰 모드 토글과 업로드 버튼 */}
-                <Box 
-                    sx={{ 
-                        display: "flex", 
+                <Box
+                    sx={{
+                        display: "flex",
                         gap: 2,
                         alignItems: "center",
                         flexBasis: { xs: '100%', md: 'auto' },
@@ -278,7 +278,7 @@ export default function WorkDataPage() {
                             if (newMode !== null) setViewMode(newMode);
                         }}
                         aria-label="view mode toggle"
-                        sx={{ 
+                        sx={{
                             '& .MuiToggleButton-root': {
                                 borderColor: '#e0e0e0',
                                 color: '#757575',
@@ -293,23 +293,23 @@ export default function WorkDataPage() {
                         }}
                     >
                         <ToggleButton value="table" aria-label="table view">
-                            <TableChartIcon sx={{ mr: { xs: 0, sm: 0.5 } }} /> 
+                            <TableChartIcon sx={{ mr: { xs: 0, sm: 0.5 } }} />
                             <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>테이블 보기</Box>
                         </ToggleButton>
                         <ToggleButton value="card" aria-label="card view">
-                            <ViewModuleIcon sx={{ mr: { xs: 0, sm: 0.5 } }} /> 
+                            <ViewModuleIcon sx={{ mr: { xs: 0, sm: 0.5 } }} />
                             <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>카드 보기</Box>
                         </ToggleButton>
                     </ToggleButtonGroup>
 
                     {/* 📤 파일 업로드 버튼 */}
-                    <Button 
-                        variant="contained" 
-                        color="primary" 
-                        startIcon={<CloudUploadIcon />} 
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<CloudUploadIcon />}
                         onClick={handleUpload}
                         sx={{
-                            bgcolor: '#3F72AF', 
+                            bgcolor: '#3F72AF',
                             '&:hover': { bgcolor: '#2E5A88' },
                             boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
                             whiteSpace: 'nowrap'
@@ -319,7 +319,7 @@ export default function WorkDataPage() {
                     </Button>
                 </Box>
             </Box>
-            
+
             {/* 파일 목록 표시 영역 */}
             <Box sx={{ mb: 3, minHeight: 400 }}>
                 <Fade in={true} timeout={500}>
@@ -341,7 +341,7 @@ export default function WorkDataPage() {
             </Box>
 
             {/* 하단 영역: 추가 정보 또는 업로드 버튼 */}
-            <Box 
+            <Box
                 sx={{
                     display: "flex",
                     justifyContent: "center",
@@ -356,11 +356,11 @@ export default function WorkDataPage() {
                     size="large"
                     startIcon={<CloudUploadIcon />}
                     onClick={handleUpload}
-                    sx={{ 
+                    sx={{
                         borderRadius: 2,
                         px: 3,
                         py: 1,
-                        bgcolor: '#3F72AF', 
+                        bgcolor: '#3F72AF',
                         '&:hover': { bgcolor: '#2E5A88' },
                         boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
                     }}
