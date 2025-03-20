@@ -21,7 +21,7 @@ import ScheduleEditModal from './ScheduleEditModal';
 //   },
 // });
 
-const Calendar = ({ tasks, onDeleteSuccess }) => {
+const Calendar = ({ tasks, onDeleteSuccess, onKanbanUpdated }) => {
   const [schedules, setSchedules] = useState(tasks);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
@@ -231,6 +231,7 @@ const Calendar = ({ tasks, onDeleteSuccess }) => {
           schedule={selectedSchedule}
           onUpdate={handleScheduleUpdate}
           onDeleteSuccess={handleScheduleDeleted} // ✅ 삭제 후 전체 일정 다시 불러오기
+          onKanbanUpdated={onKanbanUpdated} // ✅ 추가: 칸반 보드 업데이트
         />
         {isEditModalOpen && selectedEvent && (
           <ScheduleEditModal

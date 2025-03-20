@@ -205,7 +205,13 @@ const TagEditModal = ({ open, onClose }) => {
                     <InputLabel>대분류 태그 선택</InputLabel>
                     <Select value={selectedLargeTag || ""} onChange={(e) => setSelectedLargeTag(e.target.value)}>
                         {largeTags.map(tag => (
-                            <MenuItem key={tag.largeTagNumber} value={tag}>{tag.tagName}</MenuItem>
+                            <MenuItem key={tag.largeTagNumber} value={tag}>
+                                {/* {tag.tagName} */}
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                    <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: tag.tagColor }}></Box>
+                                    {tag.tagName}
+                                </Box>
+                            </MenuItem>
                         ))}
                     </Select>
                 </FormControl>
