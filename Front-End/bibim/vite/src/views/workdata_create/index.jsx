@@ -257,6 +257,7 @@ export default function WdCreatePage() {
                         </Paper>
                         <Button
                             variant="outlined"
+                            color="secondary"
                             startIcon={<CloudUploadIcon />}
                             onClick={() => fileInputRef.current.click()}
                             sx={{ ml: 2 }}
@@ -315,10 +316,10 @@ export default function WdCreatePage() {
             </Grid>
 
             <Stack direction="row" spacing={2} justifyContent="flex-end">
-                <Button variant="contained" color="primary" onClick={handleUpload}>
+                <Button variant="contained" color="secondary" onClick={handleUpload}>
                     업로드
                 </Button>
-                <Button variant="outlined" onClick={() => navigate('/workdata')}>
+                <Button variant="outlined" color="secondary" onClick={() => navigate('/workdata')}>
                     취소
                 </Button>
             </Stack>

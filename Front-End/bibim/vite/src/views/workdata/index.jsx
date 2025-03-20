@@ -168,7 +168,7 @@ export default function WorkDataPage() {
                     bgcolor: '#F8FAFF',
                     border: '1px solid #E3F2FD'
                 }}>
-                    <Typography variant="body1" color="text.secondary">
+                    <Typography variant="body1" color="text.primary">
                         📂 워크스페이스의 공유 자료를 검색하고 관리하세요. 파일을 업로드하거나 다운로드할 수 있습니다.
                     </Typography>
                 </Box>

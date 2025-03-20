@@ -132,6 +132,19 @@ const SchedulePage = () => {
 
   return (
     <MainCard4 title="의 일정 관리" wsname={activeWorkspace.wsName}>
+      {/* 상단 안내창 추가 */}
+      <Box sx={{
+        mb: 4,
+        p: 2,
+        borderRadius: 2,
+        bgcolor: '#F8FAFF',
+        border: '1px solid #E3F2FD'
+      }}>
+        <Typography variant="body1" color="text.primary">
+          📅 워크스페이스의 일정을 관리하고 조율하세요. 캘린더뷰와 간트차트뷰로 일정을 확인할 수 있습니다.
+        </Typography>
+      </Box>
+      
       {/* 상단 뷰 - 캘린더뷰, 간트차트뷰 토글버튼 */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
         {/* <Typography variant="h4" component="h1">{activeWorkspace.wsName}의 일정</Typography> */}
