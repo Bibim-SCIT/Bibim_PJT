@@ -55,6 +55,7 @@ export default function WorkspaceList({ workspaces = [], onSelect }) {
                                     p: 2,
                                     mx: 'auto',
                                     width: '90%',
+                                    mt: 2,
                                     border: '2px solid #ccc',
                                     borderRadius: 2,
                                     boxShadow: '2px 2px 8px rgba(0,0,0,0.1)',

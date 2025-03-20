@@ -21,6 +21,8 @@ import "./ChatComponent.css";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import ChatSummaryModal from './ChatSummaryModal';
+
 
 /**
  * LocalDateTime을 Asia/Seoul 시간대로 변환하고 포맷팅하는 함수
@@ -70,6 +72,10 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [selectedChannel, setSelectedChannel] = useState(null);
 
+    // 요약 모달 관련 상태
+    const [summaryModalOpen, setSummaryModalOpen] = useState(false);
+
+
     // ✅ 번역된 메시지를 저장하는 상태 (각 메시지 ID별로 관리)
     const [translatedMessages, setTranslatedMessages] = useState({});
 
@@ -110,8 +116,6 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
      * 메시지 내용 렌더링 함수
      */
     const renderMessageContent = (msg, handleTranslate, messageIndex, translatedMessage) => {
-        // console.log("찍어보기", msg);
-        // console.log("인덱스", messageIndex);
         if (msg.messageOrFile && msg.content) {
             return isImageFile(msg.content) ? (
                 <img src={msg.content} alt="파일 미리보기" className="chat-image" />
@@ -545,6 +549,9 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
     console.log(channels);
     console.log("채널 id와 채널명", channelId, channelName);
 
+    // ✅ 일반 채팅 메시지 필터링 (파일, 유튜브 링크 제외)
+    const textMessages = messages.filter(msg => !msg.messageOrFile);
+
     return (
         <div className="chat-container">
             {/* 채널 헤더 */}
@@ -555,7 +562,7 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                     <Button
                         variant="outlined"
                         size="small"
-                        sx={{ 
+                        sx={{
                             marginLeft: "10px",
                             borderColor: "#3F72AF",
                             color: "#3F72AF",
@@ -569,6 +576,25 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                         onClick={() => setDrawerOpen(true)}
                     >
                         채널 변경
+                    </Button>
+
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                            marginLeft: "10px",
+                            borderColor: "#3F72AF",
+                            color: "#3F72AF",
+                            borderRadius: "20px",
+                            padding: "4px 12px",
+                            '&:hover': {
+                                borderColor: "#3F72AF",
+                                backgroundColor: "rgba(63, 114, 175, 0.04)"
+                            }
+                        }}
+                        onClick={() => setSummaryModalOpen(true)}
+                    >
+                        채팅 요약
                     </Button>
                 </div>
                 {/* 멤버 접속 상태 컴포넌트 */}
@@ -700,7 +726,7 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                     <Button
                         variant="contained"
                         fullWidth
-                        sx={{ 
+                        sx={{
                             marginTop: "16px",
                             backgroundColor: "#3F72AF",
                             '&:hover': {
@@ -737,6 +763,15 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                 onClose={() => setMemberStatusModalOpen(false)}
                 workspaceId={WSID}
             />
+
+            {/* 요약 기능 모달 추가 */}
+            <ChatSummaryModal
+                open={summaryModalOpen}
+                onClose={() => setSummaryModalOpen(false)}
+                messages={textMessages}
+                wsId={WSID}
+            />
+
         </div>
     );
 }
