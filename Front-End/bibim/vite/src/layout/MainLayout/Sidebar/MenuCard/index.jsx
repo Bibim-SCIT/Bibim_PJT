@@ -268,7 +268,7 @@ function MenuCard() {
         sx={{
           bgcolor: 'primary.light',
           mb: 3,
-          mt: 2,
+          mt: 3,
           overflow: 'hidden',
           position: 'relative',
           '&:after': {
