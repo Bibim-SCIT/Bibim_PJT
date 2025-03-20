@@ -247,7 +247,8 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                             senderNickname,
                             "delete",
                             member.getMember().getEmail(),
-                            member.getNickname()
+                            member.getNickname(),
+                            workspaceEntity
                     )
             );
         }
@@ -317,7 +318,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     // 워크스페이스 탈퇴 메소드
     @Override
     @Transactional
-    public ResultDTO<SuccessDTO> workspaceWithDrawal(Long wsId) {
+    public ResultDTO<SuccessDTO> workspaceWithdrawal(Long wsId) {
         String senderEmail = AuthUtil.getLoginUserId();
 
         WorkspaceMemberEntity member = workspaceMemberRepository
@@ -329,9 +330,6 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         WorkspaceEntity workspaceEntity = getWorkspaceEntity(wsId);
         String workspaceName = workspaceEntity.getWsName(); // 워크스페이스 이름을 미리 저장
 
-        // 멤버 탈퇴
-        workspaceMemberRepository.deleteByWorkspace_wsIdAndMember_Email(wsId, senderEmail);
-
         // 담당했던 스케줄 해제
         List<ScheduleEntity> scheduleEntities = scheduleRepository.findAllByMember(member.getMember());
         for (ScheduleEntity scheduleEntity : scheduleEntities) {
@@ -339,13 +337,16 @@ public class WorkspaceServiceImpl implements WorkspaceService {
             scheduleEntity.setScheduleStatus(ScheduleStatus.fromCode('1'));
         }
 
+        // 멤버 탈퇴
+        workspaceMemberRepository.deleteByWorkspace_wsIdAndMember_Email(wsId, senderEmail);
+
         List<WorkspaceMemberEntity> remainingMembers = workspaceMemberRepository.findAllByWorkspace_WsId(wsId);
 
         if (remainingMembers.isEmpty()) {
             // 삭제 전에 이벤트 먼저 발생
             eventPublisher.publishEvent(
                     new WorkspaceEvent(wsId, workspaceName, senderEmail, senderNickname, "delete",
-                            senderEmail, senderNickname)
+                            senderEmail, senderNickname, workspaceEntity)
             );
 
             // 이벤트가 발생한 후에 삭제
@@ -353,11 +354,15 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         } else {
             eventPublisher.publishEvent(
                     new WorkspaceEvent(wsId, workspaceName, senderEmail, senderNickname, "withdraw",
-                            senderEmail, senderNickname)
+                            senderEmail, senderNickname, workspaceEntity)
             );
         }
 
-        return ResultDTO.of("워크스페이스 탈퇴에 성공했습니다.", SuccessDTO.builder().success(true).build());
+        SuccessDTO result = SuccessDTO.builder()
+                .success(true)
+                .build();
+
+        return ResultDTO.of("워크스페이스 탈퇴에 성공했습니다.", result);
     }
 
 

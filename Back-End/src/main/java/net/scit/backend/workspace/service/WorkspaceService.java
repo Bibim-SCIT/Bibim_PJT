@@ -27,7 +27,7 @@ public interface WorkspaceService
 
     public ResultDTO<SuccessDTO> workspaceAdd(String code);
 
-    public ResultDTO<SuccessDTO> workspaceWithDrawal(Long wsId);
+    public ResultDTO<SuccessDTO> workspaceWithdrawal(Long wsId);
 
     public ResultDTO<SuccessDTO> workspaceForceDrawal(Long wsId, String email);
 
