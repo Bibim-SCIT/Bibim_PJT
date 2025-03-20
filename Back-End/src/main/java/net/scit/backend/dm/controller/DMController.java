@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -50,6 +51,7 @@ public class DMController {
      * @param messageDTO 전송할 메시지 DTO
      */
     @MessageMapping("/dm.sendMessage")
+    @SendTo("/exchange/dm-exchange/msg.{roomId}")
     public void sendMessage(DmMessageDTO messageDTO) {
         // 메시지 처리 및 저장
         DmMessageDTO savedMessage = dmService.processMessage(messageDTO);
@@ -64,7 +66,7 @@ public class DMController {
 
     /**
      * 파일 업로드
-     * @param file 업로드할 파일
+     * @param file 업로드할 파일Q
      * @param sender 발신자
      * @param receiver 수신자
      * @param wsId 워크스페이스 ID

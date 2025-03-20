@@ -11,6 +11,8 @@ import net.scit.backend.workspace.entity.WorkspaceMemberEntity;
 import net.scit.backend.workspace.repository.WorkspaceMemberRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.messaging.simp.SimpMessagingTemplate; // ✅ 추가
+
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,8 @@ public class DmServiceImpl implements DmService {
     private final DmRepository dmRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final S3Uploader s3Uploader;
+    private final SimpMessagingTemplate messagingTemplate; // ✅ WebSocket 메시지 전송을 위한 객체 추가
+
 
     /**
      * 이메일에서 사용자명을 추출
@@ -57,19 +61,17 @@ public class DmServiceImpl implements DmService {
      */
     @Override
     public DmMessageDTO processMessage(DmMessageDTO messageDTO) {
+        if (messageDTO.isFile()) {
+            log.info("📂 파일 메시지는 processMessage에서 처리하지 않음.");
+            return messageDTO;
+        }
+
         String roomId = generateRoomId(messageDTO.getWsId(), messageDTO.getSender(), messageDTO.getReceiver());
 
         DmMessageEntity messageEntity = mapToEntity(messageDTO, roomId); // DTO -> Entity 변환
         messageEntity.setRead(false); // 기본값으로 읽지 않음 설정
 
-        //프로필 사진과 닉네임 바로 전달
-        WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_WsIdAndMember_Email(
-                                                messageDTO.getWsId(),messageDTO.getSender())
-                                                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         dmRepository.save(messageEntity);
-
-        messageDTO.setNickname(workspaceMember.getNickname());
-        messageDTO.setProfileImage(workspaceMember.getProfileImage());
 
         return messageDTO;
     }
@@ -109,15 +111,10 @@ public class DmServiceImpl implements DmService {
 
         dmRepository.save(messageEntity);
 
-        DmMessageDTO dto = mapToDTO(messageEntity);// Entity -> DTO 변환
+        DmMessageDTO messageDTO = mapToDTO(messageEntity);
+        messagingTemplate.convertAndSend("/exchange/dm-exchange/msg." + roomId, messageDTO);
 
-        WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_WsIdAndMember_Email(wsId,sender)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-        dto.setProfileImage(workspaceMember.getProfileImage());
-        dto.setNickname(workspaceMember.getNickname());
-
-        return dto;
+        return mapToDTO(messageEntity); // Entity -> DTO 변환
     }
 
     /**
@@ -180,11 +177,11 @@ public class DmServiceImpl implements DmService {
      */
     private DmMessageDTO mapToDTO(DmMessageEntity entity) {
         WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(entity.getWsId(),entity.getSender())
-                                                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         return DmMessageDTO.builder()
                 .dmNumber(entity.getId())
                 .wsId(entity.getWsId())
-                .nickname(workspaceMember.getNickname())
+//                .nickname(workspaceMember.getNickname())
                 .roomId(entity.getRoomId())
                 .sender(entity.getSender())
                 .receiver(entity.getReceiver())
