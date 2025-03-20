@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import net.scit.backend.member.dto.MemberLoginStatusDTO;
 import net.scit.backend.schedule.entity.ScheduleEntity;
 import net.scit.backend.schedule.repository.ScheduleRepository;
+import net.scit.backend.schedule.type.ScheduleStatus;
 import net.scit.backend.workspace.event.WorkspaceEvent;
 import net.scit.backend.workspace.repository.WorkspaceChannelRepository;
 import org.springframework.context.ApplicationEventPublisher;
@@ -335,6 +336,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         List<ScheduleEntity> scheduleEntities = scheduleRepository.findAllByMember(member.getMember());
         for (ScheduleEntity scheduleEntity : scheduleEntities) {
             scheduleEntity.setMember(null);
+            scheduleEntity.setScheduleStatus(ScheduleStatus.fromCode('1'));
         }
 
         List<WorkspaceMemberEntity> remainingMembers = workspaceMemberRepository.findAllByWorkspace_WsId(wsId);
