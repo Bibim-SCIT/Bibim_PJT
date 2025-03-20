@@ -1,21 +1,58 @@
 import React, { useState } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button } from "@mui/material";
+import { 
+    Modal,
+    Box,
+    Typography, 
+    TextField, 
+    Button,
+    IconButton,
+    Divider,
+    Snackbar,
+    Alert
+} from "@mui/material";
+import CloseIcon from '@mui/icons-material/Close';
 import { createChannel } from "../../../api/channel";
 import { useSelector } from 'react-redux';
 
-function ChannelCreateModal({ open, onClose, workspaceId, onChannelCreated }) {
-    const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
-    console.log("몇번", activeWorkspace)
+// 모달 스타일 정의
+const modalStyle = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 400,
+    bgcolor: 'background.paper',
+    borderRadius: 1,
+    boxShadow: 24,
+    p: 0,
+    outline: 'none'
+};
+
+function ChannelCreateModal({ open, onClose, onChannelCreated }) {
+    const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace);
     const WSID = activeWorkspace.wsId;
 
     const [channelName, setChannelName] = useState("");
-    const [isCreating, setIsCreating] = useState(false); // ✅ 생성 중 상태 추가
+    const [isCreating, setIsCreating] = useState(false);
+    const [snackbar, setSnackbar] = useState({
+        open: false,
+        message: '',
+        severity: 'success'
+    });
+
+    // 스낵바 닫기 핸들러
+    const handleCloseSnackbar = () => {
+        setSnackbar(prev => ({
+            ...prev,
+            open: false
+        }));
+    };
 
     const handleCreate = async () => {
-        // if (!channelName.trim()) return;
-        if (!channelName.trim() || isCreating) return; // ✅ 이미 생성 중이면 실행 방지
+        if (!channelName.trim() || isCreating) return;
 
-        setIsCreating(true); // ✅ 생성 시작
+        setIsCreating(true);
+        
         try {
             console.log("생성할 웤스번호", WSID);
             const newChannel = await createChannel(WSID, channelName);
@@ -26,42 +63,153 @@ function ChannelCreateModal({ open, onClose, workspaceId, onChannelCreated }) {
             }
 
             console.log("새로운 채널 생성 완료:", newChannel);
+            
+            // 성공 알림 표시
+            setSnackbar({
+                open: true,
+                message: '채널이 성공적으로 생성되었습니다.',
+                severity: 'success'
+            });
 
-            // ✅ 채널 생성 후 부모 컴포넌트에서 상태 업데이트
             onChannelCreated(newChannel.channelId, newChannel.channelName);
 
-            // ✅ 모달 닫기 전에 입력 필드 초기화
+            // 약간의 지연 후 모달 닫기 (알림이 보이도록)
             setTimeout(() => {
                 setChannelName("");
                 onClose();
-            }, 200);
+            }, 1000);
         } catch (error) {
             console.error("채널 생성 오류:", error);
+            // 실패 알림 표시
+            setSnackbar({
+                open: true,
+                message: `채널 생성 실패: ${error.message || '알 수 없는 오류가 발생했습니다.'}`,
+                severity: 'error'
+            });
         } finally {
-            setIsCreating(false); // ✅ 생성 완료 후 버튼 활성화
+            setIsCreating(false);
         }
     };
 
+    // 모달 닫기 및 상태 초기화
+    const handleClose = () => {
+        setChannelName("");
+        setSnackbar({
+            open: false,
+            message: '',
+            severity: 'success'
+        });
+        onClose();
+    };
+
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle>새 채널 생성</DialogTitle>
-            <DialogContent sx={{ padding: "20px" }}>
-                <TextField
-                    fullWidth
-                    label="채널 이름"
-                    value={channelName}
-                    onChange={(e) => setChannelName(e.target.value)}
-                    disabled={isCreating} // ✅ 입력창 비활성화 (생성 중일 때)
-                    sx={{ marginBottom: "16px" }}
-                />
-            </DialogContent>
-            <DialogActions sx={{ padding: "16px" }}>
-                <Button onClick={onClose} variant="outlined">취소</Button>
-                <Button onClick={handleCreate} color="primary" variant="contained" disabled={isCreating}>
-                    {isCreating ? "생성 중..." : "생성"}
-                </Button>
-            </DialogActions>
-        </Dialog>
+        <>
+            <Modal open={open} onClose={handleClose}>
+                <Box sx={modalStyle}>
+                    {/* 헤더 영역 */}
+                    <Box sx={{ p: 3, pb: 2 }}>
+                        <IconButton
+                            onClick={handleClose}
+                            sx={{
+                                position: 'absolute',
+                                right: 8,
+                                top: 8
+                            }}
+                        >
+                            <CloseIcon />
+                        </IconButton>
+
+                        <Typography
+                            variant="h4"
+                            sx={{
+                                fontWeight: 400,
+                                mb: 0
+                            }}
+                        >
+                            새 채널 생성
+                        </Typography>
+                    </Box>
+
+                    <Divider sx={{ borderColor: '#e0e0e0' }} />
+
+                    {/* 내용 영역 */}
+                    <Box sx={{ p: 3 }}>
+                        <Typography variant="body1" sx={{ mb: 3 }}>
+                            <Box component="span" sx={{ fontWeight: 600, color: '#4a6cc7' }}>
+                                {activeWorkspace?.wsName}
+                            </Box>
+                            <Box component="span"> 워크스페이스에 새 채널을 생성합니다</Box>
+                        </Typography>
+                        
+                        <TextField
+                            fullWidth
+                            label="채널 이름"
+                            value={channelName}
+                            onChange={(e) => setChannelName(e.target.value)}
+                            disabled={isCreating}
+                            sx={{ mb: 3 }}
+                            placeholder="채널 이름을 입력해주세요"
+                        />
+                        
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                            <Button 
+                                variant="outlined" 
+                                onClick={handleClose}
+                                sx={{
+                                    px: 2,
+                                    textTransform: 'none',
+                                    fontWeight: 500,
+                                    fontSize: '0.95rem',
+                                    borderColor: '#e0e0e0',
+                                    color: 'text.secondary',
+                                    '&:hover': {
+                                        borderColor: '#bdbdbd',
+                                        bgcolor: 'rgba(0,0,0,0.01)'
+                                    }
+                                }}
+                            >
+                                취소
+                            </Button>
+                            <Button 
+                                variant="contained" 
+                                onClick={handleCreate} 
+                                disabled={isCreating}
+                                sx={{
+                                    bgcolor: '#4a6cc7',
+                                    boxShadow: 'none',
+                                    px: 2,
+                                    textTransform: 'none',
+                                    fontWeight: 500,
+                                    fontSize: '0.95rem',
+                                    '&:hover': {
+                                        bgcolor: '#3f5ba9',
+                                        boxShadow: 'none'
+                                    }
+                                }}
+                            >
+                                {isCreating ? '생성 중...' : '생성하기'}
+                            </Button>
+                        </Box>
+                    </Box>
+                </Box>
+            </Modal>
+            
+            {/* 알림 메시지 표시 */}
+            <Snackbar 
+                open={snackbar.open} 
+                autoHideDuration={4000} 
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert 
+                    onClose={handleCloseSnackbar} 
+                    severity={snackbar.severity} 
+                    sx={{ width: '100%' }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
+        </>
     );
 }
 
