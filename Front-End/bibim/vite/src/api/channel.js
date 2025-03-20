@@ -72,4 +72,36 @@ export const deleteChannel = async (workspaceId, channelId) => {
     }
 };
 
+/**
+ * ✅ 채팅 요약 API
+ * @param {Object} chatRequest - 요약 요청 데이터 (chatHistory 포함)
+ * @returns {Promise<Object>} - 요약된 메시지 반환
+ */
+export const summarizeChat = async (chatRequest) => {
+    try {
+        console.log(`📝 채팅 요약 요청: /api/chat/summarize`, chatRequest);
+        const response = await api.post(`/api/chat/summarize`, chatRequest);
+        return response.data;
+    } catch (error) {
+        console.error("❌ 채팅 요약 오류:", error.response?.data || error);
+        throw error.response?.data || error.message;
+    }
+};
+
+/**
+ * ✅ 채팅 요약 업로드 API (자료실 등록)
+ * @param {Object} summaryData - 요약된 데이터 (summaryText 포함)
+ * @returns {Promise<Object>} - 업로드 성공 여부 반환
+ */
+export const summarizeChatUpload = async (summaryData, wsId) => {
+    try {
+        console.log(`📤 요약본 업로드 요청: /api/chat/summarize/upload`, summaryData);
+        const response = await api.post(`/api/chat/summarize/upload`, summaryData, wsId);
+        return response.data;
+    } catch (error) {
+        console.error("❌ 요약본 업로드 오류:", error.response?.data || error);
+        throw error.response?.data || error.message;
+    }
+};
+
 export default api;
