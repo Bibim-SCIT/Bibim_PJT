@@ -211,7 +211,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                 },
                 withCredentials: true,
             });
-            setMessages((prev) => [...prev, response.data]);
+            // setMessages((prev) => [...prev, response.data]);
             setFile(null);
         } catch (error) {
             console.error("🚨 파일 업로드 실패:", error);
@@ -261,18 +261,14 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
     // ✅ WebSocket을 통해 실시간 메시지 수신 처리
     useEffect(() => {
         if (!stompClient || !roomId) return;
-
+        console.log(`✅ WebSocket 구독 시도: /exchange/dm-exchange/msg.${roomId}`);
         const subscription = stompClient.subscribe(`/exchange/dm-exchange/msg.${roomId}`, (message) => {
             try {
                 const parsedMessage = JSON.parse(message.body);
+                console.log("📥 WebSocket 메시지 수신:", parsedMessage); 
                 // 자기 자신의 메시지인지 확인하여 필터링
                 if (parsedMessage.sender !== user?.email) {
                      // setMessages((prev) => [...prev, parsedMessage]); // 실시간 메시지 추가
-                }
-
-                // 상대방 메시지인 경우 프로필 이미지 추가
-                if (parsedMessage.sender !== senderId && receiverInfo) {
-                    parsedMessage.profileImage = receiverInfo.profileImage;
                 }
 
                 setMessages((prev) => [...prev, parsedMessage]);
@@ -283,6 +279,7 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
         });
 
         return () => {
+            console.log(`🔄 WebSocket 구독 해제: /exchange/dm-exchange/msg.${roomId}`);
             subscription.unsubscribe();
         };
     }, [stompClient, roomId, senderId, receiverInfo]);
@@ -317,10 +314,6 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
         // ✅ setMessages 제거하여 중복 메시지 방지
         setMessage("");
 
-        // 이게 있으면 바로 올라오는데, 문제는 메세지가 두번 올라오는 문제가 발생함
-        // 느리더라도 메세지가 한번만 올라오게 하는 방법임
-        // setMessages((prev) => [...prev, messageDTO]);
-        setMessage("");
         setTimeout(scrollToBottom, 100);
     };
 
@@ -422,33 +415,6 @@ export const ChatComponent = ({ wsId, roomId, senderId, receiverId, stompClient,
                             >
                                 {/* 발신자 정보 */}
                                 <div className="dm-sender">
-                                    {msg.sender !== senderId && (
-                                        <>
-                                            <div className="dm-sender-avatar">
-                                                {msg.profileImage ? (
-                                                    <Avatar
-                                                        src={msg.profileImage}
-                                                        alt={msg.sender}
-                                                        sx={{ width: 28, height: 28 }}
-                                                    />
-                                                ) : (
-                                                    <Avatar
-                                                        sx={{
-                                                            width: 28,
-                                                            height: 28,
-                                                            bgcolor: '#007AFF',
-                                                            fontSize: '14px'
-                                                        }}
-                                                    >
-                                                        {msg.sender.charAt(0).toUpperCase()}
-                                                    </Avatar>
-                                                )}
-                                            </div>
-                                            <span className="dm-sender-name">
-                                                {msg.nickname}
-                                            </span>
-                                        </>
-                                    )}
                                     <span className="dm-message-time">
                                         {formatToKoreanTime(msg.sendTime)}
                                     </span>
