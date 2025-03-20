@@ -1,4 +1,4 @@
-package net.scit.backend.common;
+package net.scit.backend.common.dto;
 
 import lombok.Builder;
 import lombok.Getter;

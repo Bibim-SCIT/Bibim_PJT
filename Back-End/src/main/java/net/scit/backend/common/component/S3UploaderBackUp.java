@@ -1,4 +1,4 @@
-package net.scit.backend.component;
+package net.scit.backend.common.component;
 public class S3UploaderBackUp {
 
 //package net.scit.backend.component;

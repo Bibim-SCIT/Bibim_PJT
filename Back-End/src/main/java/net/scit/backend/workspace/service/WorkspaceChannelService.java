@@ -1,8 +1,7 @@
 package net.scit.backend.workspace.service;
 
-import net.scit.backend.common.ResultDTO;
-import net.scit.backend.common.SuccessDTO;
-import net.scit.backend.member.dto.MemberLoginStatusDTO;
+import net.scit.backend.common.dto.ResultDTO;
+import net.scit.backend.common.dto.SuccessDTO;
 import net.scit.backend.member.dto.WorkspaceChannelLoginStatusDTO;
 import net.scit.backend.workspace.dto.ChannelDTO;
 import net.scit.backend.workspace.dto.ChannelUpdateRequest;

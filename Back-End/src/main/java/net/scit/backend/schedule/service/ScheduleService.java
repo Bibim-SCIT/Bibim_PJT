@@ -1,7 +1,7 @@
 package net.scit.backend.schedule.service;
 
-import net.scit.backend.common.ResultDTO;
-import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.common.dto.ResultDTO;
+import net.scit.backend.common.dto.SuccessDTO;
 import net.scit.backend.schedule.dto.*;
 import org.springframework.stereotype.Service;
 import java.util.List;

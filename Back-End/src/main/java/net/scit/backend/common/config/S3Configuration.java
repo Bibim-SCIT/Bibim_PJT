@@ -1,4 +1,4 @@
-package net.scit.backend.config;
+package net.scit.backend.common.config;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;

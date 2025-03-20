@@ -1,4 +1,4 @@
-package net.scit.backend.config;
+package net.scit.backend.common.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

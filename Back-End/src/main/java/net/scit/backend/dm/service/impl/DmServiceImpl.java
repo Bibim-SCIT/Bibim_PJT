@@ -20,7 +20,7 @@ import net.scit.backend.dm.DTO.DmMessageDTO;
 import net.scit.backend.dm.entity.DmMessageEntity;
 import net.scit.backend.dm.repository.DmRepository;
 import net.scit.backend.dm.service.DmService;
-import net.scit.backend.component.S3Uploader;
+import net.scit.backend.common.component.S3Uploader;
 
 @Service
 @RequiredArgsConstructor

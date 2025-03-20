@@ -1,4 +1,4 @@
-package net.scit.backend.component;
+package net.scit.backend.common.component;
 
 import lombok.RequiredArgsConstructor;
 import net.scit.backend.exception.CustomException;

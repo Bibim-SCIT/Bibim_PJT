@@ -1,4 +1,4 @@
-package net.scit.backend.config;
+package net.scit.backend.common.config;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.cache.CacheManager;

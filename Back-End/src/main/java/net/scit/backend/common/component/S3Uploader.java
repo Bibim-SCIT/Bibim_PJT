@@ -1,4 +1,4 @@
-package net.scit.backend.component;
+package net.scit.backend.common.component;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.SdkClientException;

@@ -1,11 +1,16 @@
 package net.scit.backend.channel.controller;
 
+import net.scit.backend.channel.DTO.ChatRequestDTO;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.channel.DTO.MessageDTO;
+import net.scit.backend.channel.DTO.SummaryDTO;
 import net.scit.backend.channel.service.ChannelService;
 
 import java.util.List;
 
+import net.scit.backend.common.dto.ResultDTO;
+import net.scit.backend.common.dto.SuccessDTO;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -53,5 +58,22 @@ public class ChatController {
     @GetMapping("/messages/{channelId}")
     public List<MessageDTO> getMessagesByChannel(@PathVariable("channelId") Long channelId) {
         return chatService.getMessagesByChannel(channelId);
+    }
+
+    /**
+     * 채널 요약 API
+     * @param chatRequestDTO
+     * @return
+     */
+    @PostMapping("/summarize")
+    public ResponseEntity<ResultDTO<String>> summarizeChat(@RequestBody ChatRequestDTO chatRequestDTO) {
+        ResultDTO<String> result = chatService.summarizeChat(chatRequestDTO);
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/summarize/upload")
+    public ResponseEntity<ResultDTO<SuccessDTO>> summarizeChatUpload(@RequestBody SummaryDTO summaryDTO) {
+        ResultDTO<SuccessDTO> result = chatService.summarizeChatUpload(summaryDTO);
+        return ResponseEntity.ok(result);
     }
 }

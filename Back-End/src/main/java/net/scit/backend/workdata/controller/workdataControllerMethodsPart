@@ -4,8 +4,8 @@ import com.amazonaws.services.s3.model.S3Object;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.scit.backend.common.ResultDTO;
-import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.common.dto.ResultDTO;
+import net.scit.backend.common.dto.SuccessDTO;
 import net.scit.backend.component.S3Uploader;
 import net.scit.backend.workdata.dto.WorkdataDTO;
 import net.scit.backend.workdata.entity.WorkDataFileTagEntity;
