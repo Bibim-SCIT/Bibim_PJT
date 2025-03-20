@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
-import net.scit.backend.common.ResultDTO;
+import net.scit.backend.common.dto.ResultDTO;
 import net.scit.backend.mypage.dto.AllWorkspaceDataDTO;
 import net.scit.backend.mypage.dto.MyScheduleDTO;
 import net.scit.backend.mypage.service.MyPageService;

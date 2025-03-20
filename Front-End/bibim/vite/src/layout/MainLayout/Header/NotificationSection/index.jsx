@@ -338,11 +338,14 @@ export default function NotificationSection() {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       {/* ✅ 알림 아이콘을 감싸는 박스 (위치 조정) */}
-      <Box sx={{ position: 'relative', mr: 2 }}>
+      <Box sx={{ position: 'relative', mr: 0, ml: 'auto' }}>
         {/* ✅ 알림 아이콘 */}
         <Avatar
           variant="rounded"
           sx={{
+            ...theme.typography.commonAvatar,
+            ...theme.typography.mediumAvatar,
+            overflow: 'hidden',
             transition: 'all .2s ease-in-out',
             bgcolor: 'secondary.light',
             color: 'secondary.dark',

@@ -2,8 +2,8 @@ package net.scit.backend.workspace.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.scit.backend.common.ResultDTO;
-import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.common.dto.ResultDTO;
+import net.scit.backend.common.dto.SuccessDTO;
 import net.scit.backend.member.dto.WorkspaceChannelLoginStatusDTO;
 import net.scit.backend.workspace.dto.ChannelDTO;
 import net.scit.backend.workspace.dto.ChannelUpdateRequest;

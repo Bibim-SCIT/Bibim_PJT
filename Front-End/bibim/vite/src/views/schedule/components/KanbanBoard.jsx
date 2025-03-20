@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { Box, Card, Typography, Avatar } from "@mui/material";
+import React, { useContext, useEffect, useState } from "react";
+import { Box, Card, Typography, Avatar, Button } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { fetchKanbanTasks, fetchScheduleTasks, updateKanbanTaskStatus, assignSchedule } from "../../../api/schedule";
+import { useSelector } from 'react-redux';
+import { ConfigContext } from "contexts/ConfigContext";
+import { translateText } from "../../../api/translate";  // ✅ 번역 API 추가
 
 const KanbanWrapper = styled(Box)({
   padding: "20px",
@@ -44,6 +47,12 @@ const columnColors = {
 
 const KanbanBoard = ({ wsId, setSchedules, setGanttTasks, onKanbanUpdated, forceRender }) => {
   const [tasks, setTasks] = useState([]);
+  const [translatedTasks, setTranslatedTasks] = useState({}); // ✅ 번역된 결과를 저장하는 상태
+  const [isTranslating, setIsTranslating] = useState(false); // ✅ 번역 진행 여부
+  const [showTranslations, setShowTranslations] = useState(false); // 번역 표시 여부
+
+  // ✅ ConfigContext에서 현재 로그인한 사용자 정보 가져오기
+  const { user } = useContext(ConfigContext);
 
   // ✅ 기존 useEffect (유지)
   useEffect(() => {
@@ -175,10 +184,62 @@ const KanbanBoard = ({ wsId, setSchedules, setGanttTasks, onKanbanUpdated, force
     }
   };
 
+  // ✅ 언어 코드 맵핑 설정
+  const langMap = {
+    ko: "ko",
+    en: "en",
+    jp: "ja",  // ✅ 'jp'를 'ja'로 변환
+  };
+
+
+  // ✅ 번역 실행 함수
+  const handleTranslate = async () => {
+    if (showTranslations) {
+      // ✅ 이미 번역된 상태라면 번역을 숨김
+      setShowTranslations(false);
+      return;
+    }
+
+    setIsTranslating(true);
+
+    // ✅ 현재 로그인한 사용자의 언어 설정 가져오기
+    const targetLang = langMap[user.language] || "en";  // 기본값은 영어(en)
+
+    const translations = {};
+
+    try {
+      for (const task of tasks) {
+        const translatedText = await translateText(task.title, targetLang);
+        translations[task.id] = translatedText;
+      }
+
+      setTranslatedTasks(translations);
+      setShowTranslations(true); // ✅ 번역 완료 후 표시
+      console.log("✅ 번역 완료:", translations);
+    } catch (error) {
+      console.error("❌ 번역 실패:", error);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   return (
     <KanbanWrapper>
       {/* <h2>📌 칸반 보드 (wsId: {wsId})</h2> */}
-      <Typography variant="h2" sx={{ textAlign: "center", mb: 2 }}>📌 칸반 보드</Typography>
+      {/* ✅ 칸반보드 제목과 번역 버튼을 같은 선상에 배치 */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h2">📌 칸반 보드</Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleTranslate}
+          sx={{ backgroundColor: "#3F72AF" }}
+          disabled={isTranslating}
+        >
+          {isTranslating ? "번역 중..." : showTranslations ? "번역 숨기기" : "번역하기"}
+        </Button>
+      </Box>
+
       <DragDropContext onDragEnd={onDragEnd}>
         <Box display="flex" justifyContent="space-around">
           {Object.entries(columns).map(([columnId, columnTitle]) => (
@@ -224,21 +285,42 @@ const KanbanBoard = ({ wsId, setSchedules, setGanttTasks, onKanbanUpdated, force
                               padding: "10px",
                               boxShadow: "0 0 10px rgba(0,0,0,0.1)",
                               display: "flex",
-                              alignItems: "center",
-                              gap: "10px"
+                              flexDirection: "column",
+                              alignItems: "flex-start", // ✅ 좌측 정렬
+                              gap: "5px",
                             }}
                           >
-                            {task.extendedProps?.profileImage && (
-                              <Avatar
-                                src={task.extendedProps.profileImage}
-                                alt={task.extendedProps.nickname || "담당자 없음"}
+                            {/* ✅ Avatar + Task Title 같은 줄 배치 */}
+                            <Box sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "10px",
+                              flexDirection: "row",
+                            }}>
+                              {task.extendedProps?.profileImage && (
+                                <Avatar
+                                  src={task.extendedProps.profileImage}
+                                  alt={task.extendedProps.nickname || "담당자 없음"}
+                                  sx={{ width: "30px", height: "30px" }}
+                                />
+                              )}
+                              <Typography >{task.title}</Typography>
+                            </Box>
+
+                            {/* ✅ 번역된 텍스트 (showTranslations이 true일 때만 표시) */}
+                            {showTranslations && translatedTasks[task.id] && (
+                              <Typography
                                 sx={{
-                                  width: "30px",
-                                  height: "30px",
+                                  fontSize: "12px",
+                                  color: "gray",
+                                  mt: 1,
+                                  pl: "40px" // Avatar 크기만큼 들여쓰기
                                 }}
-                              />
+                              >
+                                {translatedTasks[task.id]}
+                              </Typography>
                             )}
-                            <Typography>{task.title}</Typography>
+
                           </Card>
                         )}
                       </Draggable>

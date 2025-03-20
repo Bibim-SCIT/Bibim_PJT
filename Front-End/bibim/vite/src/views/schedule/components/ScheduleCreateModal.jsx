@@ -40,7 +40,7 @@ const style = {
     overflow: 'auto'
 };
 
-const ScheduleCreateModal = ({ open, onClose, onCreateSuccess }) => {
+const ScheduleCreateModal = ({ open, onClose, onCreateSuccess, onKanbanUpdated }) => {
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ 현재 워크스페이스 가져오기
 
     const [formData, setFormData] = useState({
@@ -91,6 +91,8 @@ const ScheduleCreateModal = ({ open, onClose, onCreateSuccess }) => {
                 .catch((error) => console.error("대분류 태그 fetch 실패:", error));
         }
     }, [open, activeWorkspace]);
+
+    console.log("대분류태그 함보자", largeTags);
 
     // 대분류 선택 시 중분류 태그 가져오기
     useEffect(() => {
@@ -158,22 +160,20 @@ const ScheduleCreateModal = ({ open, onClose, onCreateSuccess }) => {
 
             console.log("📌 일정 생성 요청 데이터:", requestData);
 
-            // await createSchedule(requestData);
             const newSchedule = await createSchedule(requestData); // ✅ 생성된 일정 반환
             console.log("새스케줄", newSchedule);
 
-            // alert("일정이 생성되었습니다.");
             setSnackbar({
                 open: true,
                 message: '일정이 성공적으로 생성되었습니다.',
                 severity: 'success'
             });
             onClose(); // 모달 닫기
-            // window.location.reload(); // 페이지 새로고침하여 캘린더 반영
 
             // ✅ 방법 2: 전체 일정 다시 불러오기 (fetch 요청)
             if (onCreateSuccess) {
                 onCreateSuccess(); // SchedulePage에서 fetchScheduleTasks(wsId) 호출
+                onKanbanUpdated(); // 🔹 추가: 칸반 보드도 업데이트 실행
             }
 
         } catch (error) {
@@ -215,7 +215,7 @@ const ScheduleCreateModal = ({ open, onClose, onCreateSuccess }) => {
                         </IconButton>
 
                         <Typography
-                            variant="h4"
+                            variant="h3"
                             sx={{
                                 fontWeight: 400,
                                 mb: 0
@@ -236,6 +236,7 @@ const ScheduleCreateModal = ({ open, onClose, onCreateSuccess }) => {
                                 value={formData.scheduleTitle}
                                 onChange={(e) => setFormData({ ...formData, scheduleTitle: e.target.value })}
                                 sx={{ mb: 2 }}
+                                color="secondary"
                             />
 
                             <TextField
@@ -246,6 +247,7 @@ const ScheduleCreateModal = ({ open, onClose, onCreateSuccess }) => {
                                 value={formData.scheduleContent}
                                 onChange={(e) => setFormData({ ...formData, scheduleContent: e.target.value })}
                                 sx={{ mb: 2 }}
+                                color="secondary"
                             />
 
                             <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
@@ -267,6 +269,8 @@ const ScheduleCreateModal = ({ open, onClose, onCreateSuccess }) => {
                                 />
                             </Box>
 
+                            <Divider sx={{ my: 2 }} />
+
                             <FormControl fullWidth sx={{ mb: 2 }}>
                                 <InputLabel>대분류*</InputLabel>
                                 <Select
@@ -275,7 +279,11 @@ const ScheduleCreateModal = ({ open, onClose, onCreateSuccess }) => {
                                 >
                                     {largeTags.map((tag) => (
                                         <MenuItem key={tag.tagNumber} value={tag.tagName}>
-                                            {tag.tagName}
+                                            {/* {tag.tagName} */}
+                                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                                <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: tag.tagColor }}></Box>
+                                                {tag.tagName}
+                                            </Box>
                                         </MenuItem>
                                     ))}
                                 </Select>

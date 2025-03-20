@@ -14,6 +14,7 @@ public class MyScheduleDTO {
 
     private Long wsId;
     private String wsName;
+    private String wsImg;
     private Long scheduleNumber;
     private String tag1;
     private String tag2;

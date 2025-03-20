@@ -2,7 +2,7 @@
 import { Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import rabbit from 'assets/images/icons/rabbit.png';
-import bibim from 'assets/images/icons/bibim250311_2.png';
+import bibim from 'assets/images/icons/bibim250319.png';
 
 // project imports
 
@@ -20,6 +20,6 @@ export default function Logo() {
   const theme = useTheme();
 
   return (
-    <img src={bibim} alt="Rabbit" width="150" height="50" />
+    <img src={bibim} alt="Bibim" width="150" height="50" />
   );
 }

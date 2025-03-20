@@ -46,4 +46,7 @@ public interface NotificationService {
 
     // 알림 URL 조회 (리다이렉트용)
     String getNotificationUrl(Long notificationId);
+
+    boolean hasEmitter(String email);
+
 }

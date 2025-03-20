@@ -102,9 +102,15 @@ const SchedulePage = () => {
     setLoading(true); // 로딩 시작
     try {
       const updatedSchedules = await fetchScheduleTasks(wsId);
+      const updatedKanbanTasks = await fetchKanbanTasks(wsId); // 📌 추가: 칸반 보드 데이터도 불러오기
+
       console.log("📌 일정 데이터 다시 로드 완료:", updatedSchedules);
+      console.log("📌 칸반 보드 데이터 다시 로드 완료:", updatedKanbanTasks);
+
       setSchedules(updatedSchedules);
       setGanttTasks(updatedSchedules);
+      setTasks(updatedKanbanTasks); // ✅ 칸반 보드 상태도 업데이트
+
     } catch (error) {
       console.error("❌ 일정 데이터 다시 불러오기 실패:", error);
     } finally {
@@ -141,18 +147,6 @@ const SchedulePage = () => {
           일정 생성
         </Button>
         <Box sx={{ display: "flex", gap: 2 }}>
-          {/* <ToggleButtonGroup
-            value={view} // ✅ 현재 선택된 뷰 유지
-            exclusive
-            onChange={handleViewChange} // ✅ 뷰 변경 핸들러
-          >
-            <ToggleButton value="calendar" aria-label="calendar view">
-              <CalendarMonthIcon sx={{ marginRight: 1 }} /> 캘린더뷰
-            </ToggleButton>
-            <ToggleButton value="gantt" aria-label="gantt view">
-              <InsertChartIcon sx={{ marginRight: 1 }} /> 간트차트 뷰
-            </ToggleButton>
-          </ToggleButtonGroup> */}
           <StyledToggleButtonGroup value={view} exclusive onChange={handleViewChange}>
             <StyledToggleButton
               value="calendar"
@@ -178,7 +172,7 @@ const SchedulePage = () => {
         {loading ? (
           <ScheduleLoading />
         ) : (
-          view === "calendar" ? <Calendar tasks={schedules} onDeleteSuccess={handleSchedulesUpdated} /> : <GanttChart tasks={ganttTasks} onDeleteSuccess={handleSchedulesUpdated} />
+          view === "calendar" ? <Calendar tasks={schedules} onDeleteSuccess={handleSchedulesUpdated} onKanbanUpdated={handleKanbanUpdated} /> : <GanttChart tasks={ganttTasks} onDeleteSuccess={handleSchedulesUpdated} onKanbanUpdated={handleKanbanUpdated} />
         )}
       </Box>
 
@@ -215,8 +209,12 @@ const SchedulePage = () => {
         open={isModalOpen}
         onClose={() => setModalOpen(false)}
         onCreateSuccess={handleSchedulesUpdated} // ✅ 새 일정 반영
+        onKanbanUpdated={handleKanbanUpdated} // ✅ 추가: 칸반 보드 업데이트
       />
-      <ScheduleEditModal open={isModalOpen2} onClose={() => setModalOpen2(false)} />
+      <ScheduleEditModal
+        open={isModalOpen2}
+        onClose={() => setModalOpen2(false)}
+      />
       {/* ✅ 태그 생성 & 수정 모달 */}
       <TagCreateModal open={isTagCreateModalOpen} onClose={() => setTagCreateModalOpen(false)} />
       <TagEditModal open={isTagEditModalOpen} onClose={() => setTagEditModalOpen(false)} />

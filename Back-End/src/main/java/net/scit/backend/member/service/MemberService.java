@@ -1,16 +1,13 @@
 package net.scit.backend.member.service;
 
-import net.scit.backend.common.ResultDTO;
-import net.scit.backend.common.SuccessDTO;
+import net.scit.backend.common.dto.ResultDTO;
+import net.scit.backend.common.dto.SuccessDTO;
 import net.scit.backend.member.dto.*;
-import net.scit.backend.member.entity.MemberEntity;
 
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 /**
  * member에 관한 작업을 처리 하기 위한 인터페이스

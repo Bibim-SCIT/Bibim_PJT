@@ -7,7 +7,7 @@ import net.scit.backend.schedule.entity.ScheduleTagEntity;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-import net.scit.backend.common.ResultDTO;
+import net.scit.backend.common.dto.ResultDTO;
 import net.scit.backend.exception.CustomException;
 import net.scit.backend.exception.ErrorCode;
 import net.scit.backend.jwt.AuthUtil;
@@ -72,6 +72,7 @@ public class MyPageServiceImpl implements MyPageService {
             MyScheduleDTO.MyScheduleDTOBuilder dtoBuilder = MyScheduleDTO.builder()
                     .wsId(scheduleEntity.getWorkspace().getWsId())
                     .wsName(scheduleEntity.getWorkspace().getWsName())
+                    .wsImg(scheduleEntity.getWorkspace().getWsImg())
                     .scheduleNumber(scheduleEntity.getScheduleNumber())
                     .scheduleTitle(scheduleEntity.getScheduleTitle())
                     .scheduleContent(scheduleEntity.getScheduleContent())

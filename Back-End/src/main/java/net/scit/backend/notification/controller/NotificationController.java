@@ -62,13 +62,19 @@ public class NotificationController {
         List<NotificationEntity> unreadNotifications = notificationService.getUnreadNotifications(email);
         try {
             if (unreadNotifications != null && !unreadNotifications.isEmpty()) {
-                emitter.send(SseEmitter.event().name("HISTORY").data(unreadNotifications));
-                log.info("✅ 초기 알림 데이터 전송 완료 ({}개)", unreadNotifications.size());
+                if (notificationService.hasEmitter(email)) { // ✅ 변경된 메서드 호출
+                    emitter.send(SseEmitter.event().name("HISTORY").data(unreadNotifications));
+                    log.info("✅ 초기 알림 데이터 전송 완료 ({}개)", unreadNotifications.size());
+                } else {
+                    log.warn("⚠️ Emitter가 이미 닫힘: 알림 데이터 전송 안 함 - {}", email);
+                }
             }
         } catch (IOException e) {
             log.error("❌ SSE 데이터 전송 오류: {}", e.getMessage());
             emitter.completeWithError(e);
         }
+
+
 
         return emitter;
     }
