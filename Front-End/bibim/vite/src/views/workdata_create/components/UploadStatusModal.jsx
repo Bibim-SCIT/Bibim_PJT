@@ -27,9 +27,9 @@ const UploadStatusModal = ({ open, status, message, onConfirm }) => {
                     <Typography sx={{ mt: 2 }}>{message}</Typography>
                 </Box>
             </DialogContent>
-            <DialogActions>
+            <DialogActions sx={{ justifyContent: 'flex-end', padding: 2 }}>
                 {status !== 'loading' && (
-                    <Button onClick={onConfirm} color="primary" variant="contained">
+                    <Button onClick={onConfirm} color="secondary" variant="contained">
                         확인
                     </Button>
                 )}
