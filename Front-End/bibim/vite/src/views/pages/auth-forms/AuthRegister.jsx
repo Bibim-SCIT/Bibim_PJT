@@ -16,7 +16,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 // 추가 import
-import { Select, MenuItem, Avatar, Divider } from "@mui/material"
+import { Select, MenuItem, Avatar, Divider, Snackbar, Alert, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material"
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 
 // project imports
@@ -55,6 +55,32 @@ export default function AuthRegister() {
   const [profileImage, setProfileImage] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);  // 미리보기용 URL
   const [fileInputKey, setfileInputKey] = useState(Date.now()); // 파일 input 초기화용 key
+  // 로딩 상태 추가
+  const [loading, setLoading] = useState(false);
+
+  // 스낵바 상태 추가
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
+
+  // 완료 모달 상태 추가
+  const [openSuccessModal, setOpenSuccessModal] = useState(false);
+
+  // 스낵바 닫기 핸들러
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  // 스낵바 표시 함수
+  const showSnackbar = (message, severity = 'success') => {
+    setSnackbar({
+      open: true,
+      message,
+      severity
+    });
+  };
 
   // 기존 코드
   const handleClickShowPassword = () => {
@@ -72,49 +98,33 @@ export default function AuthRegister() {
   const handleCheckEmail = async () => {
     try {
       await checkEmail(email);
-      alert("사용 가능한 이메일입니다.");
+      showSnackbar("사용 가능한 이메일입니다.");
     } catch (error) {
-      alert(error.message || "이메일 중복 확인 오류");
+      showSnackbar(error.message || "이메일 중복 확인 오류", "error");
     }
   };
-
-  // 이메일 인증 코드 발송 (25.02.17 - 수동 버전)
-  // const sendVerificationCode = () => {
-  //   const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6자리 난수 생성
-  //   setGeneratedCode(code);
-  //   alert(`이메일 (${email})로 인증 코드가 발송되었습니다: ${code}`); // 실제 환경에서는 이메일 API 사용
-  // };
 
   // 이메일 인증 코드 발송 (25.02.17 - 실제 이메일 버전)
   const handleSendVerificationCode = async () => {
     try {
+      setLoading(true); // 로딩 시작
       const response = await sendVerificationEmail(email);
 
       console.log("📩 인증 코드 응답:", response);  // ✅ 백엔드 응답 확인
 
       // 응답 구조에 따라 success 필드를 올바르게 확인
       if (response.data && response.data.success) {
-        alert(`이메일(${email})로 인증 코드가 발송되었습니다.`);
+        // 스낵바 제거하고 텍스트만 표시
+        setIsVerified(true); // 인증 코드가 발송됨을 표시
       } else {
-        alert('인증 코드 전송 실패');
+        showSnackbar('인증 코드 전송 실패', 'error');
       }
     } catch (error) {
-      alert(error.message || '인증 코드 요청 중 오류 발생');
+      showSnackbar(error.message || '인증 코드 요청 중 오류 발생', 'error');
+    } finally {
+      setLoading(false); // 로딩 종료
     }
   };
-
-
-
-  // 인증 코드 확인 (25.02.17 - 수동 버전)
-  // const verifyCode = () => {
-  //   if (verificationCode === generatedCode) {
-  //     setIsVerified(true);
-  //     setEmailCheck(true); // 이메일 인증 완료 후 true 설정
-  //     alert('이메일 인증 성공!');
-  //   } else {
-  //     alert('인증 코드가 올바르지 않습니다.');
-  //   }
-  // };
 
   // 인증 코드 확인 (25.02.17 - 실제 이메일 버전)
   const handleVerifyCode = async () => {
@@ -125,15 +135,13 @@ export default function AuthRegister() {
 
       if (response.data && response.data.success) {
         setEmailCheck(true);
-        alert("✅ 이메일 인증 성공!");
       } else {
-        alert("❌ 인증 코드가 일치하지 않습니다.");
+        showSnackbar("❌ 인증 코드가 일치하지 않습니다.", "error");
       }
     } catch (error) {
-      alert(error.message || "❌ 인증 코드 검증 중 오류 발생");
+      showSnackbar(error.message || "❌ 인증 코드 검증 중 오류 발생", "error");
     }
   };
-
 
   // 프로필 이미지 업로드 (추가 코드)
   const handleProfileImageUpload = (event) => {
@@ -141,6 +149,7 @@ export default function AuthRegister() {
     if (file) {
       setProfileImage(file);  // ✅ 실제 파일 저장
       setPreviewImage(URL.createObjectURL(file));  // ✅ 미리보기 URL 생성
+      showSnackbar("프로필 이미지가 설정되었습니다.");
     }
   };
 
@@ -149,20 +158,21 @@ export default function AuthRegister() {
     setProfileImage(null);
     setPreviewImage(null);
     setFileInputKey(Date.now()); // 파일 input 초기화
+    showSnackbar("프로필 이미지가 삭제되었습니다.", "info");
   };
 
   // 회원가입 요청 (25.02.17 추가)
   const handleRegister = async () => {
     if (!emailCheck) {
-      alert('이메일 인증을 완료해야 합니다.');
+      showSnackbar('이메일 인증을 완료해야 합니다.', 'warning');
       return;
     }
     if (password !== confirmPassword) {
-      alert("비밀번호가 일치하지 않습니다.");
+      showSnackbar("비밀번호가 일치하지 않습니다.", "error");
       return;
     }
     if (password.length < 8) {
-      alert("비밀번호는 8자 이상이어야 합니다.");
+      showSnackbar("비밀번호는 8자 이상이어야 합니다.", "error");
       return;
     }
 
@@ -195,27 +205,32 @@ export default function AuthRegister() {
     }
 
     try {
+      setLoading(true); // 로딩 시작
       await registerUser(formData, {
         headers: {
           "Content-Type": "multipart/form-data", // 📌 Content-Type 명시적으로 지정
         },
       });
-      alert("회원가입이 완료되었습니다!");
-      navigate("/");
+      setOpenSuccessModal(true); // 성공 모달 표시
     } catch (error) {
-      alert(error.message || "회원가입 중 오류가 발생했습니다.");
+      showSnackbar(error.message || "회원가입 중 오류가 발생했습니다.", "error");
+    } finally {
+      setLoading(false); // 로딩 종료
     }
   };
 
+  // 모달 확인 후 로그인 페이지로 이동
+  const handleSuccessModalClose = () => {
+    setOpenSuccessModal(false);
+    navigate("/pages/login");
+  };
 
   return (
     <>
       {/* 이메일 입력 및 인증 */}
-      <Grid container spacing={1} alignItems="center">
+      <Grid container spacing={1} alignItems="flex-start">
         <Grid item xs={10} sx={{ width: '70%' }}>
-          <FormControl fullWidth
-            sx={{ ...theme.typography.customInput }}
-          >
+          <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
             <InputLabel htmlFor="email">이메일</InputLabel>
             <OutlinedInput
               id="email"
@@ -224,17 +239,57 @@ export default function AuthRegister() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="이메일을 입력하세요"
             />
+            {isVerified && !emailCheck && (
+              <Typography 
+                variant="caption" 
+                color="secondary" 
+                sx={{ 
+                  mt: 0.5, 
+                  ml: 1, 
+                  display: 'block', 
+                  position: 'relative',
+                  height: '18px',
+
+                  whiteSpace: 'nowrap',
+
+                  textOverflow: 'ellipsis'
+                }}
+              >
+                인증 코드가 발송되었습니다! 이메일을 확인해주세요.
+              </Typography>
+            )}
+            {!isVerified && (
+              <Box sx={{ height: '18px' }} /> // 메시지 없을 때도 같은 높이 유지
+            )}
           </FormControl>
         </Grid>
-        <Grid item xs={2} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant="contained" color="secondary" fullWidth sx={{ fontSize: '12px', height: '35px' }} onClick={handleSendVerificationCode} disabled={!email}>
-            인증코드 발송
+        <Grid item xs={2} sx={{ display: 'flex', alignItems: 'flex-start' }}>
+          <Button 
+            variant="contained" 
+            color="secondary" 
+            fullWidth 
+            sx={{ 
+              fontSize: '12px',
+              height: '40px',
+              marginTop: '22px' // InputLabel과 입력 필드 높이를 고려한 조정
+            }} 
+            onClick={handleSendVerificationCode} 
+            disabled={!email || emailCheck || loading}
+          >
+            {loading ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <CircularProgress size={16} color="inherit" />
+                <span>발송중...</span>
+              </Box>
+            ) : (
+              '인증코드 발송'
+            )}
           </Button>
         </Grid>
       </Grid>
 
       {/* 인증코드 입력 */}
-      <Grid container spacing={1} sx={{ mt: 1.5 }} alignItems="center">
+      <Grid container spacing={1} sx={{ mt: 0.5 }} alignItems="flex-start">
         <Grid item xs={10} sx={{ width: '70%' }}>
           <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
             <InputLabel htmlFor="verification-code">인증코드</InputLabel>
@@ -244,15 +299,28 @@ export default function AuthRegister() {
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
               placeholder="인증코드를 입력하세요"
+              endAdornment={
+                emailCheck && (
+                  <InputAdornment position="end">
+                    <Typography variant="caption" color="secondary" sx={{ fontWeight: 'bold' }}>
+                      인증완료
+                    </Typography>
+                  </InputAdornment>
+                )
+              }
             />
           </FormControl>
         </Grid>
-        <Grid item xs={2} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Grid item xs={2} sx={{ display: 'flex', alignItems: 'flex-start' }}>
           <Button
             variant="contained"
             color="secondary"
             fullWidth
-            sx={{ fontSize: '12px', height: '35px' }}
+            sx={{ 
+              fontSize: '12px', 
+              height: '40px',
+              marginTop: '22px' // InputLabel과 입력 필드 높이를 고려한 조정
+            }}
             onClick={handleVerifyCode}
             disabled={emailCheck} // ✅ 인증 성공하면 버튼 비활성화
           >
@@ -295,7 +363,7 @@ export default function AuthRegister() {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           placeholder="비밀번호를 다시 입력하세요"
-          error={password !== confirmPassword}
+          error={confirmPassword.length > 0 && password !== confirmPassword}
           endAdornment={
             <InputAdornment position="end">
               <IconButton onClick={handleClickShowConfirmPassword} onMouseDown={handleMouseDownPassword}>
@@ -304,6 +372,11 @@ export default function AuthRegister() {
             </InputAdornment>
           }
         />
+        {confirmPassword.length > 0 && password !== confirmPassword && (
+          <Typography color="error" variant="caption" sx={{ mt: 1, ml: 1 }}>
+            비밀번호가 일치하지 않습니다.
+          </Typography>
+        )}
       </FormControl>
 
       {/* 이름 입력 */}
@@ -472,11 +545,70 @@ export default function AuthRegister() {
             variant="contained"
             color="secondary"
             onClick={handleRegister}
+            disabled={loading}
           >
-            회원가입
+            {loading ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <CircularProgress size={20} color="inherit" />
+                <span>가입 중...</span>
+              </Box>
+            ) : (
+              '회원가입'
+            )}
           </Button>
         </AnimateButton>
       </Box>
+
+      {/* 스낵바 컴포넌트 */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+
+      {/* 회원가입 성공 모달 */}
+      <Dialog
+        open={openSuccessModal}
+        onClose={handleSuccessModalClose}
+        aria-labelledby="success-dialog-title"
+        aria-describedby="success-dialog-description"
+        maxWidth="xs" // 모달창의 최대 너비를 xs 크기로 제한
+        PaperProps={{
+          sx: {
+            width: '80%', // 모달창의 너비를 화면의 80%로 설정
+            maxWidth: '400px' // 모달창의 최대 너비를 400px로 제한
+          }
+        }}
+      >
+        <DialogTitle id="success-dialog-title">
+          {"회원가입 완료"} {/* 모달창 제목 텍스트 */}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="success-dialog-description" sx={{ fontSize: '13.5px' }}> {/* 모달창 내용 텍스트 CSS - 폰트 크기 설정 */}
+            회원가입이 성공적으로 완료되었습니다. 로그인 페이지로 이동합니다. {/* 모달창 내용 텍스트 */}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'flex-end', pr: 3, pb: 2 }}> {/* 버튼 오른쪽 정렬 및 우측/하단 여백 추가 */}
+          <Button 
+            onClick={handleSuccessModalClose} 
+            variant="contained"
+            color="secondary"
+            autoFocus
+            sx={{ width: '80px' }} // 버튼 너비 지정
+          >
+            확인 {/* 버튼 텍스트 */}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
