@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Button, Avatar, Chip, Box, Dialog,
-    DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemIcon, ListItemText, Popover, Divider, Snackbar, Alert
+    DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemIcon, ListItemText, Popover, Divider, Snackbar, Alert, Modal
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -13,6 +13,7 @@ import { ConfigContext } from '../../../contexts/ConfigContext';
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import DownloadIcon from "@mui/icons-material/Download";
+import WarningIcon from '@mui/icons-material/Warning';
 
 // 파일 아이콘 import
 import pdfIcon from "assets/images/icons/pdf.png";
@@ -60,6 +61,10 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
     const [openSnackbar, setOpenSnackbar] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
 
+    // 파일 삭제 확인 모달 관련 상태
+    const [openDeleteModal, setOpenDeleteModal] = useState(false);
+    const [fileToDelete, setFileToDelete] = useState(null);
+
     console.log("📌 FileTable에서 받은 files 데이터:", files); // ✅ 전달된 데이터 확인
     console.log("현재 유저정보", user)
 
@@ -88,11 +93,26 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
         return fileName; // 최대 길이 이하라면 그대로 반환
     };
 
+    // 파일 삭제 모달 열기 (일반 상태)
+    const handleDeleteClick = (wsId, fileId) => {
+        setFileToDelete({ wsId, fileId });
+        setOpenDeleteModal(true);
+    };
+
+    // 파일 삭제 모달 열기 (모달 상태)
+    const modalHandleDeleteClick = (file) => {
+        setFileToDelete(file);
+        setOpenDeleteModal(true);
+    };
+
+    // 삭제 모달 닫기
+    const handleCloseDeleteModal = () => {
+        setOpenDeleteModal(false);
+        setFileToDelete(null);
+    };
+
     // 파일 삭제 기능 (일반 상태)
     const handleDelete = async (wsId, fileId) => {
-        const confirmDelete = window.confirm(`해당 파일을(를) 정말 삭제하시겠습니까?`);
-        if (!confirmDelete) return;
-
         try {
             // ✅ 서버에서 삭제 요청
             await deleteWorkdata(wsId, fileId);
@@ -105,32 +125,42 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                 setOpenModal(false);
             }
 
-            alert("파일이 성공적으로 삭제되었습니다.");
+            // 모달 닫기
+            setOpenDeleteModal(false);
+            setFileToDelete(null);
+
+            // 알림 표시
+            setSnackbarMessage("파일이 성공적으로 삭제되었습니다.");
+            setOpenSnackbar(true);
         } catch (error) {
             console.error("❌ 파일 삭제 실패:", error);
-            alert("파일 삭제에 실패했습니다. 다시 시도해주세요.");
+            setSnackbarMessage("파일 삭제에 실패했습니다. 다시 시도해주세요.");
+            setOpenSnackbar(true);
         }
     };
 
     // 파일 삭제 기능 (모달 상태)
     const modalhandleDelete = async (file) => {
-        const confirmDelete = window.confirm(`"${file.name}"을(를) 정말 삭제하시겠습니까?`);
-        if (!confirmDelete) return;
-
         try {
             await deleteWorkdata(file.wsId, file.id);
 
             setFiles((prevFiles) => prevFiles.filter((f) => f.id !== file.id));
             setOpenModal(false);
             setSelectedFile(null);
+            
+            // 모달 닫기
+            setOpenDeleteModal(false);
+            setFileToDelete(null);
 
-            alert("파일이 성공적으로 삭제되었습니다.");
+            // 알림 표시
+            setSnackbarMessage("파일이 성공적으로 삭제되었습니다.");
+            setOpenSnackbar(true);
         } catch (error) {
             console.error("❌ 파일 삭제 실패:", error);
-            alert("파일 삭제에 실패했습니다. 다시 시도해주세요.");
+            setSnackbarMessage("파일 삭제에 실패했습니다. 다시 시도해주세요.");
+            setOpenSnackbar(true);
         }
     };
-
 
     // 파일 상세 정보 모달 열기
     const handleOpenModal = (file) => {
@@ -521,7 +551,7 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                                         variant="contained"
                                         size="small"
                                         color="error"
-                                        onClick={() => handleDelete(file.wsId, file.id)}
+                                        onClick={() => handleDeleteClick(file.wsId, file.id)}
                                         disabled={file.writer !== currentUser} // 현재 유저와 업로더가 다르면 비활성화
                                     >
                                         삭제
@@ -768,7 +798,7 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                     <Button
                         variant="contained"
                         startIcon={<DeleteIcon />}
-                        onClick={() => modalhandleDelete(selectedFile)}
+                        onClick={() => modalHandleDeleteClick(selectedFile)}
                         disabled={selectedFile && selectedFile.writer !== currentUser}
                         sx={{
                             bgcolor: '#f44336',
@@ -923,6 +953,128 @@ const FileTable = ({ files, setFiles, sortField, sortOrder, onSort, loading }) =
                     {snackbarMessage}
                 </Alert>
             </Snackbar>
+
+            {/* 파일 삭제 확인 모달 */}
+            <Modal
+                open={openDeleteModal}
+                onClose={handleCloseDeleteModal}
+            >
+                <Box sx={{
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: 400,
+                    bgcolor: 'background.paper',
+                    borderRadius: 1,
+                    boxShadow: 24,
+                    p: 0,
+                    position: 'relative',
+                    outline: 'none'
+                }}>
+                    <Box sx={{ p: 3, pb: 2 }}>
+                        <IconButton
+                            onClick={handleCloseDeleteModal}
+                            sx={{
+                                position: 'absolute',
+                                right: 8,
+                                top: 8
+                            }}
+                        >
+                            <CloseIcon />
+                        </IconButton>
+
+                        <Typography
+                            variant="h4"
+                            sx={{
+                                fontWeight: 400,
+                                mb: 0
+                            }}
+                        >
+                            파일 삭제
+                        </Typography>
+                    </Box>
+
+                    <Divider sx={{ borderColor: '#e0e0e0' }} />
+
+                    <Box sx={{ p: 3 }}>
+                        <Box sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            mb: 3
+                        }}>
+                            <WarningIcon
+                                sx={{
+                                    fontSize: 40,
+                                    color: '#ff4444',
+                                    mb: 2
+                                }}
+                            />
+                            <Typography sx={{ mb: 1, textAlign: 'center' }}>
+                                {fileToDelete && fileToDelete.wsId ? 
+                                    '해당 파일을 정말 삭제하시겠습니까?' : 
+                                    fileToDelete && fileToDelete.name ? 
+                                        `"${fileToDelete.name}"을(를) 정말 삭제하시겠습니까?` :
+                                        fileToDelete && fileToDelete.title ?
+                                            `"${fileToDelete.title}"을(를) 정말 삭제하시겠습니까?` :
+                                            '해당 파일을 정말 삭제하시겠습니까?'
+                                }
+                            </Typography>
+                            <Typography
+                                color="error"
+                                sx={{
+                                    fontSize: '0.875rem',
+                                    fontStyle: 'italic',
+                                    textAlign: 'center'
+                                }}
+                            >
+                                ※ 삭제 시 데이터는 복구할 수 없습니다.
+                            </Typography>
+                        </Box>
+                    </Box>
+
+                    <Box sx={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        gap: 1,
+                        p: 2,
+                        bgcolor: '#f8f9fa',
+                        borderTop: '1px solid #e0e0e0'
+                    }}>
+                        <Button
+                            variant="outlined"
+                            onClick={handleCloseDeleteModal}
+                            sx={{
+                                color: '#666',
+                                borderColor: '#666',
+                                boxShadow: 'none'
+                            }}
+                        >
+                            취소
+                        </Button>
+                        <Button
+                            variant="contained"
+                            onClick={() => {
+                                if (fileToDelete && fileToDelete.wsId && fileToDelete.id) {
+                                    handleDelete(fileToDelete.wsId, fileToDelete.id);
+                                } else if (fileToDelete && (fileToDelete.wsId !== undefined)) {
+                                    modalhandleDelete(fileToDelete);
+                                }
+                            }}
+                            sx={{
+                                bgcolor: '#ff4444',
+                                boxShadow: 'none',
+                                '&:hover': {
+                                    bgcolor: '#ff0000',
+                                    boxShadow: 'none'
+                                }
+                            }}
+                        >
+                            삭제하기
+                        </Button>
+                    </Box>
+                </Box>
+            </Modal>
         </>
     );
 };
