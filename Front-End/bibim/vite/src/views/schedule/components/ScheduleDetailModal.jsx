@@ -67,7 +67,7 @@ const statusMapping = {
   ON_HOLD: { label: "보류", icon: <PauseCircleIcon />, color: "warning" },
 };
 
-const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSuccess }) => {
+const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSuccess, onKanbanUpdated }) => {
   const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ Redux에서 현재 워크스페이스
   const { user } = useContext(ConfigContext); // ✅ Context에서 로그인 유저 정보 가져오기
   const wsId = activeWorkspace?.wsId;
@@ -263,6 +263,11 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSucces
         assigneeEmail: selectedMember.email,  // ✅ assigneeEmail 업데이트
       });
 
+      // ✅ 캘린더, 간트차트, 칸반보드 업데이트
+      if (onKanbanUpdated) {
+        onKanbanUpdated();
+      }
+
       setSnackbar({ open: true, message: "담당자가 변경되었습니다.", severity: "success" });
     } catch (error) {
       console.error("❌ 담당자 변경 실패:", error);
@@ -293,6 +298,12 @@ const ScheduleDetailModal = ({ schedule, open, onClose, onUpdate, onDeleteSucces
       onUpdate(updatedSchedule);
 
       setSnackbar({ open: true, message: "상태가 변경되었습니다.", severity: "success" });
+
+      // ✅ 캘린더, 간트차트, 칸반보드 업데이트
+      if (onKanbanUpdated) {
+        onKanbanUpdated();
+      }
+
     } catch (error) {
       console.error("❌ 상태 변경 실패:", error);
       setSnackbar({ open: true, message: "상태 변경에 실패했습니다.", severity: "error" });

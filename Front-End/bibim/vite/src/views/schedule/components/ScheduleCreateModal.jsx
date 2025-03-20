@@ -40,7 +40,7 @@ const style = {
     overflow: 'auto'
 };
 
-const ScheduleCreateModal = ({ open, onClose, onCreateSuccess }) => {
+const ScheduleCreateModal = ({ open, onClose, onCreateSuccess, onKanbanUpdated }) => {
     const activeWorkspace = useSelector((state) => state.workspace.activeWorkspace); // ✅ 현재 워크스페이스 가져오기
 
     const [formData, setFormData] = useState({
@@ -160,22 +160,20 @@ const ScheduleCreateModal = ({ open, onClose, onCreateSuccess }) => {
 
             console.log("📌 일정 생성 요청 데이터:", requestData);
 
-            // await createSchedule(requestData);
             const newSchedule = await createSchedule(requestData); // ✅ 생성된 일정 반환
             console.log("새스케줄", newSchedule);
 
-            // alert("일정이 생성되었습니다.");
             setSnackbar({
                 open: true,
                 message: '일정이 성공적으로 생성되었습니다.',
                 severity: 'success'
             });
             onClose(); // 모달 닫기
-            // window.location.reload(); // 페이지 새로고침하여 캘린더 반영
 
             // ✅ 방법 2: 전체 일정 다시 불러오기 (fetch 요청)
             if (onCreateSuccess) {
                 onCreateSuccess(); // SchedulePage에서 fetchScheduleTasks(wsId) 호출
+                onKanbanUpdated(); // 🔹 추가: 칸반 보드도 업데이트 실행
             }
 
         } catch (error) {
