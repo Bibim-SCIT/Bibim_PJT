@@ -625,6 +625,7 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
                             key={messageKey} // ✅ key 값을 msg.id 또는 index 기반으로 설정
                             className={`message ${msg.sender === user?.email ? "my-message" : "other-message"}`}>
                             {/* 발신자 정보 */}
+                            {console.log(msg.pro)}
                             <div className="sender">
                                 <div className="sender-avatar">
                                     {msg.profileImage ? (
