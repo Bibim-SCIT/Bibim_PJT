@@ -106,18 +106,26 @@ public class ChannelServiceImpl implements ChannelService {
         // 파일 메시지는 여기서 처리하지 않으므로 바로 반환
         if (messageDTO.getMessageOrFile()) {
             log.info("📂 파일 메시지는 processMessage에서 처리하지 않음.");
+            WorkspaceChannelEntity workspaceChannelEntity = getWorkspaceChannelById(messageDTO.getChannelNumber());
+            WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(
+                            workspaceChannelEntity.getWorkspace().getWsId(),
+                            messageDTO.getSender())
+                    .orElseThrow(() -> new CustomException(ErrorCode.IMAGE_NOT_FOUND));
+
+            messageDTO.setNickname(workspaceMember.getNickname());
+            messageDTO.setProfileImage(workspaceMember.getProfileImage());
             return messageDTO;
         }
 
         // 채널 엔티티 가져오기
         WorkspaceChannelEntity workspaceChannelEntity = getWorkspaceChannelById(messageDTO.getChannelNumber());
-        
+
         // 프로필 이미지와 닉네임 가져오기 위해 사용
         WorkspaceMemberEntity workspaceMember = workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(
                                                     workspaceChannelEntity.getWorkspace().getWsId(),
                                                     messageDTO.getSender())
                                                     .orElseThrow(() -> new CustomException(ErrorCode.IMAGE_NOT_FOUND));
-        
+
         // 메시지 엔티티 생성 및 저장
         MessageEntity messageEntity = MessageEntity.builder()
                 .workspaceChannelEntity(workspaceChannelEntity)
@@ -126,9 +134,9 @@ public class ChannelServiceImpl implements ChannelService {
                 .messageOrFile(false) // 텍스트 메시지임을 명시
                 .build();
         messageReposittory.save(messageEntity);
-        
+
         messageDTO.setNickname(workspaceMember.getNickname());
-        messageDTO.setProfileImage(workspaceMember.getProfileImage()); 
+        messageDTO.setProfileImage(workspaceMember.getProfileImage());
 
         // 입력된 DTO 데이터를 그대로 반환
         return messageDTO;
