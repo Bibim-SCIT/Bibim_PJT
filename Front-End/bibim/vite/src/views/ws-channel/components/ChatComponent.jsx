@@ -558,7 +558,7 @@ function ChatComponent({ channelId, workspaceId, channelName, setChannel }) {
             <div className="chat-header">
                 <div className="channel-info">
                     <TagIcon sx={{ color: '#6b7280', fontSize: 20 }} />
-                    <span>{channelName} (채널 {channelId})</span>
+                    <span>{channelName}</span>
                     <Button
                         variant="outlined"
                         size="small"
