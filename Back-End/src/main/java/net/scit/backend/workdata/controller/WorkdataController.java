@@ -1,10 +1,13 @@
 package net.scit.backend.workdata.controller;
 
-
 import com.fasterxml.jackson.core.type.TypeReference;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.scit.backend.jwt.AuthUtil;
@@ -20,24 +23,34 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.*;
 
+/**
+ * WorkdataController
+ * 자료글 CRUD 및 태그/검색 관련 API를 제공합니다.
+ */
 @Controller
 @RestController
 @RequestMapping("/workdata")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Workdata API", description = "자료글 등록, 수정, 삭제, 검색 및 태그 관리 API")
 public class WorkdataController {
 
     private final WorkdataService workdataService;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final ObjectMapper objectMapper;
 
-
     /**
-     * 1-1) 게시글 생성 (PathVariable로 wsId 전달)
+     * 자료글 생성 API
+     * @param wsId 워크스페이스 ID
+     * @param title 제목
+     * @param content 내용
+     * @param files 첨부 파일들 (optional)
+     * @param tags 태그 리스트 (optional)
+     * @return 생성된 자료글 DTO
      */
+    @Operation(summary = "자료글 생성", description = "워크스페이스 ID를 기반으로 자료글을 생성합니다.")
     @PostMapping("/{wsId}")
     public ResponseEntity<ResultDTO<WorkdataDTO>> workdataCreate(
             @PathVariable Long wsId,
@@ -46,8 +59,6 @@ public class WorkdataController {
             @RequestParam(value = "files", required = false) MultipartFile[] files,
             @RequestParam(value = "tags", required = false) List<String> tags) {
         try {
-            // 현재 로그인한 사용자의 email을 SecurityContext에서 가져온다고 가정
-            // 예: String email = SecurityContextHolder.getContext().getAuthentication().getName();
             WorkdataDTO responseDTO = workdataService.createWorkdata(wsId, title, content, files, tags);
             return ResponseEntity.ok(ResultDTO.of("자료글 등록 성공!", responseDTO));
         } catch (IllegalArgumentException e) {
@@ -59,10 +70,13 @@ public class WorkdataController {
         }
     }
 
-
     /**
-     * 1-2) 자료글 삭제 (+파일, +태그)
+     * 자료글 삭제 API
+     * @param wsId 워크스페이스 ID
+     * @param dataNumber 자료글 ID
+     * @return 삭제 성공 여부 DTO
      */
+    @Operation(summary = "자료글 삭제", description = "워크스페이스 ID와 자료 번호를 이용해 자료글을 삭제합니다.")
     @DeleteMapping("/{wsId}/{dataNumber}")
     public ResponseEntity<ResultDTO<SuccessDTO>> deleteWorkdata(
             @PathVariable Long wsId,
@@ -81,12 +95,8 @@ public class WorkdataController {
         }
     }
 
-
     /**
-     * 문자열(JSON 배열)을 List<T>로 변환하는 헬퍼 메서드
-     * @param jsonStr JSON 배열 문자열
-     * @param typeRef 변환할 타입 (예: new TypeReference<List<String>>() {})
-     * @return 변환된 List<T> 또는 변환 실패 시 빈 리스트 반환
+     * JSON 문자열을 리스트로 변환하는 유틸 메서드
      */
     private <T> List<T> parseJsonArray(String jsonStr, TypeReference<List<T>> typeRef) {
         if (jsonStr == null || jsonStr.trim().isEmpty()) {
@@ -100,10 +110,11 @@ public class WorkdataController {
         }
     }
 
-
     /**
-     * 1-3) 자료글 수정(+ 파일, 태그)
+     * 자료글 수정 API (파일/태그 포함)
+     * @return 성공 여부 DTO
      */
+    @Operation(summary = "자료글 수정", description = "자료글 제목/내용/파일/태그를 수정합니다. Multipart 요청 필요")
     @PutMapping(value = "/{wsId}/{dataNumber}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ResultDTO<SuccessDTO>> workdataUpdate(@PathVariable Long wsId,
                                                                 @PathVariable Long dataNumber,
@@ -114,7 +125,6 @@ public class WorkdataController {
                                                                 @RequestParam(value = "newTags", required = false) String newTagsJson,
                                                                 @RequestParam(value = "files", required = false) MultipartFile[] newFiles) {
         try {
-            // JSON 문자열을 List<String>으로 파싱
             List<String> deleteFiles = parseJsonArray(deleteFilesJson, new TypeReference<List<String>>() {});
             List<String> deleteTags = parseJsonArray(deleteTagsJson, new TypeReference<List<String>>() {});
             List<String> newTags = parseJsonArray(newTagsJson, new TypeReference<List<String>>() {});
@@ -132,51 +142,40 @@ public class WorkdataController {
         }
     }
 
-
     /**
-     * 1-4-1) 자료글 전체 조회(+태그별 정렬)
+     * 자료글 전체 조회 (정렬 포함)
+     * @return 자료글 리스트
      */
+    @Operation(summary = "자료글 전체 조회", description = "워크스페이스 내 등록된 모든 자료글을 정렬 방식에 따라 조회합니다.")
     @GetMapping("/{wsId}")
     public ResponseEntity<ResultDTO<List<WorkdataTotalSearchDTO>>> workdata(
             @PathVariable Long wsId,
             @RequestParam(required = false, defaultValue = "regDate") String sort,
             @RequestParam(required = false, defaultValue = "desc") String order) {
-        // 1. 로그인 사용자 이메일 조회
         String userEmail = AuthUtil.getLoginUserId();
-
-        // 2. 워크스페이스 검증 (일관성을 위해 findByMember_EmailAndWorkspace_WsId 사용)
         workspaceMemberRepository.findByMember_EmailAndWorkspace_WsId(userEmail, wsId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다."));
-
-        // 3. 서비스 호출 후 응답 반환
         return workdataService.workdata(wsId, sort, order);
     }
 
-
     /**
-     * 1-4-2) 자료실 개별 조회
+     * 자료글 상세 조회 API
      */
+    @Operation(summary = "자료글 상세 조회", description = "자료글 ID를 통해 상세 정보를 조회합니다.")
     @GetMapping("/{wsId}/{dataNumber}")
     public ResponseEntity<ResultDTO<WorkdataTotalSearchDTO>> workdataDetail(
             @PathVariable Long wsId,
             @PathVariable Long dataNumber) {
-        // 1. 로그인 사용자 이메일 조회
         String userEmail = AuthUtil.getLoginUserId();
-
-        // 2. 워크스페이스 검증
         workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다."));
-
-        // 3. 서비스 호출 후 응답 반환
         return workdataService.workdataDetail(wsId, dataNumber);
     }
 
-
     /**
-     * 1-4-3) 태그 전체 조회
-     * @param wsId
-     * @return
+     * 사용 중인 전체 태그 조회 API
      */
+    @Operation(summary = "태그 전체 조회", description = "워크스페이스 내 자료글에 사용된 모든 태그 목록을 조회합니다.")
     @GetMapping("/{wsId}/tags")
     public ResponseEntity<List<String>> getAllTags(@PathVariable Long wsId) {
         List<String> tags = workdataService.getAllTags(wsId);
@@ -184,28 +183,19 @@ public class WorkdataController {
     }
 
     /**
-     * 2. 검색
-     * keyword는 workdata의 title, writer, fileName, tag에서 찾을 수 있음
+     * 키워드 기반 자료글 검색 API
      */
+    @Operation(summary = "자료글 키워드 검색", description = "제목, 작성자, 파일명, 태그에 대해 키워드로 검색합니다.")
     @GetMapping("/search/{wsId}")
     public ResponseEntity<ResultDTO<List<WorkdataTotalSearchDTO>>> searchWorkdata(
             @PathVariable Long wsId,
             @RequestParam String keyword,
             @RequestParam(required = false, defaultValue = "regDate") String sort,
             @RequestParam(required = false, defaultValue = "desc") String order) {
-        // 1) 로그인 사용자 이메일 조회
         String userEmail = AuthUtil.getLoginUserId();
-
-        // 2) 워크스페이스 검증 (일관성을 위해 findByMember_EmailAndWorkspace_WsId 사용)
         workspaceMemberRepository.findByWorkspace_wsIdAndMember_Email(wsId, userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 속한 워크스페이스를 찾을 수 없습니다."));
-
-        // 3) 서비스 호출
         ResultDTO<List<WorkdataTotalSearchDTO>> result = workdataService.searchWorkdata(wsId, keyword, sort, order);
-
-        // 4) 결과 반환
         return ResponseEntity.ok(result);
     }
-
-
 }
