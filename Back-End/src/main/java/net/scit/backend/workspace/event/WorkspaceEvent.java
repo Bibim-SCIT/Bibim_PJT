@@ -36,8 +36,8 @@ public class WorkspaceEvent implements BasedUpdatedEvent {
 
     // delete 이벤트 전용 생성자 (wsId, wsName만 전달)
     public WorkspaceEvent(Long wsId, String wsName, String senderEmail, String senderNickname,
-                          String eventType, String receiverEmail, String receiverNickname) {
-        this.workspace = null;
+                          String eventType, String receiverEmail, String receiverNickname, WorkspaceEntity workspace) {
+        this.workspace = workspace;
         this.wsId = wsId;
         this.wsName = wsName;
         this.senderEmail = senderEmail;

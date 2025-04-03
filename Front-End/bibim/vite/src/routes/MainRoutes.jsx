@@ -3,7 +3,7 @@ import { lazy } from 'react';
 // project imports
 import MainLayout from 'layout/MainLayout';
 import Loadable from 'ui-component/Loadable';
-import AuthGuard from 'components/AuthGuard';
+// import AuthGuard from 'components/AuthGuard';
 // import WorkDataPage from '../views/workdata';
 
 // dashboard routing
@@ -29,9 +29,9 @@ const WsRoleSetting = Loadable(lazy(() => import('views/ws-role/WsRoleSetting'))
 const MainRoutes = {
   path: '/',
   element: (
-    <AuthGuard>
+    // <AuthGuard>
       <MainLayout />
-    </AuthGuard>
+    // </AuthGuard>
   ),
   children: [
     // {

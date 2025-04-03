@@ -1,7 +1,18 @@
 package net.scit.backend.dm.controller;
 
-import java.util.Arrays;
-import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import net.scit.backend.dm.DTO.DmMessageDTO;
+import net.scit.backend.dm.service.DmService;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -9,106 +20,87 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import net.scit.backend.dm.DTO.DmMessageDTO;
-import net.scit.backend.dm.service.DmService;
+import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/dm")
+@Tag(name = "DM API", description = "1:1 DM(Direct Message) 관련 API")
 public class DMController {
 
     private final DmService dmService;
     private final SimpMessagingTemplate messagingTemplate;
 
-    /**
-     * 이메일 주소에서 사용자명을 추출
-     * @param email 이메일 주소
-     * @return 이메일 사용자명 (소문자로 변환)
-     */
     private String cleanEmail(String email) {
         return email.toLowerCase().split("@")[0];
     }
 
-    /**
-     * DM 방 ID 생성
-     * @param wsId 워크스페이스 ID
-     * @param senderEmail 발신자 이메일
-     * @param receiverEmail 수신자 이메일
-     * @return 생성된 방 ID
-     */
     private String generateRoomId(Long wsId, String senderEmail, String receiverEmail) {
         String[] emails = { cleanEmail(senderEmail), cleanEmail(receiverEmail) };
-        Arrays.sort(emails); // 두 이메일 주소를 정렬한 뒤 방 ID 생성
+        Arrays.sort(emails);
         return "dm-" + wsId + "-" + emails[0] + "-" + emails[1];
     }
 
-    /**
-     * 메시지 전송
-     * 클라이언트에서 "/app/dm.sendMessage"로 메시지 전송
-     * @param messageDTO 전송할 메시지 DTO
-     */
     @MessageMapping("/dm.sendMessage")
     @SendTo("/exchange/dm-exchange/msg.{roomId}")
-    public void sendMessage(DmMessageDTO messageDTO) {
-        // 메시지 처리 및 저장
+    @Operation(
+            summary = "DM 메시지 전송 (WebSocket)",
+            description = "1:1 DM 메시지를 WebSocket을 통해 전송합니다. 클라이언트는 /app/dm.sendMessage로 메시지를 전송합니다."
+    )
+    public void sendMessage(
+            @Parameter(description = "DM 메시지 정보") DmMessageDTO messageDTO
+    ) {
         DmMessageDTO savedMessage = dmService.processMessage(messageDTO);
-
-        // 방 ID 생성
         String roomId = generateRoomId(messageDTO.getWsId(), messageDTO.getSender(), messageDTO.getReceiver());
-
-        // 대상 클라이언트에게 메시지 전송
         String destination = "/exchange/dm-exchange/msg." + roomId;
         messagingTemplate.convertAndSend(destination, savedMessage);
     }
 
-    /**
-     * 파일 업로드
-     * @param file 업로드할 파일Q
-     * @param sender 발신자
-     * @param receiver 수신자
-     * @param wsId 워크스페이스 ID
-     * @return 저장된 파일 메시지 DTO
-     */
     @PostMapping("/upload")
+    @Operation(
+            summary = "파일 업로드",
+            description = "DM 채팅에 파일을 업로드합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "업로드 성공", content = @Content(schema = @Schema(implementation = DmMessageDTO.class)))
+            }
+    )
     public DmMessageDTO uploadFile(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("sender") String sender,
-            @RequestParam("receiver") String receiver,
-            @RequestParam("wsId") Long wsId
+            @Parameter(description = "업로드할 파일") @RequestParam("file") MultipartFile file,
+            @Parameter(description = "보낸 사람 이메일") @RequestParam("sender") String sender,
+            @Parameter(description = "받는 사람 이메일") @RequestParam("receiver") String receiver,
+            @Parameter(description = "워크스페이스 ID") @RequestParam("wsId") Long wsId
     ) {
         log.info("📂 파일 업로드 요청: sender={}, receiver={}, wsId={}", sender, receiver, wsId);
         return dmService.uploadFile(file, sender, receiver, wsId);
     }
 
-    /**
-     * 메시지 조회
-     * @param wsId 워크스페이스 ID
-     * @param roomId 방 ID
-     * @return 조회된 메시지 리스트
-     */
     @GetMapping("/messages")
+    @Operation(
+            summary = "DM 메시지 조회",
+            description = "워크스페이스와 DM 방 ID를 기준으로 기존 DM 메시지를 조회합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DmMessageDTO.class))))
+            }
+    )
     public List<DmMessageDTO> getMessages(
-            @RequestParam("wsId") Long wsId,
-            @RequestParam("roomId") String roomId
+            @Parameter(description = "워크스페이스 ID") @RequestParam("wsId") Long wsId,
+            @Parameter(description = "DM 방 ID") @RequestParam("roomId") String roomId
     ) {
         log.info("📩 메시지 조회 요청: wsId={}, roomId={}", wsId, roomId);
         return dmService.getMessages(wsId, roomId);
     }
 
-    /**
-     * 메시지 읽음 처리
-     * @param wsId 워크스페이스 ID
-     * @param sender 발신자
-     * @param receiver 수신자
-     */
     @PostMapping("/read")
+    @Operation(
+            summary = "DM 메시지 읽음 처리",
+            description = "워크스페이스 ID, 발신자, 수신자를 기준으로 메시지를 읽음 처리합니다."
+    )
     public void markMessagesAsRead(
-            @RequestParam("wsId") Long wsId,
-            @RequestParam("sender") String sender,
-            @RequestParam("receiver") String receiver
+            @Parameter(description = "워크스페이스 ID") @RequestParam("wsId") Long wsId,
+            @Parameter(description = "보낸 사람 이메일") @RequestParam("sender") String sender,
+            @Parameter(description = "받는 사람 이메일") @RequestParam("receiver") String receiver
     ) {
         log.info("📖 메시지 읽음 처리 요청: wsId={}, sender={}, receiver={}", wsId, sender, receiver);
         dmService.markMessagesAsRead(wsId, sender, receiver);

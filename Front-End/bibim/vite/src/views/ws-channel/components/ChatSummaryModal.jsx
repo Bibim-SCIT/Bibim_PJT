@@ -124,7 +124,7 @@ const ChatSummaryModal = ({ open, onClose, messages, wsId }) => {
                                         }}
                                     >
                                         <Avatar src={msg.profileImage} sx={{ width: 32, height: 32, marginRight: 2 }}>
-                                            {msg.nickname.charAt(0)}
+                                        {(msg.sender ?? "?").charAt(0)}
                                         </Avatar>
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="body1" fontWeight="bold">
