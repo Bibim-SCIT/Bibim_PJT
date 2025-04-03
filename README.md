@@ -182,7 +182,7 @@ SCIT 개발자 과정 팀 프로젝트
 ---
 
 
-> 📌 Notion, 시연 영상, 배포 링크가 있다면 아래와 같이 추가:
+> 📌 Notion, 배포 링크 :
 
 - [📘 기획 Notion 바로가기](https://example.notion.site)
 - [🚀 배포 링크 (클릭)](https://dev.bibim.shop)
