@@ -75,20 +75,23 @@
 
 ### 🖥 Frontend
 
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="30" /> | <img src="	https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redux/redux-original.svg" width="30" /> |  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" width="30" />  | <img src="[https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vite/vite-original.svg)" width="30" />  |  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="30" />  |  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="30" />  |  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="30" />  |
+| <img src="./assets/readme/skill/react.png" width="30" /> | <img src="./assets/readme/skill/redux.png" width="30" /> |  <img src="./assets/readme/skill/javascript.png" width="40" />  | <img src="./assets/readme/skill/vite.svg" width="30" />  |  <img src="./assets/readme/skill/mui.png" width="30" />  |  <img src="./assets/readme/skill/axios.png" width="40" />  |  <img src="./assets/readme/skill/react-router.svg" width="30" />  |
 | :---: | :---: | :--------: | :--: | :-: | :---: | :----------: |
 | React | Redux | JavaScript | Vite | MUI | Axios | React Router |
 
 
 ### 🛠 Backend
 
-| Java | SpringBoot | Spring Security | JPA | JWT | MySQL | Redis |
+| <img src="./assets/readme/skill/java.svg" width="30" /> | <img src="./assets/readme/skill/springboot.jpg" width="40" /> | <img src="./assets/readme/skill/springsecurity.png" width="40" /> | <img src="./assets/readme/skill/jpa.png" width="30" /> | <img src="./assets/readme/skill/jwt.png" width="30" /> | <img src="./assets/readme/skill/mysql.png" width="40" /> | <img src="./assets/readme/skill/redis.png" width="30" /> |
 | :--: | :--------: | :-------------: | :-: | :-: | :---: | :---: |
+| Java | SpringBoot | Spring Security | JPA | JWT | MySQL | Redis |
+
 
 ### ☁ DevOps & Infra
 
-| Docker | GitHub Actions | AWS EC2 | S3 | Railway | Vercel | Nginx |
+| <img src="./assets/readme/skill/docker.webp" width="30" /> | <img src="./assets/readme/skill/githubactions.png" width="40" /> | <img src="./assets/readme/skill/ec2.svg" width="40" /> | <img src="./assets/readme/skill/s3.png" width="40" /> | <img src="./assets/readme/skill/railway.svg" width="30" /> | <img src="./assets/readme/skill/vercel.jpg" width="40" /> | <img src="./assets/readme/skill/nginx.jpg" width="40" /> |
 | :----: | :-------------: | :-----: | :-: | :-----: | :----: | :---: |
+| Docker | GitHub Actions | AWS EC2 | S3 | Railway | Vercel | Nginx |
 
 <br />
 
@@ -182,7 +185,7 @@ SCIT 개발자 과정 팀 프로젝트
 ---
 
 
-> 📌 Notion, 시연 영상, 배포 링크가 있다면 아래와 같이 추가:
+> 📌 Notion, 배포 링크 :
 
 - [📘 기획 Notion 바로가기](https://example.notion.site)
 - [🚀 배포 링크 (클릭)](https://dev.bibim.shop)
