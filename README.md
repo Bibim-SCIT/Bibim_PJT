@@ -89,7 +89,7 @@
 
 ### ☁ DevOps & Infra
 
-| <img src="./assets/readme/skill/docker.webp" width="30" /> | <img src="./assets/readme/skill/githubactions.png" width="40" /> | <img src="./assets/readme/skill/ec2.svg" width="40" /> | <img src="./assets/readme/skill/s3.png" width="30" /> | <img src="./assets/readme/skill/railway.svg" width="30" /> | <img src="./assets/readme/skill/vercel.jpg" width="40" /> | <img src="./assets/readme/skill/nginx.jpg" width="30" /> |
+| <img src="./assets/readme/skill/docker.webp" width="30" /> | <img src="./assets/readme/skill/githubactions.png" width="40" /> | <img src="./assets/readme/skill/ec2.svg" width="40" /> | <img src="./assets/readme/skill/s3.png" width="40" /> | <img src="./assets/readme/skill/railway.svg" width="30" /> | <img src="./assets/readme/skill/vercel.jpg" width="40" /> | <img src="./assets/readme/skill/nginx.jpg" width="40" /> |
 | :----: | :-------------: | :-----: | :-: | :-----: | :----: | :---: |
 | Docker | GitHub Actions | AWS EC2 | S3 | Railway | Vercel | Nginx |
 
