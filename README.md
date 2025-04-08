@@ -82,13 +82,16 @@
 
 ### 🛠 Backend
 
-| Java | SpringBoot | Spring Security | JPA | JWT | MySQL | Redis |
+| <img src="./assets/readme/skill/java.svg" width="30" /> | <img src="./assets/readme/skill/springboot.jpg" width="30" /> | <img src="./assets/readme/skill/springsecurity.png" width="30" /> | <img src="./assets/readme/skill/jpa.png" width="30" /> | <img src="./assets/readme/skill/jwt.png" width="30" /> | <img src="./assets/readme/skill/mysql.png" width="30" /> | <img src="./assets/readme/skill/redis.png" width="30" /> |
 | :--: | :--------: | :-------------: | :-: | :-: | :---: | :---: |
+| Java | SpringBoot | Spring Security | JPA | JWT | MySQL | Redis |
+
 
 ### ☁ DevOps & Infra
 
-| Docker | GitHub Actions | AWS EC2 | S3 | Railway | Vercel | Nginx |
+| <img src="./assets/readme/skill/docker.webp" width="30" /> | <img src="./assets/readme/skill/github action.png" width="30" /> | <img src="./assets/readme/skill/ec2.png" width="30" /> | <img src="./assets/readme/skill/s3.png" width="30" /> | <img src="./assets/readme/skill/railway.svg" width="30" /> | <img src="./assets/readme/skill/vercel.png" width="30" /> | <img src="./assets/readme/skill/nginx.jpg" width="30" /> |
 | :----: | :-------------: | :-----: | :-: | :-----: | :----: | :---: |
+| Docker | GitHub Actions | AWS EC2 | S3 | Railway | Vercel | Nginx |
 
 <br />
 
