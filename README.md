@@ -75,21 +75,21 @@
 
 ### 🖥 Frontend
 
-| <img src="./assets/readme/skill/react.png" width="30" /> | <img src="./assets/readme/skill/redux.png" width="30" /> |  <img src="./assets/readme/skill/javascript.png" width="30" />  | <img src="./assets/readme/skill/vite.svg" width="30" />  |  <img src="./assets/readme/skill/mui.png" width="30" />  |  <img src="./assets/readme/skill/axios.png" />  |  <img src="./assets/readme/skill/react.png" width="30" />  |
+| <img src="./assets/readme/skill/react.png" width="30" /> | <img src="./assets/readme/skill/redux.png" width="30" /> |  <img src="./assets/readme/skill/javascript.png" width="40" />  | <img src="./assets/readme/skill/vite.svg" width="30" />  |  <img src="./assets/readme/skill/mui.png" width="30" />  |  <img src="./assets/readme/skill/axios.png" width="40" />  |  <img src="./assets/readme/skill/react.png" width="30" />  |
 | :---: | :---: | :--------: | :--: | :-: | :---: | :----------: |
 | React | Redux | JavaScript | Vite | MUI | Axios | React Router |
 
 
 ### 🛠 Backend
 
-| <img src="./assets/readme/skill/java.svg" width="30" /> | <img src="./assets/readme/skill/springboot.jpg" /> | <img src="./assets/readme/skill/springsecurity.png" /> | <img src="./assets/readme/skill/jpa.png" width="30" /> | <img src="./assets/readme/skill/jwt.png" width="30" /> | <img src="./assets/readme/skill/mysql.png" width="30" /> | <img src="./assets/readme/skill/redis.png" width="30" /> |
+| <img src="./assets/readme/skill/java.svg" width="30" /> | <img src="./assets/readme/skill/springboot.jpg" width="40" /> | <img src="./assets/readme/skill/springsecurity.png" width="40" /> | <img src="./assets/readme/skill/jpa.png" width="30" /> | <img src="./assets/readme/skill/jwt.png" width="30" /> | <img src="./assets/readme/skill/mysql.png" width="40" /> | <img src="./assets/readme/skill/redis.png" width="30" /> |
 | :--: | :--------: | :-------------: | :-: | :-: | :---: | :---: |
 | Java | SpringBoot | Spring Security | JPA | JWT | MySQL | Redis |
 
 
 ### ☁ DevOps & Infra
 
-| <img src="./assets/readme/skill/docker.webp" width="30" /> | <img src="./assets/readme/skill/github action.png" width="30" /> | <img src="./assets/readme/skill/ec2.png" width="30" /> | <img src="./assets/readme/skill/s3.png" width="30" /> | <img src="./assets/readme/skill/railway.svg" width="30" /> | <img src="./assets/readme/skill/vercel.png" width="30" /> | <img src="./assets/readme/skill/nginx.jpg" width="30" /> |
+| <img src="./assets/readme/skill/docker.webp" width="30" /> | <img src="./assets/readme/skill/github action.png" width="40" /> | <img src="./assets/readme/skill/ec2.png" width="40" /> | <img src="./assets/readme/skill/s3.png" width="30" /> | <img src="./assets/readme/skill/railway.svg" width="30" /> | <img src="./assets/readme/skill/vercel.png" width="40" /> | <img src="./assets/readme/skill/nginx.jpg" width="30" /> |
 | :----: | :-------------: | :-----: | :-: | :-----: | :----: | :---: |
 | Docker | GitHub Actions | AWS EC2 | S3 | Railway | Vercel | Nginx |
 
