@@ -75,7 +75,7 @@
 
 ### 🖥 Frontend
 
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="30" /> | <img src="	https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redux/redux-original.svg" width="30" /> |  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" width="30" />  | <img src="[https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vite/vite-original.svg)" width="30" />  |  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="30" />  |  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="30" />  |  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="30" />  |
+| <img src="./assets/readme/skill/react.png" width="30" /> | <img src="./assets/readme/skill/redux.png" width="30" /> |  <img src="./assets/readme/skill/javascript.png" width="30" />  | <img src="./assets/readme/skill/vite.svg" width="30" />  |  <img src="./assets/readme/skill/mui.png" width="30" />  |  <img src="./assets/readme/skill/axios.png" width="30" />  |  <img src="./assets/readme/skill/react.png" width="30" />  |
 | :---: | :---: | :--------: | :--: | :-: | :---: | :----------: |
 | React | Redux | JavaScript | Vite | MUI | Axios | React Router |
 
